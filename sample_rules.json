@@ -1,0 +1,38 @@
+{
+  "rules": [
+    {
+      "name": "Make land drop",
+      "phase": "setup",
+      "when": {
+        "hand_contains": [
+          "Island"
+        ],
+        "has_played_land": false
+      },
+      "then": {
+        "action": "play",
+        "target": "Island"
+      },
+      "priority": 1,
+      "enabled": true
+    },
+    {
+      "name": "Play Preordain",
+      "phase": "setup",
+      "when": {
+        "hand_contains": [
+          "Preordain"
+        ],
+        "mana_available": "U"
+      },
+      "then": {
+        "action": "play",
+        "target": "Preordain",
+        "preactions": [{"action": "", "target": ""}],
+        "postactions": [{"action": "", "target": ""}]
+      },
+      "enabled": true
+    }
+  ],
+  "choice_rules": []
+}
