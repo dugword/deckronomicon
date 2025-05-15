@@ -7,7 +7,7 @@ import "fmt"
 // Abilities
 
 var AbilityIsland = ActivatedAbility{
-	Cost: CompositeCost{Costs: []Cost{TapCost{}}},
+	Cost: TapCost{},
 	Effect: func(g *GameState, resolver ChoiceResolver) {
 		g.ManaPool["U"]++
 	},
@@ -20,7 +20,7 @@ var AbilityIsland = ActivatedAbility{
 }
 
 var AbilitySwamp = ActivatedAbility{
-	Cost: CompositeCost{Costs: []Cost{TapCost{}}},
+	Cost: TapCost{},
 	Effect: func(g *GameState, resolver ChoiceResolver) {
 		g.ManaPool["B"]++
 	},
@@ -32,7 +32,7 @@ var AbilitySwamp = ActivatedAbility{
 }
 
 var AbilityMountain = ActivatedAbility{
-	Cost: CompositeCost{Costs: []Cost{TapCost{}}},
+	Cost: TapCost{},
 	Effect: func(g *GameState, resolver ChoiceResolver) {
 		g.ManaPool["R"]++
 	},
@@ -44,7 +44,7 @@ var AbilityMountain = ActivatedAbility{
 }
 
 var AbilityForest = ActivatedAbility{
-	Cost: CompositeCost{Costs: []Cost{TapCost{}}},
+	Cost: TapCost{},
 	Effect: func(g *GameState, resolver ChoiceResolver) {
 		g.ManaPool["G"]++
 	},
@@ -56,7 +56,7 @@ var AbilityForest = ActivatedAbility{
 }
 
 var AbilityPlains = ActivatedAbility{
-	Cost: CompositeCost{Costs: []Cost{TapCost{}}},
+	Cost: TapCost{},
 	Effect: func(g *GameState, resolver ChoiceResolver) {
 		g.ManaPool["W"]++
 	},
@@ -70,8 +70,9 @@ var AbilityPlains = ActivatedAbility{
 var AbilityScry2 = SpellAbility{
 	Description: "Scry 2",
 	Effect: func(g *GameState, resolver ChoiceResolver) {
-		deck := Scry(2, g.Deck, resolver)
-		g.Deck = deck
+		// TODO: Don't access cards directly
+		cards := Scry(2, g.Deck.cards, resolver)
+		g.Deck.cards = cards
 	},
 }
 
@@ -88,25 +89,25 @@ func Scry(n int, cards []*Card, resolver ChoiceResolver) []*Card {
 	used := make([]bool, len(taken))
 	for range len(taken) {
 		// Build option list from unplaced cards
-		var options []Choice
+		var choices []Choice
 		for index, card := range taken {
 			if !used[index] {
-				options = append(options, Choice{
-					Name:  card.Name,
+				choices = append(choices, Choice{
+					Name:  card.Name(),
 					Index: index,
 				})
 			}
 		}
-		chosen := resolver.ChooseOne("Choose a card to place", options)
+		chosen := resolver.ChooseOne("Choose a card to place", choices)
 		chosenCard := taken[chosen.Index]
 		used[chosen.Index] = true
-		topBottomOptions := []Choice{
+		topBottomchoices := []Choice{
 			{Name: "Top"},
 			{Name: "Bottom"},
 		}
 		placement := resolver.ChooseOne(
 			fmt.Sprintf("Place %s on top or bottom of your library?", chosenCard.Name),
-			topBottomOptions,
+			topBottomchoices,
 		)
 		if placement.Index == 0 {
 			remaining = putOnTop(remaining, chosenCard)
@@ -120,27 +121,30 @@ func Scry(n int, cards []*Card, resolver ChoiceResolver) []*Card {
 var AbilityBrainstorm = SpellAbility{
 	Description: "Draw three cards, then put two cards from your hand on top of your library in any order.",
 	Effect: func(g *GameState, resolver ChoiceResolver) {
+		/* // TODO: Figure out a generic draw that's not a draw action maybe
 		g.DrawCards(3)
 		hand, deck := PutNBackOnTop(2, g.Hand, g.Deck, resolver)
 		g.Deck = deck
 		g.Hand = hand
+		*/
 	},
 }
 
-func PutNBackOnTop(n int, hand []*Card, deck []*Card, resolver ChoiceResolver) (newHand, newDeck []*Card) {
+// TODO Revist this
+func PutNBackOnTop(n int, hand *Hand, deck []*Card, resolver ChoiceResolver) (newHand, newDeck []*Card) {
 	for range n {
-		options := getCardOptions(hand)
-		choice := resolver.ChooseOne("Which card to put back on top", options)
-		card := hand[choice.Index]
+		choices := hand.CardChoices()
+		choice := resolver.ChooseOne("Which card to put back on top", choices)
+		card := hand.GetCard(choice.Index)
 		if card != nil {
-			card := hand[choice.Index]
+			card := hand.GetCard(choice.Index)
 			if card != nil {
-				hand = removeCard(hand, card)
+				hand.RemoveCard(card)
 				deck = putOnTop(deck, card)
 			}
 		}
 	}
-	return hand, deck
+	return hand.cards, deck
 }
 
 /*

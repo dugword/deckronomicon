@@ -3,20 +3,43 @@ package game
 import (
 	"errors"
 	"fmt"
-	"maps"
 )
+
+type ManaCost struct {
+	Generic int            // The {1}, {2}, etc.object.
+	Colors  map[string]int // {"G": 1, "U": 1}
+}
 
 type Cost interface {
 	CanPay(game *GameState, source *Permanent) bool
 	Pay(game *GameState, source *Permanent) error
-	Description() string
+	//Description() string
 }
 
-type ManaCost struct {
-	Generic int            // The {1}, {2}, etc.
-	Colors  map[string]int // {"G": 1, "U": 1}
+// --- CompositeCost ---
+
+type CompositeCost struct {
+	Costs []Cost
 }
 
+// --- TapCost ---
+
+type TapCost struct{}
+
+// this feels odd since the cost is tied to the ability, and the ability is tied to a source... so weird you have to pass it in and can't read up the chain
+func (c TapCost) CanPay(game *GameState, source *Permanent) bool {
+	return !source.IsTapped()
+}
+
+func (c TapCost) Pay(game *GameState, source *Permanent) error {
+	// TODO: Either return this directly, or wrap the function, probably wrap with a pay thing
+	if err := source.Tap(); err != nil {
+		return err
+	}
+	return nil
+}
+
+/*
 // TODO Needs to be abstract interface or something
 // Also the logic is hard, maybe it should be its own type with methods
 func (c ManaCost) CanPay(game *GameState, source *Object) bool {
@@ -59,25 +82,26 @@ func CanPotentiallyPayFor(state *GameState, manaCost ManaCost) bool {
 
 	return genericAvailable >= manaCost.Generic
 }
+*/
 
 func ChooseManaForGeneric(genericCost int, pool map[string]int, resolver ChoiceResolver) (map[string]int, error) {
 	choice := make(map[string]int)
 	remaining := genericCost
 
 	for remaining > 0 {
-		options := []Choice{}
+		choices := []Choice{}
 		for color, count := range pool {
 			if count > 0 {
-				options = append(options, Choice{
+				choices = append(choices, Choice{
 					Name: color,
 				})
 			}
 		}
-		if len(options) == 0 {
+		if len(choices) == 0 {
 			return nil, errors.New("not enough mana to pay for generic cost")
 		}
 
-		selected := resolver.ChooseOne("Choose mana to use for generic cost", options)
+		selected := resolver.ChooseOne("Choose mana to use for generic cost", choices)
 		pool[selected.Name]--
 		choice[selected.Name]++
 		remaining--
@@ -86,7 +110,7 @@ func ChooseManaForGeneric(genericCost int, pool map[string]int, resolver ChoiceR
 	return choice, nil
 }
 
-func (c ManaCost) Pay(game *GameState, resolver ChoiceResolver, source *Object) error {
+func (c ManaCost) Pay(game *GameState, resolver ChoiceResolver, source GameObject) error {
 	// Step 1: Pay colored mana first
 	for color, amount := range c.Colors {
 		if game.ManaPool[color] < amount {
@@ -109,25 +133,15 @@ func (c ManaCost) Pay(game *GameState, resolver ChoiceResolver, source *Object) 
 	return nil
 }
 
+/*
 func (c ManaCost) Description() string {
 	return "Pay mana"
 }
 
-// --- TapCost ---
 
-type TapCost struct{}
 
-func (c TapCost) CanPay(game *GameState, source *Permanent) bool {
-	return !source.Tapped
-}
 
-func (c TapCost) Pay(game *GameState, source *Permanent) error {
-	if !c.CanPay(game, source) {
-		return fmt.Errorf("source is already tapped")
-	}
-	source.Tapped = true
-	return nil
-}
+
 
 func (c TapCost) Description() string {
 	return "Tap this permanent"
@@ -153,11 +167,11 @@ func (c SacrificeCost) Pay(game *GameState, source *Permanent) error {
 		if c.Filter(p) {
 			game.Battlefield = append(game.Battlefield[:i], game.Battlefield[i+1:]...)
 			// TODO
-			/*
-				if p.Card != nil {
-					game.Graveyard = append(game.Graveyard, *p.Card)
-				}
-			*/
+
+				//if p.Card != nil {
+				//	game.Graveyard = append(game.Graveyard, *p.Card)
+				//}
+			//
 			return nil
 		}
 	}
@@ -168,11 +182,7 @@ func (c SacrificeCost) Description() string {
 	return "Sacrifice a permanent"
 }
 
-// --- CompositeCost ---
 
-type CompositeCost struct {
-	Costs []Cost
-}
 
 func (c CompositeCost) CanPay(game *GameState, source *Permanent) bool {
 	for _, cost := range c.Costs {

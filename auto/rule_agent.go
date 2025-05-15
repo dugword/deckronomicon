@@ -1,3 +1,42 @@
+// Package rulesagent provides a configurable, strategy-driven player agent for simulating
+// Magic: The Gathering gameplay using deterministic decision-making based on rule definitions.
+//
+// The rules agent reads a user-supplied strategy configuration file (referred to as a RuleSet),
+// which defines a prioritized list of strategic behaviors. During each decision point in a game,
+// the agent evaluates these strategies against the current GameState, including factors such as:
+//
+//   - Cards in hand
+//   - Battlefield state (creatures, permanents, lands, etc.)
+//   - Graveyard contents
+//   - Life totals
+//   - Mana available or potential mana generation
+//
+// Once a strategy condition is matched, the associated action is executed — such as casting a
+// spell, activating an ability, or targeting a permanent — using defined or derived targets.
+//
+// Unlike the auto agent, which plays randomly or heuristically, the rules agent simulates how a
+// skilled player might execute an idealized game plan. This enables precise, data-driven evaluations
+// of deck performance and strategy efficacy.
+//
+// Key Features:
+//
+//   - Supports custom strategy files (RuleSets) defining prioritized, conditional logic.
+//   - Includes a rich set of conditionals (ConditionSet) to express complex game state checks.
+//   - Deterministic execution of matched rules ensures reproducible simulations.
+//   - Useful for analyzing win rates, fizzle rates, and sequencing decisions across deck variants.
+//
+// Example Use Cases:
+//
+//   - Compare two strategies for the same deck by changing rule priority or structure.
+//   - Measure fizzle rate when the agent always follows an optimal strategy.
+//   - Validate if a combo line is consistently reachable under specific game conditions.
+//
+// Use the rulesagent package when you want to:
+//
+//   - Model advanced player behavior through conditional logic
+//   - Evaluate strategic differences between deck variants
+//   - Simulate high-skill-level performance for testing or optimization
+
 package auto
 
 import (
@@ -5,7 +44,6 @@ import (
 	"fmt"
 	"os"
 	"sort"
-	"strings"
 
 	game "deckronomicon/game"
 )
@@ -55,8 +93,21 @@ func (a *RuleBasedAgent) GetNextAction(state *game.GameState) game.GameAction {
 		// TODO: change to !disabled so we don't need it in every rule
 		if rule.Enabled && MatchesConditionSet(state, rule.When) {
 			gameAction := rule.ToGameAction()
+			// TODO This could be more elegant
 			if gameAction.Type == game.ActionPlay {
-
+				if rule.Then.Target != "" {
+					//card := state.Hand.FindCard(rule.Then.Target)
+					// TODO canCast should probably be an error?
+					/*
+						preactions, canCast := PlanManaActivation(state.Battlefield, card.ManaCost)
+						if !canCast {
+							fmt.Println("ERROR (HANDLE THIS BETTER): can not cast even if I tap all my lands")
+							return game.GameAction{Type: ""}
+						}
+						gameAction.Preactions = preactions
+					*/
+					return gameAction
+				}
 			}
 		}
 	}
@@ -64,9 +115,9 @@ func (a *RuleBasedAgent) GetNextAction(state *game.GameState) game.GameAction {
 }
 
 // TODO: Something better
-func (a *RuleBasedAgent) ChooseOne(prompt string, options []game.Choice) game.Choice {
+func (a *RuleBasedAgent) ChooseOne(prompt string, choices []game.Choice) game.Choice {
 	// always chose the first option for now
-	return options[0]
+	return choices[0]
 }
 
 // --- Rule definitions ---
@@ -158,6 +209,7 @@ type ChoiceAction struct {
 	Choose string `json:"choose"` // "top" or "bottom" or name match
 }
 
+/*
 func (cr ChoiceRule) Applies(prompt game.OptionPrompt) bool {
 	if cr.When.PromptContains != "" && !strings.Contains(prompt.Message, cr.When.PromptContains) {
 		return false
@@ -166,10 +218,11 @@ func (cr ChoiceRule) Applies(prompt game.OptionPrompt) bool {
 }
 
 func (cr ChoiceRule) Resolve(prompt game.OptionPrompt) game.Choice {
-	for i, option := range prompt.Options {
+	for i, option := range prompt.choices {
 		if strings.EqualFold(cr.Then.Choose, option) {
 			return game.Choice{Name: option, Index: i}
 		}
 	}
-	return game.Choice{Name: prompt.Options[0], Index: 0}
+	return game.Choice{Name: prompt.choices[0], Index: 0}
 }
+*/

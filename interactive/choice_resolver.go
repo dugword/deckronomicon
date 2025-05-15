@@ -5,17 +5,17 @@ import (
 	"fmt"
 )
 
-func (a *InteractivePlayerAgent) ChooseOne(prompt string, options []game.Choice) game.Choice {
-	for i, opt := range options {
+func (a *InteractivePlayerAgent) ChooseOne(prompt string, choices []game.Choice) game.Choice {
+	for i, opt := range choices {
 		fmt.Printf("%d: %s\n", i, opt.Name)
 	}
 	for {
 		a.Prompt(prompt)
-		choice, err := a.ReadInputNumber(len(options))
+		choice, err := a.ReadInputNumber(len(choices))
 		if err != nil {
-			fmt.Printf("Invalid choice. Please enter a number: %d - %d\n", 0, len(options))
+			fmt.Printf("Invalid choice. Please enter a number: %d - %d\n", 0, len(choices))
 			continue
 		}
-		return options[choice]
+		return choices[choice]
 	}
 }

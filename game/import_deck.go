@@ -15,7 +15,7 @@ type DeckImport struct {
 	Cards []CardImport `json:"cards"`
 }
 
-func importDeck(filename string) (Deck, error) {
+func importDeck(filename string) (*Deck, error) {
 	var deckImport DeckImport
 	file, err := os.Open(filename)
 	if err != nil {
@@ -36,8 +36,8 @@ func importDeck(filename string) (Deck, error) {
 	for _, cardImport := range deckImport.Cards {
 		for range cardImport.Count {
 			card := CardPool[cardImport.Name]
-			deck = append(deck, &card)
+			deck.cards = append(deck.cards, &card)
 		}
 	}
-	return deck, err
+	return &deck, err
 }

@@ -8,7 +8,7 @@ import (
 
 func hasCardNamed(cards []*game.Card, name string) bool {
 	for _, c := range cards {
-		if strings.EqualFold(c.Name, name) {
+		if strings.EqualFold(c.Name(), name) {
 			return true
 		}
 	}
@@ -17,19 +17,11 @@ func hasCardNamed(cards []*game.Card, name string) bool {
 
 func hasPermanentNamed(perms []*game.Permanent, name string) bool {
 	for _, p := range perms {
-		if strings.EqualFold(p.Name, name) {
+		if strings.EqualFold(p.Name(), name) {
 			return true
 		}
 	}
 	return false
-}
-
-func cardsFromPerms(perms []*game.Permanent) []*game.Card {
-	cards := make([]*game.Card, 0, len(perms))
-	for _, p := range perms {
-		cards = append(cards, &game.Card{Object: p.Object})
-	}
-	return cards
 }
 
 func allCardsPresent(names []string, cards []*game.Card) bool {
@@ -204,20 +196,20 @@ func PlanManaActivation(battlefield []*game.Permanent, cost game.ManaCost) ([]ga
 	// First pass: fulfill colored mana
 	for color, required := range needed {
 		for i, perm := range battlefield {
-			if used[i] || perm.Tapped {
+			if used[i] || perm.IsTapped() {
 				continue
 			}
-			for _, ability := range perm.Object.ActivatedAbilities {
+			for _, ability := range perm.ActivatedAbilities() {
 				if !ability.IsManaAbility {
 					continue
 				}
-				// TODO This sucks
+				// TODO This sucks - do I need it? does break break the inner loop or the outer? Is it obvious?
 			Foo:
 				for _, tag := range ability.Tags {
 					if tag.Key == "ManaSource" && tag.Value == color {
 						actions = append(actions, game.GameAction{
 							Type:   game.ActionActivate,
-							Target: perm.Object.Name,
+							Target: perm.Name(),
 						})
 						used[i] = true
 						required--
@@ -239,14 +231,14 @@ func PlanManaActivation(battlefield []*game.Permanent, cost game.ManaCost) ([]ga
 
 	// Second pass: satisfy generic mana
 	for i, perm := range battlefield {
-		if used[i] || perm.Tapped {
+		if used[i] || perm.IsTapped() {
 			continue
 		}
-		for _, ability := range perm.Object.ActivatedAbilities {
+		for _, ability := range perm.ActivatedAbilities() {
 			if ability.IsManaAbility {
 				actions = append(actions, game.GameAction{
 					Type:   game.ActionActivate,
-					Target: perm.Object.Name,
+					Target: perm.Name(),
 				})
 				used[i] = true
 				genericNeeded--

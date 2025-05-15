@@ -4,7 +4,7 @@ import "fmt"
 
 type Event struct {
 	Type   EventType
-	Source *Object
+	Source GameObject
 	// TODO: Better this
 	Data map[string]interface{} // anything extra (like how it died, what it targeted, etc.)
 }
