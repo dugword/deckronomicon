@@ -97,5 +97,6 @@ const (
 	SubtypeFrog           Subtype = "Frog"
 	SubtypeFungus         Subtype = "Fungus"
 	SubtypeGamer          Subtype = "Gamer"
-	SubtypeUnicorn        Subtype = "Unicorn"
+	// ...missing a bunch TODO: add 'em
+	SubtypeUnicorn Subtype = "Unicorn"
 )

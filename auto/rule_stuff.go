@@ -12,62 +12,67 @@ func MatchesConditionSet(state *game.GameState, cond ConditionSet) bool {
 	}
 	// --- Mana Cost ---
 	if cond.ManaAvailable != "" {
-		manaNeeded := parseManaCost(cond.ManaAvailable)
-		if !game.CanPotentiallyPayFor(state, manaNeeded) {
-			return false
-		}
+		//manaNeeded := parseManaCost(cond.ManaAvailable)
+		/*
+			if !game.CanPotentiallyPayFor(state, manaNeeded) {
+				return false
+			}
+		*/
 	}
 	// --- Hand Checks ---
-	if !allCardsPresent(cond.HandContains, state.Hand) {
+	if !allCardsPresent(cond.HandContains, state.Hand.Cards()) {
 		return false
 	}
-	if len(cond.HandContainsAny) > 0 && !anyCardPresent(cond.HandContainsAny, state.Hand) {
+	if len(cond.HandContainsAny) > 0 && !anyCardPresent(cond.HandContainsAny, state.Hand.Cards()) {
 		return false
 	}
-	if !allGroupsSatisfied(cond.HandContainsAllGroups, state.Hand) {
+	if !allGroupsSatisfied(cond.HandContainsAllGroups, state.Hand.Cards()) {
 		return false
 	}
-	if len(cond.HandContainsAnyGroups) > 0 && !anyGroupSatisfied(cond.HandContainsAnyGroups, state.Hand) {
+	if len(cond.HandContainsAnyGroups) > 0 && !anyGroupSatisfied(cond.HandContainsAnyGroups, state.Hand.Cards()) {
 		return false
 	}
-	if !allCardsAbsent(cond.HandLacks, state.Hand) {
+	if !allCardsAbsent(cond.HandLacks, state.Hand.Cards()) {
 		return false
 	}
-	if len(cond.HandLacksAny) > 0 && !anyCardAbsent(cond.HandLacksAny, state.Hand) {
+	if len(cond.HandLacksAny) > 0 && !anyCardAbsent(cond.HandLacksAny, state.Hand.Cards()) {
 		return false
 	}
-	if !allGroupsAbsent(cond.HandLacksAllGroups, state.Hand) {
+	if !allGroupsAbsent(cond.HandLacksAllGroups, state.Hand.Cards()) {
 		return false
 	}
-	if !noGroupFullyPresent(cond.HandLacksAnyGroups, state.Hand) {
+	if !noGroupFullyPresent(cond.HandLacksAnyGroups, state.Hand.Cards()) {
 		return false
 	}
 
-	// --- Battlefield Checks ---
-	if !allCardsPresent(cond.BattlefieldContains, cardsFromPerms(state.Battlefield)) {
-		return false
-	}
-	if len(cond.BattlefieldContainsAny) > 0 && !anyCardPresent(cond.BattlefieldContainsAny, cardsFromPerms(state.Battlefield)) {
-		return false
-	}
-	if !allGroupsSatisfied(cond.BattlefieldContainsAllGroups, cardsFromPerms(state.Battlefield)) {
-		return false
-	}
-	if len(cond.BattlefieldContainsAnyGroups) > 0 && !anyGroupSatisfied(cond.BattlefieldContainsAnyGroups, cardsFromPerms(state.Battlefield)) {
-		return false
-	}
-	if !allCardsAbsent(cond.BattlefieldLacks, cardsFromPerms(state.Battlefield)) {
-		return false
-	}
-	if len(cond.BattlefieldLacksAny) > 0 && !anyCardAbsent(cond.BattlefieldLacksAny, cardsFromPerms(state.Battlefield)) {
-		return false
-	}
-	if !allGroupsAbsent(cond.BattlefieldLacksAllGroups, cardsFromPerms(state.Battlefield)) {
-		return false
-	}
-	if !noGroupFullyPresent(cond.BattlefieldLacksAnyGroups, cardsFromPerms(state.Battlefield)) {
-		return false
-	}
+	/*
+		// --- Battlefield Checks ---
+		if !allCardsPresent(cond.BattlefieldContains, cardsFromPerms(state.Battlefield)) {
+			return false
+		}
+
+		if len(cond.BattlefieldContainsAny) > 0 && !anyCardPresent(cond.BattlefieldContainsAny, cardsFromPerms(state.Battlefield)) {
+			return false
+		}
+		if !allGroupsSatisfied(cond.BattlefieldContainsAllGroups, cardsFromPerms(state.Battlefield)) {
+			return false
+		}
+		if len(cond.BattlefieldContainsAnyGroups) > 0 && !anyGroupSatisfied(cond.BattlefieldContainsAnyGroups, cardsFromPerms(state.Battlefield)) {
+			return false
+		}
+		if !allCardsAbsent(cond.BattlefieldLacks, cardsFromPerms(state.Battlefield)) {
+			return false
+		}
+		if len(cond.BattlefieldLacksAny) > 0 && !anyCardAbsent(cond.BattlefieldLacksAny, cardsFromPerms(state.Battlefield)) {
+			return false
+		}
+		if !allGroupsAbsent(cond.BattlefieldLacksAllGroups, cardsFromPerms(state.Battlefield)) {
+			return false
+		}
+		if !noGroupFullyPresent(cond.BattlefieldLacksAnyGroups, cardsFromPerms(state.Battlefield)) {
+			return false
+		}
+	*/
 
 	// --- Graveyard Checks ---
 	if !allCardsPresent(cond.GraveyardContains, state.Graveyard) {
@@ -99,10 +104,10 @@ func MatchesConditionSet(state *game.GameState, cond ConditionSet) bool {
 	if cond.Storm != "" && !evaluateIntComparison(state.StormCount, cond.Storm) {
 		return false
 	}
-	if cond.LibrarySize != "" && !evaluateIntComparison(len(state.Deck), cond.LibrarySize) {
+	if cond.LibrarySize != "" && !evaluateIntComparison(state.Deck.Size(), cond.LibrarySize) {
 		return false
 	}
-	if cond.CardsInHand != "" && !evaluateIntComparison(len(state.Hand), cond.CardsInHand) {
+	if cond.CardsInHand != "" && !evaluateIntComparison(state.Hand.Size(), cond.CardsInHand) {
 		return false
 	}
 	if cond.GraveyardSize != "" && !evaluateIntComparison(len(state.Graveyard), cond.GraveyardSize) {

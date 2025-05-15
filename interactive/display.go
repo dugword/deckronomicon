@@ -27,11 +27,11 @@ func ClearScreen() {
 func DisplayGameState(g *game.GameState) {
 	DisplayGameStatus(g)
 	fmt.Println()
-	DisplayBattlefield(g.Battlefield)
+	DisplayBattlefield(g.Battlefield.Permanents())
 	DisplayGraveyard(g.Graveyard)
 	fmt.Println()
 	DisplayManaPool(g)
-	DisplayHand(g.Hand)
+	DisplayHand(g.Hand.Cards())
 	fmt.Println()
 	DisplayTurnMessageLog(g.TurnMessageLog)
 	fmt.Println()
@@ -43,8 +43,8 @@ func DisplayGameStatus(g *game.GameState) {
 	fmt.Printf("Turn: %d\n", g.Turn)
 	fmt.Printf("Phase: %s\n", g.CurrentPhase)
 	fmt.Printf("Player %d: %d life\n", 1, g.Life)
-	fmt.Printf("Hand: %d cards\n", len(g.Hand))
-	fmt.Printf("Library: %d cards\n", len(g.Deck))
+	fmt.Printf("Hand: %d cards\n", g.Hand.Size())
+	fmt.Printf("Library: %d cards\n", g.Deck.Size())
 	fmt.Printf("Graveyard: %d cards\n", len(g.Graveyard))
 	fmt.Printf("Message: %s\n", g.Message)
 }
@@ -58,7 +58,7 @@ func DisplayTurnMessageLog(messageLog []string) {
 func DisplayHand(hand []*game.Card) {
 	names := []string{}
 	for _, card := range hand {
-		names = append(names, card.Name)
+		names = append(names, card.Name())
 	}
 	fmt.Printf("Hand: [%s]\n", strings.Join(names, ", "))
 }
@@ -87,12 +87,12 @@ func DisplayGraveyard(graveyard []*game.Card) {
 	var summary []string
 	if len(graveyard) <= cutoff {
 		for _, card := range graveyard {
-			summary = append(summary, card.Name)
+			summary = append(summary, card.Name())
 		}
 	} else {
 		summary = append(summary, fmt.Sprintf("...%d more", len(graveyard)-cutoff))
 		for _, card := range graveyard[len(graveyard)-cutoff:] {
-			summary = append(summary, card.Name)
+			summary = append(summary, card.Name())
 		}
 	}
 	fmt.Printf("Graveyard:")
@@ -103,22 +103,22 @@ func DisplayBattlefield(perms []*game.Permanent) {
 	fmt.Println("Battlefield:")
 	for i, p := range perms {
 		status := []string{}
-		if p.Tapped {
+		if p.IsTapped() {
 			status = append(status, "🔒 Tapped")
 		}
-		if p.SummoningSick {
+		if p.HasSummoningSickness() {
 			status = append(status, "💤 Summoning Sick")
 		}
 		icon := "✨"
-		if p.Object.HasType(game.CardTypeCreature) {
+		if p.HasType(game.CardTypeCreature) {
 			icon = "🧍"
-		} else if p.Object.HasType(game.CardTypeArtifact) {
+		} else if p.HasType(game.CardTypeArtifact) {
 			icon = "⚙️"
-		} else if p.Object.HasType(game.CardTypeLand) {
+		} else if p.HasType(game.CardTypeLand) {
 			icon = "🌿"
 		}
-		desc := icon + " " + p.Object.Name
-		if p.Power != 0 || p.Toughness != 0 {
+		desc := icon + " " + p.Name()
+		if p.Power() != 0 || p.Toughness() != 0 {
 			desc += fmt.Sprintf(" [%d/%d]", p.Power, p.Toughness)
 		}
 		if len(status) > 0 {

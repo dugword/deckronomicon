@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -14,15 +15,7 @@ import (
 	"deckronomicon/logger"
 )
 
-var INTERACTIVE = false
-var MAX_TURNS = 100
-
 func main() {
-	if len(os.Args) > 1 {
-		if os.Args[1] == "interactive" {
-			INTERACTIVE = true
-		}
-	}
 	ctx := context.Background()
 	if err := run(ctx, os.Stdout, os.Args); err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
@@ -34,6 +27,15 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 	_, cancel := signal.NotifyContext(ctx, os.Interrupt)
 	defer cancel()
 
+	flags := flag.NewFlagSet("deckronomicon", flag.ContinueOnError)
+	isInteractive := flags.Bool("interactive", false, "run as interactive mode")
+	maxTurns := flags.Int("max-turns", 100, "maximum number of turns to simulate")
+	err := flags.Parse(args[1:])
+	if err != nil {
+		// TODO: Handle this without fmt
+		return err
+	}
+
 	// TODO: Handle errors as a separate writer
 	logger := logger.NewLogger(w, w)
 	logger.Log("Starting Deckronomicon...")
@@ -43,13 +45,17 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 	logger.Log("New game state created!")
 
 	logger.Log("Initializing new game...")
-	if err := state.InitializeNewGame("my_deck.json"); err != nil {
+	if err := state.InitializeNewGame(game.GameStateConfig{
+		DeckList:     "my_deck.json",
+		MaxTurns:     *maxTurns,
+		StartingLife: 20,
+	}); err != nil {
 		return err
 	}
 	logger.Log("New game initalized!")
 
 	var playerAgent game.PlayerAgent
-	if INTERACTIVE {
+	if *isInteractive {
 		logger.Log("Running in interactive mode")
 		// TODO: Pass this into main so we can test?
 		// maybe not because we can test the interative package separately...
@@ -61,9 +67,12 @@ func run(ctx context.Context, w io.Writer, args []string) error {
 		//playerAgent = auto.NewAutoPlayerAgent()
 	}
 
-	state.RunGameLoop(playerAgent, MAX_TURNS)
+	gameEndErr := state.RunGameLoop(playerAgent)
 	for _, message := range state.MessageLog {
 		fmt.Println(message)
+	}
+	if gameEndErr != nil {
+		return gameEndErr
 	}
 	return nil
 }

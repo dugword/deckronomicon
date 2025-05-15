@@ -1,53 +1,41 @@
 package game
 
-import (
-	"fmt"
-	"strings"
-)
-
-type Deck []*Card
+type ManaPool map[string]int
 
 type GameState struct {
-	LastActionFailed   bool
-	CurrentPlayer      int
-	CurrentPhase       string
+	Battlefield        *Battlefield
 	Cheat              bool
-	Life               int
-	GameLost           bool
-	Deck               Deck
-	Turn               int
-	SpellsCastThisTurn []string
-	Hand               []*Card
-	Battlefield        []*Permanent
-	Graveyard          []*Card
-	Exile              []*Card
-	ManaPool           ManaPool
-	PotentialMana      ManaPool
-	StormCount         int
-	TurnCount          int
-	MessageLog         []string
-	TurnMessageLog     []string
-	LandDrop           bool
+	CurrentPhase       string
+	CurrentPlayer      int
+	CurrentStep        string
+	Deck               *Deck
 	EventListeners     []EventHandler
+	Exile              []*Card
+	Graveyard          []*Card
+	Hand               *Hand
+	LandDrop           bool
+	LastActionFailed   bool
+	Life               int
+	ManaPool           ManaPool
+	MaxHandSize        int
+	MaxTurns           int
 	Message            string
-}
-
-type CheatResult struct {
-	Message string
-}
-
-type ActionResult struct {
-	EndTurn bool
-	Message string
+	MessageLog         []string
+	PotentialMana      ManaPool
+	SpellsCastThisTurn []string
+	StormCount         int
+	Turn               int
+	TurnCount          int
+	TurnMessageLog     []string
 }
 
 // Maybe do something where I can pass in "play Island" and it'll take the second param as the Choice and only prompt if it is missing
 // maybe support typing in the number or the name of the card
 type ChoiceResolver interface {
-	ChooseOne(prompt string, options []Choice) Choice
-	//ChooseN(prompt string, options []Choice, n int) []Choice
-	//ChooseUpToN(prompt string, options []Choice, n int) []Choice
-	//ChooseAny(prompt string, options []Choice) []Choice
+	ChooseOne(prompt string, choices []Choice) Choice
+	//ChooseN(prompt string, choices []Choice, n int) []Choice
+	//ChooseUpToN(prompt string, choices []Choice, n int) []Choice
+	//ChooseAny(prompt string, choices []Choice) []Choice
 	//Confirm(prompt string) bool // For simple yes/no prompts
 }
 
@@ -58,43 +46,43 @@ type PlayerAgent interface {
 	ChoiceResolver
 }
 
-type OptionPrompt struct {
-	Message string
-	Options []string
-	Min     int
-	Max     int
-}
-
 type Choice struct {
 	Name   string
 	Index  int
 	Source string
 }
 
-// TODO: make this more better
-func (g *GameState) PrintDeck() {
-	for _, card := range g.Deck {
-		fmt.Println(card.Name)
-	}
+type GameStateConfig struct {
+	StartingLife int
+	MaxTurns     int
+	DeckList     string
 }
-
-var startingLife = 20
 
 func NewGameState() *GameState {
 	return &GameState{}
 }
 
-func (g *GameState) InitializeNewGame(filename string) error {
-	g.Life = startingLife
-	deck, err := importDeck(filename)
+func (g *GameState) InitializeNewGame(config GameStateConfig) error {
+	g.MaxTurns = config.MaxTurns
+	g.Life = config.StartingLife
+	g.MaxHandSize = 7
+	deck, err := importDeck(config.DeckList)
 	if err != nil {
 		return err
 	}
 	g.Deck = deck
-	g.ShuffleDeck()
-	// TODO: Start with 6 so we draw into 7 to simulate on the play
-	// this should be configurable
-	g.DrawCards(6)
+	g.Deck.Shuffle()
+	g.Hand = &Hand{}
+	for range 7 { // TODO: This sucks, figure this out along will mulls
+		_, err := g.ResolveAction(GameAction{
+			Type: ActionDraw,
+		}, nil)
+		if err != nil {
+			return err
+		}
+	}
+	g.ManaPool = make(ManaPool)
+	g.Battlefield = &Battlefield{}
 	return nil
 }
 
@@ -108,27 +96,6 @@ func (g *GameState) Log(message string) {
 func (g *GameState) Error(err error) {
 	g.TurnMessageLog = append(g.TurnMessageLog, "ERROR: "+err.Error())
 	g.MessageLog = append(g.MessageLog, "ERROR: "+err.Error())
-}
-
-func (g *GameState) ShuffleDeck() {
-	shuffleCards(g.Deck)
-}
-
-// TODO Maybe return error?
-func (g *GameState) DrawCards(n int) {
-	taken, remaining, err := takeNCards(g.Deck, n)
-	if err != nil {
-		g.GameLost = true
-		g.Log("Game Lost: Decked")
-		return
-	}
-	var names []string
-	for _, card := range taken {
-		names = append(names, card.Name)
-	}
-	g.Deck = remaining
-	g.Hand = append(g.Hand, taken...)
-	g.Log(fmt.Sprintf("Drew %d cards: %s", n, strings.Join(names, ", ")))
 }
 
 /*

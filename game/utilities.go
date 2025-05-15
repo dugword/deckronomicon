@@ -7,23 +7,6 @@ import (
 
 // TODO: I hate this file, I shouldn't have a utilities file. These should be better organized some how...
 
-// TODO: Maybe have an abstraction like an interface so I can search hands and graveyards too...
-func FindPermanentsWithActivatableAbilities(battlefield []*Permanent) []Choice {
-	var found []Choice
-	for i, permanent := range battlefield {
-		if len(permanent.ActivatedAbilities) > 0 {
-			found = append(found, Choice{Name: permanent.Name, Index: i})
-		}
-	}
-	return found
-}
-
-func UntapPermanents(battlefield []*Permanent) {
-	for _, permanent := range battlefield {
-		permanent.Tapped = false
-	}
-}
-
 // Card utilities,
 func shuffleCards(cards []*Card) {
 	rand.Shuffle(len(cards), func(i, j int) {
@@ -55,52 +38,16 @@ func putOnBottom(pile []*Card, cards ...*Card) []*Card {
 	return append(pile, cards...)
 }
 
-// Does it matter if there are duplicates? Do I need to track ID? Probably someday, but not now
-func removeCard(slice []*Card, target *Card) []*Card {
-	for i, c := range slice {
-		if c == target {
-			return append(slice[:i], slice[i+1:]...)
-		}
-	}
-	return slice
-}
-
-func findUntappedPermanent(permanents []*Permanent, name string) *Permanent {
-	for _, p := range permanents {
-		if p.Name == name && !p.Tapped {
-			return p
-		}
-	}
-	return nil
-}
-
-func findCard(cards []*Card, name string) *Card {
-	for _, c := range cards {
-		if c.Name == name {
-			return c
-		}
-	}
-	return nil
-}
-
-func getCardOptions(cards []*Card) []Choice {
-	var options []Choice
-	for i, card := range cards {
-		options = append(options, Choice{Name: card.Name, Index: i})
-	}
-	return options
-}
-
 func GetPotentialMana(state *GameState) map[string]int {
 	tempGameState := GameState{
 		ManaPool: make(ManaPool),
 	}
 
-	for _, permanent := range state.Battlefield {
-		if permanent.Tapped {
+	for _, permanent := range state.Battlefield.permanents {
+		if permanent.IsTapped() {
 			continue
 		}
-		for _, ability := range permanent.ActivatedAbilities {
+		for _, ability := range permanent.ActivatedAbilities() {
 			if ability.IsManaAbility {
 				ability.Effect(&tempGameState, nil) // pass mock resolver
 			}

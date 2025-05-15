@@ -6,7 +6,7 @@ type CardTagMap map[string][]string
 
 var CardPool = map[string]Card{
 	"Island": {
-		Object: Object{
+		object: object{
 			Name:               "Island",
 			CardTypes:          []CardType{CardTypeLand},
 			Subtypes:           []Subtype{SubtypeIsland},
@@ -16,7 +16,7 @@ var CardPool = map[string]Card{
 		},
 	},
 	"Swamp": {
-		Object: Object{
+		object: object{
 			Name:               "Swamp",
 			CardTypes:          []CardType{CardTypeLand},
 			Subtypes:           []Subtype{SubtypeSwamp},
@@ -26,7 +26,7 @@ var CardPool = map[string]Card{
 		},
 	},
 	"Mountain": {
-		Object: Object{
+		object: object{
 			Name:               "Mountain",
 			CardTypes:          []CardType{CardTypeLand},
 			Subtypes:           []Subtype{SubtypeMountain},
@@ -36,7 +36,7 @@ var CardPool = map[string]Card{
 		},
 	},
 	"Forest": {
-		Object: Object{
+		object: object{
 			Name:               "Forest",
 			CardTypes:          []CardType{CardTypeLand},
 			Subtypes:           []Subtype{SubtypeForest},
@@ -46,7 +46,7 @@ var CardPool = map[string]Card{
 		},
 	},
 	"Plains": {
-		Object: Object{
+		object: object{
 			Name:               "Plains",
 			CardTypes:          []CardType{CardTypeLand},
 			Subtypes:           []Subtype{SubtypePlains},
@@ -56,7 +56,7 @@ var CardPool = map[string]Card{
 		},
 	},
 	"Pearled Unicorn": {
-		Object: Object{
+		object: object{
 			Name:      "Pearled Unicorn",
 			CardTypes: []CardType{CardTypeCreature},
 			Subtypes:  []Subtype{SubtypeUnicorn},
@@ -66,7 +66,7 @@ var CardPool = map[string]Card{
 		},
 	},
 	"Preordain": {
-		Object: Object{
+		object: object{
 			Name:         "Preordain",
 			CardTypes:    []CardType{CardTypeSorcery},
 			ManaCost:     ManaCost{Colors: map[string]int{"U": 1}},
@@ -75,7 +75,7 @@ var CardPool = map[string]Card{
 		},
 	},
 	"Brainstorm": {
-		Object: Object{
+		object: object{
 			Name:         "Brainstorm",
 			CardTypes:    []CardType{CardTypeInstant},
 			ManaCost:     ManaCost{Colors: map[string]int{"U": 1}},
@@ -83,14 +83,14 @@ var CardPool = map[string]Card{
 		},
 	},
 	"Candy Trail": {
-		Object: Object{
+		object: object{
 			Name:      "Candy Trail",
 			CardTypes: []CardType{CardTypeArtifact},
 			ManaCost:  ManaCost{Generic: 1},
 		},
 	},
 	"Foundry Inspector": {
-		Object: Object{
+		object: object{
 			Name:      "Foundry Inspector",
 			CardTypes: []CardType{CardTypeArtifact, CardTypeCreature},
 			Subtypes:  []Subtype{SubtypeConstruct},
