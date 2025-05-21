@@ -1,18 +1,11 @@
 package game
 
 import (
-	"fmt"
+	"errors"
+	"strconv"
 )
 
-// GameAction represents an action a player can take
-type GameAction struct {
-	Type       GameActionType
-	Cheat      GameCheatType
-	Target     string
-	Preactions []GameAction
-}
-
-// RunGameLoop drives the turn-based game for the given agent
+// RunGameLoop drives the turn-based game for the given agent.
 func (g *GameState) RunGameLoop(agent PlayerAgent) error {
 	for {
 		if g.Turn > g.MaxTurns {
@@ -36,6 +29,7 @@ func ResolveStep(state *GameState, agent PlayerAgent, stepName string) error {
 }
 */
 
+// RunTurn executes a single game turn using the provided agent.
 // Maybe split into ResolvePhase and ResolveStep functions
 // RunTurn executes a single game turn using the provided agent
 func (g *GameState) RunTurn(agent PlayerAgent) error {
@@ -47,7 +41,12 @@ func (g *GameState) RunTurn(agent PlayerAgent) error {
 	g.CurrentPhase = "Beginning"
 	// Untap Step
 	g.CurrentStep = "Untap"
-	actionResult, err := g.ResolveAction(GameAction{Type: ActionUntap}, agent)
+	g.EmitEvent(Event{Type: EventUntapStep}, agent)
+	actionResult, err := g.ResolveAction(
+		GameAction{
+			Type:   ActionUntap,
+			Target: UntapAll,
+		}, agent)
 	if err != nil {
 		return err
 	}
@@ -55,10 +54,15 @@ func (g *GameState) RunTurn(agent PlayerAgent) error {
 
 	// Upkeep Step
 	g.CurrentStep = "Upkeep"
+	g.EmitEvent(Event{Type: EventUpkeepStep}, agent)
 
 	// Draw Step
 	g.CurrentStep = "Draw"
-	actionResult, err = g.ResolveAction(GameAction{Type: ActionDraw}, agent)
+	g.EmitEvent(Event{Type: EventDrawStep}, agent)
+	actionResult, err = g.ResolveAction(GameAction{
+		Type:   ActionDraw,
+		Target: "1",
+	}, agent)
 	if err != nil {
 		return err
 	}
@@ -66,99 +70,126 @@ func (g *GameState) RunTurn(agent PlayerAgent) error {
 
 	// Pre-combat Main Phase
 	g.CurrentPhase = "Pre-combat Main"
+	g.EmitEvent(Event{Type: EventPrecombatMainPhase}, agent)
 	g.CurrentStep = ""
 	for {
 		g.PotentialMana = GetPotentialMana(g)
 		agent.ReportState(g)
 		action := agent.GetNextAction(g)
+		if !PlayerActions[action.Type] {
+			g.Log("Invalid player action: " + string(action.Type))
+			continue
+		}
 		if action.Cheat != "" && g.Cheat {
 			result, err := g.ResolveCheat(action, agent)
 			if err != nil {
 				g.Error(err)
+				continue
 			}
 			// TODO: Hand printing somewhere more cohesive
 			if result != nil {
-				fmt.Println("CHEAT RESULT:", result.Message)
+				g.Log("CHEAT RESULT:", result.Message)
 			}
+			continue
 		}
+		// TODO: Not sure if I like this here, it's primarily for
+		// automatically tapping lands for mana before casting spells.
 		if len(action.Preactions) > 0 {
-			fmt.Println("Doing preaction stuff, make this more inline with actions")
 			for _, preaction := range action.Preactions {
-				fmt.Println("Preaction =>", preaction.Type)
+				g.Log("Preaction: " + string(preaction.Type))
+				// Should consolidate this with ResolveAction below
 				_, err := g.ResolveAction(preaction, agent)
-				// TODO: need to handle messages and last actions and results
 				if err != nil {
 					g.Error(err)
-					fmt.Println("ERROR: " + err.Error())
 					g.LastActionFailed = true
+					// TODO: Should this break the outer loop?
+					// Probably...
+					continue
 				}
 			}
 		}
 		result, err := g.ResolveAction(action, agent)
+		if err != nil {
+			if errors.Is(err, ErrGameOver) {
+				g.Log("Game Over: " + err.Error())
+				return err
+			}
+			if result != nil {
+				g.Message = result.Message
+			} else {
+				g.Message = "Error: " + err.Error()
+			}
+			g.Error(err)
+			g.LastActionFailed = true
+			continue
+		}
+		g.LastActionFailed = false
+		// TODO: Maybe always pass back an ActionResult?
 		if result != nil {
 			g.Message = result.Message
-		} else {
-			g.Message = ""
-		}
-		if err != nil {
-			g.Error(err)
-			fmt.Println("ERROR: " + err.Error())
-			g.LastActionFailed = true
-		} else {
-			g.LastActionFailed = false
-		}
-		if result != nil && result.Pass {
-			break
+			if result.Pass {
+				break
+			}
 		}
 	}
 
 	// Combat Phase
 	g.CurrentPhase = "Combat Phase"
 	g.CurrentStep = "Beginning of Combat"
+	g.EmitEvent(Event{Type: EventBeginningOfCombatStep}, agent)
 	g.CurrentStep = "Declare Attackers"
+	g.EmitEvent(Event{Type: EventDeclareAttackersStep}, agent)
 	g.CurrentStep = "Declare Blockers"
+	g.EmitEvent(Event{Type: EventDeclareBlockersStep}, agent)
 	g.CurrentStep = "Combat Damage"
+	g.EmitEvent(Event{Type: EventCombatDamageStep}, agent)
 	g.CurrentStep = "End of Combat"
+	g.EmitEvent(Event{Type: EventEndOfCombatStep}, agent)
 
 	// Post-combat Main Phase
 	g.CurrentPhase = "Post-combat Main Phase"
+	g.EmitEvent(Event{Type: EventPostcombatMainPhase}, agent)
 	g.CurrentStep = ""
 
 	// Ending Phase
 	g.CurrentPhase = "Ending"
 	g.CurrentStep = "End"
+	g.EmitEvent(Event{Type: EventEndStep}, agent)
 	g.CurrentStep = "Cleanup"
-	for g.Hand.Size() > g.MaxHandSize {
-		ActionDiscardFunc(g, agent)
+	toDiscard := g.Hand.Size() - g.MaxHandSize
+	if toDiscard > 0 {
+		ActionDiscardFunc(g, strconv.Itoa(toDiscard), agent)
 	}
-	g.ManaPool = make(ManaPool)
+	g.ManaPool.Empty()
 
 	return nil
 }
 
+// ResolveCheat handles the resolution of cheat actions.
 func (g *GameState) ResolveCheat(action GameAction, agent PlayerAgent) (*ActionResult, error) {
 	switch action.Cheat {
 	case CheatDraw:
 		g.Log("CHEAT! Action: draw")
-		return ActionDrawFunc(g, agent)
+		return ActionDrawFunc(g, action.Target, agent)
 	case CheatPeek:
 		g.Log("CHEAT! Action: peek")
 		return &ActionResult{
-			Message: "Top Card: " + g.Deck.cards[0].Name(),
+			// TODO: No .cards access
+			Message: "Top Card: " + g.Library.cards[0].Name(),
 		}, nil
 	case CheatShuffle:
 		g.Log("CHEAT! Action: shuffle")
-		g.Deck.Shuffle()
+		g.Library.Shuffle()
 	case CheatDiscard:
 		g.Log("CHEAT! Action: discard")
-		return ActionDiscardFunc(g, agent)
+		return ActionDiscardFunc(g, "1", agent)
 	default:
 		g.Log("Unknown cheat: " + string(action.Type))
 	}
 	return nil, nil
 }
 
-// TODO: Rethink this error handling, are invalid actions errors?
+// ResolveAction handles the resolution of game actions.
 func (g *GameState) ResolveAction(action GameAction, agent PlayerAgent) (result *ActionResult, err error) {
 	switch action.Type {
 	case ActionActivate:
@@ -166,7 +197,7 @@ func (g *GameState) ResolveAction(action GameAction, agent PlayerAgent) (result 
 		return ActionActivateFunc(g, action.Target, agent)
 	case ActionDraw:
 		g.Log("Action: draw")
-		return ActionDrawFunc(g, agent)
+		return ActionDrawFunc(g, action.Target, agent)
 	case ActionCheat:
 		g.Log("Action: cheat... you cheater")
 		g.Cheat = true
@@ -182,10 +213,10 @@ func (g *GameState) ResolveAction(action GameAction, agent PlayerAgent) (result 
 		return ActionPlayFunc(g, action.Target, agent)
 	case ActionUntap:
 		g.Log("Action: untap")
-		return ActionUntapFunc(g, agent)
+		return ActionUntapFunc(g, action.Target, agent)
 	case ActionView:
 		g.Log("Action: view")
-		return ActionViewFunc(g, agent)
+		return ActionViewFunc(g, action.Target, agent)
 	default:
 		g.Log("Unknown action: " + string(action.Type))
 	}

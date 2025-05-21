@@ -44,9 +44,9 @@ func (a InteractivePlayerAgent) ReadInputNumber(max int) (int, error) {
 	if number < 0 {
 		return -1, fmt.Errorf("number less than zero")
 	}
+	// TODO: 0 based arrays... make this less confusing
 	if number > max {
 		return -1, fmt.Errorf("number greater than max")
-
 	}
 	return number, nil
 }

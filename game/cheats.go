@@ -12,6 +12,7 @@ const (
 	CheatShuffle   GameCheatType = "CheatShuffle"
 )
 
+// CheatResult represents the result of a cheat action.
 type CheatResult struct {
 	Message string
 }

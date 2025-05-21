@@ -1,0 +1,15 @@
+{
+  "CardTypes": [
+    "Creature"
+  ],
+  "Color": [
+    "W"
+  ],
+  "ManaCost": "{2}{W}",
+  "Name": "Pearled Unicorn",
+  "Power": 2,
+  "Subtypes": [
+    "Unicorn"
+  ],
+  "Toughness": 2
+}

@@ -1,18 +1,30 @@
 package game
 
+// Hand represents a player's hand of cards.
 type Hand struct {
 	cards []*Card
 }
 
-// TODO: for display remove later
+// NewHand creates a new Hand instance.
+func NewHand() *Hand {
+	return &Hand{
+		cards: []*Card{},
+	}
+}
+
+// Cards returns the cards in the hand.
+// TODO: for display remove later - why? Probably should directly manipulate
+// this
 func (h *Hand) Cards() []*Card {
 	return h.cards
 }
 
+// Add adds cards to the hand.
 func (h *Hand) Add(cards ...*Card) {
 	h.cards = append(h.cards, cards...)
 }
 
+// AddCard adds a single card to the hand.
 func (h *Hand) CardChoices() []Choice {
 	var choices []Choice
 	for i, card := range h.cards {
@@ -21,6 +33,7 @@ func (h *Hand) CardChoices() []Choice {
 	return choices
 }
 
+// FindCard finds a card in the hand by name.
 func (h *Hand) FindCard(name string) *Card {
 	for _, card := range h.cards {
 		if card.Name() == name {

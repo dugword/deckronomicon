@@ -2,6 +2,10 @@ package game
 
 import "fmt"
 
+// TODO: Rework this file with better handling for wrapper functions and ID
+// managment for cleanup.
+
+// Event represents an event in the game.
 type Event struct {
 	Type   EventType
 	Source GameObject
@@ -9,38 +13,110 @@ type Event struct {
 	Data map[string]interface{} // anything extra (like how it died, what it targeted, etc.)
 }
 
+// EventType represents the type of event.
 type EventType string
 
 const (
-	EventCastSpell        EventType = "CastSpell"
-	EventEnterBattlefield EventType = "EnterBattlefield"
-	EventLeaveBattlefield EventType = "LeaveBattlefield"
-	EventDrawCard         EventType = "DrawCard"
-	EventTapPermanent     EventType = "TapPermanent"
-	EventActivateAbility  EventType = "ActivateAbility"
-	EventEndStep          EventType = "EndStep"
-	EventUpkeep           EventType = "Upkeep"
+	EventActivateAbility       EventType = "ActivateAbility"
+	EventCastSpell             EventType = "CastSpell"
+	EventDrawCard              EventType = "DrawCard"
+	EventEndStep               EventType = "EndStep"
+	EventEnterBattlefield      EventType = "EnterBattlefield"
+	EventLeaveBattlefield      EventType = "LeaveBattlefield"
+	EventTapPermanent          EventType = "TapPermanent"
+	EventTapForMana            EventType = "TapForMana"
+	EventUpkeepStep            EventType = "UpkeepStep"
+	EventUntapStep             EventType = "UntapStep"
+	EventDrawStep              EventType = "DrawStep"
+	EventPrecombatMainPhase    EventType = "PrecombatMainPhase"
+	EventPostcombatMainPhase   EventType = "PrecombatMainPhase"
+	EventBeginningOfCombatStep EventType = "BeginningOfCombatStep"
+	EventDeclareAttackersStep  EventType = "DeclareAttackersStep"
+	EventDeclareBlockersStep   EventType = "DeclareBlockersStep"
+	EventCombatDamageStep      EventType = "CombatDamageStep"
+	EventEndOfCombatStep       EventType = "EndOfCombatStep"
 )
 
-type EventHandler func(Event, *GameState, ChoiceResolver)
+var nextEventID int
 
-// GameState additions for event system
+// TODO This probably isn't goroutine safe
+// also should use UUID like value
+func getNextEventID() int {
+	nextEventID++
+	return nextEventID
+}
+
+// EventListener is a function that handles events.
+type EventHandler struct {
+	// TODO: UUID
+	ID       int
+	Callback func(Event, *GameState, ChoiceResolver)
+}
+
+// RegisterListener registers a new event listener.
 func (g *GameState) RegisterListener(listener EventHandler) {
 	g.EventListeners = append(g.EventListeners, listener)
 }
 
-func (g *GameState) EmitEvent(evt Event, resolver ChoiceResolver) {
-	for _, listener := range g.EventListeners {
-		listener(evt, g, resolver)
+// DeregisterListener
+func (g *GameState) DeregisterListener(id int) {
+	for i, l := range g.EventListeners {
+		if l.ID == id {
+			g.EventListeners = append(g.EventListeners[:i], g.EventListeners[i+1:]...)
+			break
+		}
 	}
 }
 
-// Hook for triggered abilities
-func NewTriggeredListener(ta TriggeredAbility) EventHandler {
-	return func(event Event, state *GameState, resolver ChoiceResolver) {
-		if ta.TriggerCondition(event) {
-			fmt.Println("Triggering:", ta.Description)
-			ta.Effect(state, resolver)
-		}
+// RegisterOneShotListener registers a one-shot event listener.
+func (g *GameState) RegisterOneShotListener(listener EventHandler) {
+	wrappedListener := EventHandler{
+		ID: listener.ID,
+		Callback: func(event Event, state *GameState, resolver ChoiceResolver) {
+			// Call the original listener's callback
+			listener.Callback(event, state, resolver)
+			// Deregister the listener after it has been called
+			state.DeregisterListener(listener.ID)
+		},
 	}
+
+	g.RegisterListener(wrappedListener)
+}
+
+// RegisterListenenerUntil registers a listener until a specific event occurs.
+func (g *GameState) RegisterListenerUntil(listener EventHandler, untilEvent EventType) {
+	cleanUpID := getNextEventID()
+	cleanUpHandler := EventHandler{
+		ID: cleanUpID,
+		Callback: func(event Event, state *GameState, resolver ChoiceResolver) {
+			if event.Type == untilEvent {
+				state.DeregisterListener(listener.ID)
+				state.DeregisterListener(cleanUpID)
+			}
+		},
+	}
+	g.RegisterListener(listener)
+	g.RegisterListener(cleanUpHandler)
+}
+
+// EmitEvent emits an event to all registered listeners.
+func (g *GameState) EmitEvent(evt Event, resolver ChoiceResolver) {
+	for _, listener := range g.EventListeners {
+		fmt.Println("Emitting event to listener:", listener.ID)
+		listener.Callback(evt, g, resolver)
+	}
+}
+
+// TODO This probably isn't goroutine safe
+// Hook for triggered abilities
+func NewTriggeredListener(ta TriggeredAbility) (EventHandler, int) {
+	id := getNextEventID()
+	return EventHandler{
+		ID: id,
+		Callback: func(event Event, state *GameState, resolver ChoiceResolver) {
+			if ta.TriggerCondition(event) {
+				ta.Resolve(state, resolver)
+			}
+		},
+	}, id
 }

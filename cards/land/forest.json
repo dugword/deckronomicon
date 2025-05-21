@@ -1,0 +1,29 @@
+{
+  "Name": "Forest",
+  "CardTypes": [
+    "Land"
+  ],
+  "Subtypes": [
+    "Forest"
+  ],
+  "Supertypes": [
+    "Basic"
+  ],
+  "ActivatedAbilities": [
+    {
+      "Cost": "{T}",
+      "Effects": [
+        {
+          "ID": "AddMana",
+          "Modifiers": [
+            {
+              "Key": "Mana",
+              "Value": "{G}"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "RulesText": "{T}: Add {G}."
+}

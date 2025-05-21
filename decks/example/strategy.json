@@ -32,6 +32,23 @@
         "postactions": [{"action": "", "target": ""}]
       },
       "enabled": true
+    },
+    {
+      "name": "Play Brainstorm",
+      "phase": "setup",
+      "when": {
+        "hand_contains": [
+          "Brainstorm"
+        ],
+        "mana_available": "U"
+      },
+      "then": {
+        "action": "play",
+        "target": "Brainstorm",
+        "preactions": [{"action": "", "target": ""}],
+        "postactions": [{"action": "", "target": ""}]
+      },
+      "enabled": true
     }
   ],
   "choice_rules": []

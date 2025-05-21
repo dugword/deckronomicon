@@ -1,100 +1,68 @@
 package game
 
-type CardTagMap map[string][]string
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+)
 
-// e.g. {"Candy Trail": ["egg"], "Chromatic Star": ["egg", "draw_spell"], ...}
-
-var CardPool = map[string]Card{
-	"Island": {
-		object: object{
-			Name:               "Island",
-			CardTypes:          []CardType{CardTypeLand},
-			Subtypes:           []Subtype{SubtypeIsland},
-			Supertypes:         []Supertype{SupertypeBasic},
-			ActivatedAbilities: []ActivatedAbility{AbilityIsland},
-			RulesText:          "{T}: Add {U}.",
-		},
-	},
-	"Swamp": {
-		object: object{
-			Name:               "Swamp",
-			CardTypes:          []CardType{CardTypeLand},
-			Subtypes:           []Subtype{SubtypeSwamp},
-			Supertypes:         []Supertype{SupertypeBasic},
-			ActivatedAbilities: []ActivatedAbility{AbilitySwamp},
-			RulesText:          "{T}: Add {B}.",
-		},
-	},
-	"Mountain": {
-		object: object{
-			Name:               "Mountain",
-			CardTypes:          []CardType{CardTypeLand},
-			Subtypes:           []Subtype{SubtypeMountain},
-			Supertypes:         []Supertype{SupertypeBasic},
-			ActivatedAbilities: []ActivatedAbility{AbilityMountain},
-			RulesText:          "{T}: Add {R}.",
-		},
-	},
-	"Forest": {
-		object: object{
-			Name:               "Forest",
-			CardTypes:          []CardType{CardTypeLand},
-			Subtypes:           []Subtype{SubtypeForest},
-			Supertypes:         []Supertype{SupertypeBasic},
-			ActivatedAbilities: []ActivatedAbility{AbilityForest},
-			RulesText:          "{T}: Add {G}.",
-		},
-	},
-	"Plains": {
-		object: object{
-			Name:               "Plains",
-			CardTypes:          []CardType{CardTypeLand},
-			Subtypes:           []Subtype{SubtypePlains},
-			Supertypes:         []Supertype{SupertypeBasic},
-			ActivatedAbilities: []ActivatedAbility{AbilityPlains},
-			RulesText:          "{T}: Add {W}.",
-		},
-	},
-	"Pearled Unicorn": {
-		object: object{
-			Name:      "Pearled Unicorn",
-			CardTypes: []CardType{CardTypeCreature},
-			Subtypes:  []Subtype{SubtypeUnicorn},
-			Power:     2,
-			Toughness: 2,
-			ManaCost:  ManaCost{Generic: 2, Colors: map[string]int{"W": 1}},
-		},
-	},
-	"Preordain": {
-		object: object{
-			Name:         "Preordain",
-			CardTypes:    []CardType{CardTypeSorcery},
-			ManaCost:     ManaCost{Colors: map[string]int{"U": 1}},
-			SpellAbility: &AbilityScry2, // Neds to draw
-			RulesText:    "Scry 2",      // Should grab dynamically from abilities
-		},
-	},
-	"Brainstorm": {
-		object: object{
-			Name:         "Brainstorm",
-			CardTypes:    []CardType{CardTypeInstant},
-			ManaCost:     ManaCost{Colors: map[string]int{"U": 1}},
-			SpellAbility: &AbilityBrainstorm,
-		},
-	},
-	"Candy Trail": {
-		object: object{
-			Name:      "Candy Trail",
-			CardTypes: []CardType{CardTypeArtifact},
-			ManaCost:  ManaCost{Generic: 1},
-		},
-	},
-	"Foundry Inspector": {
-		object: object{
-			Name:      "Foundry Inspector",
-			CardTypes: []CardType{CardTypeArtifact, CardTypeCreature},
-			Subtypes:  []Subtype{SubtypeConstruct},
-			ManaCost:  ManaCost{Generic: 3},
-		},
-	},
+// LoadCardsFromCardPool loads cards from a directory containing JSON files.
+// TODO: I think this doesn't need to exist, and we should load cards during
+// the deck loading phase, this would allow us to call NewCardFromImport for
+// each card and generate a unique ID for each card.
+func LoadCardPool(path string) (map[string]*Card, error) {
+	cards := map[string]*Card{}
+	walkFunc := func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() || !strings.HasSuffix(info.Name(), ".json") {
+			return nil
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return fmt.Errorf("failed to read file %s: %w", path, err)
+		}
+		var cardImport CardImport
+		// TODO, or can I just add the file here...
+		dec := json.NewDecoder(bytes.NewReader(data))
+		dec.DisallowUnknownFields()
+		if err := dec.Decode(&cardImport); err != nil {
+			return fmt.Errorf("failed to unmarshal file %s: %w", path, err)
+		}
+		card, err := NewCardFromImport(cardImport)
+		if err != nil {
+			return fmt.Errorf("failed to create card from import: %w", err)
+		}
+		if _, ok := cards[card.Name()]; ok {
+			return fmt.Errorf("duplicate card name detected: %s", card.Name)
+		}
+		cards[card.Name()] = card
+		return nil
+	}
+	if err := filepath.Walk(path, walkFunc); err != nil {
+		return nil, fmt.Errorf("could not load cards: %w", err)
+	}
+	return cards, nil
 }
+
+// MustLoadCardPool loads cards from a directory containing JSON files and
+// panics on error.
+// TODO: Only here because I don't want to deal with errors yet, this should
+// be managed during the GameState initialization when the deck is being
+// loaded.
+func MustLoadCardPool(path string) map[string]*Card {
+	cards, err := LoadCardPool(path)
+	if err != nil {
+		panic(fmt.Sprintf("failed to load card pool: %v", err))
+	}
+	return cards
+}
+
+// CardPool is a map of card names to Card objects.
+// TODO: This is a temporary hack and should be moved to the GameState
+// initialization function.
+var CardPool = MustLoadCardPool("./cards")

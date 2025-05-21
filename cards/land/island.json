@@ -1,0 +1,29 @@
+{
+  "Name": "Island",
+  "CardTypes": [
+    "Land"
+  ],
+  "Subtypes": [
+    "Island"
+  ],
+  "Supertypes": [
+    "Basic"
+  ],
+  "ActivatedAbilities": [
+    {
+      "Cost": "{T}",
+      "Effects": [
+        {
+          "ID": "AddMana",
+          "Modifiers": [
+            {
+              "Key": "Mana",
+              "Value": "{U}"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "RulesText": "{T}: Add {U}."
+}
