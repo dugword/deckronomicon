@@ -1,0 +1,64 @@
+{
+  "cards": [
+    {
+      "name": "Brainstorm",
+      "count": 4
+    },
+    {
+      "name": "Gigadrowse",
+      "count": 1
+    },
+    {
+      "name": "High Tide",
+      "count": 4
+    },
+    {
+      "name": "Preordain",
+      "count": 4
+    },
+    {
+      "name": "Stream of Thought",
+      "count": 2
+    },
+    {
+      "name": "Hidden Strings",
+      "count": 4
+    },
+    {
+      "name": "Ideas Unbound",
+      "count": 4
+    },
+    {
+      "name": "Merchant Scroll",
+      "count": 4
+    },
+    {
+      "name": "Muddle the Mixture",
+      "count": 2
+    },
+    {
+      "name": "Peer Through Depths",
+      "count": 4
+    },
+    {
+      "name": "Psychic Puppetry",
+      "count": 4
+    },
+    {
+      "name": "Pieces of the Puzzle",
+      "count": 3
+    },
+    {
+      "name": "Deep Analysis",
+      "count": 1
+    },
+    {
+      "name": "Lorien Revealed",
+      "count": 4
+    },
+    {
+      "name": "Island",
+      "count": 15
+    }
+  ]
+}

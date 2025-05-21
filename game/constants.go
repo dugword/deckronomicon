@@ -1,18 +1,70 @@
 package game
 
+import "fmt"
+
+// CardType is a type of card in Magic: The Gathering.
 type CardType string
 
+// CardType constants represent the different types of cards.
 const (
 	CardTypeArtifact     CardType = "Artifact"
+	CardTypeBattle       CardType = "Battle"
 	CardTypeCreature     CardType = "Creature"
 	CardTypeEnchantment  CardType = "Enchantment"
-	CardTypePlaneswalker CardType = "Planeswalker"
-	CardTypeBattle       CardType = "Battle"
 	CardTypeInstant      CardType = "Instant"
-	CardTypeSorcery      CardType = "Sorcery"
 	CardTypeLand         CardType = "Land"
+	CardTypePlaneswalker CardType = "Planeswalker"
+	CardTypeSorcery      CardType = "Sorcery"
 )
 
+// PermanentCardTypes is a set of permanent card types.
+var PermanentCardTypes = map[CardType]struct{}{
+	CardTypeArtifact:     {},
+	CardTypeBattle:       {},
+	CardTypeCreature:     {},
+	CardTypeEnchantment:  {},
+	CardTypePlaneswalker: {},
+}
+
+// SpellCardTypes is a set of spell card types.
+// NOTE: Technical all non-land cards are spells, but common usage
+// is to refer to non-permanent cards as spells.
+// TODO: This may be removed later as we implement an actual stack system
+// and convert all cards to Spells as they are cast.
+var SpellCardTypes = map[CardType]struct{}{
+	CardTypeInstant: {},
+	CardTypeSorcery: {},
+}
+
+// IsPermanent checks if the CardType is a permanent type.
+func (t CardType) IsPermanent() bool {
+	if _, ok := PermanentCardTypes[t]; ok {
+		return true
+	}
+	return false
+}
+
+// IsSpell checks if the CardType is a Spell type.
+func (t CardType) IsSpell() bool {
+	if _, ok := SpellCardTypes[t]; ok {
+		return true
+	}
+	return false
+}
+
+// StringToCardType converts a string to a CardType.
+var StringToCardType = map[string]CardType{
+	"Artifact":     CardTypeArtifact,
+	"Battle":       CardTypeBattle,
+	"Creature":     CardTypeCreature,
+	"Enchantment":  CardTypeEnchantment,
+	"Instant":      CardTypeInstant,
+	"Land":         CardTypeLand,
+	"Planeswalker": CardTypePlaneswalker,
+	"Sorcery":      CardTypeSorcery,
+}
+
+// Subtype is a subtype of card in Magic: The Gathering.
 type Subtype string
 
 // Artifact Subtypes
@@ -31,34 +83,108 @@ const (
 	SubtypeVehicle       Subtype = "Vehicle"
 )
 
+// StringToArtifactSubtype converts a string to a Subtype.
+var StringToArtifactSubtype = map[string]Subtype{
+	"Blood":         SubtypeBlood,
+	"Clue":          SubtypeClue,
+	"Food":          SubtypeFood,
+	"Gold":          SubtypeGold,
+	"Incubator":     SubtypeIncubator,
+	"Junk":          SubtypeJunk,
+	"Map":           SubtypeMap,
+	"Powerstone":    SubtypePowerstone,
+	"Treasure":      SubtypeTreasure,
+	"Equipment":     SubtypeEquipment,
+	"Fortification": SubtypeFortification,
+	"Vehicle":       SubtypeVehicle,
+}
+
+func (t Subtype) IsArtifactSubtype() bool {
+	if _, ok := StringToArtifactSubtype[string(t)]; ok {
+		return true
+	}
+	return false
+}
+
 // Battle Subtypes
 const (
 	SubtypeSiege Subtype = "Siege"
 )
 
+// StringToBattleSubtype converts a string to a Subtype.
+var StringToBattleSubtype = map[string]Subtype{
+	"Siege": SubtypeSiege,
+}
+
+func (t Subtype) IsBattleSubtype() bool {
+	if _, ok := StringToBattleSubtype[string(t)]; ok {
+		return true
+	}
+	return false
+}
+
 // Enchantment Subtypes
 const (
 	SubtypeAura       Subtype = "Aura"
 	SubtypeBackground Subtype = "Background"
-	SubtypeSaga       Subtype = "Saga"
-	SubtypeRole       Subtype = "Role"
-	SubtypeShard      Subtype = "Shard"
 	SubtypeCartouche  Subtype = "Cartouche"
 	SubtypeCase       Subtype = "Case"
 	SubtypeClass      Subtype = "Class"
 	SubtypeCurse      Subtype = "Curse"
+	SubtypeRole       Subtype = "Role"
 	SubtypeRune       Subtype = "Rune"
+	SubtypeSaga       Subtype = "Saga"
+	SubtypeShard      Subtype = "Shard"
 	SubtypeShrine     Subtype = "Shrine"
 )
 
+// StringToEnchantmentSubtype converts a string to a Subtype.
+var StringToEnchantmentSubtype = map[string]Subtype{
+	"Aura":       SubtypeAura,
+	"Background": SubtypeBackground,
+	"Cartouche":  SubtypeCartouche,
+	"Case":       SubtypeCase,
+	"Class":      SubtypeClass,
+	"Curse":      SubtypeCurse,
+	"Role":       SubtypeRole,
+	"Rune":       SubtypeRune,
+	"Saga":       SubtypeSaga,
+	"Shard":      SubtypeShard,
+	"Shrine":     SubtypeShrine,
+}
+
+func (t Subtype) IsEnchantmentSubtype() bool {
+	if _, ok := StringToEnchantmentSubtype[string(t)]; ok {
+		return true
+	}
+	return false
+}
+
 // Basic Land Subtypes
 const (
-	SubtypePlains   Subtype = "Plains"
-	SubtypeIsland   Subtype = "Island"
-	SubtypeSwamp    Subtype = "Swamp"
-	SubtypeMountain Subtype = "Mountain"
 	SubtypeForest   Subtype = "Forest"
+	SubtypeIsland   Subtype = "Island"
+	SubtypeMountain Subtype = "Mountain"
+	SubtypePlains   Subtype = "Plains"
+	SubtypeSwamp    Subtype = "Swamp"
 )
+
+// StringToBasicLandSubtype converts a string to a Subtype.
+var StringToBasicLandSubtype = map[string]Subtype{
+	"Forest":   SubtypeForest,
+	"Island":   SubtypeIsland,
+	"Mountain": SubtypeMountain,
+	"Plains":   SubtypePlains,
+	"Swamp":    SubtypeSwamp,
+}
+
+// IsBasicLandSubtype checks if the Subtype is a basic land subtype.
+func (t Subtype) IsBasicLandSubtype() bool {
+	if _, ok := StringToBasicLandSubtype[string(t)]; ok {
+		return true
+	}
+	return false
+}
 
 // Nonbasic Land Subtypes
 const (
@@ -74,6 +200,28 @@ const (
 	SubtypeUrzas      Subtype = "Urza's"
 )
 
+// StringToNonbasicLandSubtype converts a string to a Subtype.
+var StringToNonbasicLandSubtype = map[string]Subtype{
+	"Cave":        SubtypeCave,
+	"Desert":      SubtypeDesert,
+	"Gate":        SubtypeGate,
+	"Lair":        SubtypeLair,
+	"Locus":       SubtypeLocus,
+	"Mine":        SubtypeMine,
+	"Power-Plant": SubtypePowerPlant,
+	"Sphere":      SubtypeSphere,
+	"Tower":       SubtypeTower,
+	"Urza's":      SubtypeUrzas,
+}
+
+// IsNonbasicLandSubtype checks if the Subtype is a nonbasic land subtype.
+func (t Subtype) IsNonbasicLandSubtype() bool {
+	if _, ok := StringToNonbasicLandSubtype[string(t)]; ok {
+		return true
+	}
+	return false
+}
+
 // Instant/Sorcery Subtypes
 const (
 	SubtypeAdventure Subtype = "Adventure"
@@ -84,6 +232,47 @@ const (
 	SubtypeTrap      Subtype = "Trap" // Instant only
 )
 
+// StringToInstantSorcerySubtype converts a string to a Subtype.
+var StringToInstantSorcerySubtype = map[string]Subtype{
+	"Adventure": SubtypeAdventure,
+	"Arcane":    SubtypeArcane,
+	"Chorus":    SubtypeChorus,
+	"Lesson":    SubtypeLesson,
+	"Omen":      SubtypeOmen,
+	"Trap":      SubtypeTrap,
+}
+
+// IsInstantSorcerySubtype checks if the Subtype is an Instant or Sorcery
+// subtype.
+func (t Subtype) IsInstantSorcerySubtype() bool {
+	if _, ok := StringToInstantSorcerySubtype[string(t)]; ok {
+		return true
+	}
+	return false
+}
+
+func StringToSubype(s string) (Subtype, error) {
+	if t, ok := StringToArtifactSubtype[s]; ok {
+		return t, nil
+	}
+	if t, ok := StringToBattleSubtype[s]; ok {
+		return t, nil
+	}
+	if t, ok := StringToEnchantmentSubtype[s]; ok {
+		return t, nil
+	}
+	if t, ok := StringToBasicLandSubtype[s]; ok {
+		return t, nil
+	}
+	if t, ok := StringToNonbasicLandSubtype[s]; ok {
+		return t, nil
+	}
+	if t, ok := StringToInstantSorcerySubtype[s]; ok {
+		return t, nil
+	}
+	return "", fmt.Errorf("unknown Subtype: %s")
+}
+
 type Supertype string
 
 const (
@@ -93,13 +282,48 @@ const (
 	SupertypeWorld     Supertype = "World"
 )
 
-type CardColor string
+// StringToSupertype converts a string to a Supertype.
+var StringToSupertype = map[string]Supertype{
+	"Basic":     SupertypeBasic,
+	"Legendary": SupertypeLegendary,
+	"Snow":      SupertypeSnow,
+	"World":     SupertypeWorld,
+}
+
+// Color is a color in Magic: The Gathering.
+type Color string
 
 const (
-	ColorWhite CardColor = "W"
-	ColorBlue  CardColor = "U"
-	ColorBlack CardColor = "B"
-	ColorRed   CardColor = "R"
-	ColorGreen CardColor = "G"
-	Colorless  CardColor = "C"
+	ColorBlack     Color = "B"
+	ColorBlue      Color = "U"
+	ColorColorless Color = "C"
+	ColorGreen     Color = "G"
+	ColorRed       Color = "R"
+	ColorWhite     Color = "W"
+)
+
+// StringToColor converts a string to a Color.
+func StringToColor(s string) (Color, error) {
+	colors := map[string]Color{
+		"B": ColorBlack,
+		"C": ColorColorless,
+		"G": ColorGreen,
+		"R": ColorRed,
+		"U": ColorBlue,
+		"W": ColorWhite,
+	}
+	color, ok := colors[s]
+	if !ok {
+		return "", fmt.Errorf("unknown color: %s", s)
+	}
+	return color, nil
+}
+
+type AbilityTagKey string
+
+const (
+	AbilityTagDiscard    AbilityTagKey = "Discard"
+	AbilityTagDraw       AbilityTagKey = "Draw"
+	AbilityTagManaSource AbilityTagKey = "ManaSource"
+	AbilityTagScry       AbilityTagKey = "Scry"
 )

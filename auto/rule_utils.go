@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+// hasCardNamed checks if a card with the given name exists in the slice of
+// cards.
 func hasCardNamed(cards []*game.Card, name string) bool {
 	for _, c := range cards {
 		if strings.EqualFold(c.Name(), name) {
@@ -15,6 +17,8 @@ func hasCardNamed(cards []*game.Card, name string) bool {
 	return false
 }
 
+// hasPermanentNamed checks if a permanent with the given name exists in the
+// slice of permanents.
 func hasPermanentNamed(perms []*game.Permanent, name string) bool {
 	for _, p := range perms {
 		if strings.EqualFold(p.Name(), name) {
@@ -24,6 +28,8 @@ func hasPermanentNamed(perms []*game.Permanent, name string) bool {
 	return false
 }
 
+// allCardsPresent checks if all cards with the given names exist in the slice
+// of cards.
 func allCardsPresent(names []string, cards []*game.Card) bool {
 	for _, name := range names {
 		if !hasCardNamed(cards, name) {
@@ -33,6 +39,8 @@ func allCardsPresent(names []string, cards []*game.Card) bool {
 	return true
 }
 
+// anyCardPresent checks if any card with the given names exists in the slice
+// of cards.
 func anyCardPresent(names []string, cards []*game.Card) bool {
 	for _, name := range names {
 		if hasCardNamed(cards, name) {
@@ -42,6 +50,8 @@ func anyCardPresent(names []string, cards []*game.Card) bool {
 	return false
 }
 
+// anyCardAbsent checks if any card with the given names does not exist in
+// the slice of cards.
 func allCardsAbsent(names []string, cards []*game.Card) bool {
 	for _, name := range names {
 		if hasCardNamed(cards, name) {
@@ -51,6 +61,8 @@ func allCardsAbsent(names []string, cards []*game.Card) bool {
 	return true
 }
 
+// anyCardAbsent checks if any card with the given names does not exist in
+// the slice of cards.
 func anyCardAbsent(names []string, cards []*game.Card) bool {
 	for _, name := range names {
 		if !hasCardNamed(cards, name) {
@@ -60,6 +72,9 @@ func anyCardAbsent(names []string, cards []*game.Card) bool {
 	return false
 }
 
+// allGroupsSatisfied checks if all groups of cards are satisfied by the
+// given cards. A group is satisfied if at least one card in the group is
+// present in the slice of cards.
 func allGroupsSatisfied(groups [][]string, cards []*game.Card) bool {
 	for _, group := range groups {
 		found := false
@@ -76,6 +91,9 @@ func allGroupsSatisfied(groups [][]string, cards []*game.Card) bool {
 	return true
 }
 
+// anyGroupSatisfied checks if any group of cards is satisfied by the given
+// cards. A group is satisfied if at least one card in the group is present
+// in the slice of cards.
 func anyGroupSatisfied(groups [][]string, cards []*game.Card) bool {
 	for _, group := range groups {
 		for _, name := range group {
@@ -87,6 +105,9 @@ func anyGroupSatisfied(groups [][]string, cards []*game.Card) bool {
 	return false
 }
 
+// anyGroupAbsent checks if any group of cards is not satisfied by the
+// given cards. A group is not satisfied if none of the cards in the group
+// are present in the slice of cards.
 func allGroupsAbsent(groups [][]string, cards []*game.Card) bool {
 	for _, group := range groups {
 		allPresent := true
@@ -103,6 +124,9 @@ func allGroupsAbsent(groups [][]string, cards []*game.Card) bool {
 	return true
 }
 
+// noGroupFullyPresent checks if no group of cards is fully present in the
+// given cards. A group is fully present if all cards in the group are
+// present in the slice of cards.
 func noGroupFullyPresent(groups [][]string, cards []*game.Card) bool {
 	for _, group := range groups {
 		groupPresent := true
@@ -119,7 +143,8 @@ func noGroupFullyPresent(groups [][]string, cards []*game.Card) bool {
 	return true
 }
 
-// evaluateIntComparison checks if an integer value satisfies a comparison string, e.g. ">=3", "<5", "==2"
+// evaluateIntComparison checks if an integer value satisfies a comparison
+// string, e.g. ">=3", "<5", "==2"
 func evaluateIntComparison(actual int, expr string) bool {
 	expr = strings.TrimSpace(expr)
 	if strings.HasPrefix(expr, ">=") {
@@ -152,39 +177,10 @@ func evaluateIntComparison(actual int, expr string) bool {
 	return false // Fallback if the expression is malformed
 }
 
-// parseManaCost parses a string like "2UG" into a ManaCost struct
-func parseManaCost(input string) game.ManaCost {
-	cost := game.ManaCost{
-		Generic: 0,
-		Colors:  make(map[string]int),
-	}
-
-	digits := ""
-	for i := 0; i < len(input); i++ {
-		c := string(input[i])
-		if c >= "0" && c <= "9" {
-			digits += c
-		} else {
-			amount := 1
-			if digits != "" {
-				amount, _ = strconv.Atoi(digits)
-				digits = ""
-			}
-			cost.Colors[c] += amount
-		}
-	}
-
-	// Any leftover digits are generic mana
-	if digits != "" {
-		amount, _ := strconv.Atoi(digits)
-		cost.Generic += amount
-	}
-
-	return cost
-}
-
-func PlanManaActivation(battlefield []*game.Permanent, cost game.ManaCost) ([]game.GameAction, bool) {
-	needed := make(map[string]int)
+// PlanManaActivation generates a list of game actions to activate mana
+// abilities.
+func PlanManaActivation(battlefield []*game.Permanent, cost *game.ManaCost) ([]game.GameAction, bool) {
+	needed := make(map[game.Color]int)
 	for color, amt := range cost.Colors {
 		needed[color] = amt
 	}
@@ -200,13 +196,15 @@ func PlanManaActivation(battlefield []*game.Permanent, cost game.ManaCost) ([]ga
 				continue
 			}
 			for _, ability := range perm.ActivatedAbilities() {
-				if !ability.IsManaAbility {
+				if !ability.IsManaAbility() {
 					continue
 				}
 				// TODO This sucks - do I need it? does break break the inner loop or the outer? Is it obvious?
 			Foo:
-				for _, tag := range ability.Tags {
-					if tag.Key == "ManaSource" && tag.Value == color {
+				for _, tag := range ability.Tags() {
+					// TODO Handl this error
+					tagValue, _ := game.StringToColor(tag.Value)
+					if tag.Key == game.AbilityTagManaSource && tagValue == color {
 						actions = append(actions, game.GameAction{
 							Type:   game.ActionActivate,
 							Target: perm.Name(),
@@ -235,7 +233,7 @@ func PlanManaActivation(battlefield []*game.Permanent, cost game.ManaCost) ([]ga
 			continue
 		}
 		for _, ability := range perm.ActivatedAbilities() {
-			if ability.IsManaAbility {
+			if ability.IsManaAbility() {
 				actions = append(actions, game.GameAction{
 					Type:   game.ActionActivate,
 					Target: perm.Name(),

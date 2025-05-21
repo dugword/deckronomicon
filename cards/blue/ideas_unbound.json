@@ -1,0 +1,40 @@
+{
+  "CardTypes": [
+    "Sorcery"
+  ],
+  "Color": [
+    "U"
+  ],
+  "ManaCost": "{U}{U}",
+  "Name": "Ideas Unbound",
+  "SpellAbility": {
+    "Effects": [
+      {
+        "ID": "Draw",
+        "Modifiers": [
+          {
+            "Key": "Count",
+            "Value": "3"
+          }
+        ]
+      },
+      {
+        "ID": "Discard",
+        "Modifiers": [
+          {
+            "Key": "Count",
+            "Value": "3"
+          },
+          {
+            "Key": "Delay",
+            "Value": "EndStep"
+          }
+        ]
+      }
+    ]
+  },
+  "RulesText": "Draw three cards. Discard three cards at the beginning of the next end step.",
+  "Subtypes": [
+    "Arcane"
+  ]
+}

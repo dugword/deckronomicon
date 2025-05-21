@@ -1,0 +1,33 @@
+{
+  "CardTypes": [
+    "Instant"
+  ],
+  "Color": [
+    "U"
+  ],
+  "ManaCost": "{U}",
+  "Name": "Brainstorm",
+  "SpellAbility": {
+    "Effects": [
+      {
+        "ID": "Draw",
+        "Modifiers": [
+          {
+            "Key": "Count",
+            "Value": "3"
+          }
+        ]
+      },
+      {
+        "ID": "PutBackOnTop",
+        "Modifiers": [
+          {
+            "Key": "Count",
+            "Value": "2"
+          }
+        ]
+      }
+    ]
+  },
+  "RulesText": "Draw three cards, then put two cards from your hand on top of your library in any order."
+}

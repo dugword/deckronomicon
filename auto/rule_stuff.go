@@ -5,125 +5,129 @@ import (
 )
 
 // MatchesConditionSet determines if a given ConditionSet is satisfied by the game state.
-func MatchesConditionSet(state *game.GameState, cond ConditionSet) bool {
+// It checks various conditions such as land drops, mana availability, card
+// presence in hand, battlefield, and graveyard, as well as game state scalars
+// like storm count, library size, and cards in hand.
+func MatchesConditionSet(state *game.GameState, cond ConditionSet) (bool, error) {
 	// --- Land Drop Checks ---
 	if cond.HasPlayedLand != nil && *cond.HasPlayedLand != state.LandDrop {
-		return false
+		return false, nil
 	}
 	// --- Mana Cost ---
 	if cond.ManaAvailable != "" {
-		//manaNeeded := parseManaCost(cond.ManaAvailable)
-		/*
-			if !game.CanPotentiallyPayFor(state, manaNeeded) {
-				return false
-			}
-		*/
+		manaNeeded, err := game.ParseManaCost(cond.ManaAvailable)
+		if err != nil {
+			return false, err
+		}
+		if !game.CanPotentiallyPayFor(state, manaNeeded) {
+			return false, nil
+		}
 	}
 	// --- Hand Checks ---
 	if !allCardsPresent(cond.HandContains, state.Hand.Cards()) {
-		return false
+		return false, nil
 	}
 	if len(cond.HandContainsAny) > 0 && !anyCardPresent(cond.HandContainsAny, state.Hand.Cards()) {
-		return false
+		return false, nil
 	}
 	if !allGroupsSatisfied(cond.HandContainsAllGroups, state.Hand.Cards()) {
-		return false
+		return false, nil
 	}
 	if len(cond.HandContainsAnyGroups) > 0 && !anyGroupSatisfied(cond.HandContainsAnyGroups, state.Hand.Cards()) {
-		return false
+		return false, nil
 	}
 	if !allCardsAbsent(cond.HandLacks, state.Hand.Cards()) {
-		return false
+		return false, nil
 	}
 	if len(cond.HandLacksAny) > 0 && !anyCardAbsent(cond.HandLacksAny, state.Hand.Cards()) {
-		return false
+		return false, nil
 	}
 	if !allGroupsAbsent(cond.HandLacksAllGroups, state.Hand.Cards()) {
-		return false
+		return false, nil
 	}
 	if !noGroupFullyPresent(cond.HandLacksAnyGroups, state.Hand.Cards()) {
-		return false
+		return false, nil
 	}
 
 	/*
 		// --- Battlefield Checks ---
 		if !allCardsPresent(cond.BattlefieldContains, cardsFromPerms(state.Battlefield)) {
-			return false
+			return false, nil
 		}
 
 		if len(cond.BattlefieldContainsAny) > 0 && !anyCardPresent(cond.BattlefieldContainsAny, cardsFromPerms(state.Battlefield)) {
-			return false
+			return false, nil
 		}
 		if !allGroupsSatisfied(cond.BattlefieldContainsAllGroups, cardsFromPerms(state.Battlefield)) {
-			return false
+			return false, nil
 		}
 		if len(cond.BattlefieldContainsAnyGroups) > 0 && !anyGroupSatisfied(cond.BattlefieldContainsAnyGroups, cardsFromPerms(state.Battlefield)) {
-			return false
+			return false, nil
 		}
 		if !allCardsAbsent(cond.BattlefieldLacks, cardsFromPerms(state.Battlefield)) {
-			return false
+			return false, nil
 		}
 		if len(cond.BattlefieldLacksAny) > 0 && !anyCardAbsent(cond.BattlefieldLacksAny, cardsFromPerms(state.Battlefield)) {
-			return false
+			return false, nil
 		}
 		if !allGroupsAbsent(cond.BattlefieldLacksAllGroups, cardsFromPerms(state.Battlefield)) {
-			return false
+			return false, nil
 		}
 		if !noGroupFullyPresent(cond.BattlefieldLacksAnyGroups, cardsFromPerms(state.Battlefield)) {
-			return false
+			return false, nil
 		}
 	*/
 
 	// --- Graveyard Checks ---
 	if !allCardsPresent(cond.GraveyardContains, state.Graveyard) {
-		return false
+		return false, nil
 	}
 	if len(cond.GraveyardContainsAny) > 0 && !anyCardPresent(cond.GraveyardContainsAny, state.Graveyard) {
-		return false
+		return false, nil
 	}
 	if !allGroupsSatisfied(cond.GraveyardContainsAllGroups, state.Graveyard) {
-		return false
+		return false, nil
 	}
 	if len(cond.GraveyardContainsAnyGroups) > 0 && !anyGroupSatisfied(cond.GraveyardContainsAnyGroups, state.Graveyard) {
-		return false
+		return false, nil
 	}
 	if !allCardsAbsent(cond.GraveyardLacks, state.Graveyard) {
-		return false
+		return false, nil
 	}
 	if len(cond.GraveyardLacksAny) > 0 && !anyCardAbsent(cond.GraveyardLacksAny, state.Graveyard) {
-		return false
+		return false, nil
 	}
 	if !allGroupsAbsent(cond.GraveyardLacksAllGroups, state.Graveyard) {
-		return false
+		return false, nil
 	}
 	if !noGroupFullyPresent(cond.GraveyardLacksAnyGroups, state.Graveyard) {
-		return false
+		return false, nil
 	}
 
 	// --- Game State Scalar Conditions ---
 	if cond.Storm != "" && !evaluateIntComparison(state.StormCount, cond.Storm) {
-		return false
+		return false, nil
 	}
-	if cond.LibrarySize != "" && !evaluateIntComparison(state.Deck.Size(), cond.LibrarySize) {
-		return false
+	if cond.LibrarySize != "" && !evaluateIntComparison(state.Library.Size(), cond.LibrarySize) {
+		return false, nil
 	}
 	if cond.CardsInHand != "" && !evaluateIntComparison(state.Hand.Size(), cond.CardsInHand) {
-		return false
+		return false, nil
 	}
 	if cond.GraveyardSize != "" && !evaluateIntComparison(len(state.Graveyard), cond.GraveyardSize) {
-		return false
+		return false, nil
 	}
 	if cond.SpellCountThisTurn != "" && !evaluateIntComparison(state.StormCount, cond.SpellCountThisTurn) {
-		return false
+		return false, nil
 	}
 	/*
 		for _, name := range cond.HasCastThisTurn {
 			if !state.SpellsCastThisTurn[name] {
-				return false
+				return false, nil
 			}
 		}
 	*/
-	return true
+	return true, nil
 }
 
 // TODO: Future Enhancements for Rule Matching

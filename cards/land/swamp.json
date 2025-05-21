@@ -1,0 +1,29 @@
+{
+  "Name": "Swamp",
+  "CardTypes": [
+    "Land"
+  ],
+  "Subtypes": [
+    "Swamp"
+  ],
+  "Supertypes": [
+    "Basic"
+  ],
+  "ActivatedAbilities": [
+    {
+      "Cost": "{T}",
+      "Effects": [
+        {
+          "ID": "AddMana",
+          "Modifiers": [
+            {
+              "Key": "Mana",
+              "Value": "{B}"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "RulesText": "{T}: Add {B}."
+}

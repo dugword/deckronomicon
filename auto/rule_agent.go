@@ -41,6 +41,7 @@ package auto
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"sort"
@@ -48,17 +49,28 @@ import (
 	game "deckronomicon/game"
 )
 
+// RuleBasedAgent implements the game.Agent interface, providing a rule-based
+// decision-making system for Magic: The Gathering gameplay. It evaluates
+// game states against a set of user-defined rules and conditions to determine
+// the best course of action. The agent can also handle choice prompts and
+// make decisions based on the defined rules.
 type RuleBasedAgent struct {
 	Rules       []Rule
 	ChoiceRules []ChoiceRule
 }
 
+// NewRuleBasedAgent creates a new RuleBasedAgent instance and loads the rules
+// from the specified JSON file. The rules are parsed and stored in the agent
+// for use during gameplay. The rules are stored by priority, with higher
+// priority rules evaluated first.
 func NewRuleBasedAgent(ruleFile string) *RuleBasedAgent {
 	agent := &RuleBasedAgent{}
 	agent.LoadRules(ruleFile)
 	return agent
 }
 
+// LoadRules loads the rules from a JSON file and parses them into the
+// RuleBasedAgent instance.
 func (a *RuleBasedAgent) LoadRules(path string) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -81,8 +93,17 @@ func (a *RuleBasedAgent) LoadRules(path string) {
 	a.ChoiceRules = parsed.ChoiceRules
 }
 
+// ReportState is a placeholder method for reporting the game state. It is not
+// used in the the rule agent but is required by the game.Agent interface.
+// This method can be implemented to log or analyze the game state at any
+// point in the game.
 func (a *RuleBasedAgent) ReportState(state *game.GameState) {}
 
+// GetNextAction evaluates the current game state against the defined rules
+// and returns the next action to be taken. If a rule's condition is met, the
+// corresponding action is executed. If no rules match, a default action
+// (ActionPass) is returned. The method also handles special cases, such as
+// conceding if the last action failed.
 func (a *RuleBasedAgent) GetNextAction(state *game.GameState) game.GameAction {
 	// TODO: make this configurable in the rules
 	if state.LastActionFailed {
@@ -91,21 +112,31 @@ func (a *RuleBasedAgent) GetNextAction(state *game.GameState) game.GameAction {
 	for _, rule := range a.Rules {
 		fmt.Println("Rule =>", rule.Name)
 		// TODO: change to !disabled so we don't need it in every rule
-		if rule.Enabled && MatchesConditionSet(state, rule.When) {
+		conditionSetMatched, err := MatchesConditionSet(state, rule.When)
+		if err != nil {
+			// TODO: handle this better
+			panic("need to handle this as an error")
+		}
+		if rule.Enabled && conditionSetMatched {
 			gameAction := rule.ToGameAction()
 			// TODO This could be more elegant
 			if gameAction.Type == game.ActionPlay {
 				if rule.Then.Target != "" {
-					//card := state.Hand.FindCard(rule.Then.Target)
+					card := state.Hand.FindCard(rule.Then.Target)
 					// TODO canCast should probably be an error?
-					/*
-						preactions, canCast := PlanManaActivation(state.Battlefield, card.ManaCost)
-						if !canCast {
-							fmt.Println("ERROR (HANDLE THIS BETTER): can not cast even if I tap all my lands")
-							return game.GameAction{Type: ""}
+					preactions, canCast := PlanManaActivation(
+						state.Battlefield.Permanents(),
+						card.ManaCost(),
+					)
+					if !canCast {
+						fmt.Println("ERROR (HANDLE THIS BETTER): can not cast even if I tap all my lands")
+						for _, p := range state.Battlefield.Permanents() {
+							fmt.Println("Permanent =>", p.Name())
 						}
-						gameAction.Preactions = preactions
-					*/
+						os.Exit(0)
+						return game.GameAction{Type: ""}
+					}
+					gameAction.Preactions = preactions
 					return gameAction
 				}
 			}
@@ -114,14 +145,31 @@ func (a *RuleBasedAgent) GetNextAction(state *game.GameState) game.GameAction {
 	return game.GameAction{Type: game.ActionPass}
 }
 
-// TODO: Something better
-func (a *RuleBasedAgent) ChooseOne(prompt string, choices []game.Choice) game.Choice {
+// ChooseOne handles choice prompts during gameplay. It evaluates the prompt
+// against the defined choice rules and selects the best option based on the
+// rules. If no choice rules match, the first option is selected by default.
+// This method can be extended to include more complex decision-making logic
+// based on the game state and the available choices.
+func (a *RuleBasedAgent) ChooseOne(prompt string, source string, choices []game.Choice) (game.Choice, error) {
+	if len(choices) == 0 {
+		return game.Choice{}, errors.New("no choices available")
+	}
 	// always chose the first option for now
-	return choices[0]
+	return choices[0], nil
 }
 
-// --- Rule definitions ---
-
+// Rule represents a single rule in the rules engine. Each rule has a name,
+// a phase (optional), a set of conditions to check against the game state,
+// an action to perform if the conditions are met, a priority for rule
+// evaluation, and an enabled flag to determine if the rule is active.
+// The priority determines the order in which rules are evaluated, with
+// higher priority rules being checked first. The phase indicates the
+// specific phase of the game in which the rule should be applied, such as
+// "main" or "combat". The conditions are defined in a ConditionSet,
+// which includes various checks for card presence, game state, and other
+// factors. The action specifies what to do if the conditions are met,
+// such as casting a spell or activating an ability. The enabled flag
+// indicates whether the rule is currently active and should be evaluated.
 type Rule struct {
 	Name     string       `json:"name"`
 	Phase    string       `json:"phase,omitempty"` // this isn't main combat, it's combo not combo, rename
@@ -131,6 +179,14 @@ type Rule struct {
 	Enabled  bool         `json:"enabled"`
 }
 
+// MatchesConditionSet checks if the current game state matches the conditions
+// defined in the ConditionSet. It evaluates the game state against the
+// conditions specified in the rule, such as card presence in hand,
+// battlefield, or graveyard, and game state conditions like storm count,
+// mana available, and other factors. If all conditions are met, it returns
+// true, indicating that the rule should be applied. If any condition is not
+// met, it returns false, indicating that the rule does not apply in the
+// current game state.
 type ConditionSet struct {
 	// Zone-Based Card Presence
 	HandContains          []string   `json:"hand_contains,omitempty"`
@@ -175,11 +231,15 @@ type ConditionSet struct {
 	HasPlayedLand      *bool    `json:"has_played_land,omitempty"`
 }
 
+// Action represents the action to be taken when a rule's conditions are met.
+// It includes the action type (e.g., "cast", "activate", "target") and the
+// target of the action.
 type Action struct {
 	ActionType string `json:"action" yaml:"action"`
 	Target     string `json:"target" yaml:"target"`
 }
 
+// ToGameAction converts the Rule's action into a game.GameAction.
 func (r Rule) ToGameAction() game.GameAction {
 	command, ok := game.Commands[r.Then.ActionType]
 	if ok {
@@ -191,38 +251,35 @@ func (r Rule) ToGameAction() game.GameAction {
 	panic("need to handle an error here")
 }
 
-// --- Choice Rule System ---
-
+// ChoiceRule represents a choice rule in the rules engine. Each choice rule
+// has a condition that specifies when the rule applies, an action that
+// defines what to do when the condition is met, and an enabled flag to
+// determine if the rule is active. The condition includes checks for
+// specific prompts, card names, and card tags. The action specifies how to
+// choose between options, such as selecting the top or bottom option or
+// matching a specific name. The enabled flag indicates whether the rule is
+// currently active and should be evaluated.
 type ChoiceRule struct {
 	When    ChoiceCondition `json:"when"`
 	Then    ChoiceAction    `json:"then"`
 	Enabled bool            `json:"enabled"`
 }
 
+// ChoiceCondition represents the conditions under which a choice rule
+// applies. It includes checks for specific prompts, card names, and card
+// tags. The prompt is checked against the provided string, and the card
+// names and tags are checked against the cards in the game state. The
+// conditions are used to determine if the choice rule should be applied
+// during gameplay. The conditions are defined in a way that allows for
+// flexible matching, including partial matches and exact matches.
 type ChoiceCondition struct {
 	PromptContains string   `json:"prompt_contains,omitempty"`
 	CardNames      []string `json:"card_names,omitempty"`
 	CardTags       []string `json:"card_tags,omitempty"`
 }
 
+// ChoiceAction represents the action to be taken when a choice rule's
+// conditions are met.
 type ChoiceAction struct {
 	Choose string `json:"choose"` // "top" or "bottom" or name match
 }
-
-/*
-func (cr ChoiceRule) Applies(prompt game.OptionPrompt) bool {
-	if cr.When.PromptContains != "" && !strings.Contains(prompt.Message, cr.When.PromptContains) {
-		return false
-	}
-	return true // can extend later with card checks
-}
-
-func (cr ChoiceRule) Resolve(prompt game.OptionPrompt) game.Choice {
-	for i, option := range prompt.choices {
-		if strings.EqualFold(cr.Then.Choose, option) {
-			return game.Choice{Name: option, Index: i}
-		}
-	}
-	return game.Choice{Name: prompt.choices[0], Index: 0}
-}
-*/

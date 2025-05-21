@@ -3,76 +3,87 @@ package main
 import (
 	"bufio"
 	"context"
-	"flag"
 	"fmt"
 	"io"
 	"os"
-	"os/signal"
+	"strings"
 
 	"deckronomicon/auto"
+	"deckronomicon/configs"
 	"deckronomicon/game"
 	"deckronomicon/interactive"
-	"deckronomicon/logger"
+	"deckronomicon/log"
 )
 
+// main is the entry point for the application.
 func main() {
-	ctx := context.Background()
-	if err := run(ctx, os.Stdout, os.Args); err != nil {
+	ctx, cancel := context.WithCancel(context.Background())
+	if err := Run(
+		ctx,
+		cancel,
+		os.Args,
+		os.Getenv,
+		os.Stdin,
+		os.Stdout,
+		os.Stderr,
+	); err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
 		os.Exit(1)
 	}
 }
 
-func run(ctx context.Context, w io.Writer, args []string) error {
-	_, cancel := signal.NotifyContext(ctx, os.Interrupt)
+// Run is an abtraction for the main function to enable testing.
+func Run(
+	ctx context.Context,
+	cancel context.CancelFunc,
+	args []string,
+	getenv func(string) string,
+	stdin *os.File,
+	stdout io.Writer,
+	stderr io.Writer,
+) error {
 	defer cancel()
 
-	flags := flag.NewFlagSet("deckronomicon", flag.ContinueOnError)
-	isInteractive := flags.Bool("interactive", false, "run as interactive mode")
-	maxTurns := flags.Int("max-turns", 100, "maximum number of turns to simulate")
-	err := flags.Parse(args[1:])
+	config, err := configs.LoadConfig(args, getenv)
 	if err != nil {
-		// TODO: Handle this without fmt
-		return err
+		return fmt.Errorf("failed to load config: %w", err)
 	}
 
-	// TODO: Handle errors as a separate writer
-	logger := logger.NewLogger(w, w)
+	// Logger for application level information.
+	logger := log.NewLogger(
+		"deckronomicon",
+		stdout,
+		stderr,
+		config.Verbose,
+	)
 	logger.Log("Starting Deckronomicon...")
-
 	logger.Log("Creating new game state...")
 	state := game.NewGameState()
 	logger.Log("New game state created!")
-
 	logger.Log("Initializing new game...")
-	if err := state.InitializeNewGame(game.GameStateConfig{
-		DeckList:     "my_deck.json",
-		MaxTurns:     *maxTurns,
-		StartingLife: 20,
-	}); err != nil {
-		return err
+	if err := state.InitializeNewGame(config); err != nil {
+		return fmt.Errorf("failed to initialize new game: %w", err)
 	}
 	logger.Log("New game initalized!")
 
+	logger.Log("Creating player agent...")
 	var playerAgent game.PlayerAgent
-	if *isInteractive {
-		logger.Log("Running in interactive mode")
-		// TODO: Pass this into main so we can test?
-		// maybe not because we can test the interative package separately...
-		scanner := bufio.NewScanner(os.Stdin)
+	if config.Interactive {
+		logger.Log("Creating interactive player agent...")
+		scanner := bufio.NewScanner(stdin)
 		playerAgent = interactive.NewInteractivePlayerAgent(scanner)
 	} else {
-		logger.Log("Running an auto simulation")
-		playerAgent = auto.NewRuleBasedAgent("sample_rules.json")
-		//playerAgent = auto.NewAutoPlayerAgent()
+		logger.Log("Creating rule based player agent...")
+		playerAgent = auto.NewRuleBasedAgent(config.StrategyFile)
 	}
-
-	gameEndErr := state.RunGameLoop(playerAgent)
-	for _, message := range state.MessageLog {
-		fmt.Println(message)
-	}
-	if gameEndErr != nil {
-		return gameEndErr
+	logger.Log("Player agent created!")
+	logger.Log("Running game loop...")
+	// TOOD: This still tracks game losses with application errors
+	// Those should be separated out
+	err = state.RunGameLoop(playerAgent)
+	logger.Log("Game Message Log:\n" + strings.Join(state.MessageLog, "\n"))
+	if err != nil {
+		return fmt.Errorf("game loop failed: %w", err)
 	}
 	return nil
 }

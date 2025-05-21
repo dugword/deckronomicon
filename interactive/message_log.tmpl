@@ -1,0 +1,6 @@
+{{ template "box" .MessageLogBox }}
+{{ define "box" }}{{.TopLine}}
+{{.Title}}
+{{.MiddleLine}}
+{{range .Lines}}{{.}}
+{{end}}{{.BottomLine}}{{ end }}
