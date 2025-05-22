@@ -1,7 +1,5 @@
 package game
 
-import "fmt"
-
 // TODO: Rework this file with better handling for wrapper functions and ID
 // managment for cleanup.
 
@@ -102,7 +100,6 @@ func (g *GameState) RegisterListenerUntil(listener EventHandler, untilEvent Even
 // EmitEvent emits an event to all registered listeners.
 func (g *GameState) EmitEvent(evt Event, resolver ChoiceResolver) {
 	for _, listener := range g.EventListeners {
-		fmt.Println("Emitting event to listener:", listener.ID)
 		listener.Callback(evt, g, resolver)
 	}
 }

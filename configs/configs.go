@@ -6,6 +6,7 @@ import (
 )
 
 type Config struct {
+	CardPool     string
 	DeckList     string
 	Interactive  bool
 	MaxTurns     int
@@ -30,17 +31,19 @@ func LoadConfig(args []string, getenv func(string) string) (*Config, error) {
 	// Configure flags.
 	flags := flag.NewFlagSet("deckronomicon", flag.ContinueOnError)
 	// TODO: Maybe load both deck and strategy from a specified directory.
+	cardPool := flags.String("card-pool", "cards", "card pool directory")
 	deckList := flags.String("deck-list", "decks/example/deck.json", "deck list file")
-	strategyFile := flags.String("strategy", "decks/example/strategy.json", "strategy file")
 	interactive := flags.Bool("interactive", false, "run as interactive mode")
 	maxTurns := flags.Int("max-turns", 100, "maximum number of turns to simulate")
 	onThePlay := flags.Bool("on-the-play", true, "player going first")
 	startingLife := flags.Int("starting-life", 20, "starting life total")
+	strategyFile := flags.String("strategy", "decks/example/strategy.json", "strategy file")
 	verbose := flags.Bool("verbose", config.Verbose, "verbose output")
 
 	if err := flags.Parse(args[1:]); err != nil {
 		return nil, err
 	}
+	config.CardPool = *cardPool
 	config.DeckList = *deckList
 	config.Interactive = *interactive
 	config.MaxTurns = *maxTurns
