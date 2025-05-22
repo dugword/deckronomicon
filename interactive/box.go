@@ -29,6 +29,15 @@ func splitLines(text string, maxLength int) []string {
 	return lines
 }
 
+// ChoicesBox creates a Box for displaying choices.
+func ChoicesBox(title string, choices []game.Choice) Box {
+	var lines []string
+	for i, choice := range choices {
+		lines = append(lines, fmt.Sprintf("%d: %s", i, choice.Name))
+	}
+	return CreateBox(title, lines)
+}
+
 // CreateMessageBox creates a Box for displaying messages.
 func MessageBox(state *game.GameState) Box {
 	lines := splitLines(state.Message, 70)

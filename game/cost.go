@@ -265,7 +265,7 @@ func chooseManaForGeneric(genericCost int, manaPool *ManaPool, resolver ChoiceRe
 		}
 		selected, err := resolver.ChooseOne(
 			"Choose mana to use for generic cost",
-			"chooseManaForGeneric",
+			NewChoiceSource("Pay Generic Cost", "Pay Generic Cost"),
 			choices,
 		)
 		if err != nil {

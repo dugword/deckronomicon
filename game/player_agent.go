@@ -1,12 +1,38 @@
 package game
 
+type ChoiceSource interface {
+	Name() string
+	ID() string
+}
+
+// TODO: Don't have a generic choice source, have a specific one for each type
+// of choice, e.g. MenuChoiceSource....
+type choiceSource struct {
+	id   string
+	name string
+}
+
+func (c *choiceSource) Name() string {
+	return c.name
+}
+
+func (c *choiceSource) ID() string {
+	return c.id
+}
+
+func NewChoiceSource(name, id string) ChoiceSource {
+	choiceSource := choiceSource{
+		id:   id,
+		name: name,
+	}
+	return &choiceSource
+}
+
 // ChoiceResolver is an interface for resolving player choices.
 // Maybe do something where I can pass in "play Island" and it'll take the second param as the Choice and only prompt if it is missing
 // maybe support typing in the number or the name of the card
 type ChoiceResolver interface {
-	// TODO: Source needs formating or a struct or something...
-	// could be an action, or a spell, or a card name, or an ability
-	ChooseOne(prompt string, source string, choices []Choice) (Choice, error)
+	ChooseOne(prompt string, source ChoiceSource, choices []Choice) (Choice, error)
 	//ChooseN(prompt string, choices []Choice, n int) []Choice
 	//ChooseUpToN(prompt string, choices []Choice, n int) []Choice
 	//ChooseAny(prompt string, choices []Choice) []Choice

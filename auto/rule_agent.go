@@ -150,7 +150,7 @@ func (a *RuleBasedAgent) GetNextAction(state *game.GameState) game.GameAction {
 // rules. If no choice rules match, the first option is selected by default.
 // This method can be extended to include more complex decision-making logic
 // based on the game state and the available choices.
-func (a *RuleBasedAgent) ChooseOne(prompt string, source string, choices []game.Choice) (game.Choice, error) {
+func (a *RuleBasedAgent) ChooseOne(prompt string, source game.ChoiceSource, choices []game.Choice) (game.Choice, error) {
 	if len(choices) == 0 {
 		return game.Choice{}, errors.New("no choices available")
 	}

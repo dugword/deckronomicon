@@ -75,7 +75,7 @@ func (g *GameState) InitializeNewGame(config *configs.Config) error {
 }
 
 // Discard discards n cards from the player's hand.
-func (g *GameState) Discard(n int, source string, resolver ChoiceResolver) error {
+func (g *GameState) Discard(n int, source ChoiceSource, resolver ChoiceResolver) error {
 	if n > len(g.Hand.Cards()) {
 		n = len(g.Hand.Cards())
 	}
@@ -159,12 +159,12 @@ func GetPotentialMana(state *GameState) *ManaPool {
 }
 
 // TODO Revist this
-func PutNBackOnTop(state *GameState, n int, source string, resolver ChoiceResolver) error {
+func PutNBackOnTop(state *GameState, n int, source GameObject, resolver ChoiceResolver) error {
 	for range n {
 		choices := state.Hand.CardChoices()
 		choice, err := resolver.ChooseOne(
 			"Which card to put back on top",
-			source+"PutBackOnTop",
+			source,
 			choices,
 		)
 		if err != nil {
