@@ -15,8 +15,24 @@ type Box struct {
 	Lines      []string
 }
 
+// splitLines splits a string into lines of a specified maximum length.
+func splitLines(text string, maxLength int) []string {
+	var lines []string
+	for len(text) > maxLength {
+		line := text[:maxLength]
+		lines = append(lines, line)
+		text = text[maxLength:]
+	}
+	if len(text) > 0 {
+		lines = append(lines, text)
+	}
+	return lines
+}
+
+// CreateMessageBox creates a Box for displaying messages.
 func MessageBox(state *game.GameState) Box {
-	return CreateBox("MESSAGE", []string{state.Message})
+	lines := splitLines(state.Message, 70)
+	return CreateBox("MESSAGE", lines)
 }
 
 // GameStatusBox creates a Box for displaying game status.

@@ -155,19 +155,12 @@ func (c *Card) IsSpell() bool {
 	return false
 }
 
-// ActivatedAbilities returns the activated abilities of the card available in
-// the provide zone.
+// ActivatedAbilities returns the activated abilities of the card available.
 // NOTE: These are the activated abilities of the card itself, not the
 // activated abilities of the permanent. A card can have activated abilities
 // that are not present on the permanent.
-func (c *Card) ActivatedAbilities(zone string) []*ActivatedAbility {
-	var abilities []*ActivatedAbility
-	for _, ability := range c.activatedAbilities {
-		if ability.Zone == zone {
-			abilities = append(abilities, ability)
-		}
-	}
-	return abilities
+func (c *Card) ActivatedAbilities() []*ActivatedAbility {
+	return c.activatedAbilities
 }
 
 // CardTypes returns the card types of the card. A card can have multiple
