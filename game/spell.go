@@ -7,20 +7,39 @@ import (
 
 // Spell represents a spell object on the stack.
 type Spell struct {
-	card               *Card
-	spellAbility       *SpellAbility
-	staticAbilities    []*StaticAbility
-	triggeredAbilities []*TriggeredAbility
+	card         *Card
+	cardTypes    []CardType
+	colors       *Colors
+	id           string
+	loyalty      int
+	manaCost     *ManaCost
+	name         string
+	power        int
+	rulesText    string
+	spellAbility *SpellAbility
+	subtypes     []Subtype
+	supertypes   []Supertype
+	toughness    int
 }
 
 // NewSpell creates a new Spell instance from a Card.
 func NewSpell(card *Card) (*Spell, error) {
-	spell := Spell{
-		card: card,
-	}
-	// Spell Ability
-	if card.SpellAbilitySpec == nil {
+	if card.spellAbilitySpec == nil {
 		return nil, errors.New("no spell ability")
+	}
+	spell := Spell{
+		card:       card,
+		cardTypes:  card.cardTypes,
+		colors:     card.colors,
+		id:         GetNextID(),
+		loyalty:    card.loyalty,
+		manaCost:   card.manaCost,
+		name:       card.name,
+		power:      card.power,
+		rulesText:  card.rulesText,
+		subtypes:   card.subtypes,
+		supertypes: card.supertypes,
+		toughness:  card.toughness,
 	}
 	// TODO: Additional Costs
 	/*
@@ -29,90 +48,69 @@ func NewSpell(card *Card) (*Spell, error) {
 			return nil, fmt.Errorf("failed to create cost: %w", err)
 		}
 	*/
-	var effects []*Effect
-	for _, effectSpec := range card.SpellAbilitySpec.EffectSpecs {
-		effectBuilder, ok := EffectMap[effectSpec.ID]
-		if !ok {
-			return nil, fmt.Errorf("effect %s not found", effectSpec.ID)
-		}
-		effect, err := effectBuilder(card.Name(), effectSpec.Modifiers)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create effect %s: %w", effectSpec.ID, err)
-		}
-		effects = append(effects, effect)
+	ability, err := BuildSpellAbility(card.spellAbilitySpec, &spell)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build spell ability: %w", err)
 	}
-	spellAbility := SpellAbility{
-		// Cost:    cost, // TODO: Additional Costs
-		Effects: effects,
-	}
-	// TODO: I think this is wrong, it's overwriting the existing
-	// activated abilities of the card. I think we need to shadow this with a
-	// top level SpellAbility field.
-	spell.spellAbility = &spellAbility
+	spell.spellAbility = ability
 	return &spell, nil
-}
-
-// ActivatedAbilities returns the activated abilities of the spell.
-// Spells cannot have activated abilities, but this is here for interface
-// compatibility.
-func (s *Spell) ActivatedAbilities() []ActivatedAbility {
-	return []ActivatedAbility{}
-}
-
-// Card returns the card associated with the spell.
-func (s *Spell) Card() *Card {
-	return s.card
 }
 
 // CardTypes returns the card types of the spell.
 func (s *Spell) CardTypes() []CardType {
-	return s.card.object.CardTypes
+	return s.cardTypes
 }
 
 // Colors returns the colors of the spell.
 func (s *Spell) Colors() *Colors {
-	return s.card.object.Colors
-}
-
-// ColorIdicator returns the color indicator of the spell.
-func (s *Spell) Defense() int {
-	return s.card.object.Defense
+	return s.colors
 }
 
 // HasType checks if the spell has the specified card type.
 func (s *Spell) HasType(cardType CardType) bool {
-	return s.card.object.HasType(cardType)
+	return s.HasType(cardType)
+}
+
+// HasSubtype checks if the card has a specific type. It returns true if the
+// card has the specified type, and false otherwise.
+func (s *Spell) HasSubtype(subtype Subtype) bool {
+	for _, t := range s.subtypes {
+		if t == subtype {
+			return true
+		}
+	}
+	return false
 }
 
 // ID returns the ID of the spell.
 func (s *Spell) ID() string {
-	return s.card.object.ID
+	return s.id
 }
 
 // Loyalty returns the loyalty of the spell.
 func (s *Spell) Loyalty() int {
-	return s.card.object.Loyalty
+	return s.loyalty
 }
 
 // ManaCost returns the mana cost of the spell.
 func (s *Spell) ManaCost() *ManaCost {
-	return s.card.object.ManaCost
+	return s.manaCost
 }
 
 // Name returns the name of the spell.
 func (s *Spell) Name() string {
-	return s.card.object.Name
+	return s.name
 }
 
 // Power returns the power of the spell.
 func (s *Spell) Power() int {
-	return s.card.object.Power
+	return s.power
 }
 
 // RulesText returns the rules text of the spell. The RulesText does not
 // impact the game logic.
 func (s *Spell) RulesText() string {
-	return s.card.object.RulesText
+	return s.rulesText
 }
 
 // SpellAbility returns the spell ability of the spell.
@@ -120,27 +118,17 @@ func (s *Spell) SpellAbility() *SpellAbility {
 	return s.spellAbility
 }
 
-// StaticAbilities returns the static abilities of the spell.
-func (s *Spell) StaticAbilities() []*StaticAbility {
-	return s.staticAbilities
-}
-
 // Subtypes returns the subtypes of the spell.
 func (s *Spell) Subtypes() []Subtype {
-	return s.card.object.Subtypes
+	return s.subtypes
 }
 
 // Supertypes returns the supertypes of the spell.
 func (s *Spell) Supertypes() []Supertype {
-	return s.card.object.Supertypes
+	return s.supertypes
 }
 
 // Toughness returns the toughness of the spell.
 func (s *Spell) Toughness() int {
-	return s.card.object.Toughness
-}
-
-// TriggeredAbilities returns the triggered abilities of the spell.
-func (s *Spell) TriggeredAbilities() []*TriggeredAbility {
-	return s.triggeredAbilities
+	return s.toughness
 }

@@ -36,6 +36,14 @@ var SpellCardTypes = map[CardType]struct{}{
 	CardTypeSorcery: {},
 }
 
+// IsLand checks if the CardType is a Land type.
+func (t CardType) IsLand() bool {
+	if t == CardTypeLand {
+		return true
+	}
+	return false
+}
+
 // IsPermanent checks if the CardType is a permanent type.
 func (t CardType) IsPermanent() bool {
 	if _, ok := PermanentCardTypes[t]; ok {
@@ -53,15 +61,22 @@ func (t CardType) IsSpell() bool {
 }
 
 // StringToCardType converts a string to a CardType.
-var StringToCardType = map[string]CardType{
-	"Artifact":     CardTypeArtifact,
-	"Battle":       CardTypeBattle,
-	"Creature":     CardTypeCreature,
-	"Enchantment":  CardTypeEnchantment,
-	"Instant":      CardTypeInstant,
-	"Land":         CardTypeLand,
-	"Planeswalker": CardTypePlaneswalker,
-	"Sorcery":      CardTypeSorcery,
+func StringToCardType(s string) (CardType, error) {
+	stringToCardType := map[string]CardType{
+		"Artifact":     CardTypeArtifact,
+		"Battle":       CardTypeBattle,
+		"Creature":     CardTypeCreature,
+		"Enchantment":  CardTypeEnchantment,
+		"Instant":      CardTypeInstant,
+		"Land":         CardTypeLand,
+		"Planeswalker": CardTypePlaneswalker,
+		"Sorcery":      CardTypeSorcery,
+	}
+	cardType, ok := stringToCardType[s]
+	if !ok {
+		return "", fmt.Errorf("unknown card type: %s", s)
+	}
+	return cardType, nil
 }
 
 // Subtype is a subtype of card in Magic: The Gathering.
@@ -251,7 +266,7 @@ func (t Subtype) IsInstantSorcerySubtype() bool {
 	return false
 }
 
-func StringToSubype(s string) (Subtype, error) {
+func StringToSubtype(s string) (Subtype, error) {
 	if t, ok := StringToArtifactSubtype[s]; ok {
 		return t, nil
 	}
@@ -283,47 +298,27 @@ const (
 )
 
 // StringToSupertype converts a string to a Supertype.
-var StringToSupertype = map[string]Supertype{
-	"Basic":     SupertypeBasic,
-	"Legendary": SupertypeLegendary,
-	"Snow":      SupertypeSnow,
-	"World":     SupertypeWorld,
-}
-
-// Color is a color in Magic: The Gathering.
-type Color string
-
-const (
-	ColorBlack     Color = "B"
-	ColorBlue      Color = "U"
-	ColorColorless Color = "C"
-	ColorGreen     Color = "G"
-	ColorRed       Color = "R"
-	ColorWhite     Color = "W"
-)
-
-// StringToColor converts a string to a Color.
-func StringToColor(s string) (Color, error) {
-	colors := map[string]Color{
-		"B": ColorBlack,
-		"C": ColorColorless,
-		"G": ColorGreen,
-		"R": ColorRed,
-		"U": ColorBlue,
-		"W": ColorWhite,
+func StringToSupertype(s string) (Supertype, error) {
+	stringToSupertype := map[string]Supertype{
+		"Basic":     SupertypeBasic,
+		"Legendary": SupertypeLegendary,
+		"Snow":      SupertypeSnow,
+		"World":     SupertypeWorld,
 	}
-	color, ok := colors[s]
+	supertype, ok := stringToSupertype[s]
 	if !ok {
-		return "", fmt.Errorf("unknown color: %s", s)
+		return "", fmt.Errorf("unknown supertype: %s", s)
 	}
-	return color, nil
+	return supertype, nil
 }
 
-type AbilityTagKey string
-
+// library, hand, battlefield, graveyard, stack, exile, and command
 const (
-	AbilityTagDiscard    AbilityTagKey = "Discard"
-	AbilityTagDraw       AbilityTagKey = "Draw"
-	AbilityTagManaSource AbilityTagKey = "ManaSource"
-	AbilityTagScry       AbilityTagKey = "Scry"
+	ZoneBattlefield = "Battlefield"
+	ZoneCommand     = "Command"
+	ZoneExile       = "Exile"
+	ZoneGraveyard   = "Graveyard"
+	ZoneHand        = "Hand"
+	ZoneLibrary     = "Library"
+	ZoneStack       = "Stack"
 )

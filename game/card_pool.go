@@ -1,7 +1,6 @@
 package game
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -9,12 +8,64 @@ import (
 	"strings"
 )
 
-// LoadCardsFromCardPool loads cards from a directory containing JSON files.
-// TODO: I think this doesn't need to exist, and we should load cards during
-// the deck loading phase, this would allow us to call NewCardFromImport for
-// each card and generate a unique ID for each card.
-func LoadCardPool(path string) (map[string]*Card, error) {
-	cards := map[string]*Card{}
+type EffectSpec struct {
+	ID        string           `json:"ID,omitempty"`
+	Modifiers []EffectModifier `json:"Modifiers,omitempty"`
+}
+
+type EffectModifier struct {
+	Key   string `json:"Key,omitempty"`
+	Value string `json:"Value,omitempty"`
+}
+
+type ActivatedAbilitySpec struct {
+	Cost        string       `json:"Cost,omitempty"`
+	EffectSpecs []EffectSpec `json:"Effects,omitempty"`
+	// TODO: This might need to be a slice if an ability is activatedable from
+	// multiple zones.
+	Zone string `json:"Zone,omitempty"`
+}
+
+type SpellAbilitySpec struct {
+	// Cost // TODO: AdditionalCosts?
+	EffectSpecs []EffectSpec `json:"Effects,omitempty"`
+	Zone        string       `json:"Zone,omitempty"`
+}
+
+// StaticAbility represents the specification of static ability.
+type StaticAbilitySpec struct {
+	EffectSpecs []EffectSpec `json:"Effects,omitempty"`
+	Zone        string       `json:"Zone,omitempty"`
+}
+
+type TriggeredAbilitySpec struct {
+	// Cost Cost // TODO: Additoonal Cost
+	EffectSpec []EffectSpec `json:"Effects,omitempty"`
+}
+
+// CardData represents the underlying data structure for a card in the game.
+type CardData struct {
+	ActivatedAbilitySpecs []*ActivatedAbilitySpec `json:"ActivatedAbilities,omitempty"`
+	CardTypes             []string                `json:"CardTypes,omitempty"`
+	Colors                []string                `json:"Color,omitempty"`
+	Loyalty               int                     `json:"Loyalty,omitempty"`
+	ManaCost              string                  `json:"ManaCost,omitempty"`
+	Name                  string                  `json:"Name,omitempty"`
+	Power                 int                     `json:"Power,omitempty"`
+	RulesText             string                  `json:"RulesText,omitempty"`
+	SpellAbilitySpec      *SpellAbilitySpec       `json:"SpellAbility,omitempty"`
+	StaticAbilitySpecs    []*StaticAbilitySpec    `json:"StaticAbilities,omitempty"`
+	TriggeredAbilitySpecs []*TriggeredAbilitySpec `json:"TriggeredAbilities,omitempty"`
+	Subtypes              []string                `json:"Subtypes,omitempty"`
+	Supertypes            []string                `json:"Supertypes,omitempty"`
+	Toughness             int                     `json:"Toughness,omitempty"`
+}
+
+// LoadCardPoolData walks the provided path and loads all JSON files into a map of
+// card names to card data. It returns an error if any file cannot be read
+// or if there are duplicate card names.
+func LoadCardPoolData(path string) (map[string]CardData, error) {
+	cardPoolData := map[string]CardData{}
 	walkFunc := func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -24,45 +75,20 @@ func LoadCardPool(path string) (map[string]*Card, error) {
 		}
 		data, err := os.ReadFile(path)
 		if err != nil {
-			return fmt.Errorf("failed to read file %s: %w", path, err)
+			return fmt.Errorf("failed to read card file %s: %w", path, err)
 		}
-		var cardImport CardImport
-		// TODO, or can I just add the file here...
-		dec := json.NewDecoder(bytes.NewReader(data))
-		dec.DisallowUnknownFields()
-		if err := dec.Decode(&cardImport); err != nil {
-			return fmt.Errorf("failed to unmarshal file %s: %w", path, err)
+		var cardData CardData
+		if err := json.Unmarshal(data, &cardData); err != nil {
+			return fmt.Errorf("failed to unmarshal card data %s: %w", path, err)
 		}
-		card, err := NewCardFromImport(cardImport)
-		if err != nil {
-			return fmt.Errorf("failed to create card from import: %w", err)
+		if _, ok := cardPoolData[cardData.Name]; ok {
+			return fmt.Errorf("duplicate card name detected: %s", cardData.Name)
 		}
-		if _, ok := cards[card.Name()]; ok {
-			return fmt.Errorf("duplicate card name detected: %s", card.Name)
-		}
-		cards[card.Name()] = card
+		cardPoolData[cardData.Name] = cardData
 		return nil
 	}
 	if err := filepath.Walk(path, walkFunc); err != nil {
 		return nil, fmt.Errorf("could not load cards: %w", err)
 	}
-	return cards, nil
+	return cardPoolData, nil
 }
-
-// MustLoadCardPool loads cards from a directory containing JSON files and
-// panics on error.
-// TODO: Only here because I don't want to deal with errors yet, this should
-// be managed during the GameState initialization when the deck is being
-// loaded.
-func MustLoadCardPool(path string) map[string]*Card {
-	cards, err := LoadCardPool(path)
-	if err != nil {
-		panic(fmt.Sprintf("failed to load card pool: %v", err))
-	}
-	return cards
-}
-
-// CardPool is a map of card names to Card objects.
-// TODO: This is a temporary hack and should be moved to the GameState
-// initialization function.
-var CardPool = MustLoadCardPool("./cards")

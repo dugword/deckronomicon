@@ -57,7 +57,7 @@ func (g *GameState) InitializeNewGame(config *configs.Config) error {
 	g.MaxTurns = config.MaxTurns
 	g.Life = config.StartingLife
 	g.MaxHandSize = 7
-	library, err := importDeck(config.DeckList)
+	library, err := importDeck(config.DeckList, config.CardPool)
 	if err != nil {
 		return err
 	}

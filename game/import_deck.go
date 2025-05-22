@@ -3,7 +3,6 @@ package game
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 )
 
@@ -21,30 +20,29 @@ type DeckImport struct {
 // importDeck imports a deck from a JSON file. The file should contain a list of
 // cards and their counts. The function returns a Library containing the
 // imported cards or an error if the import fails.
-func importDeck(filename string) (*Library, error) {
+func importDeck(filename string, cardPool string) (*Library, error) {
 	var deckImport DeckImport
-	file, err := os.Open(filename)
+	deckData, err := os.ReadFile(filename)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read deck import file: %w", err)
 	}
-	defer file.Close()
-
-	bytes, err := io.ReadAll(file)
-	if err != nil {
-		return nil, err
+	if err := json.Unmarshal(deckData, &deckImport); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal deck import: %w", err)
 	}
-
-	err = json.Unmarshal(bytes, &deckImport)
+	cardPoolData, err := LoadCardPoolData(cardPool)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to load card pool data: %w", err)
 	}
 	library := NewLibrary()
-	for _, cardImport := range deckImport.Cards {
-		for range cardImport.Count {
-			// TODO: maybe call NewCard here so each card get's a unique ID
-			card, ok := CardPool[cardImport.Name]
+	for _, deckImportCard := range deckImport.Cards {
+		for range deckImportCard.Count {
+			cardData, ok := cardPoolData[deckImportCard.Name]
 			if !ok {
-				return nil, fmt.Errorf("card %s not found in card pool", cardImport.Name)
+				return nil, fmt.Errorf("card %s not found in card pool data", deckImportCard.Name)
+			}
+			card, err := NewCardFromCardData(cardData)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create card %s: %w", deckImportCard.Name, err)
 			}
 			library.PutOnTop(card)
 		}

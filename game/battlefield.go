@@ -102,7 +102,7 @@ func (b *Battlefield) FindTappedPermanent(name string) *Permanent {
 // an activated ability that can be paid.
 func (b *Battlefield) FindPermanentWithAvailableActivatedAbility(name string, state *GameState) *Permanent {
 	for _, permanent := range b.permanents {
-		for _, activatedAbility := range permanent.card.ActivatedAbilities() {
+		for _, activatedAbility := range permanent.ActivatedAbilities() {
 			if activatedAbility.Cost.CanPay(state) {
 				return permanent
 			}

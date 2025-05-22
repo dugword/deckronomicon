@@ -180,6 +180,7 @@ func evaluateIntComparison(actual int, expr string) bool {
 // PlanManaActivation generates a list of game actions to activate mana
 // abilities.
 func PlanManaActivation(battlefield []*game.Permanent, cost *game.ManaCost) ([]game.GameAction, bool) {
+	// TODO: Handle error
 	needed := make(map[game.Color]int)
 	for color, amt := range cost.Colors {
 		needed[color] = amt
@@ -204,7 +205,7 @@ func PlanManaActivation(battlefield []*game.Permanent, cost *game.ManaCost) ([]g
 				for _, tag := range ability.Tags() {
 					// TODO Handl this error
 					tagValue, _ := game.StringToColor(tag.Value)
-					if tag.Key == game.AbilityTagManaSource && tagValue == color {
+					if tag.Key == game.AbilityTagManaAbility && tagValue == color {
 						actions = append(actions, game.GameAction{
 							Type:   game.ActionActivate,
 							Target: perm.Name(),
