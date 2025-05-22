@@ -20,6 +20,17 @@ type PlayerAgent interface {
 	ReportState(state *GameState)
 }
 
+// OptionalChoice returns adds an optional choice to the list of choices.
+func AddOptionalChoice(choices []Choice) []Choice {
+	choices = append([]Choice{{
+		Index:  -1,
+		Name:   "None",
+		Source: "",
+		Zone:   "",
+	}}, choices...)
+	return choices
+}
+
 // Choice represents a choice made by the player.
 type Choice struct {
 	Index  int
