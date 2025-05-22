@@ -45,7 +45,9 @@ func ClearScreen() {
 func (a *InteractivePlayerAgent) ReportState(state *game.GameState) {
 	// ClearScreen()
 	tmpl := template.New("display")
-	tmpl = template.Must(tmpl.ParseFiles("./interactive/display.tmpl"))
+	tmpl = template.Must(tmpl.ParseFiles(
+		"./interactive/display.tmpl",
+	))
 	displayData := struct {
 		BattlefieldBox Box
 		GameStatusBox  Box

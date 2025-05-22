@@ -34,6 +34,21 @@ const (
 	ActionView     GameActionType = "View"
 )
 
+// TODO: Find some way to enforce this, maybe an action map or lookup function
+// type ActionFunc func(*GameState, string, ChoiceResolver) (*ActionResult, error)
+
+// TODO: This is a bit of a hack. We should probably have a better way to
+// to create the object for ChoiceSource.
+// This is for the ChoiceSorce interface
+func (a GameActionType) Name() string {
+	return string(a)
+}
+
+// This is for the ChoiceSorce interface
+func (a GameActionType) ID() string {
+	return string(a)
+}
+
 // PlayerActions is a map of game action types to booleans indicating if the
 // action is a player action.
 var PlayerActions = map[GameActionType]bool{
@@ -68,7 +83,7 @@ func ActionActivateFunc(state *GameState, target string, resolver ChoiceResolver
 		allChoices := append(choices, handChoices...)
 		choice, err := resolver.ChooseOne(
 			"Which permanent to activate",
-			string(ActionActivate),
+			ActionActivate,
 			AddOptionalChoice(allChoices),
 		)
 		if err != nil {
@@ -140,7 +155,8 @@ func ActionDiscardFunc(state *GameState, target string, resolver ChoiceResolver)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert %s to int: %w", target, err)
 	}
-	state.Discard(n, string(ActionDiscard), resolver)
+	// TODO:
+	state.Discard(n, ActionDiscard, resolver)
 	return &ActionResult{
 		Message: "card discarded",
 	}, nil
@@ -174,7 +190,7 @@ func ActionPlayFunc(state *GameState, target string, resolver ChoiceResolver) (r
 		choices := state.Hand.CardChoices()
 		choice, err := resolver.ChooseOne(
 			"Which card to play from hand",
-			string(ActionPlay),
+			ActionPlay,
 			AddOptionalChoice(choices),
 		)
 		if err != nil {
@@ -215,7 +231,7 @@ func ActionUntapFunc(state *GameState, target string, resolver PlayerAgent) (*Ac
 		choices := state.Battlefield.GetTappedPermanents(state)
 		choice, err := resolver.ChooseOne(
 			"Which permanent to activate",
-			string(ActionActivate),
+			ActionActivate,
 			AddOptionalChoice(choices),
 		)
 		if err != nil {
@@ -251,7 +267,7 @@ func ActionViewFunc(state *GameState, target string, resolver PlayerAgent) (*Act
 		}
 		choice, err = resolver.ChooseOne(
 			"Which zone",
-			"view zone",
+			NewChoiceSource("View Zone", "View Zone"),
 			AddOptionalChoice(choices),
 		)
 		if err != nil {
@@ -281,7 +297,7 @@ func viewHand(state *GameState, resolver ChoiceResolver) (result *ActionResult, 
 	choices := state.Hand.CardChoices()
 	choice, err := resolver.ChooseOne(
 		"Which card",
-		"view hand",
+		NewChoiceSource("View Hand", "View Hand"),
 		AddOptionalChoice(choices),
 	)
 	if err != nil {
@@ -304,7 +320,7 @@ func viewBattlefield(state *GameState, resolver ChoiceResolver) (result *ActionR
 	}
 	choice, err := resolver.ChooseOne(
 		"Which card",
-		"view battlefield",
+		NewChoiceSource("View Battlefield", "View Battlefield"),
 		AddOptionalChoice(choices),
 	)
 	if err != nil {
@@ -326,7 +342,7 @@ func viewGraveyard(state *GameState, resolver ChoiceResolver) (result *ActionRes
 	}
 	choice, err := resolver.ChooseOne(
 		"Which card",
-		"view graveyard",
+		NewChoiceSource("View Graveyard", "View Graveyard"),
 		AddOptionalChoice(choices),
 	)
 	if err != nil {

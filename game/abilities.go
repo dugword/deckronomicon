@@ -40,7 +40,7 @@ func BuildActivatedAbility(spec ActivatedAbilitySpec, source GameObject) (*Activ
 	}
 	ability.Cost = cost
 	for _, effectSpec := range spec.EffectSpecs {
-		effect, err := BuildEffect(source.Name(), effectSpec)
+		effect, err := BuildEffect(source, effectSpec)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create effect: %w", err)
 		}
@@ -100,7 +100,7 @@ func BuildStaticAbility(spec StaticAbilitySpec, source GameObject) (*StaticAbili
 		Zone: spec.Zone,
 	}
 	for _, effectSpec := range spec.EffectSpecs {
-		effect, err := BuildEffect(source.Name(), effectSpec)
+		effect, err := BuildEffect(source, effectSpec)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create effect: %w", err)
 		}
@@ -128,7 +128,7 @@ type SpellAbility struct {
 func BuildSpellAbility(spec *SpellAbilitySpec, source GameObject) (*SpellAbility, error) {
 	ability := SpellAbility{}
 	for _, effectSpec := range spec.EffectSpecs {
-		effect, err := BuildEffect(source.Name(), effectSpec)
+		effect, err := BuildEffect(source, effectSpec)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create effect: %w", err)
 		}

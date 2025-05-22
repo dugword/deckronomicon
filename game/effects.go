@@ -22,10 +22,10 @@ type EffectTag struct {
 }
 
 // TODO  would be good to ensure all BuildEffect functions return the same
-// type EffectBuilder func(source string, effectModifiers []EffectModifier) (*Effect, error)
+// type EffectBuilder func(source GameObject, effectModifiers []EffectModifier) (*Effect, error)
 
 // BuildEffect creates an effect based on the provided EffectSpec.
-func BuildEffect(source string, spec EffectSpec) (*Effect, error) {
+func BuildEffect(source GameObject, spec EffectSpec) (*Effect, error) {
 	switch spec.ID {
 	case "AdditionalMana":
 		return BuildEffectAdditionalMana(source, spec.Modifiers)
@@ -55,7 +55,7 @@ func BuildEffect(source string, spec EffectSpec) (*Effect, error) {
 // BuildEffectDraw creates a draw effect based on the provided modifiers.
 // Keys: Count, Type
 // Default: Count: 1
-func BuildEffectDraw(source string, modifiers []EffectModifier) (*Effect, error) {
+func BuildEffectDraw(source GameObject, modifiers []EffectModifier) (*Effect, error) {
 	effect := Effect{}
 	count := "1"
 	var drawType string
@@ -90,7 +90,7 @@ func BuildEffectDraw(source string, modifiers []EffectModifier) (*Effect, error)
 // pool.
 // Supported Modifier Keys (concats multiple modifiers):
 //   - Mana: <ManaString>
-func BuildEffectAddMana(source string, modifiers []EffectModifier) (*Effect, error) {
+func BuildEffectAddMana(source GameObject, modifiers []EffectModifier) (*Effect, error) {
 	effect := Effect{}
 	var mana string
 	for _, modifier := range modifiers {
@@ -125,7 +125,7 @@ func BuildEffectAddMana(source string, modifiers []EffectModifier) (*Effect, err
 //   - Mana: <ManaString>
 //   - Target: <subtype>
 //   - Duration: <eventType>
-func BuildEffectAdditionalMana(source string, modifiers []EffectModifier) (*Effect, error) {
+func BuildEffectAdditionalMana(source GameObject, modifiers []EffectModifier) (*Effect, error) {
 	var mana string
 	var target string
 	var duration string
@@ -197,7 +197,7 @@ func BuildEffectAdditionalMana(source string, modifiers []EffectModifier) (*Effe
 // the library.
 // Supported Modifier Keys (last applies):
 //   - Count: <Cards to put back> Default: 1
-func BuildEffectPutBackOnTop(source string, effectModifiers []EffectModifier) (*Effect, error) {
+func BuildEffectPutBackOnTop(source GameObject, effectModifiers []EffectModifier) (*Effect, error) {
 	effect := Effect{}
 	count := "1"
 	for _, modifier := range effectModifiers {
@@ -224,7 +224,7 @@ func BuildEffectPutBackOnTop(source string, effectModifiers []EffectModifier) (*
 // BuildEffectScry creates an effect that allows the player to scry.
 // Supported Modifier Keys (last applies):
 //   - Count: <Cards to scry> Default: 1
-func BuildEffectScry(source string, effectModifiers []EffectModifier) (*Effect, error) {
+func BuildEffectScry(source GameObject, effectModifiers []EffectModifier) (*Effect, error) {
 	effect := Effect{}
 	count := "1"
 	for _, modifier := range effectModifiers {
@@ -239,7 +239,7 @@ func BuildEffectScry(source string, effectModifiers []EffectModifier) (*Effect, 
 	}
 	effect.Description = fmt.Sprintf("look at the top %d cards of your library, then put them back on top or bottom of your library in any order.", n)
 	effect.Apply = func(state *GameState, resolver ChoiceResolver) error {
-		if err := Scry(state, n, resolver); err != nil {
+		if err := Scry(state, source, n, resolver); err != nil {
 			return err
 		}
 		return nil
@@ -253,7 +253,7 @@ func BuildEffectScry(source string, effectModifiers []EffectModifier) (*Effect, 
 // Supported Modifier Keys (last applies):
 //   - Count: <Cards to discard> Default: 1
 //   - Delay: <Delay until> EndStep
-func BuildEffectDiscard(source string, effectModifiers []EffectModifier) (*Effect, error) {
+func BuildEffectDiscard(source GameObject, effectModifiers []EffectModifier) (*Effect, error) {
 	effect := Effect{}
 	count := "1"
 	var delay string
@@ -317,7 +317,7 @@ func BuildEffectDiscard(source string, effectModifiers []EffectModifier) (*Effec
 // BuildEffectSearch creates an effect that search cards from the library.
 // Supported Modifier Keys (last applies):
 //   - Subtype <subtype>
-func BuildEffectSearch(source string, effectModifiers []EffectModifier) (*Effect, error) {
+func BuildEffectSearch(source GameObject, effectModifiers []EffectModifier) (*Effect, error) {
 	effect := Effect{}
 	var subtype string
 	for _, modifier := range effectModifiers {
@@ -339,7 +339,7 @@ func BuildEffectSearch(source string, effectModifiers []EffectModifier) (*Effect
 		}
 		chosen, err := resolver.ChooseOne(
 			fmt.Sprintf("Choose a card to put into your hand"),
-			source+"::SearchChoseCard",
+			source,
 			choices,
 		)
 		if err != nil {
@@ -358,7 +358,7 @@ func BuildEffectSearch(source string, effectModifiers []EffectModifier) (*Effect
 	return &effect, nil
 }
 
-func Scry(state *GameState, n int, resolver ChoiceResolver) error {
+func Scry(state *GameState, source GameObject, n int, resolver ChoiceResolver) error {
 	taken, _ := state.Library.TakeCards(n)
 	used := make([]bool, len(taken))
 	for range len(taken) {
@@ -374,7 +374,7 @@ func Scry(state *GameState, n int, resolver ChoiceResolver) error {
 		}
 		chosen, err := resolver.ChooseOne(
 			"Choose a card to place",
-			"ScryChoseCard",
+			source,
 			choices,
 		)
 		if err != nil {
@@ -388,8 +388,7 @@ func Scry(state *GameState, n int, resolver ChoiceResolver) error {
 		}
 		placement, err := resolver.ChooseOne(
 			fmt.Sprintf("Place %s on top or bottom of your library?", chosenCard.Name()),
-			"ScryPlaceCard",
-
+			source,
 			topBottomchoices,
 		)
 		if err != nil {
