@@ -25,14 +25,23 @@ const (
 type ActivatedAbility struct {
 	Cost    Cost
 	Effects []*Effect
+	ID      string
 	Zone    string
+	source  GameObject
 }
 
 // BuildActivatedAbility builds an activated ability from the given
 // specification.
 func BuildActivatedAbility(spec ActivatedAbilitySpec, source GameObject) (*ActivatedAbility, error) {
+	// ZoneBattlefield is the default zone for activated abilities.
+	zone := ZoneBattlefield
+	if spec.Zone != "" {
+		zone = spec.Zone
+	}
 	ability := ActivatedAbility{
-		Zone: spec.Zone,
+		ID:     GetNextID(),
+		source: source,
+		Zone:   zone,
 	}
 	cost, err := NewCost(spec.Cost, source)
 	if err != nil {
@@ -96,8 +105,13 @@ type StaticAbility struct {
 
 // BuildStaticAbility builds a static ability from the given specification.
 func BuildStaticAbility(spec StaticAbilitySpec, source GameObject) (*StaticAbility, error) {
+	// ZoneBattlefield is the default zone for static abilities.
+	zone := ZoneBattlefield
+	if spec.Zone != "" {
+		zone = spec.Zone
+	}
 	ability := StaticAbility{
-		Zone: spec.Zone,
+		Zone: zone,
 	}
 	for _, effectSpec := range spec.EffectSpecs {
 		effect, err := BuildEffect(source, effectSpec)

@@ -28,6 +28,44 @@ func NewChoiceSource(name, id string) ChoiceSource {
 	return &choiceSource
 }
 
+// CreateObjectChoices generates a list of choices from a slice of GameObjects.
+func CreateObjectChoices(objects []GameObject, zone string) []Choice {
+	var choices []Choice
+	for _, object := range objects {
+		choices = append(choices, Choice{
+			ID:   object.ID(),
+			Name: object.Name(),
+			Zone: zone,
+		})
+	}
+	return choices
+}
+
+// CreateActivatedAbilityChoices generates a list of choices from a slice of
+// ActivatedAbilities.
+func CreateActivatedAbilityChoices(abilities []*ActivatedAbility) []Choice {
+	var choices []Choice
+	for _, ability := range abilities {
+		choices = append(choices, Choice{
+			ID:     ability.ID,
+			Name:   ability.Description(),
+			Source: ability.source.Name(),
+			Zone:   ability.Zone,
+		})
+	}
+	return choices
+}
+
+/*
+func (h *Hand) CardChoices() []Choice {
+	var choices []Choice
+	for _, card := range h.cards {
+		choices = append(choices, Choice{Name: card.Name(), ID: card.ID()})
+	}
+	return choices
+}
+*/
+
 // ChoiceResolver is an interface for resolving player choices.
 // Maybe do something where I can pass in "play Island" and it'll take the second param as the Choice and only prompt if it is missing
 // maybe support typing in the number or the name of the card
@@ -54,9 +92,9 @@ func AddOptionalChoice(choices []Choice) []Choice {
 		// TODO: Make this a constant, maybe special character to prevent
 		// collision with other IDs
 		ID:     ChoiceNone,
-		Name:   "None",
-		Source: "",
-		Zone:   "",
+		Name:   ChoiceNone,
+		Source: ChoiceNone,
+		Zone:   ChoiceNone,
 	}}, choices...)
 	return choices
 }

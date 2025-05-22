@@ -44,7 +44,7 @@ func importDeck(filename string, cardPool string) (*Library, error) {
 			if err != nil {
 				return nil, fmt.Errorf("failed to create card %s: %w", deckImportCard.Name, err)
 			}
-			library.PutOnTop(card)
+			library.AddTop(card)
 		}
 	}
 	return library, err

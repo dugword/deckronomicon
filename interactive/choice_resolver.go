@@ -21,12 +21,13 @@ func (a *InteractivePlayerAgent) ChooseOne(prompt string, source game.ChoiceSour
 		return game.Choice{}, fmt.Errorf("no choices available")
 	}
 	title := fmt.Sprintf("%s requires a choice", source.Name())
+	groupedChoicesBox, orderedChoices := GroupedChoicesBox(title, choices)
 	tmpl := template.Must(template.New("choices").Parse(choiceBoxTmpl))
 	if err := tmpl.ExecuteTemplate(
 		// TODO: use passed in stdout from Run
 		os.Stdout,
 		"choices",
-		ChoicesBox(title, choices),
+		groupedChoicesBox,
 	); err != nil {
 		fmt.Println("Error executing template:", err)
 		// TODO: handle error return to main
@@ -34,12 +35,12 @@ func (a *InteractivePlayerAgent) ChooseOne(prompt string, source game.ChoiceSour
 	}
 	for {
 		a.Prompt(prompt)
-		max := len(choices) - 1 // 0 based
+		max := len(orderedChoices) - 1 // 0 based
 		choice, err := a.ReadInputNumber(max)
 		if err != nil {
 			fmt.Printf("Invalid choice. Please enter a number: %d - %d\n", 0, max)
 			continue
 		}
-		return choices[choice], nil
+		return orderedChoices[choice], nil
 	}
 }

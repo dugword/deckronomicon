@@ -17,7 +17,7 @@ type GameState struct {
 	Library            *Library
 	EventListeners     []EventHandler
 	Exile              []*Card
-	Graveyard          []*Card
+	Graveyard          *Graveyard
 	Hand               *Hand
 	LandDrop           bool
 	LastActionFailed   bool
@@ -42,7 +42,7 @@ func NewGameState() *GameState {
 		Library:            NewLibrary(),
 		EventListeners:     []EventHandler{},
 		Exile:              []*Card{}, // TODO: make this a struct
-		Graveyard:          []*Card{}, // TODO: Make this a struct
+		Graveyard:          NewGraveyard(),
 		Hand:               NewHand(),
 		ManaPool:           NewManaPool(),
 		PotentialMana:      NewManaPool(),
@@ -76,47 +76,73 @@ func (g *GameState) InitializeNewGame(config *configs.Config) error {
 
 // Discard discards n cards from the player's hand.
 func (g *GameState) Discard(n int, source ChoiceSource, resolver ChoiceResolver) error {
-	if n > len(g.Hand.Cards()) {
-		n = len(g.Hand.Cards())
-	}
-	for range n {
-		choices := g.Hand.CardChoices()
-		choice, err := resolver.ChooseOne(
-			"Which card to discard from hand",
-			source,
-			choices,
-		)
-		if err != nil {
-			return fmt.Errorf("failed to choose card to discard: %w", err)
+	/*
+		if n > len(g.Hand.Cards()) {
+			n = len(g.Hand.Cards())
 		}
-		card, err := g.Hand.GetCard(choice.ID)
-		if err != nil {
-			return fmt.Errorf("failed to get card from hand: %w", err)
+		for range n {
+			choices := g.Hand.CardChoices()
+			choice, err := resolver.ChooseOne(
+				"Which card to discard from hand",
+				source,
+				choices,
+			)
+			if err != nil {
+				return fmt.Errorf("failed to choose card to discard: %w", err)
+			}
+			card, err := g.Hand.GetCard(choice.ID)
+			if err != nil {
+				return fmt.Errorf("failed to get card from hand: %w", err)
+			}
+			g.Hand.RemoveCard(card)
+			// todo remove the .cards access
+			g.Graveyard.cards = append(g.Graveyard.cards, card)
 		}
-		g.Hand.RemoveCard(card)
-		g.Graveyard = append(g.Graveyard, card)
-	}
+	*/
 	return nil
 }
 
 // Draw draws n cards from the library into the player's hand.
 func (g *GameState) Draw(n int) error {
-	drawn, err := g.Library.TakeCards(n)
-	if errors.Is(err, ErrLibraryEmpty) {
-		return PlayerLostError{
-			Reason: DeckedOut,
-		}
-	}
-	if err != nil {
-		return err
-	}
+	var drawn []GameObject
 	var names []string
-	for _, card := range drawn {
+	for range n {
+		card, err := g.Library.TakeTop()
+		if err != nil {
+			if errors.Is(err, ErrLibraryEmpty) {
+				return PlayerLostError{
+					Reason: DeckedOut,
+				}
+			}
+			return err
+		}
+		drawn = append(drawn, card)
 		names = append(names, card.Name())
 	}
-	g.Hand.Add(drawn...)
+	for _, card := range drawn {
+		// TODO: rethink if I want to add one at a time or accept a slice
+		g.Hand.Add(card)
+	}
 	g.Log(fmt.Sprintf("drew: %s", strings.Join(names, ", ")))
 	return nil
+}
+
+func (g *GameState) Zones() []Zone {
+	return []Zone{
+		g.Battlefield,
+		g.Library,
+		g.Hand,
+		g.Graveyard,
+	}
+}
+
+func (g *GameState) GetZone(zone string) (Zone, error) {
+	for _, z := range g.Zones() {
+		if z.ZoneType() == zone {
+			return z, nil
+		}
+	}
+	return nil, fmt.Errorf("zone %s not found", zone)
 }
 
 /*
@@ -158,23 +184,25 @@ func GetPotentialMana(state *GameState) *ManaPool {
 
 // TODO Revist this
 func PutNBackOnTop(state *GameState, n int, source GameObject, resolver ChoiceResolver) error {
-	for range n {
-		choices := state.Hand.CardChoices()
-		choice, err := resolver.ChooseOne(
-			"Which card to put back on top",
-			source,
-			choices,
-		)
-		if err != nil {
-			return fmt.Errorf("failed to choose card to put back on top: %w", err)
+	/*
+		for range n {
+			choices := state.Hand.CardChoices()
+			choice, err := resolver.ChooseOne(
+				"Which card to put back on top",
+				source,
+				choices,
+			)
+			if err != nil {
+				return fmt.Errorf("failed to choose card to put back on top: %w", err)
+			}
+			card, err := state.Hand.GetCard(choice.ID)
+			if err != nil {
+				return fmt.Errorf("failed to get card from hand: %w", err)
+			}
+			state.Hand.RemoveCard(card)
+			state.Library.PutOnTop(card)
 		}
-		card, err := state.Hand.GetCard(choice.ID)
-		if err != nil {
-			return fmt.Errorf("failed to get card from hand: %w", err)
-		}
-		state.Hand.RemoveCard(card)
-		state.Library.PutOnTop(card)
-	}
+	*/
 	return nil
 }
 

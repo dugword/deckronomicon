@@ -1,6 +1,15 @@
 package game
 
-import "fmt"
+import (
+	"fmt"
+)
+
+// Permanents returns all permanents on the battlefield.
+// TODO: For display remove later, permanents should only be manipulated
+// through the Battlefield interface.
+func (b *Battlefield) Permanents() []*Permanent {
+	return b.permanents
+}
 
 // Battlefield represents the battlefield during an active game.
 type Battlefield struct {
@@ -15,22 +24,36 @@ func NewBattlefield() *Battlefield {
 	return &battlefield
 }
 
-// AddPermanent adds a permanent to the battlefield.
-func (b *Battlefield) AddPermanent(permanent *Permanent) {
+func (b *Battlefield) Add(object GameObject) error {
+	permanent, ok := object.(*Permanent)
+	if !ok {
+		return fmt.Errorf("object is not a permanent")
+	}
 	b.permanents = append(b.permanents, permanent)
+	return nil
 }
 
-// Permanents returns all permanents on the battlefield.
-// TODO: For display remove later
-// I don't remember why I said for display only... maybe permanents should
-// only be manipulated through the methods of this struct.
-// Maybe return choices?
-func (b *Battlefield) Permanents() []*Permanent {
-	return b.permanents
+func (b *Battlefield) AvailableActivatedAbilities(state *GameState) []*ActivatedAbility {
+	var abilities []*ActivatedAbility
+	for _, permanent := range b.permanents {
+		for _, ability := range permanent.ActivatedAbilities() {
+			if ability.Cost.CanPay(state) {
+				abilities = append(abilities, ability)
+			}
+		}
+	}
+	return abilities
 }
 
-// GetPermanents returns the permanent with the given ID.
-func (b *Battlefield) GetPermanent(id string) (*Permanent, error) {
+// AvailableToPlay returns a list of permanents that can be played from the
+// battlefield. This exists to satisfy the Zone interface. Permanents on the
+// battlefield generally cannot be played. There is no rule that prevents a
+// card from enabling this, but I don't think any exist.
+func (b *Battlefield) AvailableToPlay(*GameState) []GameObject {
+	return nil
+}
+
+func (b *Battlefield) Find(id string) (GameObject, error) {
 	for _, permanent := range b.permanents {
 		if permanent.ID() == id {
 			return permanent, nil
@@ -39,94 +62,92 @@ func (b *Battlefield) GetPermanent(id string) (*Permanent, error) {
 	return nil, fmt.Errorf("permanent with ID %s not found", id)
 }
 
-// GetPermanentsWithActivatedAbilities returns a list of permanents with
-// activated abilities that can be paid.
-func (b *Battlefield) GetPermanentsWithActivatedAbilities(state *GameState) []Choice {
-	var found []Choice
+// FindByName finds the first permanent in the battlefield by name.
+func (b *Battlefield) FindByName(name string) (GameObject, error) {
 	for _, permanent := range b.permanents {
-		for _, activatedAbility := range permanent.ActivatedAbilities() {
-			if activatedAbility.Cost.CanPay(state) {
-				found = append(
-					found,
-					Choice{
-						Name: permanent.Name(),
-						ID:   permanent.ID(),
-						Zone: "Battlefield",
-					},
-				)
-				break
-			}
+		if permanent.Name() == name {
+			return permanent, nil
+		}
+	}
+	return nil, fmt.Errorf("card with name %s not found", name)
+}
+
+// FindAllBySubtype finds all permanents in the battlefield by subtype.
+func (b *Battlefield) FindAllBySubtype(subtype Subtype) []GameObject {
+	var found []GameObject
+	for _, permanent := range b.permanents {
+		if permanent.HasSubtype(subtype) {
+			found = append(found, permanent)
 		}
 	}
 	return found
 }
 
-// GetUnTappedPermanents returns a list of choices for untapped permanents on
-// the battlefield.
-func (b *Battlefield) GetUnTappedPermanents(state *GameState) []Choice {
-	var found []Choice
+func (b *Battlefield) Get(id string) (GameObject, error) {
 	for _, permanent := range b.permanents {
-		if !permanent.IsTapped() {
-			found = append(
-				found,
-				Choice{
-					Name: permanent.Name(),
-					ID:   permanent.ID(),
-				},
-			)
+		if permanent.ID() == id {
+			return permanent, nil
 		}
 	}
-	return found
+	return nil, fmt.Errorf("permanent with ID %s not found", id)
 }
 
-// GetTappedPermanents returns a list of choices for tapped permanents on
-// the battlefield.
-func (b *Battlefield) GetTappedPermanents(state *GameState) []Choice {
-	var found []Choice
-	for _, permanent := range b.permanents {
-		if permanent.IsTapped() {
-			found = append(found, Choice{Name: permanent.Name(), ID: permanent.ID()})
+func (b *Battlefield) Remove(id string) error {
+	for i, permanent := range b.permanents {
+		if permanent.ID() == id {
+			b.permanents = append(b.permanents[:i], b.permanents[i+1:]...)
+			return nil
 		}
 	}
-	return found
+	return fmt.Errorf("permanent with ID %s not found", id)
 }
 
-// FindUntappedPermanent returns the first untapped permanent with the given
-// name.
-// TODO: this only finds the first one, that will be problematic if there are
-// duplicates where it matters
-func (b *Battlefield) FindUntappedPermanent(name string) *Permanent {
-	for _, p := range b.permanents {
-		if p.Name() == name && !p.IsTapped() {
-			return p
+func (b *Battlefield) Take(id string) (GameObject, error) {
+	for i, permanent := range b.permanents {
+		if permanent.ID() == id {
+			b.permanents = append(b.permanents[:i], b.permanents[i+1:]...)
+			return permanent, nil
 		}
 	}
-	return nil
+	return nil, fmt.Errorf("permanent with ID %s not found", id)
 }
+
+func (b *Battlefield) Size() int {
+	return len(b.permanents)
+}
+
+func (b *Battlefield) ZoneType() string {
+	return ZoneBattlefield
+}
+
+// Battlefield Specific Methods
 
 // FindTappedPermanent returns the first tapped permanent with the given name.
-// TODO: this only finds the first one, that will be problematic if there are
-// duplicates where it matters
-func (b *Battlefield) FindTappedPermanent(name string) *Permanent {
+func (b *Battlefield) FindTappedPermanent(name string) (*Permanent, error) {
 	for _, p := range b.permanents {
 		if p.Name() == name && p.IsTapped() {
-			return p
+			return p, nil
 		}
 	}
-	return nil
+	return nil, fmt.Errorf("tapped permanent with name %s not found", name)
 }
 
-// FindPermanentWithAvailableActivatedAbility returns the first permanent with
-// an activated ability that can be paid.
-func (b *Battlefield) FindPermanentWithAvailableActivatedAbility(name string, state *GameState) *Permanent {
-	for _, permanent := range b.permanents {
-		for _, activatedAbility := range permanent.ActivatedAbilities() {
-			if activatedAbility.Cost.CanPay(state) {
-				return permanent
-			}
+// GetTappedPermanents returns all tapped permanents on the battlefield.
+func (b *Battlefield) GetTappedPermanents() []GameObject {
+	var permanents []GameObject
+	for _, p := range b.permanents {
+		if p.IsTapped() {
+			permanents = append(permanents, p)
 		}
 	}
-	return nil
+	return permanents
+}
+
+// RemoveSummoningSickness removes summoning sickness from all permanents
+func (b *Battlefield) RemoveSummoningSickness() {
+	for _, permanent := range b.permanents {
+		permanent.RemoveSummoningSickness()
+	}
 }
 
 // UntapPermanents untaps all permanents on the battlefield.
@@ -136,12 +157,5 @@ func (b *Battlefield) FindPermanentWithAvailableActivatedAbility(name string, st
 func (b *Battlefield) UntapPermanents() {
 	for _, permanent := range b.permanents {
 		permanent.Untap()
-	}
-}
-
-// RemoveSummoningSickness removes summoning sickness from all permanents
-func (b *Battlefield) RemoveSummoningSickness() {
-	for _, permanent := range b.permanents {
-		permanent.RemoveSummoningSickness()
 	}
 }

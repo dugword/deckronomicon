@@ -3,6 +3,7 @@ package interactive
 import (
 	"deckronomicon/game"
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -29,11 +30,66 @@ func splitLines(text string, maxLength int) []string {
 	return lines
 }
 
+func GroupedChoicesBox(title string, choices []game.Choice) (Box, []game.Choice) {
+	grouped := make(map[string][]game.Choice)
+	for _, choice := range choices {
+		if choice.ID == game.ChoiceNone {
+			grouped[game.ChoiceNone] = append(grouped[game.ChoiceNone], choice)
+		} else if choice.Zone == "" {
+			// TODO: Handle this different
+			grouped["unknown"] = append(grouped[game.ChoiceNone], choice)
+		} else {
+			grouped[choice.Zone] = append(grouped[choice.Zone], choice)
+		}
+	}
+	var groupNames []string
+	for groupName := range grouped {
+		if groupName == game.ChoiceNone {
+			continue
+		}
+		groupNames = append(groupNames, groupName)
+	}
+	sort.Strings(groupNames)
+	// TODO: Make 0 always none, and have it be not an option if the choice is
+	// not optional
+	var orderedChoices []game.Choice
+	var i = 0
+	var lines []string
+	for _, groupName := range groupNames {
+		lines = append(lines, fmt.Sprintf("--- %s ---", groupName))
+		for _, choice := range grouped[groupName] {
+			var line string
+			if choice.Source == "" {
+				line = fmt.Sprintf("%d: %s", i, choice.Name)
+			} else {
+				line = fmt.Sprintf("%d: %s - %s", i, choice.Source, choice.Name)
+			}
+			lines = append(lines, line)
+			orderedChoices = append(orderedChoices, choice)
+			i++
+		}
+	}
+	if grouped[game.ChoiceNone] != nil {
+		lines = append(lines, "---------")
+		lines = append(lines, fmt.Sprintf("%d: %s", i, game.ChoiceNone))
+		orderedChoices = append(orderedChoices, game.Choice{ID: game.ChoiceNone})
+	}
+	return CreateBox(title, lines), orderedChoices
+}
+
 // ChoicesBox creates a Box for displaying choices.
 func ChoicesBox(title string, choices []game.Choice) Box {
 	var lines []string
 	for i, choice := range choices {
-		lines = append(lines, fmt.Sprintf("%d: %s", i, choice.Name))
+		var line string
+		if choice.ID == game.ChoiceNone {
+			line = fmt.Sprintf("%d: %s", i, choice.Name)
+		} else if choice.Source == "" {
+			line = fmt.Sprintf("%d: %s - %s", i, choice.Zone, choice.Name)
+		} else {
+			line = fmt.Sprintf("%d: %s - %s - %s", i, choice.Zone, choice.Source, choice.Name)
+		}
+		lines = append(lines, line)
 	}
 	return CreateBox(title, lines)
 }
@@ -52,7 +108,7 @@ func GameStatusBox(state *game.GameState) Box {
 		fmt.Sprintf("Turn: %d", state.Turn),
 		fmt.Sprintf("Phase: %s", state.CurrentPhase),
 		fmt.Sprintf("Library: %d cards", state.Library.Size()),
-		fmt.Sprintf("Graveyard: %d cards", len(state.Graveyard)),
+		fmt.Sprintf("Graveyard: %d cards", len(state.Graveyard.Cards())),
 		fmt.Sprintf("Hand: %d cards", state.Hand.Size()),
 	})
 }
@@ -76,7 +132,7 @@ func BattlefieldBox(state *game.GameState) Box {
 // GraveyardBox creates a Box for displaying cards in the graveyard.
 func GraveyardBox(state *game.GameState) Box {
 	var lines []string
-	for _, card := range state.Graveyard {
+	for _, card := range state.Graveyard.Cards() {
 		line := card.Name()
 		lines = append(lines, line)
 	}

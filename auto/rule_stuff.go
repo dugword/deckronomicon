@@ -79,28 +79,28 @@ func MatchesConditionSet(state *game.GameState, cond ConditionSet) (bool, error)
 	*/
 
 	// --- Graveyard Checks ---
-	if !allCardsPresent(cond.GraveyardContains, state.Graveyard) {
+	if !allCardsPresent(cond.GraveyardContains, state.Graveyard.Cards()) {
 		return false, nil
 	}
-	if len(cond.GraveyardContainsAny) > 0 && !anyCardPresent(cond.GraveyardContainsAny, state.Graveyard) {
+	if len(cond.GraveyardContainsAny) > 0 && !anyCardPresent(cond.GraveyardContainsAny, state.Graveyard.Cards()) {
 		return false, nil
 	}
-	if !allGroupsSatisfied(cond.GraveyardContainsAllGroups, state.Graveyard) {
+	if !allGroupsSatisfied(cond.GraveyardContainsAllGroups, state.Graveyard.Cards()) {
 		return false, nil
 	}
-	if len(cond.GraveyardContainsAnyGroups) > 0 && !anyGroupSatisfied(cond.GraveyardContainsAnyGroups, state.Graveyard) {
+	if len(cond.GraveyardContainsAnyGroups) > 0 && !anyGroupSatisfied(cond.GraveyardContainsAnyGroups, state.Graveyard.Cards()) {
 		return false, nil
 	}
-	if !allCardsAbsent(cond.GraveyardLacks, state.Graveyard) {
+	if !allCardsAbsent(cond.GraveyardLacks, state.Graveyard.Cards()) {
 		return false, nil
 	}
-	if len(cond.GraveyardLacksAny) > 0 && !anyCardAbsent(cond.GraveyardLacksAny, state.Graveyard) {
+	if len(cond.GraveyardLacksAny) > 0 && !anyCardAbsent(cond.GraveyardLacksAny, state.Graveyard.Cards()) {
 		return false, nil
 	}
-	if !allGroupsAbsent(cond.GraveyardLacksAllGroups, state.Graveyard) {
+	if !allGroupsAbsent(cond.GraveyardLacksAllGroups, state.Graveyard.Cards()) {
 		return false, nil
 	}
-	if !noGroupFullyPresent(cond.GraveyardLacksAnyGroups, state.Graveyard) {
+	if !noGroupFullyPresent(cond.GraveyardLacksAnyGroups, state.Graveyard.Cards()) {
 		return false, nil
 	}
 
@@ -114,7 +114,7 @@ func MatchesConditionSet(state *game.GameState, cond ConditionSet) (bool, error)
 	if cond.CardsInHand != "" && !evaluateIntComparison(state.Hand.Size(), cond.CardsInHand) {
 		return false, nil
 	}
-	if cond.GraveyardSize != "" && !evaluateIntComparison(len(state.Graveyard), cond.GraveyardSize) {
+	if cond.GraveyardSize != "" && !evaluateIntComparison(len(state.Graveyard.Cards()), cond.GraveyardSize) {
 		return false, nil
 	}
 	if cond.SpellCountThisTurn != "" && !evaluateIntComparison(state.StormCount, cond.SpellCountThisTurn) {

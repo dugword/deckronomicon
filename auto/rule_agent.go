@@ -122,7 +122,18 @@ func (a *RuleBasedAgent) GetNextAction(state *game.GameState) game.GameAction {
 			// TODO This could be more elegant
 			if gameAction.Type == game.ActionPlay {
 				if rule.Then.Target != "" {
-					card := state.Hand.FindCard(rule.Then.Target)
+					object, err := state.Hand.FindByName(rule.Then.Target)
+					if err != nil {
+						fmt.Println("ERROR: could not find card in hand =>", rule.Then.Target)
+						os.Exit(1)
+						return game.GameAction{Type: ""}
+					}
+					card, ok := object.(*game.Card)
+					if !ok {
+						fmt.Println("ERROR: could not cast card =>", rule.Then.Target)
+						os.Exit(1)
+					}
+
 					// TODO canCast should probably be an error?
 					preactions, canCast := PlanManaActivation(
 						state.Battlefield.Permanents(),
