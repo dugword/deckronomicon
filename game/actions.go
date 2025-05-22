@@ -69,10 +69,13 @@ func ActionActivateFunc(state *GameState, target string, resolver ChoiceResolver
 		choice, err := resolver.ChooseOne(
 			"Which permanent to activate",
 			string(ActionActivate),
-			allChoices,
+			AddOptionalChoice(allChoices),
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to choose permanent: %w", err)
+		}
+		if choice.Index == -1 {
+			return nil, nil
 		}
 		if choice.Zone == "Hand" {
 			selectedObject = state.Hand.GetCard(choice.Index)
@@ -172,10 +175,16 @@ func ActionPlayFunc(state *GameState, target string, resolver ChoiceResolver) (r
 		choice, err := resolver.ChooseOne(
 			"Which card to play from hand",
 			string(ActionPlay),
-			choices,
+			AddOptionalChoice(choices),
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to choose card: %w", err)
+		}
+		// TODO: This is a bit of a hack. We should probably have a better way
+		// to handle optional choices. Maybe a special value or a separate
+		// type.
+		if choice.Index == -1 {
+			return nil, nil
 		}
 		card = state.Hand.GetCard(choice.Index)
 	}
@@ -207,10 +216,13 @@ func ActionUntapFunc(state *GameState, target string, resolver PlayerAgent) (*Ac
 		choice, err := resolver.ChooseOne(
 			"Which permanent to activate",
 			string(ActionActivate),
-			choices,
+			AddOptionalChoice(choices),
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to choose permanent: %w", err)
+		}
+		if choice.Index == -1 {
+			return nil, nil
 		}
 		selectedPermanent = state.Battlefield.GetPermanent(choice.Index)
 	}
@@ -237,9 +249,16 @@ func ActionViewFunc(state *GameState, target string, resolver PlayerAgent) (*Act
 				Name: "Graveyard",
 			},
 		}
-		choice, err = resolver.ChooseOne("Which zone", "view zone", choices)
+		choice, err = resolver.ChooseOne(
+			"Which zone",
+			"view zone",
+			AddOptionalChoice(choices),
+		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to choose zone: %w", err)
+		}
+		if choice.Index == -1 {
+			return nil, nil
 		}
 	} else {
 		choice = Choice{Name: target}
@@ -260,9 +279,16 @@ func ActionViewFunc(state *GameState, target string, resolver PlayerAgent) (*Act
 // probably a general abstraction for cards/permanents and zones
 func viewHand(state *GameState, resolver ChoiceResolver) (result *ActionResult, err error) {
 	choices := state.Hand.CardChoices()
-	choice, err := resolver.ChooseOne("Which card", "view hand", choices)
+	choice, err := resolver.ChooseOne(
+		"Which card",
+		"view hand",
+		AddOptionalChoice(choices),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to choose card: %w", err)
+	}
+	if choice.Index == -1 {
+		return nil, nil
 	}
 	card := state.Hand.GetCard(choice.Index)
 	state.Log("viewed " + card.Name())
@@ -276,9 +302,16 @@ func viewBattlefield(state *GameState, resolver ChoiceResolver) (result *ActionR
 	for i, card := range permanents {
 		choices = append(choices, Choice{Name: card.Name(), Index: i})
 	}
-	choice, err := resolver.ChooseOne("Which card", "view battlefield", choices)
+	choice, err := resolver.ChooseOne(
+		"Which card",
+		"view battlefield",
+		AddOptionalChoice(choices),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to choose card: %w", err)
+	}
+	if choice.Index == -1 {
+		return nil, nil
 	}
 	card := permanents[choice.Index]
 	state.Log("viewed " + card.Name())
@@ -291,9 +324,16 @@ func viewGraveyard(state *GameState, resolver ChoiceResolver) (result *ActionRes
 	for i, card := range state.Graveyard {
 		choices = append(choices, Choice{Name: card.Name(), Index: i})
 	}
-	choice, err := resolver.ChooseOne("Which card", "view graveyard", choices)
+	choice, err := resolver.ChooseOne(
+		"Which card",
+		"view graveyard",
+		AddOptionalChoice(choices),
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to choose card: %w", err)
+	}
+	if choice.Index == -1 {
+		return nil, nil
 	}
 	card := state.Graveyard[choice.Index]
 	state.Log("viewed " + card.Name())
