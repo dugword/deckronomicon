@@ -58,27 +58,33 @@ type ActionResult struct {
 // TODO: Support more than one activated ability
 // TODO: Support activated abilities in hand and graveyard
 func ActionActivateFunc(state *GameState, target string, resolver ChoiceResolver) (*ActionResult, error) {
-	var selectedPermanent *Permanent
+	var selectedObject GameObject
 	if target != "" {
-		selectedPermanent = state.Battlefield.FindPermanentWithAvailableActivatedAbility(target, state)
+		selectedObject = state.Battlefield.FindPermanentWithAvailableActivatedAbility(target, state)
 	}
-	if selectedPermanent == nil {
+	if selectedObject == nil {
 		choices := state.Battlefield.GetPermanentsWithActivatedAbilities(state)
+		handChoices := state.Hand.GetCardsWithActivatedAbilities()
+		allChoices := append(choices, handChoices...)
 		choice, err := resolver.ChooseOne(
 			"Which permanent to activate",
 			string(ActionActivate),
-			choices,
+			allChoices,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to choose permanent: %w", err)
 		}
-		selectedPermanent = state.Battlefield.GetPermanent(choice.Index)
+		if choice.Zone == "Hand" {
+			selectedObject = state.Hand.GetCard(choice.Index)
+		} else if choice.Zone == "Battlefield" {
+			selectedObject = state.Battlefield.GetPermanent(choice.Index)
+		}
 	}
 	// TODO: Support more than 1
-	if len(selectedPermanent.ActivatedAbilities()) > 1 {
+	if len(selectedObject.ActivatedAbilities()) > 1 {
 		return nil, fmt.Errorf("no support for multiple activated abilities")
 	}
-	activatedAbility := selectedPermanent.ActivatedAbilities()[0]
+	activatedAbility := selectedObject.ActivatedAbilities()[0]
 	if err := activatedAbility.Cost.Pay(state, resolver); err != nil {
 		return nil, fmt.Errorf("cannot pay activated ability cost: %w", err)
 	}
@@ -100,7 +106,7 @@ func ActionActivateFunc(state *GameState, target string, resolver ChoiceResolver
 				fmt.Println("is mana ability")
 				state.EmitEvent(Event{
 					Type:   EventTapForMana,
-					Source: selectedPermanent,
+					Source: selectedObject,
 				}, resolver)
 				fmt.Println("Emitted event")
 			}
@@ -108,14 +114,14 @@ func ActionActivateFunc(state *GameState, target string, resolver ChoiceResolver
 	}
 	state.Log(fmt.Sprintf(
 		"%s, paid %s to %s",
-		selectedPermanent.Name(),
+		selectedObject.Name(),
 		activatedAbility.Cost.Description(),
 		activatedAbility.Description()),
 	)
 	return &ActionResult{
 		Message: fmt.Sprintf(
 			"ability resolved: %s (%s)",
-			selectedPermanent.Name(),
+			selectedObject.Name(),
 			activatedAbility.Description(),
 		),
 	}, nil

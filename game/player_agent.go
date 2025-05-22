@@ -25,4 +25,5 @@ type Choice struct {
 	Index  int
 	Name   string
 	Source string
+	Zone   string
 }

@@ -33,6 +33,29 @@ func (h *Hand) CardChoices() []Choice {
 	return choices
 }
 
+// GetCardsWithActivatedAbilities returns a slice of cards with activated
+// abilities.
+func (h *Hand) GetCardsWithActivatedAbilities() []Choice {
+	var choices []Choice
+	for i, card := range h.cards {
+		if len(card.ActivatedAbilities()) > 0 {
+			ability := card.ActivatedAbilities()[0]
+			if ability.Zone != "Hand" {
+				continue
+			}
+			choices = append(
+				choices,
+				Choice{
+					Name:  card.Name(),
+					Index: i,
+					Zone:  "Hand",
+				},
+			)
+		}
+	}
+	return choices
+}
+
 // FindCard finds a card in the hand by name.
 func (h *Hand) FindCard(name string) *Card {
 	for _, card := range h.cards {
