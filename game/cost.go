@@ -257,7 +257,7 @@ func chooseManaForGeneric(genericCost int, manaPool *ManaPool, resolver ChoiceRe
 		choices := []Choice{}
 		for _, color := range manaPool.ColorsAvailable() {
 			choices = append(choices, Choice{
-				Name: fmt.Sprintf("s: %d", string(color), manaPool.Available(color)),
+				Name: string(color),
 			})
 		}
 		if len(choices) == 0 {

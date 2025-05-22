@@ -39,6 +39,8 @@ func BuildEffect(source string, spec EffectSpec) (*Effect, error) {
 		return BuildEffectPutBackOnTop(source, spec.Modifiers)
 	case "Scry":
 		return BuildEffectScry(source, spec.Modifiers)
+	case "Search":
+		return BuildEffectSearch(source, spec.Modifiers)
 	default:
 		return &Effect{
 			Description: fmt.Sprintf("unknown effect: %s", spec.ID),
@@ -309,6 +311,50 @@ func BuildEffectDiscard(source string, effectModifiers []EffectModifier) (*Effec
 	effect.Tags = tags
 	effect.Description = description
 	effect.Apply = effectFunc
+	return &effect, nil
+}
+
+// BuildEffectSearch creates an effect that search cards from the library.
+// Supported Modifier Keys (last applies):
+//   - Subtype <subtype>
+func BuildEffectSearch(source string, effectModifiers []EffectModifier) (*Effect, error) {
+	effect := Effect{}
+	var subtype string
+	for _, modifier := range effectModifiers {
+		if modifier.Key == "Subtype" {
+			subtype = modifier.Value
+		}
+	}
+	if subtype == "" {
+		return nil, errors.New("no subtype provided")
+	}
+	subtypeEnum, err := StringToSubtype(subtype)
+	if err != nil {
+		return nil, fmt.Errorf("invalid subtype: %s", subtype)
+	}
+	effect.Apply = func(state *GameState, resolver ChoiceResolver) error {
+		choices := state.Library.ChooseCardsBySubtype(subtypeEnum)
+		if len(choices) == 0 {
+			return fmt.Errorf("no cards of subtype %s found", subtype)
+		}
+		chosen, err := resolver.ChooseOne(
+			fmt.Sprintf("Choose a card to put into your hand"),
+			source+"::SearchChoseCard",
+			choices,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to choose card: %w", err)
+		}
+		card, err := state.Library.TakeCardByIndex(chosen.Index)
+		if err != nil {
+			return fmt.Errorf("failed to take card: %w", err)
+		}
+		state.Library.Shuffle()
+		state.Hand.Add(card)
+		return nil
+	}
+	effect.Description = fmt.Sprintf("search library for a card of subtype %s", subtype)
+	effect.Tags = []EffectTag{{Key: "Tutor", Value: subtype}}
 	return &effect, nil
 }
 

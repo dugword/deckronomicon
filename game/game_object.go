@@ -6,6 +6,7 @@ package game
 type GameObject interface {
 	HasSubtype(Subtype) bool
 	Name() string
+	ActivatedAbilities() []*ActivatedAbility
 	/*
 		Card() *Card
 		CardTypes() []CardType

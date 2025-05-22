@@ -56,6 +56,12 @@ func NewSpell(card *Card) (*Spell, error) {
 	return &spell, nil
 }
 
+// ActivatedAbilities don't exist for spell objects. This method is here to
+// satisfy the GameObject interface.
+func (s *Spell) ActivatedAbilities() []*ActivatedAbility {
+	return nil
+}
+
 // CardTypes returns the card types of the spell.
 func (s *Spell) CardTypes() []CardType {
 	return s.cardTypes

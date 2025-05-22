@@ -24,11 +24,35 @@ func NewLibrary() *Library {
 	return &library
 }
 
+// ChoseCardsBySubtype returns a list of cards of the specified subtype.
+func (l *Library) ChooseCardsBySubtype(subtype Subtype) []Choice {
+	var choices []Choice
+	for i, card := range l.cards {
+		if card.HasSubtype(subtype) {
+			choices = append(choices, Choice{Name: card.Name(), Index: i})
+		}
+	}
+	return choices
+}
+
 // Shuffle randomly shuffles the cards in the library.
 func (l *Library) Shuffle() {
 	rand.Shuffle(len(l.cards), func(i, j int) {
 		l.cards[i], l.cards[j] = l.cards[j], l.cards[i]
 	})
+}
+
+// TakeCardByIndex removes a card from the library at the specified index and
+// returns it.
+// TODO: Replace this with a way to select a card by ID, seems more robust.
+// TODO: Standardize with hand/battlefield/graveyard take/get/find methods.
+func (l *Library) TakeCardByIndex(index int) (*Card, error) {
+	if index < 0 || index >= len(l.cards) {
+		return nil, ErrLibraryEmpty
+	}
+	card := l.cards[index]
+	l.cards = append(l.cards[:index], l.cards[index+1:]...)
+	return card, nil
 }
 
 // TakeCards removes the top N cards from the library and returns them.

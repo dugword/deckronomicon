@@ -41,7 +41,14 @@ func (b *Battlefield) GetPermanentsWithActivatedAbilities(state *GameState) []Ch
 	for i, permanent := range b.permanents {
 		for _, activatedAbility := range permanent.ActivatedAbilities() {
 			if activatedAbility.Cost.CanPay(state) {
-				found = append(found, Choice{Name: permanent.Name(), Index: i})
+				found = append(
+					found,
+					Choice{
+						Name:  permanent.Name(),
+						Index: i,
+						Zone:  "Battlefield",
+					},
+				)
 				break
 			}
 		}
