@@ -345,7 +345,7 @@ func BuildEffectSearch(source GameObject, effectModifiers []EffectModifier) (*Ef
 		if err != nil {
 			return fmt.Errorf("failed to choose card: %w", err)
 		}
-		card, err := state.Library.TakeCardByIndex(chosen.Index)
+		card, err := state.Library.TakeCardByID(chosen.ID)
 		if err != nil {
 			return fmt.Errorf("failed to take card: %w", err)
 		}
@@ -360,15 +360,16 @@ func BuildEffectSearch(source GameObject, effectModifiers []EffectModifier) (*Ef
 
 func Scry(state *GameState, source GameObject, n int, resolver ChoiceResolver) error {
 	taken, _ := state.Library.TakeCards(n)
-	used := make([]bool, len(taken))
+	used := map[string]bool{}
+
 	for range len(taken) {
 		// Build option list from unplaced cards
 		var choices []Choice
-		for index, card := range taken {
-			if !used[index] {
+		for _, card := range taken {
+			if !used[card.ID()] {
 				choices = append(choices, Choice{
-					Name:  card.Name(),
-					Index: index,
+					Name: card.Name(),
+					ID:   card.ID(),
 				})
 			}
 		}
@@ -380,11 +381,27 @@ func Scry(state *GameState, source GameObject, n int, resolver ChoiceResolver) e
 		if err != nil {
 			return fmt.Errorf("failed to choose card: %w", err)
 		}
-		chosenCard := taken[chosen.Index]
-		used[chosen.Index] = true
+		var chosenCard *Card
+		for _, card := range taken {
+			if card.ID() == chosen.ID {
+				chosenCard = card
+				break
+			}
+		}
+		if chosenCard == nil {
+			return fmt.Errorf("failed to find chosen card: %s", chosen.ID)
+		}
+		used[chosen.ID] = true
+		// TODO: Use constants instead of strings for Top and Bottom
 		topBottomchoices := []Choice{
-			{Name: "Top"},
-			{Name: "Bottom"},
+			{
+				Name: "Top",
+				ID:   "Top",
+			},
+			{
+				Name: "Bottom",
+				ID:   "Bottom",
+			},
 		}
 		placement, err := resolver.ChooseOne(
 			fmt.Sprintf("Place %s on top or bottom of your library?", chosenCard.Name()),
@@ -394,7 +411,7 @@ func Scry(state *GameState, source GameObject, n int, resolver ChoiceResolver) e
 		if err != nil {
 			return fmt.Errorf("failed to choose placement: %w", err)
 		}
-		if placement.Index == 0 {
+		if placement.ID == "TOP" {
 			state.Library.PutOnTop(chosenCard)
 		} else {
 			state.Library.PutOnBottom(chosenCard)

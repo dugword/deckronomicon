@@ -1,5 +1,7 @@
 package game
 
+import "fmt"
+
 // Hand represents a player's hand of cards.
 type Hand struct {
 	cards []*Card
@@ -27,8 +29,8 @@ func (h *Hand) Add(cards ...*Card) {
 // AddCard adds a single card to the hand.
 func (h *Hand) CardChoices() []Choice {
 	var choices []Choice
-	for i, card := range h.cards {
-		choices = append(choices, Choice{Name: card.Name(), Index: i})
+	for _, card := range h.cards {
+		choices = append(choices, Choice{Name: card.Name(), ID: card.ID()})
 	}
 	return choices
 }
@@ -37,7 +39,7 @@ func (h *Hand) CardChoices() []Choice {
 // abilities.
 func (h *Hand) GetCardsWithActivatedAbilities() []Choice {
 	var choices []Choice
-	for i, card := range h.cards {
+	for _, card := range h.cards {
 		if len(card.ActivatedAbilities()) > 0 {
 			ability := card.ActivatedAbilities()[0]
 			if ability.Zone != "Hand" {
@@ -46,9 +48,9 @@ func (h *Hand) GetCardsWithActivatedAbilities() []Choice {
 			choices = append(
 				choices,
 				Choice{
-					Name:  card.Name(),
-					Index: i,
-					Zone:  "Hand",
+					Name: card.Name(),
+					ID:   card.ID(),
+					Zone: "Hand",
 				},
 			)
 		}
@@ -67,8 +69,13 @@ func (h *Hand) FindCard(name string) *Card {
 }
 
 // TODO: need to figure out how to handle duplicates so this can be better, maybe by an ID?
-func (h *Hand) GetCard(i int) *Card {
-	return h.cards[i]
+func (h *Hand) GetCard(id string) (*Card, error) {
+	for _, card := range h.cards {
+		if card.ID() == id {
+			return card, nil
+		}
+	}
+	return nil, fmt.Errorf("card with ID %s not found", id)
 }
 
 // Does it matter if there are duplicates? Do I need to track ID? Probably someday, but not now

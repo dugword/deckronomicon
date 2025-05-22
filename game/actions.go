@@ -89,13 +89,19 @@ func ActionActivateFunc(state *GameState, target string, resolver ChoiceResolver
 		if err != nil {
 			return nil, fmt.Errorf("failed to choose permanent: %w", err)
 		}
-		if choice.Index == -1 {
+		if choice.ID == ChoiceNone {
 			return nil, nil
 		}
-		if choice.Zone == "Hand" {
-			selectedObject = state.Hand.GetCard(choice.Index)
-		} else if choice.Zone == "Battlefield" {
-			selectedObject = state.Battlefield.GetPermanent(choice.Index)
+		if choice.Zone == ZoneHand {
+			selectedObject, err = state.Hand.GetCard(choice.ID)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get card from hand: %w", err)
+			}
+		} else if choice.Zone == ZoneBattlefield {
+			selectedObject, err = state.Battlefield.GetPermanent(choice.ID)
+			if err != nil {
+				return nil, fmt.Errorf("failed to permanent from battlefield: %w", err)
+			}
 		}
 	}
 	// TODO: Support more than 1
@@ -199,10 +205,13 @@ func ActionPlayFunc(state *GameState, target string, resolver ChoiceResolver) (r
 		// TODO: This is a bit of a hack. We should probably have a better way
 		// to handle optional choices. Maybe a special value or a separate
 		// type.
-		if choice.Index == -1 {
+		if choice.ID == ChoiceNone {
 			return nil, nil
 		}
-		card = state.Hand.GetCard(choice.Index)
+		card, err = state.Hand.GetCard(choice.ID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get card from hand: %w", err)
+		}
 	}
 	if card != nil {
 		if card.HasCardType(CardTypeLand) {
@@ -237,10 +246,13 @@ func ActionUntapFunc(state *GameState, target string, resolver PlayerAgent) (*Ac
 		if err != nil {
 			return nil, fmt.Errorf("failed to choose permanent: %w", err)
 		}
-		if choice.Index == -1 {
+		if choice.ID == ChoiceNone {
 			return nil, nil
 		}
-		selectedPermanent = state.Battlefield.GetPermanent(choice.Index)
+		selectedPermanent, err = state.Battlefield.GetPermanent(choice.ID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get permanent from battlefield: %w", err)
+		}
 	}
 	return &ActionResult{
 		Message: fmt.Sprintf("%s untapped", selectedPermanent.Name()),
@@ -258,11 +270,11 @@ func ActionViewFunc(state *GameState, target string, resolver PlayerAgent) (*Act
 	if target == "" {
 		choices := []Choice{
 			{
-				Name: "Hand",
+				Name: ZoneHand,
 			}, {
-				Name: "Battlefield",
+				Name: ZoneBattlefield,
 			}, {
-				Name: "Graveyard",
+				Name: ZoneGraveyard,
 			},
 		}
 		choice, err = resolver.ChooseOne(
@@ -273,19 +285,19 @@ func ActionViewFunc(state *GameState, target string, resolver PlayerAgent) (*Act
 		if err != nil {
 			return nil, fmt.Errorf("failed to choose zone: %w", err)
 		}
-		if choice.Index == -1 {
+		if choice.ID == ChoiceNone {
 			return nil, nil
 		}
 	} else {
 		choice = Choice{Name: target}
 	}
-	if choice.Name == "Hand" {
+	if choice.Name == ZoneHand {
 		return viewHand(state, resolver)
 	}
-	if choice.Name == "Battlefield" {
+	if choice.Name == ZoneBattlefield {
 		return viewBattlefield(state, resolver)
 	}
-	if choice.Name == "Graveyard" {
+	if choice.Name == ZoneGraveyard {
 		return viewGraveyard(state, resolver)
 	}
 	return nil, fmt.Errorf("unknown zone or not yet implemented")
@@ -303,10 +315,13 @@ func viewHand(state *GameState, resolver ChoiceResolver) (result *ActionResult, 
 	if err != nil {
 		return nil, fmt.Errorf("failed to choose card: %w", err)
 	}
-	if choice.Index == -1 {
+	if choice.ID == ChoiceNone {
 		return nil, nil
 	}
-	card := state.Hand.GetCard(choice.Index)
+	card, err := state.Hand.GetCard(choice.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get card from hand: %w", err)
+	}
 	state.Log("viewed " + card.Name())
 	result = &ActionResult{Message: fmt.Sprintf("CARD: %s :: %s :: %s", card.Name(), card.CardTypes(), card.RulesText())}
 	return result, nil
@@ -315,8 +330,8 @@ func viewHand(state *GameState, resolver ChoiceResolver) (result *ActionResult, 
 func viewBattlefield(state *GameState, resolver ChoiceResolver) (result *ActionResult, err error) {
 	var choices []Choice
 	permanents := state.Battlefield.Permanents()
-	for i, card := range permanents {
-		choices = append(choices, Choice{Name: card.Name(), Index: i})
+	for _, permanent := range permanents {
+		choices = append(choices, Choice{Name: permanent.Name(), ID: permanent.ID()})
 	}
 	choice, err := resolver.ChooseOne(
 		"Which card",
@@ -326,10 +341,13 @@ func viewBattlefield(state *GameState, resolver ChoiceResolver) (result *ActionR
 	if err != nil {
 		return nil, fmt.Errorf("failed to choose card: %w", err)
 	}
-	if choice.Index == -1 {
+	if choice.ID == ChoiceNone {
 		return nil, nil
 	}
-	card := permanents[choice.Index]
+	card, err := state.Battlefield.GetPermanent(choice.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get permanent from battlefield: %w", err)
+	}
 	state.Log("viewed " + card.Name())
 	result = &ActionResult{Message: fmt.Sprintf("CARD: %s :: %s", card.Name, card.RulesText)}
 	return result, nil
@@ -337,8 +355,8 @@ func viewBattlefield(state *GameState, resolver ChoiceResolver) (result *ActionR
 
 func viewGraveyard(state *GameState, resolver ChoiceResolver) (result *ActionResult, err error) {
 	var choices []Choice
-	for i, card := range state.Graveyard {
-		choices = append(choices, Choice{Name: card.Name(), Index: i})
+	for _, card := range state.Graveyard {
+		choices = append(choices, Choice{Name: card.Name(), ID: card.ID()})
 	}
 	choice, err := resolver.ChooseOne(
 		"Which card",
@@ -348,12 +366,21 @@ func viewGraveyard(state *GameState, resolver ChoiceResolver) (result *ActionRes
 	if err != nil {
 		return nil, fmt.Errorf("failed to choose card: %w", err)
 	}
-	if choice.Index == -1 {
+	if choice.ID == ChoiceNone {
 		return nil, nil
 	}
-	card := state.Graveyard[choice.Index]
-	state.Log("viewed " + card.Name())
-	result = &ActionResult{Message: fmt.Sprintf("CARD: %s :: %s", card.Name, card.RulesText)}
+	var selectedCard *Card
+	for _, card := range state.Graveyard {
+		if card.ID() == choice.ID {
+			selectedCard = card
+			break
+		}
+	}
+	if selectedCard == nil {
+		return nil, fmt.Errorf("failed to get card from graveyard: %w", err)
+	}
+	state.Log("viewed " + selectedCard.Name())
+	result = &ActionResult{Message: fmt.Sprintf("CARD: %s :: %s", selectedCard.Name(), selectedCard.RulesText())}
 	return result, nil
 }
 

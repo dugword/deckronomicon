@@ -1,6 +1,7 @@
 package game
 
 import (
+	"errors"
 	"math/rand/v2"
 )
 
@@ -27,9 +28,9 @@ func NewLibrary() *Library {
 // ChoseCardsBySubtype returns a list of cards of the specified subtype.
 func (l *Library) ChooseCardsBySubtype(subtype Subtype) []Choice {
 	var choices []Choice
-	for i, card := range l.cards {
+	for _, card := range l.cards {
 		if card.HasSubtype(subtype) {
-			choices = append(choices, Choice{Name: card.Name(), Index: i})
+			choices = append(choices, Choice{Name: card.Name(), ID: card.ID()})
 		}
 	}
 	return choices
@@ -46,7 +47,16 @@ func (l *Library) Shuffle() {
 // returns it.
 // TODO: Replace this with a way to select a card by ID, seems more robust.
 // TODO: Standardize with hand/battlefield/graveyard take/get/find methods.
-func (l *Library) TakeCardByIndex(index int) (*Card, error) {
+func (l *Library) TakeCardByID(id string) (*Card, error) {
+	index := -1
+	for i, card := range l.cards {
+		if card.ID() == id {
+			index = i
+		}
+	}
+	if index == -1 {
+		return nil, errors.New("card not found")
+	}
 	if index < 0 || index >= len(l.cards) {
 		return nil, ErrLibraryEmpty
 	}
