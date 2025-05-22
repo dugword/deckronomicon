@@ -1,5 +1,7 @@
 package game
 
+import "fmt"
+
 // Battlefield represents the battlefield during an active game.
 type Battlefield struct {
 	permanents []*Permanent
@@ -27,26 +29,29 @@ func (b *Battlefield) Permanents() []*Permanent {
 	return b.permanents
 }
 
-// GetPermanents returns the permanent at the given index.
-// TODO: need to figure out how to handle duplicates so this can be better,
-// maybe by an ID?
-func (b *Battlefield) GetPermanent(i int) *Permanent {
-	return b.permanents[i]
+// GetPermanents returns the permanent with the given ID.
+func (b *Battlefield) GetPermanent(id string) (*Permanent, error) {
+	for _, permanent := range b.permanents {
+		if permanent.ID() == id {
+			return permanent, nil
+		}
+	}
+	return nil, fmt.Errorf("permanent with ID %s not found", id)
 }
 
 // GetPermanentsWithActivatedAbilities returns a list of permanents with
 // activated abilities that can be paid.
 func (b *Battlefield) GetPermanentsWithActivatedAbilities(state *GameState) []Choice {
 	var found []Choice
-	for i, permanent := range b.permanents {
+	for _, permanent := range b.permanents {
 		for _, activatedAbility := range permanent.ActivatedAbilities() {
 			if activatedAbility.Cost.CanPay(state) {
 				found = append(
 					found,
 					Choice{
-						Name:  permanent.Name(),
-						Index: i,
-						Zone:  "Battlefield",
+						Name: permanent.Name(),
+						ID:   permanent.ID(),
+						Zone: "Battlefield",
 					},
 				)
 				break
@@ -60,9 +65,15 @@ func (b *Battlefield) GetPermanentsWithActivatedAbilities(state *GameState) []Ch
 // the battlefield.
 func (b *Battlefield) GetUnTappedPermanents(state *GameState) []Choice {
 	var found []Choice
-	for i, permanent := range b.permanents {
+	for _, permanent := range b.permanents {
 		if !permanent.IsTapped() {
-			found = append(found, Choice{Name: permanent.Name(), Index: i})
+			found = append(
+				found,
+				Choice{
+					Name: permanent.Name(),
+					ID:   permanent.ID(),
+				},
+			)
 		}
 	}
 	return found
@@ -72,9 +83,9 @@ func (b *Battlefield) GetUnTappedPermanents(state *GameState) []Choice {
 // the battlefield.
 func (b *Battlefield) GetTappedPermanents(state *GameState) []Choice {
 	var found []Choice
-	for i, permanent := range b.permanents {
+	for _, permanent := range b.permanents {
 		if permanent.IsTapped() {
-			found = append(found, Choice{Name: permanent.Name(), Index: i})
+			found = append(found, Choice{Name: permanent.Name(), ID: permanent.ID()})
 		}
 	}
 	return found

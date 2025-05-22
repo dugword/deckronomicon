@@ -46,10 +46,14 @@ type PlayerAgent interface {
 	ReportState(state *GameState)
 }
 
+const ChoiceNone = "None"
+
 // OptionalChoice returns adds an optional choice to the list of choices.
 func AddOptionalChoice(choices []Choice) []Choice {
 	choices = append([]Choice{{
-		Index:  -1,
+		// TODO: Make this a constant, maybe special character to prevent
+		// collision with other IDs
+		ID:     ChoiceNone,
 		Name:   "None",
 		Source: "",
 		Zone:   "",
@@ -59,7 +63,7 @@ func AddOptionalChoice(choices []Choice) []Choice {
 
 // Choice represents a choice made by the player.
 type Choice struct {
-	Index  int
+	ID     string
 	Name   string
 	Source string
 	Zone   string

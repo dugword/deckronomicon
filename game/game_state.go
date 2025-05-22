@@ -89,14 +89,12 @@ func (g *GameState) Discard(n int, source ChoiceSource, resolver ChoiceResolver)
 		if err != nil {
 			return fmt.Errorf("failed to choose card to discard: %w", err)
 		}
-		card := g.Hand.GetCard(choice.Index)
-		if card != nil {
-			card := g.Hand.GetCard(choice.Index)
-			if card != nil {
-				g.Hand.RemoveCard(card)
-				g.Graveyard = append(g.Graveyard, card)
-			}
+		card, err := g.Hand.GetCard(choice.ID)
+		if err != nil {
+			return fmt.Errorf("failed to get card from hand: %w", err)
 		}
+		g.Hand.RemoveCard(card)
+		g.Graveyard = append(g.Graveyard, card)
 	}
 	return nil
 }
@@ -170,14 +168,12 @@ func PutNBackOnTop(state *GameState, n int, source GameObject, resolver ChoiceRe
 		if err != nil {
 			return fmt.Errorf("failed to choose card to put back on top: %w", err)
 		}
-		card := state.Hand.GetCard(choice.Index)
-		if card != nil {
-			card := state.Hand.GetCard(choice.Index)
-			if card != nil {
-				state.Hand.RemoveCard(card)
-				state.Library.PutOnTop(card)
-			}
+		card, err := state.Hand.GetCard(choice.ID)
+		if err != nil {
+			return fmt.Errorf("failed to get card from hand: %w", err)
 		}
+		state.Hand.RemoveCard(card)
+		state.Library.PutOnTop(card)
 	}
 	return nil
 }

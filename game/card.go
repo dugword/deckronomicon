@@ -33,6 +33,9 @@ type Card struct {
 	toughness             int
 }
 
+// TODO: Maybe use this so we can have methods for card slices
+// type Cards []*Card
+
 // NewCardFromCardData creates a new Card instance from the given CardData.
 // It initializes the card's attributes, including its abilities, colors,
 // mana cost, types, and supertypes. It also generates a unique ID for the
