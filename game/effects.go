@@ -333,10 +333,11 @@ func BuildEffectSearch(source GameObject, effectModifiers []EffectModifier) (*Ef
 		return nil, fmt.Errorf("invalid subtype: %s", subtype)
 	}
 	effect.Apply = func(state *GameState, resolver ChoiceResolver) error {
-		choices := state.Library.ChooseCardsBySubtype(subtypeEnum)
-		if len(choices) == 0 {
+		objects := state.Library.FindAllBySubtype(subtypeEnum)
+		if len(objects) == 0 {
 			return fmt.Errorf("no cards of subtype %s found", subtype)
 		}
+		choices := CreateObjectChoices(objects, ZoneLibrary)
 		chosen, err := resolver.ChooseOne(
 			fmt.Sprintf("Choose a card to put into your hand"),
 			source,
@@ -345,7 +346,7 @@ func BuildEffectSearch(source GameObject, effectModifiers []EffectModifier) (*Ef
 		if err != nil {
 			return fmt.Errorf("failed to choose card: %w", err)
 		}
-		card, err := state.Library.TakeCardByID(chosen.ID)
+		card, err := state.Library.Take(chosen.ID)
 		if err != nil {
 			return fmt.Errorf("failed to take card: %w", err)
 		}
@@ -359,7 +360,18 @@ func BuildEffectSearch(source GameObject, effectModifiers []EffectModifier) (*Ef
 }
 
 func Scry(state *GameState, source GameObject, n int, resolver ChoiceResolver) error {
-	taken, _ := state.Library.TakeCards(n)
+	var taken []GameObject
+	for range n {
+		card, err := state.Library.TakeTop()
+		if err != nil {
+			// Not an error to scry on an empty library
+			if errors.Is(err, ErrLibraryEmpty) {
+				break
+			}
+			return fmt.Errorf("failed to take top card: %w", err)
+		}
+		taken = append(taken, card)
+	}
 	used := map[string]bool{}
 
 	for range len(taken) {
@@ -381,7 +393,7 @@ func Scry(state *GameState, source GameObject, n int, resolver ChoiceResolver) e
 		if err != nil {
 			return fmt.Errorf("failed to choose card: %w", err)
 		}
-		var chosenCard *Card
+		var chosenCard GameObject
 		for _, card := range taken {
 			if card.ID() == chosen.ID {
 				chosenCard = card
@@ -412,9 +424,9 @@ func Scry(state *GameState, source GameObject, n int, resolver ChoiceResolver) e
 			return fmt.Errorf("failed to choose placement: %w", err)
 		}
 		if placement.ID == "TOP" {
-			state.Library.PutOnTop(chosenCard)
+			state.Library.AddTop(chosenCard)
 		} else {
-			state.Library.PutOnBottom(chosenCard)
+			state.Library.Add(chosenCard)
 		}
 	}
 	return nil

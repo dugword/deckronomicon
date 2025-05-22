@@ -73,46 +73,46 @@ type ActionResult struct {
 // TODO: Support more than one activated ability
 // TODO: Support activated abilities in hand and graveyard
 func ActionActivateFunc(state *GameState, target string, resolver ChoiceResolver) (*ActionResult, error) {
-	var selectedObject GameObject
-	if target != "" {
-		selectedObject = state.Battlefield.FindPermanentWithAvailableActivatedAbility(target, state)
-	}
-	if selectedObject == nil {
-		choices := state.Battlefield.GetPermanentsWithActivatedAbilities(state)
-		handChoices := state.Hand.GetCardsWithActivatedAbilities()
-		allChoices := append(choices, handChoices...)
-		choice, err := resolver.ChooseOne(
-			"Which permanent to activate",
-			ActionActivate,
-			AddOptionalChoice(allChoices),
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to choose permanent: %w", err)
+	/*
+		var selectedObject GameObject
+		if target != "" {
+			selectedObject = state.Battlefield.FindPermanentWithAvailableActivatedAbility(target, state)
 		}
-		if choice.ID == ChoiceNone {
-			return nil, nil
-		}
-		if choice.Zone == ZoneHand {
-			selectedObject, err = state.Hand.GetCard(choice.ID)
-			if err != nil {
-				return nil, fmt.Errorf("failed to get card from hand: %w", err)
-			}
-		} else if choice.Zone == ZoneBattlefield {
-			selectedObject, err = state.Battlefield.GetPermanent(choice.ID)
-			if err != nil {
-				return nil, fmt.Errorf("failed to permanent from battlefield: %w", err)
-			}
+	*/
+	var abilities []*ActivatedAbility
+	for _, zone := range state.Zones() {
+		abilities = append(abilities, zone.AvailableActivatedAbilities(state)...)
+	}
+	if len(abilities) == 0 {
+		// TODO: Do I need to check this?
+		return nil, fmt.Errorf("no activated abilities available")
+	}
+	choices := CreateActivatedAbilityChoices(abilities)
+	choice, err := resolver.ChooseOne(
+		"Which ability to activate",
+		ActionActivate,
+		AddOptionalChoice(choices),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to choose ability: %w", err)
+	}
+	if choice.ID == ChoiceNone {
+		return nil, nil
+	}
+	var ability *ActivatedAbility
+	for _, a := range abilities {
+		if a.ID == choice.ID {
+			ability = a
+			break
 		}
 	}
-	// TODO: Support more than 1
-	if len(selectedObject.ActivatedAbilities()) > 1 {
-		return nil, fmt.Errorf("no support for multiple activated abilities")
+	if ability == nil {
+		return nil, fmt.Errorf("failed to find activated ability: %w", err)
 	}
-	activatedAbility := selectedObject.ActivatedAbilities()[0]
-	if err := activatedAbility.Cost.Pay(state, resolver); err != nil {
+	if err := ability.Cost.Pay(state, resolver); err != nil {
 		return nil, fmt.Errorf("cannot pay activated ability cost: %w", err)
 	}
-	if err := activatedAbility.Resolve(state, resolver); err != nil {
+	if err := ability.Resolve(state, resolver); err != nil {
 		return nil, fmt.Errorf("cannot resolve ability: %w", err)
 	}
 	// TODO: Need to validate stack order of triggers and abilities
@@ -123,30 +123,28 @@ func ActionActivateFunc(state *GameState, target string, resolver ChoiceResolver
 	{
 		// Tap for Mana
 		fmt.Println("Checking for tap for mana")
-		_, ok := activatedAbility.Cost.(*TapCost)
+		_, ok := ability.Cost.(*TapCost)
 		if ok {
-			fmt.Println("is tap cost")
-			if activatedAbility.IsManaAbility() {
-				fmt.Println("is mana ability")
+			if ability.IsManaAbility() {
 				state.EmitEvent(Event{
 					Type:   EventTapForMana,
-					Source: selectedObject,
+					Source: ability.source,
 				}, resolver)
-				fmt.Println("Emitted event")
 			}
 		}
 	}
 	state.Log(fmt.Sprintf(
 		"%s, paid %s to %s",
-		selectedObject.Name(),
-		activatedAbility.Cost.Description(),
-		activatedAbility.Description()),
+		ability.source.Name(),
+		ability.Cost.Description(),
+		ability.Description(),
+	),
 	)
 	return &ActionResult{
 		Message: fmt.Sprintf(
 			"ability resolved: %s (%s)",
-			selectedObject.Name(),
-			activatedAbility.Description(),
+			ability.source.Name(),
+			ability.Description(),
 		),
 	}, nil
 	return nil, nil
@@ -188,38 +186,51 @@ func ActionDrawFunc(state *GameState, target string, resolver ChoiceResolver) (*
 // ActionPlayFunc handles the play action. This is performed by the player to
 // play a card from their hand. The target is the name of the card to play.
 func ActionPlayFunc(state *GameState, target string, resolver ChoiceResolver) (result *ActionResult, err error) {
-	var card *Card
-	if target != "" {
-		card = state.Hand.FindCard(target)
+	/*
+		var card GameObject
+			if target != "" {
+				card, err = state.Hand.FindByName(target)
+				if err != nil {
+					return nil, fmt.Errorf("failed to find card in hand: %w", err)
+				}
+			}
+	*/
+	var choices []Choice
+	for _, zone := range state.Zones() {
+		cards := zone.AvailableToPlay(state)
+		cs := CreateObjectChoices(cards, zone.ZoneType())
+		choices = append(choices, cs...)
 	}
-	if card == nil {
-		choices := state.Hand.CardChoices()
-		choice, err := resolver.ChooseOne(
-			"Which card to play from hand",
-			ActionPlay,
-			AddOptionalChoice(choices),
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to choose card: %w", err)
-		}
-		// TODO: This is a bit of a hack. We should probably have a better way
-		// to handle optional choices. Maybe a special value or a separate
-		// type.
-		if choice.ID == ChoiceNone {
-			return nil, nil
-		}
-		card, err = state.Hand.GetCard(choice.ID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get card from hand: %w", err)
-		}
+	if len(choices) == 0 {
+		return nil, fmt.Errorf("no cards available to play")
 	}
-	if card != nil {
-		if card.HasCardType(CardTypeLand) {
-			return actionPlayLandFunc(state, resolver, card)
-		}
-		return actionCastSpellFunc(state, resolver, card)
+	choice, err := resolver.ChooseOne(
+		"Which card to play",
+		ActionPlay,
+		AddOptionalChoice(choices),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to choose card: %w", err)
 	}
-	return nil, nil
+	if choice.ID == ChoiceNone {
+		return nil, nil
+	}
+	zone, err := state.GetZone(choice.Zone)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get zone: %w", err)
+	}
+	card, err := zone.Get(choice.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to take card from zone: %w", err)
+	}
+	c, ok := card.(*Card)
+	if !ok {
+		return nil, fmt.Errorf("object is not a card: %w", err)
+	}
+	if c.HasCardType(CardTypeLand) {
+		return actionPlayLandFunc(state, resolver, c)
+	}
+	return actionCastSpellFunc(state, resolver, c)
 }
 
 // ActionUntapFunc handles the untap action. This is performed automatically
@@ -232,15 +243,20 @@ func ActionUntapFunc(state *GameState, target string, resolver PlayerAgent) (*Ac
 		state.Battlefield.UntapPermanents()
 		return &ActionResult{Message: "all permanents untapped"}, nil
 	}
-	var selectedPermanent *Permanent
+	var selectedObject GameObject
+	var err error
 	if target != "" {
-		selectedPermanent = state.Battlefield.FindTappedPermanent(target)
+		selectedObject, err = state.Battlefield.FindTappedPermanent(target)
+		if err != nil {
+			return nil, fmt.Errorf("failed to find permanent: %w", err)
+		}
 	}
-	if selectedPermanent == nil {
-		choices := state.Battlefield.GetTappedPermanents(state)
+	if selectedObject == nil {
+		objects := state.Battlefield.GetTappedPermanents()
+		choices := CreateObjectChoices(objects, ZoneBattlefield)
 		choice, err := resolver.ChooseOne(
-			"Which permanent to activate",
-			ActionActivate,
+			"Which permanent to untap",
+			ActionUntap,
 			AddOptionalChoice(choices),
 		)
 		if err != nil {
@@ -249,13 +265,18 @@ func ActionUntapFunc(state *GameState, target string, resolver PlayerAgent) (*Ac
 		if choice.ID == ChoiceNone {
 			return nil, nil
 		}
-		selectedPermanent, err = state.Battlefield.GetPermanent(choice.ID)
+		selectedObject, err = state.Battlefield.Get(choice.ID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get permanent from battlefield: %w", err)
 		}
 	}
+	selectedPermanent, ok := selectedObject.(*Permanent)
+	if !ok {
+		return nil, fmt.Errorf("object is not a permanent: %w", err)
+	}
+	selectedPermanent.Untap()
 	return &ActionResult{
-		Message: fmt.Sprintf("%s untapped", selectedPermanent.Name()),
+		Message: fmt.Sprintf("%s untapped", selectedObject.Name()),
 	}, nil
 }
 
@@ -306,56 +327,63 @@ func ActionViewFunc(state *GameState, target string, resolver PlayerAgent) (*Act
 // TODO: There's probably an abstraction we can set up for viewHand, viewBattlefield, and viewGraveyard
 // probably a general abstraction for cards/permanents and zones
 func viewHand(state *GameState, resolver ChoiceResolver) (result *ActionResult, err error) {
-	choices := state.Hand.CardChoices()
-	choice, err := resolver.ChooseOne(
-		"Which card",
-		NewChoiceSource("View Hand", "View Hand"),
-		AddOptionalChoice(choices),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to choose card: %w", err)
-	}
-	if choice.ID == ChoiceNone {
-		return nil, nil
-	}
-	card, err := state.Hand.GetCard(choice.ID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get card from hand: %w", err)
-	}
-	state.Log("viewed " + card.Name())
-	result = &ActionResult{Message: fmt.Sprintf("CARD: %s :: %s :: %s", card.Name(), card.CardTypes(), card.RulesText())}
-	return result, nil
+	/*
+		choices := state.Hand.CardChoices()
+		choice, err := resolver.ChooseOne(
+			"Which card",
+			NewChoiceSource("View Hand", "View Hand"),
+			AddOptionalChoice(choices),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to choose card: %w", err)
+		}
+		if choice.ID == ChoiceNone {
+			return nil, nil
+		}
+		card, err := state.Hand.GetCard(choice.ID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get card from hand: %w", err)
+		}
+		state.Log("viewed " + card.Name())
+		result = &ActionResult{Message: fmt.Sprintf("CARD: %s :: %s :: %s", card.Name(), card.CardTypes(), card.RulesText())}
+		return result, nil
+	*/
+	return nil, nil
 }
 
 func viewBattlefield(state *GameState, resolver ChoiceResolver) (result *ActionResult, err error) {
-	var choices []Choice
-	permanents := state.Battlefield.Permanents()
-	for _, permanent := range permanents {
-		choices = append(choices, Choice{Name: permanent.Name(), ID: permanent.ID()})
-	}
-	choice, err := resolver.ChooseOne(
-		"Which card",
-		NewChoiceSource("View Battlefield", "View Battlefield"),
-		AddOptionalChoice(choices),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to choose card: %w", err)
-	}
-	if choice.ID == ChoiceNone {
-		return nil, nil
-	}
-	card, err := state.Battlefield.GetPermanent(choice.ID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get permanent from battlefield: %w", err)
-	}
-	state.Log("viewed " + card.Name())
-	result = &ActionResult{Message: fmt.Sprintf("CARD: %s :: %s", card.Name, card.RulesText)}
-	return result, nil
+	/*
+		var choices []Choice
+		permanents := state.Battlefield.Permanents()
+		for _, permanent := range permanents {
+			choices = append(choices, Choice{Name: permanent.Name(), ID: permanent.ID()})
+		}
+		choice, err := resolver.ChooseOne(
+			"Which card",
+			NewChoiceSource("View Battlefield", "View Battlefield"),
+			AddOptionalChoice(choices),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to choose card: %w", err)
+		}
+		if choice.ID == ChoiceNone {
+			return nil, nil
+		}
+		card, err := state.Battlefield.GetPermanent(choice.ID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get permanent from battlefield: %w", err)
+		}
+		state.Log("viewed " + card.Name())
+		result = &ActionResult{Message: fmt.Sprintf("CARD: %s :: %s", card.Name, card.RulesText)}
+		return result, nil
+	*/
+	return nil, nil
 }
 
 func viewGraveyard(state *GameState, resolver ChoiceResolver) (result *ActionResult, err error) {
 	var choices []Choice
-	for _, card := range state.Graveyard {
+	// TODO Remove the .cards access
+	for _, card := range state.Graveyard.cards {
 		choices = append(choices, Choice{Name: card.Name(), ID: card.ID()})
 	}
 	choice, err := resolver.ChooseOne(
@@ -370,7 +398,8 @@ func viewGraveyard(state *GameState, resolver ChoiceResolver) (result *ActionRes
 		return nil, nil
 	}
 	var selectedCard *Card
-	for _, card := range state.Graveyard {
+	// TODO remove the .cards access
+	for _, card := range state.Graveyard.cards {
 		if card.ID() == choice.ID {
 			selectedCard = card
 			break
@@ -393,7 +422,7 @@ func actionPlayLandFunc(state *GameState, resolver ChoiceResolver, card *Card) (
 		state.LandDrop = true
 	}
 	state.Log("Played land: " + card.Name())
-	state.Hand.RemoveCard(card)
+	state.Hand.Remove(card.ID())
 	permanent, err := NewPermanent(card)
 	if err != nil {
 		return nil, fmt.Errorf(
@@ -402,7 +431,7 @@ func actionPlayLandFunc(state *GameState, resolver ChoiceResolver, card *Card) (
 			err,
 		)
 	}
-	state.Battlefield.AddPermanent(permanent)
+	state.Battlefield.Add(permanent)
 	return &ActionResult{
 		Message: "played land: " + card.Name(),
 	}, nil
@@ -415,7 +444,7 @@ func actionCastSpellFunc(state *GameState, resolver ChoiceResolver, card *Card) 
 		return nil, err
 	}
 	state.Log("Casing spell: " + card.Name())
-	state.Hand.RemoveCard(card)
+	state.Hand.Remove(card.ID())
 	if card.IsSpell() {
 		state.Log("Card: " + card.Name() + " is a spell")
 		spell, err := NewSpell(card)
@@ -431,7 +460,7 @@ func actionCastSpellFunc(state *GameState, resolver ChoiceResolver, card *Card) 
 		if err != nil {
 			return nil, fmt.Errorf("failed to create permanent from %s: %w", card.Name(), err)
 		}
-		state.Battlefield.AddPermanent(permanent)
+		state.Battlefield.Add(permanent)
 	}
 	return &ActionResult{
 		Message: "played card: " + card.Name(),

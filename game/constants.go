@@ -311,14 +311,3 @@ func StringToSupertype(s string) (Supertype, error) {
 	}
 	return supertype, nil
 }
-
-// library, hand, battlefield, graveyard, stack, exile, and command
-const (
-	ZoneBattlefield = "Battlefield"
-	ZoneCommand     = "Command"
-	ZoneExile       = "Exile"
-	ZoneGraveyard   = "Graveyard"
-	ZoneHand        = "Hand"
-	ZoneLibrary     = "Library"
-	ZoneStack       = "Stack"
-)
