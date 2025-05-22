@@ -7,48 +7,67 @@ import (
 
 // Permanent represents a permanent card on the battlefield.
 type Permanent struct {
-	card               *Card
-	tapped             bool
-	summoningSickness  bool
 	activatedAbilities []*ActivatedAbility
+	card               *Card
+	cardTypes          []CardType
+	colors             *Colors
+	id                 string
+	loyalty            int
+	manaCost           *ManaCost
+	name               string
+	power              int
+	rulesText          string
 	staticAbilities    []*StaticAbility
+	subtypes           []Subtype
+	summoningSickness  bool
+	supertypes         []Supertype
+	tapped             bool
+	toughness          int
 	triggeredAbilities []*TriggeredAbility
 }
 
 // NewPermanent creates a new Permanent instance from a Card.
 func NewPermanent(card *Card) (*Permanent, error) {
 	permanent := Permanent{
-		card:   card,
-		tapped: false,
+		activatedAbilities: []*ActivatedAbility{},
+		card:               card,
+		cardTypes:          card.cardTypes,
+		colors:             card.colors,
+		id:                 GetNextID(),
+		loyalty:            card.loyalty,
+		manaCost:           card.manaCost,
+		name:               card.name,
+		power:              card.power,
+		rulesText:          card.rulesText,
+		staticAbilities:    []*StaticAbility{},
+		subtypes:           card.subtypes,
+		supertypes:         card.supertypes,
+		toughness:          card.toughness,
+		triggeredAbilities: []*TriggeredAbility{},
 	}
-	if card.HasType(CardTypeCreature) {
+	if card.HasCardType(CardTypeCreature) {
 		permanent.summoningSickness = true
 	}
-	var activatedAbilities []*ActivatedAbility
-	for _, abilitySpec := range card.object.ActivatedAbilitiesSpec {
-		cost, err := NewCost(abilitySpec.CostExpression, &permanent)
+	for _, spec := range card.activatedAbilitySpecs {
+		if spec.Zone == ZoneHand || spec.Zone == ZoneGraveyard {
+			continue
+		}
+		ability, err := BuildActivatedAbility(*spec, &permanent)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create cost: %w", err)
+			return nil, fmt.Errorf("failed to build activated ability: %w", err)
 		}
-		var effects []*Effect
-		for _, effectSpec := range abilitySpec.EffectSpecs {
-			effectBuilder, ok := EffectMap[effectSpec.ID]
-			if !ok {
-				return nil, fmt.Errorf("effect %s not found", effectSpec.ID)
-			}
-			effect, err := effectBuilder(card.Name(), effectSpec.Modifiers)
-			if err != nil {
-				return nil, fmt.Errorf("failed to create effect %s: %w", effectSpec.ID, err)
-			}
-			effects = append(effects, effect)
-		}
-		activatedAbility := ActivatedAbility{
-			Cost:    cost,
-			Effects: effects,
-		}
-		activatedAbilities = append(activatedAbilities, &activatedAbility)
+		permanent.activatedAbilities = append(permanent.activatedAbilities, ability)
 	}
-	permanent.activatedAbilities = activatedAbilities
+	for _, spec := range card.staticAbilitySpecs {
+		if spec.Zone == ZoneHand || spec.Zone == ZoneGraveyard {
+			continue
+		}
+		ability, err := BuildStaticAbility(*spec, &permanent)
+		if err != nil {
+			return nil, fmt.Errorf("failed to build activated ability: %w", err)
+		}
+		permanent.staticAbilities = append(permanent.staticAbilities, ability)
+	}
 	return &permanent, nil
 }
 
@@ -78,6 +97,17 @@ func (p *Permanent) HasSummoningSickness() bool {
 	return p.summoningSickness
 }
 
+// HasSubtype checks if the card has a specific type. It returns true if the
+// card has the specified type, and false otherwise.
+func (p *Permanent) HasSubtype(subtype Subtype) bool {
+	for _, t := range p.subtypes {
+		if t == subtype {
+			return true
+		}
+	}
+	return false
+}
+
 // RemoveSummoningSickness removes summoning sickness from the permanent. It
 // is a valid operation even if the permanent does not have summoning
 // sickness.
@@ -97,53 +127,53 @@ func (p *Permanent) Card() *Card {
 
 // CardTypes returns the card types of the permanent.
 func (p *Permanent) CardTypes() []CardType {
-	return p.card.object.CardTypes
+	return p.cardTypes
 }
 
 // Colors returns the colors of the permanent.
 func (p *Permanent) Colors() *Colors {
-	return p.card.object.Colors
-}
-
-// Defense returns the defense of the permanent.
-func (p *Permanent) Defense() int {
-	return p.card.object.Defense
+	return p.colors
 }
 
 // HasType checks if the permanent has the specified card type.
-func (p *Permanent) HasType(cardType CardType) bool {
-	return p.card.object.HasType(cardType)
+func (p *Permanent) HasCardType(cardType CardType) bool {
+	for _, t := range p.cardTypes {
+		if t == cardType {
+			return true
+		}
+	}
+	return false
 }
 
 // ID returns the ID of the permanent.
 func (p *Permanent) ID() string {
-	return p.card.object.ID
+	return p.id
 }
 
 // Loyalty returns the loyalty of the permanent.
 func (p *Permanent) Loyalty() int {
-	return p.card.object.Loyalty
+	return p.loyalty
 }
 
 // ManCost returns the mana cost of the permanent.
 func (p *Permanent) ManaCost() *ManaCost {
-	return p.card.object.ManaCost
+	return p.manaCost
 }
 
 // Name returns the name of the permanent.
 func (p *Permanent) Name() string {
-	return p.card.object.Name
+	return p.name
 }
 
 // Power returns the power of the permanent.
 func (p *Permanent) Power() int {
-	return p.card.object.Power
+	return p.power
 }
 
 // RulesText returns the rules text of the permanent. The RulesText does not
 // impact the game logic.
 func (p *Permanent) RulesText() string {
-	return p.card.object.RulesText
+	return p.rulesText
 }
 
 // StaticAbilities returns the static abilities of the permanent.
@@ -153,17 +183,17 @@ func (p *Permanent) StaticAbilities() []*StaticAbility {
 
 // Subtypes returns the subtypes of the permanent.
 func (p *Permanent) Subtypes() []Subtype {
-	return p.card.object.Subtypes
+	return p.subtypes
 }
 
 // Supertypes returns the supertypes of the permanent.
 func (p *Permanent) Supertypes() []Supertype {
-	return p.card.object.Supertypes
+	return p.supertypes
 }
 
 // Toughness returns the toughness of the permanent.
 func (p *Permanent) Toughness() int {
-	return p.card.object.Toughness
+	return p.toughness
 }
 
 // TriggeredAbilities returns the triggered abilities of the permanent.

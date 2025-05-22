@@ -119,6 +119,7 @@ func ActionActivateFunc(state *GameState, target string, resolver ChoiceResolver
 			activatedAbility.Description(),
 		),
 	}, nil
+	return nil, nil
 }
 
 // ActionDiscardFunc handles the discard action. This is performed
@@ -173,7 +174,7 @@ func ActionPlayFunc(state *GameState, target string, resolver ChoiceResolver) (r
 		card = state.Hand.GetCard(choice.Index)
 	}
 	if card != nil {
-		if card.HasType(CardTypeLand) {
+		if card.HasCardType(CardTypeLand) {
 			return actionPlayLandFunc(state, resolver, card)
 		}
 		return actionCastSpellFunc(state, resolver, card)
@@ -296,7 +297,7 @@ func viewGraveyard(state *GameState, resolver ChoiceResolver) (result *ActionRes
 
 // TODO: Maybe this should be a method off of GameState
 func actionPlayLandFunc(state *GameState, resolver ChoiceResolver, card *Card) (result *ActionResult, err error) {
-	if card.HasType(CardTypeLand) {
+	if card.HasCardType(CardTypeLand) {
 		if state.LandDrop {
 			return nil, errors.New("land already played this turn")
 		}
