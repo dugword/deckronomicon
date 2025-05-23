@@ -7,6 +7,7 @@ import (
 
 type Config struct {
 	CardPool     string
+	Cheat        bool
 	ConfigFile   string
 	DeckList     string
 	Interactive  bool
@@ -33,6 +34,7 @@ func LoadConfig(args []string, getenv func(string) string) (*Config, error) {
 	flags := flag.NewFlagSet("deckronomicon", flag.ContinueOnError)
 	// TODO: Maybe load both deck and strategy from a specified directory.
 	cardPool := flags.String("card-pool", "cards", "card pool directory")
+	cheat := flags.Bool("cheat", false, "cheat mode")
 	deckList := flags.String("deck-list", "decks/example/deck.json", "deck list file")
 	interactive := flags.Bool("interactive", false, "run as interactive mode")
 	maxTurns := flags.Int("max-turns", 100, "maximum number of turns to simulate")
@@ -46,6 +48,7 @@ func LoadConfig(args []string, getenv func(string) string) (*Config, error) {
 		return nil, err
 	}
 	config.CardPool = *cardPool
+	config.Cheat = *cheat
 	config.ConfigFile = *configFile
 	config.DeckList = *deckList
 	config.Interactive = *interactive

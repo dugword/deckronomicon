@@ -1,9 +1,24 @@
 {
-    "StartingHand": [
-        "Brainstorm",
-        "High Tide",
-        "Preordain",
-        "Merchant Scroll",
-        "Island"
-    ]
+  "StartingHand": [
+    "Brainstorm",
+    "Gigadrowse",
+    "High Tide",
+    "Preordain",
+    "Stream of Thought",
+    "Hidden Strings",
+    "Ideas Unbound",
+    "Merchant Scroll",
+    "Muddle the Mixture",
+    "Peer Through Depths",
+    "Psychic Puppetry",
+    "Pieces of the Puzzle",
+    "Deep Analysis",
+    "Lorien Revealed",
+    "Island",
+    "Island",
+    "Island",
+    "Island",
+    "Island",
+    "Island"
+  ]
 }

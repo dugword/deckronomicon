@@ -329,16 +329,31 @@ func ActionPlayFunc(state *GameState, target string, resolver ChoiceResolver) (r
 	if len(choices) == 0 {
 		return nil, fmt.Errorf("no cards available to play")
 	}
-	choice, err := resolver.ChooseOne(
-		"Which card to play",
-		ActionPlay,
-		AddOptionalChoice(choices),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to choose card: %w", err)
+	// TODO: Rethink this
+	if target != "" {
+		var filteredChoices []Choice
+		for _, choice := range choices {
+			if choice.Name == target {
+				filteredChoices = append(filteredChoices, choice)
+			}
+		}
+		choices = filteredChoices
 	}
-	if choice.ID == ChoiceNone {
-		return nil, nil
+	var choice Choice
+	if target != "" && len(choices) != 1 {
+		choice, err = resolver.ChooseOne(
+			"Which card to play",
+			ActionPlay,
+			AddOptionalChoice(choices),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to choose card: %w", err)
+		}
+		if choice.ID == ChoiceNone {
+			return nil, nil
+		}
+	} else {
+		choice = choices[0]
 	}
 	zone, err := state.GetZone(choice.Zone)
 	if err != nil {
