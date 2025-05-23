@@ -40,6 +40,7 @@ func (l *Library) AvailableToPlay(*GameState) []GameObject {
 	return nil
 }
 
+// Add adds a card to the bottom of the library.
 func (l *Library) Add(object GameObject) error {
 	card, ok := object.(*Card)
 	if !ok {
@@ -49,6 +50,7 @@ func (l *Library) Add(object GameObject) error {
 	return nil
 }
 
+// AddTop adds a card to the top of the library.
 func (l *Library) AddTop(object GameObject) error {
 	card, ok := object.(*Card)
 	if !ok {
@@ -130,8 +132,9 @@ func (l *Library) TakeTop() (GameObject, error) {
 	if len(l.cards) == 0 {
 		return nil, ErrLibraryEmpty
 	}
+	taken := l.cards[0]
 	l.cards = l.cards[1:]
-	return l.cards[0], nil
+	return taken, nil
 }
 
 func (l *Library) Size() int {
