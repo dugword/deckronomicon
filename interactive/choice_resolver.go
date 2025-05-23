@@ -14,6 +14,19 @@ var choiceBoxTmpl = `{{.TopLine}}
 {{end}}{{.BottomLine}}
 `
 
+// Confirm prompts the user to confirm an action.
+func (a *InteractivePlayerAgent) Confirm(prompt string, source game.ChoiceSource) (bool, error) {
+	for {
+		a.Prompt(prompt)
+		accept, err := a.ReadInputConfirm()
+		if err != nil {
+			fmt.Println("Invalid choice. Please enter '(y)es' or '(n)o'")
+			continue
+		}
+		return accept, nil
+	}
+}
+
 // ChoseOne prompts the user to choose one of the given choices.
 // TODO: Need to enable a way to cancel
 func (a *InteractivePlayerAgent) ChooseOne(prompt string, source game.ChoiceSource, choices []game.Choice) (game.Choice, error) {

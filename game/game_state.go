@@ -30,12 +30,15 @@ type GameState struct {
 	MaxTurns           int
 	Message            string
 	MessageLog         []string
+	Mulligans          int
 	PotentialMana      *ManaPool
 	SpellsCastThisTurn []string
 	StormCount         int
-	Turn               int
-	TurnCount          int
-	TurnMessageLog     []string
+	// TODO: I don't like this, need to rethink how to handle this
+	StartingHand   []string
+	Turn           int
+	TurnCount      int
+	TurnMessageLog []string
 }
 
 // NewGameState creates a new GameState instance.
@@ -48,6 +51,7 @@ func NewGameState() *GameState {
 		Graveyard:          NewGraveyard(),
 		Hand:               NewHand(),
 		ManaPool:           NewManaPool(),
+		Mulligans:          0,
 		PotentialMana:      NewManaPool(),
 		SpellsCastThisTurn: []string{}, // TODO: Rethink how this is managed
 		TurnMessageLog:     []string{}, // TODO: this sucks, make better
@@ -55,7 +59,27 @@ func NewGameState() *GameState {
 	return &gameState
 }
 
+func (g *GameState) DrawStartingHand(startingHand []string) error {
+	for _, cardName := range startingHand {
+		card, err := g.Library.FindByName(cardName)
+		if err != nil {
+			return fmt.Errorf("failed to find card %s in library: %w", cardName, err)
+		}
+		g.Hand.Add(card)
+	}
+	result, err := g.ResolveAction(GameAction{
+		Type:   ActionDraw,
+		Target: strconv.Itoa(g.MaxHandSize - g.Hand.Size()),
+	}, nil)
+	if err != nil {
+		return fmt.Errorf("failed to draw starting hand: %w", err)
+	}
+	g.Log(result.Message)
+	return nil
+}
+
 // InitializeNewGame initializes a new game with the given configuration.
+// TODO: DOn't pass agent here
 func (g *GameState) InitializeNewGame(config *configs.Config) error {
 	// TODO: Consolidate config file with other configs so they can all be set
 	// by either envars or cli flags or config file.
@@ -79,18 +103,9 @@ func (g *GameState) InitializeNewGame(config *configs.Config) error {
 	g.Library = library
 	g.Library.Shuffle()
 	g.Hand = &Hand{}
-	for _, cardName := range configFile.StartingHand {
-		card, err := g.Library.FindByName(cardName)
-		if err != nil {
-			return fmt.Errorf("failed to find card %s in library: %w", cardName, err)
-		}
-		g.Hand.Add(card)
+	if err := g.DrawStartingHand(configFile.StartingHand); err != nil {
+		return fmt.Errorf("failed to draw starting hand: %w", err)
 	}
-	result, err := g.ResolveAction(GameAction{
-		Type:   ActionDraw,
-		Target: strconv.Itoa(g.MaxHandSize - g.Hand.Size()),
-	}, nil)
-	g.Log(result.Message)
 	g.ManaPool = NewManaPool()
 	g.Battlefield = &Battlefield{}
 	return nil
@@ -98,29 +113,26 @@ func (g *GameState) InitializeNewGame(config *configs.Config) error {
 
 // Discard discards n cards from the player's hand.
 func (g *GameState) Discard(n int, source ChoiceSource, resolver ChoiceResolver) error {
-	/*
-		if n > len(g.Hand.Cards()) {
-			n = len(g.Hand.Cards())
+	if n > g.Hand.Size() {
+		n = g.Hand.Size()
+	}
+	for range n {
+		choices := CreateObjectChoices(g.Hand.GetAll(), ZoneHand)
+		choice, err := resolver.ChooseOne(
+			"Which card to discard from hand",
+			source,
+			choices,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to choose card to discard: %w", err)
 		}
-		for range n {
-			choices := g.Hand.CardChoices()
-			choice, err := resolver.ChooseOne(
-				"Which card to discard from hand",
-				source,
-				choices,
-			)
-			if err != nil {
-				return fmt.Errorf("failed to choose card to discard: %w", err)
-			}
-			card, err := g.Hand.GetCard(choice.ID)
-			if err != nil {
-				return fmt.Errorf("failed to get card from hand: %w", err)
-			}
-			g.Hand.RemoveCard(card)
-			// todo remove the .cards access
-			g.Graveyard.cards = append(g.Graveyard.cards, card)
+		card, err := g.Hand.Get(choice.ID)
+		if err != nil {
+			return fmt.Errorf("failed to get card from hand: %w", err)
 		}
-	*/
+		g.Hand.Remove(card.ID())
+		g.Graveyard.Add(card)
+	}
 	return nil
 }
 
@@ -205,26 +217,23 @@ func GetPotentialMana(state *GameState) *ManaPool {
 }
 
 // TODO Revist this
-func PutNBackOnTop(state *GameState, n int, source GameObject, resolver ChoiceResolver) error {
-	/*
-		for range n {
-			choices := state.Hand.CardChoices()
-			choice, err := resolver.ChooseOne(
-				"Which card to put back on top",
-				source,
-				choices,
-			)
-			if err != nil {
-				return fmt.Errorf("failed to choose card to put back on top: %w", err)
-			}
-			card, err := state.Hand.GetCard(choice.ID)
-			if err != nil {
-				return fmt.Errorf("failed to get card from hand: %w", err)
-			}
-			state.Hand.RemoveCard(card)
-			state.Library.PutOnTop(card)
+func PutNBackOnTop(state *GameState, n int, source ChoiceSource, resolver ChoiceResolver) error {
+	for range n {
+		choices := CreateObjectChoices(state.Hand.GetAll(), ZoneHand)
+		choice, err := resolver.ChooseOne(
+			"Which card to put back on top",
+			source,
+			choices,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to choose card to put back on top: %w", err)
 		}
-	*/
+		card, err := state.Hand.Take(choice.ID)
+		if err != nil {
+			return fmt.Errorf("failed to take card from hand: %w", err)
+		}
+		state.Library.AddTop(card)
+	}
 	return nil
 }
 

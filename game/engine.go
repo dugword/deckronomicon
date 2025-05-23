@@ -2,11 +2,15 @@ package game
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 )
 
 // RunGameLoop drives the turn-based game for the given agent.
 func (g *GameState) RunGameLoop(agent PlayerAgent) error {
+	if err := g.Mulligan(agent); err != nil {
+		return fmt.Errorf("failed to mulligan: %w", err)
+	}
 	for {
 		if g.Turn > g.MaxTurns {
 			return ErrMaxTurnsExceeded
@@ -15,6 +19,40 @@ func (g *GameState) RunGameLoop(agent PlayerAgent) error {
 			return err
 		}
 	}
+}
+
+var ChoiceMulligan = "Mulligan"
+
+// Mulligan allows the player to mulligan their hand. The player draws 7 new
+// cards but then needs to put 1 card back on the bottom of their library for
+// each time they've mulliganed.
+func (g *GameState) Mulligan(agent PlayerAgent) error {
+	var accept bool
+	var err error
+	for (g.Mulligans < g.MaxHandSize) || !accept {
+		agent.ReportState(g)
+		accept, err = agent.Confirm("Keep Hand? (y/n)", NewChoiceSource(ChoiceMulligan, ChoiceMulligan))
+		if err != nil {
+			return fmt.Errorf("failed to confirm mulligan: %w", err)
+		}
+		if accept {
+			break
+		}
+		g.Log("Mulliganing...")
+		for _, card := range g.Hand.GetAll() {
+			g.Hand.Remove(card.ID())
+			g.Library.Add(card)
+		}
+		g.Library.Shuffle()
+		g.DrawStartingHand(g.StartingHand)
+		g.Mulligans++
+	}
+	if g.Mulligans != 0 {
+		if err := PutNBackOnTop(g, g.Mulligans, NewChoiceSource(ChoiceMulligan, ChoiceMulligan), agent); err != nil {
+			return fmt.Errorf("failed to put cards back on top: %w", err)
+		}
+	}
+	return nil
 }
 
 /*
@@ -41,6 +79,7 @@ func (g *GameState) RunTurn(agent PlayerAgent) error {
 	g.CurrentPhase = "Beginning"
 	// Untap Step
 	g.CurrentStep = "Untap"
+	// agent.ReportState(g)
 	g.EmitEvent(Event{Type: EventUntapStep}, agent)
 	actionResult, err := g.ResolveAction(
 		GameAction{
@@ -54,10 +93,12 @@ func (g *GameState) RunTurn(agent PlayerAgent) error {
 
 	// Upkeep Step
 	g.CurrentStep = "Upkeep"
+	// agent.ReportState(g)
 	g.EmitEvent(Event{Type: EventUpkeepStep}, agent)
 
 	// Draw Step
 	g.CurrentStep = "Draw"
+	// agent.ReportState(g)
 	g.EmitEvent(Event{Type: EventDrawStep}, agent)
 	actionResult, err = g.ResolveAction(GameAction{
 		Type:   ActionDraw,
@@ -71,7 +112,7 @@ func (g *GameState) RunTurn(agent PlayerAgent) error {
 	// Pre-combat Main Phase
 	g.CurrentPhase = "Pre-combat Main"
 	g.EmitEvent(Event{Type: EventPrecombatMainPhase}, agent)
-	g.CurrentStep = ""
+	g.CurrentStep = "Pre-combat Main"
 	for {
 		g.PotentialMana = GetPotentialMana(g)
 		agent.ReportState(g)
@@ -136,26 +177,34 @@ func (g *GameState) RunTurn(agent PlayerAgent) error {
 	// Combat Phase
 	g.CurrentPhase = "Combat Phase"
 	g.CurrentStep = "Beginning of Combat"
+	// agent.ReportState(g)
 	g.EmitEvent(Event{Type: EventBeginningOfCombatStep}, agent)
 	g.CurrentStep = "Declare Attackers"
+	// agent.ReportState(g)
 	g.EmitEvent(Event{Type: EventDeclareAttackersStep}, agent)
 	g.CurrentStep = "Declare Blockers"
+	// agent.ReportState(g)
 	g.EmitEvent(Event{Type: EventDeclareBlockersStep}, agent)
 	g.CurrentStep = "Combat Damage"
+	// agent.ReportState(g)
 	g.EmitEvent(Event{Type: EventCombatDamageStep}, agent)
 	g.CurrentStep = "End of Combat"
+	// agent.ReportState(g)
 	g.EmitEvent(Event{Type: EventEndOfCombatStep}, agent)
 
 	// Post-combat Main Phase
 	g.CurrentPhase = "Post-combat Main Phase"
 	g.EmitEvent(Event{Type: EventPostcombatMainPhase}, agent)
-	g.CurrentStep = ""
+	g.CurrentStep = "Post-combat Main Phase"
+	//agent.ReportState(g)
 
 	// Ending Phase
 	g.CurrentPhase = "Ending"
 	g.CurrentStep = "End"
+	// agent.ReportState(g)
 	g.EmitEvent(Event{Type: EventEndStep}, agent)
 	g.CurrentStep = "Cleanup"
+	// agent.ReportState(g)
 	toDiscard := g.Hand.Size() - g.MaxHandSize
 	if toDiscard > 0 {
 		ActionDiscardFunc(g, strconv.Itoa(toDiscard), agent)
