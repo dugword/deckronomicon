@@ -46,11 +46,11 @@ type GameState struct {
 func NewGameState() *GameState {
 	gameState := GameState{
 		Battlefield:        NewBattlefield(),
-		Library:            NewLibrary(),
 		EventListeners:     []EventHandler{},
 		Exile:              []*Card{}, // TODO: make this a struct
 		Graveyard:          NewGraveyard(),
 		Hand:               NewHand(),
+		Library:            NewLibrary(),
 		ManaPool:           NewManaPool(),
 		Mulligans:          0,
 		PotentialMana:      NewManaPool(),
@@ -94,6 +94,7 @@ func (g *GameState) InitializeNewGame(config *configs.Config) error {
 	if err := json.Unmarshal(data, &configFile); err != nil {
 		return fmt.Errorf("failed to unmarshal config file: %w", err)
 	}
+	g.Cheat = config.Cheat
 	g.MaxTurns = config.MaxTurns
 	g.Life = config.StartingLife
 	g.MaxHandSize = 7
