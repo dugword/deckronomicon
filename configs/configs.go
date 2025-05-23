@@ -7,6 +7,7 @@ import (
 
 type Config struct {
 	CardPool     string
+	ConfigFile   string
 	DeckList     string
 	Interactive  bool
 	MaxTurns     int
@@ -38,12 +39,14 @@ func LoadConfig(args []string, getenv func(string) string) (*Config, error) {
 	onThePlay := flags.Bool("on-the-play", true, "player going first")
 	startingLife := flags.Int("starting-life", 20, "starting life total")
 	strategyFile := flags.String("strategy", "decks/example/strategy.json", "strategy file")
+	configFile := flags.String("config", "decks/example/config.json", "configuration file")
 	verbose := flags.Bool("verbose", config.Verbose, "verbose output")
 
 	if err := flags.Parse(args[1:]); err != nil {
 		return nil, err
 	}
 	config.CardPool = *cardPool
+	config.ConfigFile = *configFile
 	config.DeckList = *deckList
 	config.Interactive = *interactive
 	config.MaxTurns = *maxTurns
