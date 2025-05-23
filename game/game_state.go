@@ -2,8 +2,11 @@ package game
 
 import (
 	"deckronomicon/configs"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 )
 
@@ -54,6 +57,18 @@ func NewGameState() *GameState {
 
 // InitializeNewGame initializes a new game with the given configuration.
 func (g *GameState) InitializeNewGame(config *configs.Config) error {
+	// TODO: Consolidate config file with other configs so they can all be set
+	// by either envars or cli flags or config file.
+	data, err := os.ReadFile(config.ConfigFile)
+	if err != nil {
+		return fmt.Errorf("failed to read config file: %w", err)
+	}
+	var configFile struct {
+		StartingHand []string `json:"StartingHand"`
+	}
+	if err := json.Unmarshal(data, &configFile); err != nil {
+		return fmt.Errorf("failed to unmarshal config file: %w", err)
+	}
 	g.MaxTurns = config.MaxTurns
 	g.Life = config.StartingLife
 	g.MaxHandSize = 7
@@ -64,9 +79,16 @@ func (g *GameState) InitializeNewGame(config *configs.Config) error {
 	g.Library = library
 	g.Library.Shuffle()
 	g.Hand = &Hand{}
+	for _, cardName := range configFile.StartingHand {
+		card, err := g.Library.FindByName(cardName)
+		if err != nil {
+			return fmt.Errorf("failed to find card %s in library: %w", cardName, err)
+		}
+		g.Hand.Add(card)
+	}
 	result, err := g.ResolveAction(GameAction{
 		Type:   ActionDraw,
-		Target: "7",
+		Target: strconv.Itoa(g.MaxHandSize - g.Hand.Size()),
 	}, nil)
 	g.Log(result.Message)
 	g.ManaPool = NewManaPool()
