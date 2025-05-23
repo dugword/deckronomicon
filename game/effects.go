@@ -404,15 +404,17 @@ func Scry(state *GameState, source GameObject, n int, resolver ChoiceResolver) e
 			return fmt.Errorf("failed to find chosen card: %s", chosen.ID)
 		}
 		used[chosen.ID] = true
-		// TODO: Use constants instead of strings for Top and Bottom
+		// TODO: Maybe have a global set of constants for choices like this
+		const ChoiceTop = "Top"
+		const ChoiceBottom = "Bottom"
 		topBottomchoices := []Choice{
 			{
-				Name: "Top",
-				ID:   "Top",
+				Name: ChoiceTop,
+				ID:   ChoiceTop,
 			},
 			{
-				Name: "Bottom",
-				ID:   "Bottom",
+				Name: ChoiceBottom,
+				ID:   ChoiceBottom,
 			},
 		}
 		placement, err := resolver.ChooseOne(
@@ -423,7 +425,7 @@ func Scry(state *GameState, source GameObject, n int, resolver ChoiceResolver) e
 		if err != nil {
 			return fmt.Errorf("failed to choose placement: %w", err)
 		}
-		if placement.ID == "TOP" {
+		if placement.ID == ChoiceTop {
 			state.Library.AddTop(chosenCard)
 		} else {
 			state.Library.Add(chosenCard)
