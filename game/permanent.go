@@ -1,7 +1,6 @@
 package game
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -39,7 +38,7 @@ func NewPermanent(card *Card) (*Permanent, error) {
 		name:               card.name,
 		power:              card.power,
 		rulesText:          card.rulesText,
-		staticAbilities:    []*StaticAbility{},
+		staticAbilities:    card.staticAbilities,
 		subtypes:           card.subtypes,
 		supertypes:         card.supertypes,
 		toughness:          card.toughness,
@@ -58,16 +57,6 @@ func NewPermanent(card *Card) (*Permanent, error) {
 		}
 		permanent.activatedAbilities = append(permanent.activatedAbilities, ability)
 	}
-	for _, spec := range card.staticAbilitySpecs {
-		if spec.Zone == ZoneHand || spec.Zone == ZoneGraveyard {
-			continue
-		}
-		ability, err := BuildStaticAbility(*spec, &permanent)
-		if err != nil {
-			return nil, fmt.Errorf("failed to build activated ability: %w", err)
-		}
-		permanent.staticAbilities = append(permanent.staticAbilities, ability)
-	}
 	return &permanent, nil
 }
 
@@ -78,9 +67,11 @@ func (p *Permanent) IsTapped() bool {
 
 // Tap taps the permanent. Returns an error if the permanent is already
 // tapped.
+// TODO: There are some specifics that matter for tapping tapped creatures,
+// but for now we will just disallow it.
 func (p *Permanent) Tap() error {
 	if p.tapped {
-		return errors.New("already tapped")
+		return ErrAlreadyTapped
 	}
 	p.tapped = true
 	return nil
@@ -88,6 +79,8 @@ func (p *Permanent) Tap() error {
 
 // Untap untaps the permanent. It is a valid operation even if the permanent
 // is already untapped.
+// TODO: There are some specifics that matter for untapping untapped
+// creatures, but for now we will just allow it.
 func (p *Permanent) Untap() {
 	p.tapped = false
 }
@@ -95,6 +88,17 @@ func (p *Permanent) Untap() {
 // HasSummoningSickness checks if the permanent has summoning sickness.
 func (p *Permanent) HasSummoningSickness() bool {
 	return p.summoningSickness
+}
+
+// HasStaticAbility checks if the permanent has a static ability with the
+// specified name.
+func (p *Permanent) HasStaticAbility(id string) bool {
+	for _, ability := range p.staticAbilities {
+		if ability.ID == id {
+			return true
+		}
+	}
+	return false
 }
 
 // HasSubtype checks if the card has a specific type. It returns true if the

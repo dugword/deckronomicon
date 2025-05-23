@@ -24,9 +24,9 @@ type Card struct {
 	name                  string
 	power                 int
 	rulesText             string
+	spellAbility          *SpellAbility
 	spellAbilitySpec      *SpellAbilitySpec
 	staticAbilities       []*StaticAbility
-	staticAbilitySpecs    []*StaticAbilitySpec
 	triggeredAbilitySpecs []*TriggeredAbilitySpec
 	subtypes              []Subtype
 	supertypes            []Supertype
@@ -53,7 +53,6 @@ func NewCardFromCardData(cardData CardData) (*Card, error) {
 		power:                 cardData.Power,
 		rulesText:             cardData.RulesText,
 		spellAbilitySpec:      cardData.SpellAbilitySpec,
-		staticAbilitySpecs:    cardData.StaticAbilitySpecs,
 		staticAbilities:       []*StaticAbility{},
 		toughness:             cardData.Toughness,
 		triggeredAbilitySpecs: cardData.TriggeredAbilitySpecs,
@@ -105,14 +104,12 @@ func NewCardFromCardData(cardData CardData) (*Card, error) {
 			card.activatedAbilities = append(card.activatedAbilities, ability)
 		}
 	}
-	for _, spec := range card.staticAbilitySpecs {
-		if spec.Zone == ZoneHand || spec.Zone == ZoneGraveyard {
-			ability, err := BuildStaticAbility(*spec, &card)
-			if err != nil {
-				return nil, fmt.Errorf("failed to build activated ability: %w", err)
-			}
-			card.staticAbilities = append(card.staticAbilities, ability)
+	for _, spec := range cardData.StaticAbilitySpecs {
+		staticAbility, err := BuildStaticAbility(*spec, &card)
+		if err != nil {
+			return nil, fmt.Errorf("failed to build static ability: %w", err)
 		}
+		card.staticAbilities = append(card.staticAbilities, staticAbility)
 	}
 	return &card, nil
 }
@@ -190,6 +187,16 @@ func (c *Card) HasCardType(cardType CardType) bool {
 	return false
 }
 
+// HasStaticAbility checks if the card has a specific static ability.
+func (c *Card) HasStaticAbility(id string) bool {
+	for _, ability := range c.staticAbilities {
+		if ability.ID == id {
+			return true
+		}
+	}
+	return false
+}
+
 // HasSubtype checks if the card has a specific type. It returns true if the
 // card has the specified type, and false otherwise.
 func (c *Card) HasSubtype(subtype Subtype) bool {
@@ -241,18 +248,19 @@ func (c *Card) RulesText() string {
 	return c.rulesText
 }
 
-// StaticAbilities returns the static abilities of the card available in the
-// provide zone
-// NOTE: this is not the same as the static abilities of a permanent. A card
-// can have static abilities that are not present on the permanent.
-func (c *Card) StaticAbilities(zone string) []*StaticAbility {
-	var abilities []*StaticAbility
-	for _, ability := range c.staticAbilities {
-		if ability.Zone == zone {
-			abilities = append(abilities, ability)
-		}
-	}
-	return abilities
+// StaticAbilities returns the static abilities of the card.
+func (c *Card) StaticAbilities() []*StaticAbility {
+	return c.staticAbilities
+}
+
+// SpellAbility returns the spell ability of the card.
+func (c *Card) SpellAbility() *SpellAbility {
+	return c.spellAbility
+}
+
+// SpellAbilitySpec returns the spell ability Spec of the card.
+func (c *Card) SpellAbilitySpec() *SpellAbilitySpec {
+	return c.spellAbilitySpec
 }
 
 // Subtypes returns the subtypes of the card.

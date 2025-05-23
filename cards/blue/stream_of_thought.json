@@ -35,18 +35,13 @@
   },
   "StaticAbilities": [
     {
-      "Effects": [
+      "ID": "Replicate",
+      "Modifiers": [
         {
-          "ID": "Replicate",
-          "Modifiers": [
-            {
-              "Key": "Cost",
-              "Value": "{2}{U}{U}"
-            }
-          ]
+          "Key": "Cost",
+          "Value": "{2}{U}{U}"
         }
-      ],
-      "Zone": "Hand"
+      ]
     }
   ],
   "RulesText": "Target player mills four cards. You shuffle up to four cards from your graveyard into your library.\nReplicate {2}{U}{U} (When you cast this spell, copy it for each time you paid its replicate cost. You may choose new targets for the copies.)"

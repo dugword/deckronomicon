@@ -13,6 +13,7 @@ type Cost interface {
 	CanPay(state *GameState) bool
 	Description() string
 	Pay(state *GameState, resolver ChoiceResolver) error
+	Add(cost Cost) Cost
 }
 
 // ManaPattern is a regex pattern that matches valid mana costs.
@@ -55,6 +56,11 @@ type CompositeCost struct {
 	Costs []Cost
 }
 
+func (c *CompositeCost) Add(cost Cost) Cost {
+	c.Costs = append(c.Costs, cost)
+	return c
+}
+
 // CanPay checks if all costs in the composite cost can be paid with the
 // current game state.
 func (c *CompositeCost) CanPay(state *GameState) bool {
@@ -94,6 +100,15 @@ func (c *CompositeCost) Description() string {
 // Pay pays all costs in the composite cost.
 // TODO: If one cost fails, we need to roll back the others.
 func (c *CompositeCost) Pay(state *GameState, resolver ChoiceResolver) error {
+	// TODO: Maybe there's a better way to do this, but this helps with the
+	// needing to roll back thing.
+	for _, cost := range c.Costs {
+		if !cost.CanPay(state) {
+			return fmt.Errorf(
+				"failed to pay composite cost",
+			)
+		}
+	}
 	for _, cost := range c.Costs {
 		if err := cost.Pay(state, resolver); err != nil {
 			return fmt.Errorf(
@@ -109,6 +124,16 @@ func (c *CompositeCost) Pay(state *GameState, resolver ChoiceResolver) error {
 type ManaCost struct {
 	Colors  map[Color]int
 	Generic int
+}
+
+// AddCost adds a cost to the mana cost.
+func (c *ManaCost) Add(cost Cost) Cost {
+	cc := CompositeCost{
+		Costs: []Cost{},
+	}
+	cc.Costs = append(cc.Costs, c)
+	cc.Costs = append(cc.Costs, cost)
+	return &cc
 }
 
 // CanPay checks if the cost can be paid with the current game state.
@@ -184,21 +209,31 @@ type SacrificeCost struct {
 	Permanent *Permanent
 }
 
+// AddCost adds a cost to the mana cost.
+func (c *SacrificeCost) Add(cost Cost) Cost {
+	cc := CompositeCost{
+		Costs: []Cost{},
+	}
+	cc.Costs = append(cc.Costs, c)
+	cc.Costs = append(cc.Costs, cost)
+	return &cc
+}
+
 // CanPay checks if the sacrifice cost can be paid with the current game
 // state.
-func (c SacrificeCost) CanPay(game *GameState) bool {
+func (c *SacrificeCost) CanPay(game *GameState) bool {
 	// TODO: Pretty much always true unless there is some state that says the
 	// permanent can't be sacrificed.
 	return true
 }
 
 // Description returns a string representation of the sacrifice cost.
-func (c SacrificeCost) Description() string {
+func (c *SacrificeCost) Description() string {
 	return "sacrifice this permanent"
 }
 
 // Pay pays the sacrifice cost by sacrificing the permanent.
-func (c SacrificeCost) Pay(game *GameState, resolver ChoiceResolver) error {
+func (c *SacrificeCost) Pay(game *GameState, resolver ChoiceResolver) error {
 	// TODO: Implement this
 	return errors.New("not implemented")
 }
@@ -206,6 +241,16 @@ func (c SacrificeCost) Pay(game *GameState, resolver ChoiceResolver) error {
 // TapCost represents a cost that requires tapping the permanent.
 type TapCost struct {
 	Permanent *Permanent
+}
+
+// AddCost adds a cost to the mana cost.
+func (c *TapCost) Add(cost Cost) Cost {
+	cc := CompositeCost{
+		Costs: []Cost{},
+	}
+	cc.Costs = append(cc.Costs, c)
+	cc.Costs = append(cc.Costs, cost)
+	return &cc
 }
 
 // CanPay checks if the tap cost can be paid with the current game state.

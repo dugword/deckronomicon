@@ -14,6 +14,9 @@ var ErrMaxTurnsExceeded = fmt.Errorf("maximum turns exceeded: %w", ErrGameOver)
 var ErrInvalidObjectType = errors.New("invalid object type")
 var ErrObjectNotFound = errors.New("object not found")
 
+// TODO I don't like this name, come up with something better
+var ErrAlreadyTapped = errors.New("object already tapped")
+
 // PlayerLostReason provides detailed cause for game loss
 type PlayerLostReason string
 

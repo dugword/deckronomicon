@@ -175,6 +175,13 @@ func (a *RuleBasedAgent) ChooseOne(prompt string, source game.ChoiceSource, choi
 	return choices[0], nil
 }
 
+// EnterNumber handles the prompt for entering a number during gameplay. It
+// returns a number based on the rule conditions and the game state.
+// TODO: Implement this
+func (a *RuleBasedAgent) EnterNumber(prompt string, source game.ChoiceSource) (int, error) {
+	return 0, nil
+}
+
 // Rule represents a single rule in the rules engine. Each rule has a name,
 // a phase (optional), a set of conditions to check against the game state,
 // an action to perform if the conditions are met, a priority for rule

@@ -34,6 +34,7 @@ type GameState struct {
 	Mulligans          int
 	PotentialMana      *ManaPool
 	SpellsCastThisTurn []string
+	Stack              []*Spell
 	StormCount         int
 	// TODO: I don't like this, need to rethink how to handle this
 	StartingHand   []string
