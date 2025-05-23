@@ -582,23 +582,57 @@ func actionCastSpellFunc(state *GameState, resolver ChoiceResolver, card *Card) 
 	}
 	state.Log("Casing spell: " + card.Name())
 	state.Hand.Remove(card.ID())
-	if card.IsSpell() {
-		state.Log("Card: " + card.Name() + " is a spell")
-		spell, err := NewSpell(card)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create spell from %s: %w", card.Name(), err)
-		}
+	spell, err := NewSpell(card)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create spell from %s: %w", card.Name(), err)
+	}
+	state.Stack = append(state.Stack, spell)
+	for len(state.Stack) > 0 {
+		spell := state.Stack[0]
+		state.Stack = state.Stack[1:]
+		state.Log(fmt.Sprintf("Spell on stack: %s", spell.Name()))
 		if err := spell.SpellAbility().Resolve(state, resolver); err != nil {
 			return nil, fmt.Errorf("failed to resolve spell: %w", err)
 		}
-	} else if card.IsPermanent() {
-		state.Log("Card: " + card.Name() + " is permanent")
-		permanent, err := NewPermanent(card)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create permanent from %s: %w", card.Name(), err)
-		}
-		state.Battlefield.Add(permanent)
 	}
+
+	/*
+		var castStaticAbilities []*StaticAbility
+		if card.staticAbilitySpecs != nil {
+			for _, spec := range card.staticAbilitySpecs {
+				if spec.Zone == ZoneStack {
+					ability, err := BuildStaticAbility(*spec, card)
+					if err != nil {
+						return nil, fmt.Errorf("failed to build static ability: %w", err)
+					}
+					castStaticAbilities = append(castStaticAbilities, ability)
+				}
+			}
+		}
+	*/
+
+	/*
+		// TODO: Need to either check for success before paying or rollback
+
+		if card.IsSpell() {
+			state.Log("Card: " + card.Name() + " is a spell")
+			spell, err := NewSpell(card)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create spell from %s: %w", card.Name(), err)
+			}
+			if err := spell.SpellAbility().Resolve(state, resolver); err != nil {
+				return nil, fmt.Errorf("failed to resolve spell: %w", err)
+			}
+		} else
+		if card.IsPermanent() {
+			state.Log("Card: " + card.Name() + " is permanent")
+			permanent, err := NewPermanent(card)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create permanent from %s: %w", card.Name(), err)
+			}
+			state.Battlefield.Add(permanent)
+		}
+	*/
 	return &ActionResult{
 		Message: "played card: " + card.Name(),
 	}, nil

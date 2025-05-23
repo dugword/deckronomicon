@@ -24,6 +24,7 @@ type Card struct {
 	name                  string
 	power                 int
 	rulesText             string
+	spellAbility          *SpellAbility
 	spellAbilitySpec      *SpellAbilitySpec
 	staticAbilities       []*StaticAbility
 	staticAbilitySpecs    []*StaticAbilitySpec
@@ -253,6 +254,16 @@ func (c *Card) StaticAbilities(zone string) []*StaticAbility {
 		}
 	}
 	return abilities
+}
+
+// SpellAbility returns the spell ability of the card.
+func (c *Card) SpellAbility() *SpellAbility {
+	return c.spellAbility
+}
+
+// SpellAbilitySpec returns the spell ability Spec of the card.
+func (c *Card) SpellAbilitySpec() *SpellAbilitySpec {
+	return c.spellAbilitySpec
 }
 
 // Subtypes returns the subtypes of the card.

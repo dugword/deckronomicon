@@ -21,6 +21,22 @@ type EffectTag struct {
 	Value string
 }
 
+// BuildPermanentEfect creates and effect that generates a permanent. This is
+// used for spells that create permanents, like creatures or enchantments.
+func BuildPermanentEffect(card *Card) (*Effect, error) {
+	effect := Effect{}
+	effect.Apply = func(state *GameState, resolver ChoiceResolver) error {
+		permanent, err := NewPermanent(card)
+		if err != nil {
+			return fmt.Errorf("failed to create permanent: %w", err)
+		}
+		state.Battlefield.Add(permanent)
+		return nil
+	}
+	effect.Description = fmt.Sprintf("create a %s", card.Name())
+	return &effect, nil
+}
+
 // TODO  would be good to ensure all BuildEffect functions return the same
 // type EffectBuilder func(source GameObject, effectModifiers []EffectModifier) (*Effect, error)
 
@@ -41,6 +57,10 @@ func BuildEffect(source GameObject, spec EffectSpec) (*Effect, error) {
 		return BuildEffectScry(source, spec.Modifiers)
 	case "Search":
 		return BuildEffectSearch(source, spec.Modifiers)
+	case "Replicate":
+		return BuildEffectReplicate(source, spec.Modifiers)
+	case "Tap":
+		return BuildEffectTap(source, spec.Modifiers)
 	default:
 		return &Effect{
 			Description: fmt.Sprintf("unknown effect: %s", spec.ID),
@@ -356,6 +376,118 @@ func BuildEffectSearch(source GameObject, effectModifiers []EffectModifier) (*Ef
 	}
 	effect.Description = fmt.Sprintf("search library for a card of subtype %s", subtype)
 	effect.Tags = []EffectTag{{Key: "Tutor", Value: subtype}}
+	return &effect, nil
+}
+
+// BuildEffectReplicate creates an effect that replicates a spell for each
+// tiem the replicate cost is paid.
+// Supported Modifier Keys (last applies):
+//   - Cost: <cost>
+func BuildEffectReplicate(source GameObject, effectModifiers []EffectModifier) (*Effect, error) {
+	card, ok := source.(*Card)
+	if !ok {
+		return nil, fmt.Errorf("source is not a card: %s", source.ID())
+	}
+	effect := Effect{}
+	var costString string
+	for _, modifier := range effectModifiers {
+		if modifier.Key == "Cost" {
+			costString = modifier.Value
+		}
+	}
+	if costString == "" {
+		return nil, errors.New("no cost provided")
+	}
+	cost, err := ParseManaCost(costString)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse cost: %w", err)
+	}
+	// TODO: Pay the cost here or return something?
+	effect.Apply = func(state *GameState, resolver ChoiceResolver) error {
+		for {
+			if !cost.CanPay(state) {
+				break
+			}
+			accept, err := resolver.Confirm(
+				fmt.Sprintf("Pay the replicate cost?: %s", costString),
+				source,
+			)
+			if err != nil {
+				return fmt.Errorf("failed to confirm: %w", err)
+			}
+			if !accept {
+				break
+			}
+			if err := cost.Pay(state, resolver); err != nil {
+				return fmt.Errorf("failed to pay cost: %w", err)
+			}
+			spell, err := NewSpell(card)
+			if err != nil {
+				return fmt.Errorf("failed to create spell: %w", err)
+			}
+			state.Stack = append(state.Stack, spell)
+			continue
+		}
+		return nil
+	}
+	effect.Description = fmt.Sprintf("replicate for %s", costString)
+	effect.Tags = []EffectTag{{Key: "Replicate", Value: costString}}
+	return &effect, nil
+}
+
+// BuildEffectTap creates an effect that taps a card.
+// Supported Modifier Keys (last applies):
+//   - Target: Permanent
+//
+// TODO: Support other targets
+func BuildEffectTap(source GameObject, effectModifiers []EffectModifier) (*Effect, error) {
+	effect := Effect{}
+	var target string
+	for _, modifier := range effectModifiers {
+		if modifier.Key == "Target" {
+			target = modifier.Value
+		}
+	}
+	if target == "" {
+		return nil, errors.New("no target provided")
+	}
+	if target != "Permanent" {
+		return nil, fmt.Errorf("only Permanent target is supported: %s", target)
+	}
+	effect.Apply = func(state *GameState, resolver ChoiceResolver) error {
+		cards := state.Battlefield.GetAll()
+		if len(cards) == 0 {
+			// TODO: Spells can't be cast without targets
+			return fmt.Errorf("no available targets")
+		}
+		choices := CreateObjectChoices(cards, ZoneBattlefield)
+		chosen, err := resolver.ChooseOne(
+			fmt.Sprintf("Choose a card to tap"),
+			source,
+			choices,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to choose card: %w", err)
+		}
+		permanent, err := state.Battlefield.Get(chosen.ID)
+		if err != nil {
+			return fmt.Errorf("failed to get permanent: %w", err)
+		}
+		p, ok := permanent.(*Permanent)
+		if !ok {
+			return fmt.Errorf("object is not a permanent: %s", chosen.ID)
+		}
+		if err := p.Tap(); err != nil {
+			if errors.Is(err, ErrAlreadyTapped) {
+				// It's not an error to tap a card that's already tapped.
+				return nil
+			}
+			return fmt.Errorf("failed to tap card: %w", err)
+		}
+		return nil
+	}
+	effect.Description = fmt.Sprintf("tap a card of type %s", target)
+	effect.Tags = []EffectTag{{Key: "Tap", Value: target}}
 	return &effect, nil
 }
 

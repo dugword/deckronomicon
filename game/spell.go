@@ -48,11 +48,17 @@ func NewSpell(card *Card) (*Spell, error) {
 			return nil, fmt.Errorf("failed to create cost: %w", err)
 		}
 	*/
-	ability, err := BuildSpellAbility(card.spellAbilitySpec, &spell)
-	if err != nil {
-		return nil, fmt.Errorf("failed to build spell ability: %w", err)
+	var spellAbility *SpellAbility
+	var err error
+	if card.IsPermanent() {
+		spellAbility, err = BuildPermanentSpellAbility(card)
+	} else {
+		spellAbility, err = BuildSpellAbility(card.spellAbilitySpec, &spell)
+		if err != nil {
+			return nil, fmt.Errorf("failed to build spell ability: %w", err)
+		}
 	}
-	spell.spellAbility = ability
+	spell.spellAbility = spellAbility
 	return &spell, nil
 }
 

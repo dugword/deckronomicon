@@ -1,7 +1,6 @@
 package game
 
 import (
-	"errors"
 	"fmt"
 )
 
@@ -78,9 +77,11 @@ func (p *Permanent) IsTapped() bool {
 
 // Tap taps the permanent. Returns an error if the permanent is already
 // tapped.
+// TODO: There are some specifics that matter for tapping tapped creatures,
+// but for now we will just disallow it.
 func (p *Permanent) Tap() error {
 	if p.tapped {
-		return errors.New("already tapped")
+		return ErrAlreadyTapped
 	}
 	p.tapped = true
 	return nil
@@ -88,6 +89,8 @@ func (p *Permanent) Tap() error {
 
 // Untap untaps the permanent. It is a valid operation even if the permanent
 // is already untapped.
+// TODO: There are some specifics that matter for untapping untapped
+// creatures, but for now we will just allow it.
 func (p *Permanent) Untap() {
 	p.tapped = false
 }

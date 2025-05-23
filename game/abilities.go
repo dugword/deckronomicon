@@ -151,6 +151,17 @@ func BuildSpellAbility(spec *SpellAbilitySpec, source GameObject) (*SpellAbility
 	return &ability, nil
 }
 
+// BuildPermanentSpellAbility builds a spell ability from the given specification.
+func BuildPermanentSpellAbility(card *Card) (*SpellAbility, error) {
+	effect, err := BuildPermanentEffect(card)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create permanent effect: %w", err)
+	}
+	return &SpellAbility{
+		Effects: []*Effect{effect},
+	}, nil
+}
+
 // Description returns a string representation of the spell ability.
 func (a *SpellAbility) Description() string {
 	var descriptions []string
