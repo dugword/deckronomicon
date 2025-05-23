@@ -149,6 +149,12 @@ func (g *GameState) RunTurn(agent PlayerAgent) error {
 				if err != nil {
 					g.Error(err)
 					g.LastActionFailed = true
+					// TODO: Think through if we want to put errors here, or
+					// if we want to get the error from the action result
+					// struct.
+					// or if errors should go to an g.ErrorMessage or
+					// something
+					g.Message = "Error: " + err.Error()
 					// TODO: Should this break the outer loop?
 					// Probably...
 					continue
