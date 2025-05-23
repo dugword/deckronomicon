@@ -89,6 +89,14 @@ func (h *Hand) Get(id string) (GameObject, error) {
 	return nil, fmt.Errorf("card with ID %s not found", id)
 }
 
+func (h *Hand) GetAll() []GameObject {
+	var all []GameObject
+	for _, card := range h.cards {
+		all = append(all, card)
+	}
+	return all
+}
+
 func (h *Hand) Remove(id string) error {
 	for i, card := range h.cards {
 		if card.ID() == id {

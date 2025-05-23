@@ -74,7 +74,7 @@ type ChoiceResolver interface {
 	//ChooseN(prompt string, choices []Choice, n int) []Choice
 	//ChooseUpToN(prompt string, choices []Choice, n int) []Choice
 	//ChooseAny(prompt string, choices []Choice) []Choice
-	//Confirm(prompt string) bool // For simple yes/no prompts
+	Confirm(prompt string, source ChoiceSource) (bool, error)
 }
 
 // PlayerAgent defines how player decisions are made.

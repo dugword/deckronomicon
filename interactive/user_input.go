@@ -35,6 +35,20 @@ func (a *InteractivePlayerAgent) ReadInput() (action, target string) {
 	}
 }
 
+// ReadInputConfirm reads input from the interactive console and returns a
+// boolean.
+func (a *InteractivePlayerAgent) ReadInputConfirm() (bool, error) {
+	input, _ := a.ReadInput()
+	accept := strings.ToLower(input)
+	if accept == "y" || accept == "yes" {
+		return true, nil
+	}
+	if accept == "n" || accept == "no" {
+		return false, nil
+	}
+	return false, fmt.Errorf("invalid input: %s", accept)
+}
+
 func (a InteractivePlayerAgent) ReadInputNumber(max int) (int, error) {
 	input, _ := a.ReadInput()
 	number, err := strconv.Atoi(input)

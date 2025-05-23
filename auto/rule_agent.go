@@ -99,6 +99,12 @@ func (a *RuleBasedAgent) LoadRules(path string) {
 // point in the game.
 func (a *RuleBasedAgent) ReportState(state *game.GameState) {}
 
+// Confirm is a placeholder method for confirming actions during gameplay.
+// TODO: Implement this
+func (a *RuleBasedAgent) Confirm(prompt string, source game.ChoiceSource) (bool, error) {
+	return true, nil
+}
+
 // GetNextAction evaluates the current game state against the defined rules
 // and returns the next action to be taken. If a rule's condition is met, the
 // corresponding action is executed. If no rules match, a default action
