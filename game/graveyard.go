@@ -91,6 +91,14 @@ func (g *Graveyard) Get(id string) (GameObject, error) {
 	return nil, fmt.Errorf("card witg ID %s not found", id)
 }
 
+func (g *Graveyard) GetAll() []GameObject {
+	var all []GameObject
+	for _, card := range g.cards {
+		all = append(all, card)
+	}
+	return all
+}
+
 func (g *Graveyard) Remove(id string) error {
 	for i, card := range g.cards {
 		if card.ID() == id {

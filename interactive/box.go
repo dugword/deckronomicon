@@ -37,7 +37,7 @@ func GroupedChoicesBox(title string, choices []game.Choice) (Box, []game.Choice)
 			grouped[game.ChoiceNone] = append(grouped[game.ChoiceNone], choice)
 		} else if choice.Zone == "" {
 			// TODO: Handle this different
-			grouped["unknown"] = append(grouped[game.ChoiceNone], choice)
+			grouped[""] = append(grouped[""], choice)
 		} else {
 			grouped[choice.Zone] = append(grouped[choice.Zone], choice)
 		}

@@ -285,7 +285,10 @@ func StringToSubtype(s string) (Subtype, error) {
 	if t, ok := StringToInstantSorcerySubtype[s]; ok {
 		return t, nil
 	}
-	return "", fmt.Errorf("unknown Subtype: %s")
+	if t, ok := StringToCreatureSubtype[s]; ok {
+		return t, nil
+	}
+	return "", fmt.Errorf("unknown Subtype: %s", s)
 }
 
 type Supertype string

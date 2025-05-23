@@ -8,6 +8,10 @@ type Command struct {
 
 // Commands is a map of command names to their corresponding Command structs.
 var Commands = map[string]Command{
+	"addmana": {
+		Description: "Add mana to your mana pool",
+		Action:      GameAction{Cheat: CheatAddMana},
+	},
 	"activate": {
 		Description: "Activate an ability",
 		Action:      GameAction{Type: ActionActivate},
@@ -20,6 +24,10 @@ var Commands = map[string]Command{
 		Description: "Concede the game",
 		Action:      GameAction{Type: ActionConcede},
 	},
+	"conjure": {
+		Description: "Conjure a card",
+		Action:      GameAction{Cheat: CheatConjure},
+	},
 	"draw": {
 		Description: "Draw a card",
 		Action:      GameAction{Cheat: CheatDraw},
@@ -28,10 +36,18 @@ var Commands = map[string]Command{
 		Description: "Discard a card",
 		Action:      GameAction{Cheat: CheatDiscard},
 	},
+	"find": {
+		Description: "Find a card in the library",
+		Action:      GameAction{Cheat: CheatFind},
+	},
 	"help": {
 		Description: "Print more information about a command",
 		// TODO: maybe have something here incase it some how gets passed to the game loop....
 		Action: GameAction{},
+	},
+	"landdrop": {
+		Description: "Reset land drop check",
+		Action:      GameAction{Cheat: CheatLandDrop},
 	},
 	"pass": {
 		Description: "Pass the turn",
