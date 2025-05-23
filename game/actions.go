@@ -248,9 +248,13 @@ func ActionDiscardFunc(state *GameState, target string, resolver ChoiceResolver)
 // manually by the player if Cheat is enabled in the game state. The target is
 // the number of cards to draw.
 func ActionDrawFunc(state *GameState, target string, resolver ChoiceResolver) (*ActionResult, error) {
-	n, err := strconv.Atoi(target)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert %s to int: %w", target, err)
+	n := 1
+	var err error
+	if target != "" {
+		n, err = strconv.Atoi(target)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert %s to int: %w", target, err)
+		}
 	}
 	if err := state.Draw(n); err != nil {
 		return nil, err
@@ -311,15 +315,6 @@ func ActionLandDropFunc(state *GameState, target string, resolver ChoiceResolver
 // ActionPlayFunc handles the play action. This is performed by the player to
 // play a card from their hand. The target is the name of the card to play.
 func ActionPlayFunc(state *GameState, target string, resolver ChoiceResolver) (result *ActionResult, err error) {
-	/*
-		var card GameObject
-			if target != "" {
-				card, err = state.Hand.FindByName(target)
-				if err != nil {
-					return nil, fmt.Errorf("failed to find card in hand: %w", err)
-				}
-			}
-	*/
 	var choices []Choice
 	for _, zone := range state.Zones() {
 		cards := zone.AvailableToPlay(state)
@@ -339,8 +334,12 @@ func ActionPlayFunc(state *GameState, target string, resolver ChoiceResolver) (r
 		}
 		choices = filteredChoices
 	}
+
 	var choice Choice
-	if target != "" && len(choices) != 1 {
+	if target != "" && len(choices) == 1 {
+		choice = choices[0]
+	} else {
+
 		choice, err = resolver.ChooseOne(
 			"Which card to play",
 			ActionPlay,
@@ -352,8 +351,6 @@ func ActionPlayFunc(state *GameState, target string, resolver ChoiceResolver) (r
 		if choice.ID == ChoiceNone {
 			return nil, nil
 		}
-	} else {
-		choice = choices[0]
 	}
 	zone, err := state.GetZone(choice.Zone)
 	if err != nil {
