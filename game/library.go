@@ -97,6 +97,14 @@ func (l *Library) Get(id string) (GameObject, error) {
 	return nil, fmt.Errorf("card with ID %s not found", id)
 }
 
+func (l *Library) GetAll() []GameObject {
+	var all []GameObject
+	for _, card := range l.cards {
+		all = append(all, card)
+	}
+	return all
+}
+
 func (l *Library) Remove(id string) error {
 	for i, card := range l.cards {
 		if card.ID() == id {

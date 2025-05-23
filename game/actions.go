@@ -150,6 +150,83 @@ func ActionActivateFunc(state *GameState, target string, resolver ChoiceResolver
 	return nil, nil
 }
 
+// ActionAddManaFunc handles the add mana action. This is performed by the
+// player to add mana to their mana pool. The target is the amount of mana
+// to add. This is a cheat.
+func ActionAddManaFunc(state *GameState, target string, resolver ChoiceResolver) (*ActionResult, error) {
+	mana := target
+	if mana == "" {
+		choices := []Choice{
+			{
+				Name:   "White",
+				ID:     "{W}",
+				Source: ChoiceCheat,
+			}, {
+				Name:   "Blue",
+				ID:     "{U}",
+				Source: ChoiceCheat,
+			}, {
+				Name:   "Black",
+				ID:     "{B}",
+				Source: ChoiceCheat,
+			}, {
+				Name:   "Red",
+				ID:     "{R}",
+				Source: ChoiceCheat,
+			}, {
+				Name:   "Green",
+				ID:     "{G}",
+				Source: ChoiceCheat,
+			}, {
+				Name:   "Colorless",
+				ID:     "{C}",
+				Source: ChoiceCheat,
+			},
+		}
+		choice, err := resolver.ChooseOne(
+			"Add mana to mana pool",
+			ChoiceSourceCheat,
+			choices,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to choose mana: %w", err)
+		}
+		mana = choice.ID
+	}
+	state.ManaPool.AddMana(mana)
+	return &ActionResult{
+		Message: fmt.Sprintf("%s mana added to pool", mana),
+	}, nil
+}
+
+// ActionConjureFunc handles the conjure action. This is performed by the
+// player to conjure a card. The target is the name of the card to conjure.
+// This is a cheat.
+func ActionConjureFunc(state *GameState, target string, resolver ChoiceResolver) (*ActionResult, error) {
+	if target == "" {
+		return nil, fmt.Errorf("no card name provided")
+	}
+	cardPoolData, err := LoadCardPoolData(state.CardPool)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load card pool data: %w", err)
+	}
+	cardData, ok := cardPoolData[target]
+	if !ok {
+		return nil, fmt.Errorf("card %s not found in card pool data", target)
+	}
+	card, err := NewCardFromCardData(cardData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create card %s: %w", target, err)
+	}
+	if err := state.Hand.Add(card); err != nil {
+		return nil, fmt.Errorf("failed to add card to hand: %w", err)
+	}
+	state.Log("Conjured card: " + card.Name())
+	return &ActionResult{
+		Message: "conjured card: " + card.Name(),
+	}, nil
+}
+
 // ActionDiscardFunc handles the discard action. This is performed
 // automatically at the end of turn by during the clean up state. It can also
 // be performed manually by the player if Cheat is enabled in the game state.
@@ -180,6 +257,54 @@ func ActionDrawFunc(state *GameState, target string, resolver ChoiceResolver) (*
 	}
 	return &ActionResult{
 		Message: "card drawn",
+	}, nil
+}
+
+// ActionFindFunc handles the find action. This is performed by the player to
+// find a card in their library. The target is the name of the card to find.
+// This is a cheat.
+func ActionFindFunc(state *GameState, target string, resolver ChoiceResolver) (*ActionResult, error) {
+	var card GameObject
+	var err error
+	if target != "" {
+		card, err = state.Library.FindByName(target)
+		if err != nil {
+			return nil, fmt.Errorf("failed to find card in library: %w", err)
+		}
+	} else {
+		choices := CreateObjectChoices(
+			state.Library.GetAll(),
+			ZoneLibrary,
+		)
+		choice, err := resolver.ChooseOne(
+			"Which card to find",
+			ChoiceSourceCheat,
+			AddOptionalChoice(choices),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to choose card: %w", err)
+		}
+		card, err = state.Library.Take(choice.ID)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to take card from library: %w", err)
+	}
+	if err := state.Hand.Add(card); err != nil {
+		return nil, fmt.Errorf("failed to add card to hand: %w", err)
+	}
+	return &ActionResult{
+		Message: "found card: " + card.Name(),
+	}, nil
+}
+
+// ActionLandDropFunc handles the land drop action. This is performed by the
+// player. Is resets the land drop flag for the player.
+// This is a cheat.
+func ActionLandDropFunc(state *GameState, target string, resolver ChoiceResolver) (*ActionResult, error) {
+	state.LandDrop = false
+	state.Log("Land drop reset")
+	return &ActionResult{
+		Message: "land drop reset",
 	}, nil
 }
 

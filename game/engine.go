@@ -22,6 +22,7 @@ func (g *GameState) RunGameLoop(agent PlayerAgent) error {
 }
 
 var ChoiceMulligan = "Mulligan"
+var ChoiceSourceMulligan = NewChoiceSource(ChoiceMulligan, ChoiceMulligan)
 
 // Mulligan allows the player to mulligan their hand. The player draws 7 new
 // cards but then needs to put 1 card back on the bottom of their library for
@@ -31,7 +32,7 @@ func (g *GameState) Mulligan(agent PlayerAgent) error {
 	var err error
 	for (g.Mulligans < g.MaxHandSize) || !accept {
 		agent.ReportState(g)
-		accept, err = agent.Confirm("Keep Hand? (y/n)", NewChoiceSource(ChoiceMulligan, ChoiceMulligan))
+		accept, err = agent.Confirm("Keep Hand? (y/n)", ChoiceSourceMulligan)
 		if err != nil {
 			return fmt.Errorf("failed to confirm mulligan: %w", err)
 		}
@@ -117,9 +118,12 @@ func (g *GameState) RunTurn(agent PlayerAgent) error {
 		g.PotentialMana = GetPotentialMana(g)
 		agent.ReportState(g)
 		action := agent.GetNextAction(g)
-		if !PlayerActions[action.Type] {
-			g.Log("Invalid player action: " + string(action.Type))
-			continue
+		// TODO Revisit this, it's a bit messy
+		if !g.Cheat {
+			if !PlayerActions[action.Type] {
+				g.Log("Invalid player action: " + string(action.Type))
+				continue
+			}
 		}
 		if action.Cheat != "" && g.Cheat {
 			result, err := g.ResolveCheat(action, agent)
@@ -217,9 +221,21 @@ func (g *GameState) RunTurn(agent PlayerAgent) error {
 // ResolveCheat handles the resolution of cheat actions.
 func (g *GameState) ResolveCheat(action GameAction, agent PlayerAgent) (*ActionResult, error) {
 	switch action.Cheat {
+	case CheatAddMana:
+		g.Log("CHEAT! Action: add mana")
+		return ActionAddManaFunc(g, action.Target, agent)
+	case CheatConjure:
+		g.Log("Action: conjure")
+		return ActionConjureFunc(g, action.Target, agent)
 	case CheatDraw:
 		g.Log("CHEAT! Action: draw")
 		return ActionDrawFunc(g, action.Target, agent)
+	case CheatFind:
+		g.Log("CHEAT! Action: find")
+		return ActionFindFunc(g, action.Target, agent)
+	case CheatLandDrop:
+		g.Log("CHEAT! Action: land drop")
+		return ActionLandDropFunc(g, action.Target, agent)
 	case CheatPeek:
 		g.Log("CHEAT! Action: peek")
 		return &ActionResult{

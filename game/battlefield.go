@@ -92,6 +92,14 @@ func (b *Battlefield) Get(id string) (GameObject, error) {
 	return nil, fmt.Errorf("permanent with ID %s not found", id)
 }
 
+func (b *Battlefield) GetAll() []GameObject {
+	var all []GameObject
+	for _, permanent := range b.permanents {
+		all = append(all, permanent)
+	}
+	return all
+}
+
 func (b *Battlefield) Remove(id string) error {
 	for i, permanent := range b.permanents {
 		if permanent.ID() == id {

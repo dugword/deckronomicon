@@ -14,6 +14,7 @@ import (
 type GameState struct {
 	Battlefield        *Battlefield
 	Cheat              bool
+	CardPool           string
 	CurrentPhase       string
 	CurrentPlayer      int
 	CurrentStep        string
@@ -96,7 +97,8 @@ func (g *GameState) InitializeNewGame(config *configs.Config) error {
 	g.MaxTurns = config.MaxTurns
 	g.Life = config.StartingLife
 	g.MaxHandSize = 7
-	library, err := importDeck(config.DeckList, config.CardPool)
+	g.CardPool = config.CardPool
+	library, err := importDeck(config.DeckList, g.CardPool)
 	if err != nil {
 		return err
 	}

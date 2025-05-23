@@ -19,6 +19,7 @@ type Zone interface {
 	FindByName(name string) (GameObject, error)
 	FindAllBySubtype(subtype Subtype) []GameObject
 	Get(id string) (GameObject, error)
+	GetAll() []GameObject
 	Remove(id string) error
 	Take(id string) (GameObject, error)
 	Size() int
