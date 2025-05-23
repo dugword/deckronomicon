@@ -129,11 +129,13 @@ func (g *GameState) RunTurn(agent PlayerAgent) error {
 			result, err := g.ResolveCheat(action, agent)
 			if err != nil {
 				g.Error(err)
+				g.Message = "Error: " + err.Error()
 				continue
 			}
 			// TODO: Hand printing somewhere more cohesive
 			if result != nil {
 				g.Log("CHEAT RESULT:", result.Message)
+				g.Message = result.Message
 			}
 			continue
 		}
@@ -240,7 +242,7 @@ func (g *GameState) ResolveCheat(action GameAction, agent PlayerAgent) (*ActionR
 		g.Log("CHEAT! Action: peek")
 		return &ActionResult{
 			// TODO: No .cards access
-			Message: "Top Card: " + g.Library.cards[0].Name(),
+			Message: "Top Card: " + g.Library.Peek().Name(),
 		}, nil
 	case CheatShuffle:
 		g.Log("CHEAT! Action: shuffle")
