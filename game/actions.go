@@ -609,8 +609,17 @@ func actionCastSpellFunc(state *GameState, resolver ChoiceResolver, card *Card) 
 	if err := spellCost.Pay(state, resolver); err != nil {
 		return nil, err
 	}
-	state.Log("Casing spell: " + card.Name())
-	state.Hand.Remove(card.ID())
+	{
+		// TODO: Spells should be moved to graveyard after resolving.
+		state.Log("Casing spell: " + card.Name())
+		card, err := state.Hand.Get(card.ID())
+		if err != nil {
+			return nil, fmt.Errorf("failed to get card from hand: %w", err)
+		}
+		if err := state.Graveyard.Add(card); err != nil {
+			return nil, fmt.Errorf("failed to move card to graveyard: %w", err)
+		}
+	}
 	state.Stack = append(state.Stack, spell)
 	for range replicateCount {
 		spell, err := NewSpell(card)
