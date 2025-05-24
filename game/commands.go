@@ -65,6 +65,10 @@ var Commands = map[string]Command{
 		Description: "Shuffle the library",
 		Action:      GameAction{Cheat: CheatShuffle},
 	},
+	"untap": {
+		Description: "Untap a card",
+		Action:      GameAction{Type: ActionUntap},
+	},
 	"view": {
 		Description: "View an object's description",
 		Action:      GameAction{Type: ActionView},
