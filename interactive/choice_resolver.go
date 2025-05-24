@@ -4,7 +4,6 @@ import (
 	"deckronomicon/game"
 	"fmt"
 	"os"
-	"text/template"
 )
 
 var choiceBoxTmpl = `{{.TopLine}}
@@ -47,13 +46,15 @@ func (a *InteractivePlayerAgent) ChooseOne(prompt string, source game.ChoiceSour
 		return game.Choice{}, fmt.Errorf("no choices available")
 	}
 	title := fmt.Sprintf("%s requires a choice", source.Name())
-	groupedChoicesBox, orderedChoices := GroupedChoicesBox(title, choices)
-	tmpl := template.Must(template.New("choices").Parse(choiceBoxTmpl))
-	if err := tmpl.ExecuteTemplate(
+	groupedChoicesData, orderedChoices := GroupedChoicesData(title, choices)
+	a.UpdateChoiceData(groupedChoicesData)
+	displayBoxes := a.BuildDisplayBoxes()
+	ClearScreen()
+	if err := a.DisplayTemplate.ExecuteTemplate(
 		// TODO: use passed in stdout from Run
 		os.Stdout,
-		"choices",
-		groupedChoicesBox,
+		"display.tmpl",
+		displayBoxes,
 	); err != nil {
 		fmt.Println("Error executing template:", err)
 		// TODO: handle error return to main
