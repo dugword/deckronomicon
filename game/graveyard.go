@@ -33,6 +33,9 @@ func (g *Graveyard) AvailableActivatedAbilities(state *GameState) []*ActivatedAb
 	abilities := []*ActivatedAbility{}
 	for _, card := range g.cards {
 		for _, ability := range card.ActivatedAbilities() {
+			if !ability.CanPlay(state) {
+				continue
+			}
 			if !ability.Cost.CanPay(state) {
 				continue
 			}

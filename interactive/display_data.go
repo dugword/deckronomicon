@@ -102,6 +102,18 @@ func HandData(state *game.GameState) BoxData {
 	}
 }
 
+// StackData creates the box data for displaying cards in the player's hand.
+func StackData(state *game.GameState) BoxData {
+	var lines []string
+	for _, spell := range state.Stack.GetAll() {
+		lines = append(lines, spell.Name())
+	}
+	return BoxData{
+		Title:   "Stack",
+		Content: lines,
+	}
+}
+
 func GroupedChoicesData(title string, choices []game.Choice) (BoxData, []game.Choice) {
 	grouped := make(map[string][]game.Choice)
 	for _, choice := range choices {

@@ -110,10 +110,10 @@ func (a *RuleBasedAgent) Confirm(prompt string, source game.ChoiceSource) (bool,
 // corresponding action is executed. If no rules match, a default action
 // (ActionPass) is returned. The method also handles special cases, such as
 // conceding if the last action failed.
-func (a *RuleBasedAgent) GetNextAction(state *game.GameState) game.GameAction {
+func (a *RuleBasedAgent) GetNextAction(state *game.GameState) *game.GameAction {
 	// TODO: make this configurable in the rules
 	if state.LastActionFailed {
-		return game.GameAction{Type: game.ActionConcede}
+		return &game.GameAction{Type: game.ActionConcede}
 	}
 	for _, rule := range a.Rules {
 		fmt.Println("Rule =>", rule.Name)
@@ -132,7 +132,7 @@ func (a *RuleBasedAgent) GetNextAction(state *game.GameState) game.GameAction {
 					if err != nil {
 						fmt.Println("ERROR: could not find card in hand =>", rule.Then.Target)
 						os.Exit(1)
-						return game.GameAction{Type: ""}
+						return &game.GameAction{Type: ""}
 					}
 					card, ok := object.(*game.Card)
 					if !ok {
@@ -151,15 +151,15 @@ func (a *RuleBasedAgent) GetNextAction(state *game.GameState) game.GameAction {
 							fmt.Println("Permanent =>", p.Name())
 						}
 						os.Exit(0)
-						return game.GameAction{Type: ""}
+						return &game.GameAction{Type: ""}
 					}
 					gameAction.Preactions = preactions
-					return gameAction
+					return &gameAction
 				}
 			}
 		}
 	}
-	return game.GameAction{Type: game.ActionPass}
+	return &game.GameAction{Type: game.ActionPass}
 }
 
 // ChooseOne handles choice prompts during gameplay. It evaluates the prompt

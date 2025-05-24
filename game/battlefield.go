@@ -37,6 +37,9 @@ func (b *Battlefield) AvailableActivatedAbilities(state *GameState) []*Activated
 	var abilities []*ActivatedAbility
 	for _, permanent := range b.permanents {
 		for _, ability := range permanent.ActivatedAbilities() {
+			if !ability.CanPlay(state) {
+				continue
+			}
 			if ability.Cost.CanPay(state) {
 				abilities = append(abilities, ability)
 			}

@@ -72,8 +72,7 @@ func PrintCommands(cheatsEnabled bool) {
 	var commands []string
 	var cheats []string
 	for name, command := range game.Commands {
-		isCheat := command.Action.Cheat != ""
-		if isCheat {
+		if command.Cheat {
 			cheats = append(cheats, name)
 			continue
 		}
@@ -92,8 +91,7 @@ func PrintHelp(cheatsEnabled bool) {
 	var cheats []string
 	var aliases []string
 	for name, command := range game.Commands {
-		isCheat := command.Action.Cheat != ""
-		if isCheat {
+		if command.Cheat {
 			cheats = append(cheats, fmt.Sprintf("%s :: %s", name, command.Description))
 			continue
 		}
