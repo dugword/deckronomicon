@@ -27,6 +27,19 @@ func (a *InteractivePlayerAgent) Confirm(prompt string, source game.ChoiceSource
 	}
 }
 
+// EnterNumber prompts the user to enter a number.
+func (a *InteractivePlayerAgent) EnterNumber(prompt string, source game.ChoiceSource) (int, error) {
+	for {
+		a.Prompt(prompt)
+		number, err := a.ReadInputNumber(-1)
+		if err != nil {
+			fmt.Println("Invalid choice. Please enter a number")
+			continue
+		}
+		return number, nil
+	}
+}
+
 // ChoseOne prompts the user to choose one of the given choices.
 // TODO: Need to enable a way to cancel
 func (a *InteractivePlayerAgent) ChooseOne(prompt string, source game.ChoiceSource, choices []game.Choice) (game.Choice, error) {

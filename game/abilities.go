@@ -99,26 +99,30 @@ func (a *ActivatedAbility) Tags() []EffectTag {
 
 // StaticAbility represents continuous effects.
 type StaticAbility struct {
-	Zone    string
-	Effects []*Effect
+	ID string
+	// TODO: I don't like this, it feels close but not quite right.
+	// I think tags should mostly be informational and for finding stuff, not
+	// impacting the actual effect logic.
+	// I also want to parse the JSON config closer to when the card is created
+	// to verify things, and not store logic in strings. Maybe having a
+	// defined "Cost" field in this struct would be better, but I don't know
+	// the full set of possible static abilties.
+	// Maybe I need to create a new Modifier tag...  instead of resuing effect
+	// tags just because they are similiar. :shrug:
+	Modifiers []EffectTag
 }
 
 // BuildStaticAbility builds a static ability from the given specification.
 func BuildStaticAbility(spec StaticAbilitySpec, source GameObject) (*StaticAbility, error) {
-	// ZoneBattlefield is the default zone for static abilities.
-	zone := ZoneBattlefield
-	if spec.Zone != "" {
-		zone = spec.Zone
-	}
 	ability := StaticAbility{
-		Zone: zone,
+		ID: spec.ID,
 	}
-	for _, effectSpec := range spec.EffectSpecs {
-		effect, err := BuildEffect(source, effectSpec)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create effect: %w", err)
+	for _, modifer := range spec.Modifiers {
+		efectTag := EffectTag{
+			Key:   modifer.Key,
+			Value: modifer.Value,
 		}
-		ability.Effects = append(ability.Effects, effect)
+		ability.Modifiers = append(ability.Modifiers, efectTag)
 	}
 	return &ability, nil
 }
@@ -126,8 +130,11 @@ func BuildStaticAbility(spec StaticAbilitySpec, source GameObject) (*StaticAbili
 // Description returns a string representation of the static ability.
 func (a *StaticAbility) Description() string {
 	var descriptions []string
-	for _, effect := range a.Effects {
-		descriptions = append(descriptions, effect.Description)
+	for _, modifier := range a.Modifiers {
+		descriptions = append(
+			descriptions,
+			fmt.Sprintf("%s: %s", modifier.Key, modifier.Value),
+		)
 	}
 	return strings.Join(descriptions, ", ")
 }

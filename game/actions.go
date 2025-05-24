@@ -73,12 +73,6 @@ type ActionResult struct {
 // TODO: Support more than one activated ability
 // TODO: Support activated abilities in hand and graveyard
 func ActionActivateFunc(state *GameState, target string, resolver ChoiceResolver) (*ActionResult, error) {
-	/*
-		var selectedObject GameObject
-		if target != "" {
-			selectedObject = state.Battlefield.FindPermanentWithAvailableActivatedAbility(target, state)
-		}
-	*/
 	var abilities []*ActivatedAbility
 	for _, zone := range state.Zones() {
 		abilities = append(abilities, zone.AvailableActivatedAbilities(state)...)
@@ -577,16 +571,55 @@ func actionPlayLandFunc(state *GameState, resolver ChoiceResolver, card *Card) (
 // TODO: Maybe this should be a method off of GameState
 // or maybe a method off of Card, e.g. card.Cast() like Ability.Resolve()
 func actionCastSpellFunc(state *GameState, resolver ChoiceResolver, card *Card) (result *ActionResult, err error) {
-	if err := card.ManaCost().Pay(state, resolver); err != nil {
-		return nil, err
-	}
-	state.Log("Casing spell: " + card.Name())
-	state.Hand.Remove(card.ID())
 	spell, err := NewSpell(card)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create spell from %s: %w", card.Name(), err)
 	}
+	var spellCost Cost = spell.ManaCost()
+	var isReplicate bool
+	var replicateCost Cost
+	var replicateCount int
+	for _, ability := range spell.StaticAbilities() {
+		if ability.ID != AbilityKeywordReplicate {
+			continue
+		}
+		for _, modifier := range ability.Modifiers {
+			if modifier.Key != "Cost" {
+				continue
+			}
+			isReplicate = true
+			replicateCost, err = NewCost(modifier.Value, spell)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create cost: %w", err)
+			}
+		}
+	}
+	if isReplicate {
+		replicateCount, err = resolver.EnterNumber(
+			fmt.Sprintf("Replicate how many times for %s", replicateCost.Description()),
+			NewChoiceSource(AbilityKeywordReplicate, AbilityKeywordReplicate),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to confirm replicate cost: %w", err)
+		}
+	}
+	for range replicateCount {
+		spellCost = spellCost.Add(replicateCost)
+	}
+	if err := spellCost.Pay(state, resolver); err != nil {
+		return nil, err
+	}
+	state.Log("Casing spell: " + card.Name())
+	state.Hand.Remove(card.ID())
 	state.Stack = append(state.Stack, spell)
+	for range replicateCount {
+		spell, err := NewSpell(card)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create spell from %s: %w", card.Name(), err)
+		}
+		state.Stack = append(state.Stack, spell)
+		state.Log(fmt.Sprintf("Replicated spell: %s", spell.Name()))
+	}
 	for len(state.Stack) > 0 {
 		spell := state.Stack[0]
 		state.Stack = state.Stack[1:]
@@ -595,44 +628,6 @@ func actionCastSpellFunc(state *GameState, resolver ChoiceResolver, card *Card) 
 			return nil, fmt.Errorf("failed to resolve spell: %w", err)
 		}
 	}
-
-	/*
-		var castStaticAbilities []*StaticAbility
-		if card.staticAbilitySpecs != nil {
-			for _, spec := range card.staticAbilitySpecs {
-				if spec.Zone == ZoneStack {
-					ability, err := BuildStaticAbility(*spec, card)
-					if err != nil {
-						return nil, fmt.Errorf("failed to build static ability: %w", err)
-					}
-					castStaticAbilities = append(castStaticAbilities, ability)
-				}
-			}
-		}
-	*/
-
-	/*
-		// TODO: Need to either check for success before paying or rollback
-
-		if card.IsSpell() {
-			state.Log("Card: " + card.Name() + " is a spell")
-			spell, err := NewSpell(card)
-			if err != nil {
-				return nil, fmt.Errorf("failed to create spell from %s: %w", card.Name(), err)
-			}
-			if err := spell.SpellAbility().Resolve(state, resolver); err != nil {
-				return nil, fmt.Errorf("failed to resolve spell: %w", err)
-			}
-		} else
-		if card.IsPermanent() {
-			state.Log("Card: " + card.Name() + " is permanent")
-			permanent, err := NewPermanent(card)
-			if err != nil {
-				return nil, fmt.Errorf("failed to create permanent from %s: %w", card.Name(), err)
-			}
-			state.Battlefield.Add(permanent)
-		}
-	*/
 	return &ActionResult{
 		Message: "played card: " + card.Name(),
 	}, nil

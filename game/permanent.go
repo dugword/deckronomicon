@@ -38,7 +38,7 @@ func NewPermanent(card *Card) (*Permanent, error) {
 		name:               card.name,
 		power:              card.power,
 		rulesText:          card.rulesText,
-		staticAbilities:    []*StaticAbility{},
+		staticAbilities:    card.staticAbilities,
 		subtypes:           card.subtypes,
 		supertypes:         card.supertypes,
 		toughness:          card.toughness,
@@ -56,16 +56,6 @@ func NewPermanent(card *Card) (*Permanent, error) {
 			return nil, fmt.Errorf("failed to build activated ability: %w", err)
 		}
 		permanent.activatedAbilities = append(permanent.activatedAbilities, ability)
-	}
-	for _, spec := range card.staticAbilitySpecs {
-		if spec.Zone == ZoneHand || spec.Zone == ZoneGraveyard {
-			continue
-		}
-		ability, err := BuildStaticAbility(*spec, &permanent)
-		if err != nil {
-			return nil, fmt.Errorf("failed to build activated ability: %w", err)
-		}
-		permanent.staticAbilities = append(permanent.staticAbilities, ability)
 	}
 	return &permanent, nil
 }
@@ -98,6 +88,17 @@ func (p *Permanent) Untap() {
 // HasSummoningSickness checks if the permanent has summoning sickness.
 func (p *Permanent) HasSummoningSickness() bool {
 	return p.summoningSickness
+}
+
+// HasStaticAbility checks if the permanent has a static ability with the
+// specified name.
+func (p *Permanent) HasStaticAbility(id string) bool {
+	for _, ability := range p.staticAbilities {
+		if ability.ID == id {
+			return true
+		}
+	}
+	return false
 }
 
 // HasSubtype checks if the card has a specific type. It returns true if the

@@ -34,8 +34,8 @@ type SpellAbilitySpec struct {
 
 // StaticAbility represents the specification of static ability.
 type StaticAbilitySpec struct {
-	EffectSpecs []EffectSpec `json:"Effects,omitempty"`
-	Zone        string       `json:"Zone,omitempty"`
+	ID        string           `json:"ID,omitempty"`
+	Modifiers []EffectModifier `json:"Modifiers,omitempty"`
 }
 
 type TriggeredAbilitySpec struct {

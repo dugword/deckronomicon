@@ -7,6 +7,8 @@ type GameObject interface {
 	HasSubtype(Subtype) bool
 	Name() string
 	ActivatedAbilities() []*ActivatedAbility
+	StaticAbilities() []*StaticAbility
+	HasStaticAbility(string) bool
 	ID() string
 	/*
 		Card() *Card
