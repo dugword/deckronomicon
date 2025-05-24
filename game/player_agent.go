@@ -81,7 +81,7 @@ type ChoiceResolver interface {
 // PlayerAgent defines how player decisions are made.
 type PlayerAgent interface {
 	ChoiceResolver
-	GetNextAction(state *GameState) GameAction
+	GetNextAction(state *GameState) *GameAction
 	ReportState(state *GameState)
 }
 

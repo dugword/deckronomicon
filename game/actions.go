@@ -10,9 +10,11 @@ import (
 // Perhaps a standard special character like "!" or "@" could be used.
 const UntapAll = "UntapAll"
 
+var ChoiceCheat = "Cheat"
+var ChoiceSourceCheat = NewChoiceSource(ChoiceCheat, ChoiceCheat)
+
 // GameAction represents an action a player can take.
 type GameAction struct {
-	Cheat      GameCheatType
 	Preactions []GameAction
 	Target     string
 	Type       GameActionType
@@ -32,6 +34,17 @@ const (
 	ActionPlay     GameActionType = "Play"
 	ActionUntap    GameActionType = "Untap"
 	ActionView     GameActionType = "View"
+
+	// Cheat actions
+	CheatAddMana   GameActionType = "CheatAddMana"
+	CheatConjure   GameActionType = "CheatConjure"
+	CheatDiscard   GameActionType = "CheatDiscard"
+	CheatDraw      GameActionType = "CheatDraw"
+	CheatFind      GameActionType = "CheatFind"
+	CheatLandDrop  GameActionType = "CheatLandDrop"
+	CheatPeek      GameActionType = "CheatPeek"
+	CheatPrintDeck GameActionType = "CheatPrintDeck"
+	CheatShuffle   GameActionType = "CheatShuffle"
 )
 
 // TODO: Find some way to enforce this, maybe an action map or lookup function
@@ -116,7 +129,6 @@ func ActionActivateFunc(state *GameState, target string, resolver ChoiceResolver
 	// TODO: Make this more generic
 	{
 		// Tap for Mana
-		fmt.Println("Checking for tap for mana")
 		_, ok := ability.Cost.(*TapCost)
 		if ok {
 			if ability.IsManaAbility() {
@@ -316,7 +328,7 @@ func ActionPlayFunc(state *GameState, target string, resolver ChoiceResolver) (r
 		choices = append(choices, cs...)
 	}
 	if len(choices) == 0 {
-		return nil, fmt.Errorf("no cards available to play")
+		return nil, errors.New("no cards available to play")
 	}
 	// TODO: Rethink this
 	if target != "" {
@@ -609,33 +621,15 @@ func actionCastSpellFunc(state *GameState, resolver ChoiceResolver, card *Card) 
 	if err := spellCost.Pay(state, resolver); err != nil {
 		return nil, err
 	}
-	{
-		// TODO: Spells should be moved to graveyard after resolving.
-		state.Log("Casing spell: " + card.Name())
-		card, err := state.Hand.Get(card.ID())
-		if err != nil {
-			return nil, fmt.Errorf("failed to get card from hand: %w", err)
-		}
-		if err := state.Graveyard.Add(card); err != nil {
-			return nil, fmt.Errorf("failed to move card to graveyard: %w", err)
-		}
+	if err := state.Hand.Remove(card.ID()); err != nil {
+		return nil, fmt.Errorf("failed to remove card from hand: %w", err)
 	}
-	state.Stack = append(state.Stack, spell)
-	for range replicateCount {
-		spell, err := NewSpell(card)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create spell from %s: %w", card.Name(), err)
-		}
-		state.Stack = append(state.Stack, spell)
-		state.Log(fmt.Sprintf("Replicated spell: %s", spell.Name()))
+	state.Log("Casing spell: " + card.Name())
+	if err := spell.Replicate(replicateCount); err != nil {
+		return nil, fmt.Errorf("failed to replicate spell: %w", err)
 	}
-	for len(state.Stack) > 0 {
-		spell := state.Stack[0]
-		state.Stack = state.Stack[1:]
-		state.Log(fmt.Sprintf("Spell on stack: %s", spell.Name()))
-		if err := spell.SpellAbility().Resolve(state, resolver); err != nil {
-			return nil, fmt.Errorf("failed to resolve spell: %w", err)
-		}
+	if err := state.Stack.Add(spell); err != nil {
+		return nil, fmt.Errorf("failed to add spell to stack: %w", err)
 	}
 	return &ActionResult{
 		Message: "played card: " + card.Name(),

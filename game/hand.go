@@ -27,12 +27,14 @@ func (h *Hand) AvailableActivatedAbilities(state *GameState) []*ActivatedAbility
 	var abilities []*ActivatedAbility
 	for _, card := range h.cards {
 		for _, ability := range card.ActivatedAbilities() {
+			if !ability.CanPlay(state) {
+				continue
+			}
 			if !ability.Cost.CanPay(state) {
 				continue
 			}
 			if ability.Zone != ZoneHand {
 				continue
-
 			}
 			abilities = append(abilities, ability)
 		}
@@ -43,8 +45,18 @@ func (h *Hand) AvailableActivatedAbilities(state *GameState) []*ActivatedAbility
 func (h *Hand) AvailableToPlay(state *GameState) []GameObject {
 	var available []GameObject
 	for _, card := range h.cards {
-		if (card.IsLand() && state.LandDrop == false) || card.ManaCost().CanPay(state) {
+		if state.CanCastSorcery() {
+			if card.IsLand() && state.LandDrop == false {
+				available = append(available, card)
+				continue
+			} else if card.ManaCost().CanPay(state) {
+				available = append(available, card)
+				continue
+			}
+		}
+		if card.ManaCost().CanPay(state) && card.HasCardType(CardTypeInstant) {
 			available = append(available, card)
+			continue
 		}
 	}
 	return available

@@ -34,7 +34,7 @@ type GameState struct {
 	Mulligans          int
 	PotentialMana      *ManaPool
 	SpellsCastThisTurn []string
-	Stack              []*Spell
+	Stack              *Stack
 	StormCount         int
 	// TODO: I don't like this, need to rethink how to handle this
 	StartingHand   []string
@@ -56,6 +56,7 @@ func NewGameState() *GameState {
 		Mulligans:          0,
 		PotentialMana:      NewManaPool(),
 		SpellsCastThisTurn: []string{}, // TODO: Rethink how this is managed
+		Stack:              NewStack(),
 		TurnMessageLog:     []string{}, // TODO: this sucks, make better
 	}
 	return &gameState
@@ -69,7 +70,7 @@ func (g *GameState) DrawStartingHand(startingHand []string) error {
 		}
 		g.Hand.Add(card)
 	}
-	result, err := g.ResolveAction(GameAction{
+	result, err := g.ResolveAction(&GameAction{
 		Type:   ActionDraw,
 		Target: strconv.Itoa(g.MaxHandSize - g.Hand.Size()),
 	}, nil)
@@ -250,4 +251,23 @@ func CanPotentiallyPayFor(state *GameState, manaCost *ManaCost) bool {
 		simulated.Use(color, need)
 	}
 	return simulated.HasGeneric(manaCost.Generic)
+}
+
+func (g *GameState) CanCastSorcery() bool {
+	if g.IsMainPhase() && g.StackIsEmpty() && g.IsPlayerTurn(g.CurrentPlayer) {
+		return true
+	}
+	return false
+}
+
+func (g *GameState) IsMainPhase() bool {
+	return g.CurrentPhase == PhasePreCombatMain || g.CurrentPhase == PhasePostCombatMain
+}
+
+func (g *GameState) StackIsEmpty() bool {
+	return g.Stack.Size() == 0
+}
+
+func (g *GameState) IsPlayerTurn(playerID int) bool {
+	return g.CurrentPlayer == playerID
 }

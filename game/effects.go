@@ -21,22 +21,6 @@ type EffectTag struct {
 	Value string
 }
 
-// BuildPermanentEfect creates and effect that generates a permanent. This is
-// used for spells that create permanents, like creatures or enchantments.
-func BuildPermanentEffect(card *Card) (*Effect, error) {
-	effect := Effect{}
-	effect.Apply = func(state *GameState, resolver ChoiceResolver) error {
-		permanent, err := NewPermanent(card)
-		if err != nil {
-			return fmt.Errorf("failed to create permanent: %w", err)
-		}
-		state.Battlefield.Add(permanent)
-		return nil
-	}
-	effect.Description = fmt.Sprintf("create a %s", card.Name())
-	return &effect, nil
-}
-
 // TODO  would be good to ensure all BuildEffect functions return the same
 // type EffectBuilder func(source GameObject, effectModifiers []EffectModifier) (*Effect, error)
 
@@ -384,50 +368,23 @@ func BuildEffectSearch(source GameObject, effectModifiers []EffectModifier) (*Ef
 // Supported Modifier Keys (last applies):
 //   - Cost: <cost>
 func BuildEffectReplicate(source GameObject, effectModifiers []EffectModifier) (*Effect, error) {
+	var costString string
+	for _, modifier := range effectModifiers {
+		if modifier.Key == "Cost" {
+			costString += modifier.Value
+		}
+	}
 	card, ok := source.(*Card)
 	if !ok {
 		return nil, fmt.Errorf("source is not a card: %s", source.ID())
 	}
 	effect := Effect{}
-	var costString string
-	for _, modifier := range effectModifiers {
-		if modifier.Key == "Cost" {
-			costString = modifier.Value
-		}
-	}
-	if costString == "" {
-		return nil, errors.New("no cost provided")
-	}
-	cost, err := ParseManaCost(costString)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse cost: %w", err)
-	}
-	// TODO: Pay the cost here or return something?
 	effect.Apply = func(state *GameState, resolver ChoiceResolver) error {
-		for {
-			if !cost.CanPay(state) {
-				break
-			}
-			accept, err := resolver.Confirm(
-				fmt.Sprintf("Pay the replicate cost?: %s", costString),
-				source,
-			)
-			if err != nil {
-				return fmt.Errorf("failed to confirm: %w", err)
-			}
-			if !accept {
-				break
-			}
-			if err := cost.Pay(state, resolver); err != nil {
-				return fmt.Errorf("failed to pay cost: %w", err)
-			}
-			spell, err := NewSpell(card)
-			if err != nil {
-				return fmt.Errorf("failed to create spell: %w", err)
-			}
-			state.Stack = append(state.Stack, spell)
-			continue
+		spell, err := NewSpell(card)
+		if err != nil {
+			return fmt.Errorf("failed to create spell: %w", err)
 		}
+		state.Stack.Add(spell)
 		return nil
 	}
 	effect.Description = fmt.Sprintf("replicate for %s", costString)

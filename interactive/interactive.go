@@ -19,6 +19,7 @@ type DisplayData struct {
 	HandData        BoxData
 	ManaPoolData    BoxData
 	MessageData     BoxData
+	StackData       BoxData
 }
 
 type DisplayBoxes struct {
@@ -34,18 +35,20 @@ type InteractivePlayerAgent struct {
 	DisplayData     DisplayData
 	DisplayTemplate *template.Template
 	Scanner         *bufio.Scanner
+	inputError      string
 	prompt          string
 }
 
 func (a *InteractivePlayerAgent) UpdateDisplayData(state *game.GameState) {
 	a.DisplayData = DisplayData{
 		BattlefieldData: BattlefieldData(state),
+		ChoiceData:      BoxData{Title: "Nothing to choose"},
 		GameStatusData:  GameStatusData(state),
 		GraveyardData:   GraveyardData(state),
 		HandData:        HandData(state),
 		ManaPoolData:    ManaPoolData(state),
 		MessageData:     MessageData(state),
-		ChoiceData:      BoxData{Title: "Nothing to choose"},
+		StackData:       StackData(state),
 	}
 }
 
@@ -60,8 +63,11 @@ func (a *InteractivePlayerAgent) BuildDisplayBoxes() DisplayBoxes {
 			CreateBox(a.DisplayData.ManaPoolData),
 		),
 		PlaySpaceBox: CombineBoxesSideBySide(
-			CreateBox(a.DisplayData.GraveyardData),
-			CreateBox(a.DisplayData.BattlefieldData),
+			CombineBoxesSideBySide(
+				CreateBox(a.DisplayData.GraveyardData),
+				CreateBox(a.DisplayData.BattlefieldData),
+			),
+			CreateBox(a.DisplayData.StackData),
 		),
 		PlayerBox: CombineBoxesSideBySide(
 			CreateBox(a.DisplayData.HandData),
@@ -117,10 +123,15 @@ func (a *InteractivePlayerAgent) ReportState(state *game.GameState) {
 	}
 }
 
-func (a *InteractivePlayerAgent) GetNextAction(state *game.GameState) game.GameAction {
+func (a *InteractivePlayerAgent) GetNextAction(state *game.GameState) *game.GameAction {
 	for {
+		a.ReportState(state)
 		PrintCommands(state.Cheat)
 		// TODO: maybe move the prompt to the read functions?
+		if a.inputError != "" {
+			fmt.Println("Error:", a.inputError)
+			a.inputError = ""
+		}
 		a.Prompt("take action")
 		userInput, arg := a.ReadInput()
 		if alias, ok := game.CommandAliases[userInput]; ok {
@@ -132,10 +143,10 @@ func (a *InteractivePlayerAgent) GetNextAction(state *game.GameState) game.GameA
 		}
 		command, ok := game.Commands[userInput]
 		if !ok {
-			fmt.Println("Invalid input. Try again.")
+			a.inputError = "Invalid input. Try again."
 			continue
 		}
 		command.Action.Target = arg
-		return command.Action
+		return &command.Action
 	}
 }

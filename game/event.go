@@ -33,6 +33,7 @@ const (
 	EventDeclareBlockersStep   EventType = "DeclareBlockersStep"
 	EventCombatDamageStep      EventType = "CombatDamageStep"
 	EventEndOfCombatStep       EventType = "EndOfCombatStep"
+	EventCleanupStep           EventType = "CleanupStep"
 )
 
 var nextEventID int

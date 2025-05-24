@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"strings"
 )
 
 // Spell represents a spell object on the stack.
@@ -46,15 +47,9 @@ func NewSpell(card *Card) (*Spell, error) {
 			return nil, fmt.Errorf("failed to create cost: %w", err)
 		}
 	*/
-	var spellAbility *SpellAbility
-	var err error
-	if card.IsPermanent() {
-		spellAbility, err = BuildPermanentSpellAbility(card)
-	} else {
-		spellAbility, err = BuildSpellAbility(card.spellAbilitySpec, &spell)
-		if err != nil {
-			return nil, fmt.Errorf("failed to build spell ability: %w", err)
-		}
+	spellAbility, err := BuildSpellAbility(card.spellAbilitySpec, &spell)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build spell ability: %w", err)
 	}
 	spell.spellAbility = spellAbility
 	return &spell, nil
@@ -136,6 +131,52 @@ func (s *Spell) Name() string {
 // Power returns the power of the spell.
 func (s *Spell) Power() int {
 	return s.power
+}
+
+// Replicate is used to replicate a spell. It creates a new instance of the
+// spell with the same properties. This is used during casting spells that
+// have the Replicate ability.
+func (s *Spell) Replicate(count int) error {
+	for range count {
+		/*
+			// Create a new spell instance with the same properties.
+			newSpell, err := NewSpell(s.card)
+			if err != nil {
+				return fmt.Errorf("failed to replicate spell: %w", err)
+			}
+			// Add the new spell to the stack or wherever it needs to go.
+			// This part is game-specific and not implemented here.
+			fmt.Println("Replicated spell:", newSpell.Name())
+		*/
+	}
+	return nil
+}
+
+// Description returns a string representation of the activated ability.
+func (s *Spell) Description() string {
+	var descriptions []string
+	for _, effect := range s.spellAbility.Effects {
+		descriptions = append(descriptions, effect.Description)
+	}
+	// TODO: Support additional costs
+	return fmt.Sprintf("%s: %s", s.ManaCost().Description(), strings.Join(descriptions, ", "))
+}
+
+func (s *Spell) Resolve(state *GameState, resolver ChoiceResolver) error {
+	if s.spellAbility == nil && s.card.IsPermanent() {
+		permanent, err := NewPermanent(s.card)
+		if err != nil {
+			return fmt.Errorf("failed to create permanent: %w", err)
+		}
+		state.Battlefield.Add(permanent)
+	}
+	if err := s.spellAbility.Resolve(state, resolver); err != nil {
+		return fmt.Errorf("cannot resolve spell ability: %w", err)
+	}
+	if err := state.Graveyard.Add(s.card); err != nil {
+		return fmt.Errorf("cannot move spell to graveyard: %w", err)
+	}
+	return nil
 }
 
 // RulesText returns the rules text of the spell. The RulesText does not

@@ -5,6 +5,9 @@ import (
 	"strings"
 )
 
+// TODO: Figure this out
+// Abilities are Game Objects too....
+
 // TODO: Is this useful?
 // Ability is the general interface for all abilities.
 /*
@@ -13,6 +16,11 @@ type Ability interface {
 	Resolve(game *GameState, resolver ChoiceResolver) error
 }
 */
+
+const (
+	SpeedInstant string = "Instant"
+	SpeedSorcery string = "Instant"
+)
 
 const (
 	AbilityTagDiscard     string = "Discard"
@@ -28,6 +36,14 @@ type ActivatedAbility struct {
 	ID      string
 	Zone    string
 	source  GameObject
+	Speed   string
+}
+
+func (a *ActivatedAbility) CanPlay(state *GameState) bool {
+	if a.Speed == SpeedSorcery && !state.CanCastSorcery() {
+		return false
+	}
+	return true
 }
 
 // BuildActivatedAbility builds an activated ability from the given
@@ -156,17 +172,6 @@ func BuildSpellAbility(spec *SpellAbilitySpec, source GameObject) (*SpellAbility
 		ability.Effects = append(ability.Effects, effect)
 	}
 	return &ability, nil
-}
-
-// BuildPermanentSpellAbility builds a spell ability from the given specification.
-func BuildPermanentSpellAbility(card *Card) (*SpellAbility, error) {
-	effect, err := BuildPermanentEffect(card)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create permanent effect: %w", err)
-	}
-	return &SpellAbility{
-		Effects: []*Effect{effect},
-	}, nil
 }
 
 // Description returns a string representation of the spell ability.
