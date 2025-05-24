@@ -11,19 +11,78 @@ import (
 	game "deckronomicon/game"
 )
 
+type DisplayData struct {
+	BattlefieldData BoxData
+	ChoiceData      BoxData
+	GameStatusData  BoxData
+	GraveyardData   BoxData
+	HandData        BoxData
+	ManaPoolData    BoxData
+	MessageData     BoxData
+}
+
+type DisplayBoxes struct {
+	GameStatusBox Box
+	MessageBox    Box
+	PlaySpaceBox  Box
+	PlayerBox     Box
+}
+
 // InteractivePlayerAgent implements the PlayerAgent interface for interactive
 // play.
 type InteractivePlayerAgent struct {
-	Scanner *bufio.Scanner
-	prompt  string
+	DisplayData     DisplayData
+	DisplayTemplate *template.Template
+	Scanner         *bufio.Scanner
+	prompt          string
+}
+
+func (a *InteractivePlayerAgent) UpdateDisplayData(state *game.GameState) {
+	a.DisplayData = DisplayData{
+		BattlefieldData: BattlefieldData(state),
+		GameStatusData:  GameStatusData(state),
+		GraveyardData:   GraveyardData(state),
+		HandData:        HandData(state),
+		ManaPoolData:    ManaPoolData(state),
+		MessageData:     MessageData(state),
+		ChoiceData:      BoxData{Title: "Nothing to choose"},
+	}
+}
+
+func (a *InteractivePlayerAgent) UpdateChoiceData(choiceData BoxData) {
+	a.DisplayData.ChoiceData = choiceData
+}
+
+func (a *InteractivePlayerAgent) BuildDisplayBoxes() DisplayBoxes {
+	return DisplayBoxes{
+		GameStatusBox: CombineBoxesSideBySide(
+			CreateBox(a.DisplayData.GameStatusData),
+			CreateBox(a.DisplayData.ManaPoolData),
+		),
+		PlaySpaceBox: CombineBoxesSideBySide(
+			CreateBox(a.DisplayData.GraveyardData),
+			CreateBox(a.DisplayData.BattlefieldData),
+		),
+		PlayerBox: CombineBoxesSideBySide(
+			CreateBox(a.DisplayData.HandData),
+			CreateBox(a.DisplayData.ChoiceData),
+		),
+		MessageBox: CreateBox(a.DisplayData.MessageData),
+	}
 }
 
 // NewInteractivePlayerAgent creates a new InteractivePlayerAgent with the
 // given scanner.
 func NewInteractivePlayerAgent(scanner *bufio.Scanner) *InteractivePlayerAgent {
+	tmpl := template.New("display")
+	tmpl = template.Must(tmpl.ParseFiles(
+		"./interactive/display.tmpl",
+	))
 	return &InteractivePlayerAgent{
-		Scanner: scanner,
-		prompt:  ">> ",
+		DisplayData:     DisplayData{},
+		Scanner:         scanner,
+		DisplayTemplate: tmpl,
+		prompt:          ">> ",
 	}
 }
 
@@ -43,31 +102,14 @@ func ClearScreen() {
 
 // ReportState displays the current game state in a terminal UI.
 func (a *InteractivePlayerAgent) ReportState(state *game.GameState) {
-	// ClearScreen()
-	tmpl := template.New("display")
-	tmpl = template.Must(tmpl.ParseFiles(
-		"./interactive/display.tmpl",
-	))
-	displayData := struct {
-		BattlefieldBox Box
-		GameStatusBox  Box
-		GraveyardBox   Box
-		HandBox        Box
-		ManaPoolBox    Box
-		MessageBox     Box
-	}{
-		BattlefieldBox: BattlefieldBox(state),
-		GameStatusBox:  GameStatusBox(state),
-		GraveyardBox:   GraveyardBox(state),
-		HandBox:        HandBox(state),
-		ManaPoolBox:    ManaPoolBox(state),
-		MessageBox:     MessageBox(state),
-	}
-	if err := tmpl.ExecuteTemplate(
+	a.UpdateDisplayData(state)
+	displayBoxes := a.BuildDisplayBoxes()
+	ClearScreen()
+	if err := a.DisplayTemplate.ExecuteTemplate(
 		// TODO: use passed in stdout from Run
 		os.Stdout,
 		"display.tmpl",
-		displayData,
+		displayBoxes,
 	); err != nil {
 		fmt.Println("Error executing template:", err)
 		// TODO: handle error return to main
