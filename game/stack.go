@@ -1,6 +1,9 @@
 package game
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 type Resolvable interface {
 	Description() string
@@ -80,7 +83,7 @@ func (s *Stack) ZoneType() string {
 
 func (s *Stack) Pop() (GameObject, error) {
 	if len(s.stack) == 0 {
-		return nil, fmt.Errorf("stack is empty")
+		return nil, errors.New("stack is empty")
 	}
 	top := s.stack[len(s.stack)-1]
 	s.stack = s.stack[:len(s.stack)-1]

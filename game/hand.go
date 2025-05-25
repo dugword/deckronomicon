@@ -1,6 +1,9 @@
 package game
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 // Hand represents a player's hand of cards.
 type Hand struct {
@@ -17,7 +20,8 @@ func NewHand() *Hand {
 func (h *Hand) Add(object GameObject) error {
 	card, ok := object.(*Card)
 	if !ok {
-		return fmt.Errorf("object is not a card")
+		// TODO: Move all errors.New to the errors file
+		return errors.New("object is not a card")
 	}
 	h.cards = append(h.cards, card)
 	return nil

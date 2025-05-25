@@ -18,25 +18,25 @@ type GameStep struct {
 }
 
 func (g *GameState) RunStep(step GameStep, agent PlayerAgent) error {
-	g.CurrentPhase = step.Name
-	g.Log("Running step: %s", step.Name)
+	g.CurrentStep = step.Name
+	g.Log(fmt.Sprintf("Running step: %s", step.Name))
 	g.EmitEvent(Event{Type: step.EventEvent}, agent)
 	if err := step.Handler(g, agent); err != nil {
 		return fmt.Errorf("failed to run step %s: %w", step.Name, err)
 	}
-	g.Log("Step completed: %s", step.Name)
+	g.Log(fmt.Sprintf("Step completed: %s", step.Name))
 	return nil
 }
 
 func (g *GameState) RunPhase(phase GamePhase, agent PlayerAgent) error {
 	g.CurrentPhase = phase.Name
-	g.Log("Running phase: %s", phase.Name)
+	g.Log(fmt.Sprintf("Running phase: %s", phase.Name))
 	for _, step := range phase.Steps {
 		if err := g.RunStep(step, agent); err != nil {
 			return fmt.Errorf("failed to run phase %s step %s: %w", phase.Name, step.Name, err)
 		}
 	}
-	g.Log("Phase completed: %s", phase.Name)
+	g.Log(fmt.Sprintf("Phase completed: %s", phase.Name))
 	return nil
 }
 
@@ -100,32 +100,21 @@ func (g *GameState) RunTurn(agent PlayerAgent) error {
 	g.Battlefield.RemoveSummoningSickness()
 	g.TurnMessageLog = []string{} // TODO: this sucks, make better
 	g.Log(fmt.Sprintf("Turn %d", g.Turn))
-
 	if err := g.RunPhase(beginningPhase, agent); err != nil {
 		return fmt.Errorf("failed to run beginning phase: %w", err)
 	}
-
 	if err := g.RunPhase(preCombatMainPhase, agent); err != nil {
 		return fmt.Errorf("failed to run pre-combat main phase: %w", err)
 	}
-
 	if err := g.RunPhase(combatPhase, agent); err != nil {
 		return fmt.Errorf("failed to run combat phase: %w", err)
 	}
-
 	if err := g.RunPhase(postCombatMainPhase, agent); err != nil {
 		return fmt.Errorf("failed to run post-combat main phase: %w", err)
 	}
-
 	if err := g.RunPhase(endingPhase, agent); err != nil {
 		return fmt.Errorf("failed to run ending phase: %w", err)
 	}
-
-	// Pre-combat Main Phase
-	g.CurrentPhase = "Pre-combat Main"
-	g.EmitEvent(Event{Type: EventPrecombatMainPhase}, agent)
-	g.CurrentStep = "Pre-combat Main"
-
 	return nil
 }
 

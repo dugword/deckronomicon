@@ -15,25 +15,27 @@ type Event struct {
 type EventType string
 
 const (
-	EventActivateAbility       EventType = "ActivateAbility"
-	EventCastSpell             EventType = "CastSpell"
-	EventDrawCard              EventType = "DrawCard"
-	EventEndStep               EventType = "EndStep"
-	EventEnterBattlefield      EventType = "EnterBattlefield"
-	EventLeaveBattlefield      EventType = "LeaveBattlefield"
-	EventTapPermanent          EventType = "TapPermanent"
-	EventTapForMana            EventType = "TapForMana"
-	EventUpkeepStep            EventType = "UpkeepStep"
-	EventUntapStep             EventType = "UntapStep"
-	EventDrawStep              EventType = "DrawStep"
-	EventPrecombatMainPhase    EventType = "PrecombatMainPhase"
-	EventPostcombatMainPhase   EventType = "PrecombatMainPhase"
+	EventActivateAbility  EventType = "ActivateAbility"
+	EventCastSpell        EventType = "CastSpell"
+	EventDrawCard         EventType = "DrawCard"
+	EventEnterBattlefield EventType = "EnterBattlefield"
+	EventLeaveBattlefield EventType = "LeaveBattlefield"
+	EventTapForMana       EventType = "TapForMana"
+	EventTapPermanent     EventType = "TapPermanent"
+	//Phase
+	EventPostcombatMainPhase EventType = "PrecombatMainPhase"
+	EventPrecombatMainPhase  EventType = "PrecombatMainPhase"
+	// Step
 	EventBeginningOfCombatStep EventType = "BeginningOfCombatStep"
+	EventCleanupStep           EventType = "CleanupStep"
+	EventCombatDamageStep      EventType = "CombatDamageStep"
 	EventDeclareAttackersStep  EventType = "DeclareAttackersStep"
 	EventDeclareBlockersStep   EventType = "DeclareBlockersStep"
-	EventCombatDamageStep      EventType = "CombatDamageStep"
+	EventDrawStep              EventType = "DrawStep"
 	EventEndOfCombatStep       EventType = "EndOfCombatStep"
-	EventCleanupStep           EventType = "CleanupStep"
+	EventEndStep               EventType = "EndStep"
+	EventUntapStep             EventType = "UntapStep"
+	EventUpkeepStep            EventType = "UpkeepStep"
 )
 
 var nextEventID int

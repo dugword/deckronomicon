@@ -44,6 +44,10 @@ func wrapStep(handler func(*GameState, PlayerAgent) error) func(*GameState, Play
 }
 
 func (g *GameState) RunPriorityLoop(agent PlayerAgent) error {
+	if g.ShouldAutoPass() {
+		agent.ReportState(g)
+		return nil
+	}
 	for {
 		g.PotentialMana = GetPotentialMana(g)
 		agent.ReportState(g)

@@ -7,17 +7,32 @@ import (
 
 const (
 	PhaseBeginning      = "Beginning"
-	PhasePreCombatMain  = "Pre-combat Main"
+	PhasePreCombatMain  = "PreCombatMain"
 	PhaseCombat         = "Combat"
-	PhasePostCombatMain = "Post-combat Main"
+	PhasePostCombatMain = "PostCombatMain"
 	PhaseEnding         = "Ending"
 )
 
+const (
+	StepUntap             = "Untap"
+	StepUpkeep            = "Upkeep"
+	StepDraw              = "Draw"
+	StepPreCombatMain     = "PreCombatMain"
+	StepBeginningOfCombat = "BeginningOfCombat"
+	StepDeclareAttackers  = "DeclareAttackers"
+	StepDeclareBlockers   = "DeclareBlockers"
+	StepCombatDamage      = "CombatDamage"
+	StepEndOfCombat       = "EndOfCombat"
+	StepPostCombatMain    = "PostCombatMain"
+	StepEnd               = "End"
+	StepCleanup           = "Cleanup"
+)
+
 var beginningPhase = GamePhase{
-	Name: "Beginning",
+	Name: PhaseBeginning,
 	Steps: []GameStep{
 		{
-			Name:       "Untap",
+			Name:       StepUntap,
 			EventEvent: EventUntapStep,
 			Handler: func(g *GameState, agent PlayerAgent) error {
 				g.Log("Untapping all permanents")
@@ -30,14 +45,14 @@ var beginningPhase = GamePhase{
 			},
 		},
 		{
-			Name:       "Upkeep",
+			Name:       StepUpkeep,
 			EventEvent: EventUpkeepStep,
 			Handler: wrapStep(func(g *GameState, agent PlayerAgent) error {
 				return nil
 			}),
 		},
 		{
-			Name:       "Draw",
+			Name:       StepDraw,
 			EventEvent: EventDrawStep,
 			Handler: wrapStep(func(g *GameState, agent PlayerAgent) error {
 				g.Log("Drawing a card")
@@ -53,10 +68,10 @@ var beginningPhase = GamePhase{
 }
 
 var preCombatMainPhase = GamePhase{
-	Name: "Pre-combat Main",
+	Name: PhasePreCombatMain,
 	Steps: []GameStep{
 		{
-			Name:       "Pre-combat Main",
+			Name:       StepPreCombatMain,
 			EventEvent: EventPrecombatMainPhase,
 			Handler: wrapStep(func(g *GameState, agent PlayerAgent) error {
 				return nil
@@ -66,10 +81,10 @@ var preCombatMainPhase = GamePhase{
 }
 
 var combatPhase = GamePhase{
-	Name: "Combat",
+	Name: PhaseCombat,
 	Steps: []GameStep{
 		{
-			Name:       "Beginning of Combat",
+			Name:       StepBeginningOfCombat,
 			EventEvent: EventBeginningOfCombatStep,
 
 			Handler: wrapStep(func(g *GameState, agent PlayerAgent) error {
@@ -77,28 +92,28 @@ var combatPhase = GamePhase{
 			}),
 		},
 		{
-			Name:       "Declare Attackers",
+			Name:       StepDeclareAttackers,
 			EventEvent: EventDeclareAttackersStep,
 			Handler: wrapStep(func(g *GameState, agent PlayerAgent) error {
 				return nil
 			}),
 		},
 		{
-			Name:       "Declare Blockers",
+			Name:       StepDeclareBlockers,
 			EventEvent: EventDeclareBlockersStep,
 			Handler: wrapStep(func(g *GameState, agent PlayerAgent) error {
 				return nil
 			}),
 		},
 		{
-			Name:       "Combat Damage",
+			Name:       StepCombatDamage,
 			EventEvent: EventCombatDamageStep,
 			Handler: wrapStep(func(g *GameState, agent PlayerAgent) error {
 				return nil
 			}),
 		},
 		{
-			Name: "End of Combat",
+			Name: StepEndOfCombat,
 
 			EventEvent: EventEndOfCombatStep,
 			Handler: wrapStep(func(g *GameState, agent PlayerAgent) error {
@@ -109,10 +124,10 @@ var combatPhase = GamePhase{
 }
 
 var postCombatMainPhase = GamePhase{
-	Name: "Post-combat Main",
+	Name: PhasePostCombatMain,
 	Steps: []GameStep{
 		{
-			Name:       "Post-combat Main",
+			Name:       StepPostCombatMain,
 			EventEvent: EventPostcombatMainPhase,
 			Handler: wrapStep(func(g *GameState, agent PlayerAgent) error {
 				return nil
@@ -122,17 +137,17 @@ var postCombatMainPhase = GamePhase{
 }
 
 var endingPhase = GamePhase{
-	Name: "Ending",
+	Name: PhaseEnding,
 	Steps: []GameStep{
 		{
-			Name:       "End Step",
+			Name:       StepEnd,
 			EventEvent: EventEndStep,
 			Handler: wrapStep(func(g *GameState, agent PlayerAgent) error {
 				return nil
 			}),
 		},
 		{
-			Name:       "Cleanup",
+			Name:       StepCleanup,
 			EventEvent: EventCleanupStep,
 			Handler: func(g *GameState, agent PlayerAgent) error {
 				toDiscard := g.Hand.Size() - g.MaxHandSize

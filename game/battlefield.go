@@ -1,6 +1,7 @@
 package game
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -27,7 +28,7 @@ func NewBattlefield() *Battlefield {
 func (b *Battlefield) Add(object GameObject) error {
 	permanent, ok := object.(*Permanent)
 	if !ok {
-		return fmt.Errorf("object is not a permanent")
+		return errors.New("object is not a permanent")
 	}
 	b.permanents = append(b.permanents, permanent)
 	return nil

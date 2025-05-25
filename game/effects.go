@@ -415,7 +415,7 @@ func BuildEffectTap(source GameObject, effectModifiers []EffectModifier) (*Effec
 		cards := state.Battlefield.GetAll()
 		if len(cards) == 0 {
 			// TODO: Spells can't be cast without targets
-			return fmt.Errorf("no available targets")
+			return errors.New("no available targets")
 		}
 		choices := CreateObjectChoices(cards, ZoneBattlefield)
 		chosen, err := resolver.ChooseOne(

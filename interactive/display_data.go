@@ -20,6 +20,7 @@ func GameStatusData(state *game.GameState) BoxData {
 			fmt.Sprintf("Player 1 Life: %d", state.Life),
 			fmt.Sprintf("Turn: %d", state.Turn),
 			fmt.Sprintf("Phase: %s", state.CurrentPhase),
+			fmt.Sprintf("Step: %s", state.CurrentStep),
 			fmt.Sprintf("Library: %d cards", state.Library.Size()),
 			fmt.Sprintf("Graveyard: %d cards", len(state.Graveyard.Cards())),
 			fmt.Sprintf("Hand: %d cards", state.Hand.Size()),
