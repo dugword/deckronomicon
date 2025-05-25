@@ -8,13 +8,9 @@ import (
 type Config struct {
 	CardPool     string
 	Cheat        bool
-	ConfigFile   string
-	DeckList     string
 	Interactive  bool
-	MaxTurns     int
-	OnThePlay    bool
-	StartingLife int
-	StrategyFile string
+	Scenario     string
+	ScenariosDir string
 	Verbose      bool
 }
 
@@ -29,34 +25,23 @@ func LoadConfig(args []string, getenv func(string) string) (*Config, error) {
 	if v, err := strconv.ParseBool(getenv("VERBOSE")); err == nil {
 		config.Verbose = v
 	}
-
 	// Configure flags.
 	flags := flag.NewFlagSet("deckronomicon", flag.ContinueOnError)
 	// TODO: Maybe load both deck and strategy from a specified directory.
 	cardPool := flags.String("card-pool", "cards", "card pool directory")
 	cheat := flags.Bool("cheat", false, "cheat mode")
-	deckList := flags.String("deck-list", "decks/example/deck.json", "deck list file")
 	interactive := flags.Bool("interactive", false, "run as interactive mode")
-	maxTurns := flags.Int("max-turns", 100, "maximum number of turns to simulate")
-	onThePlay := flags.Bool("on-the-play", true, "player going first")
-	startingLife := flags.Int("starting-life", 20, "starting life total")
-	strategyFile := flags.String("strategy", "decks/example/strategy.json", "strategy file")
-	configFile := flags.String("config", "decks/example/config.json", "configuration file")
+	scenario := flags.String("scenario", "example", "scenario to run")
+	scenariosDir := flags.String("scenarios", "scenarios", "scenarios directory")
 	verbose := flags.Bool("verbose", config.Verbose, "verbose output")
-
 	if err := flags.Parse(args[1:]); err != nil {
 		return nil, err
 	}
 	config.CardPool = *cardPool
 	config.Cheat = *cheat
-	config.ConfigFile = *configFile
-	config.DeckList = *deckList
 	config.Interactive = *interactive
-	config.MaxTurns = *maxTurns
-	config.OnThePlay = *onThePlay
-	config.StartingLife = *startingLife
-	config.StrategyFile = *strategyFile
+	config.Scenario = *scenario
+	config.ScenariosDir = *scenariosDir
 	config.Verbose = *verbose
-
 	return &config, nil
 }

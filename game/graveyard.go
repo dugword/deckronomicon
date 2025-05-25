@@ -32,14 +32,14 @@ func (g *Graveyard) Add(object GameObject) error {
 
 // AvailableActivatedAbilities returns all activated abilities of the cards in
 // the graveyard.
-func (g *Graveyard) AvailableActivatedAbilities(state *GameState) []*ActivatedAbility {
+func (g *Graveyard) AvailableActivatedAbilities(state *GameState, player *Player) []*ActivatedAbility {
 	abilities := []*ActivatedAbility{}
 	for _, card := range g.cards {
 		for _, ability := range card.ActivatedAbilities() {
 			if !ability.CanPlay(state) {
 				continue
 			}
-			if !ability.Cost.CanPay(state) {
+			if !ability.Cost.CanPay(state, player) {
 				continue
 			}
 			if ability.Zone != ZoneGraveyard {
@@ -54,7 +54,7 @@ func (g *Graveyard) AvailableActivatedAbilities(state *GameState) []*ActivatedAb
 // AvailableToPlay returns a list of cards that can be played from the
 // graveyard. Static abilities such as Flashback and Unearth are not
 // implemented yet so this wil return nil.
-func (g *Graveyard) AvailableToPlay(state *GameState) []GameObject {
+func (g *Graveyard) AvailableToPlay(state *GameState, player *Player) []GameObject {
 	return nil
 }
 

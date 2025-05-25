@@ -162,18 +162,18 @@ func (s *Spell) Description() string {
 	return fmt.Sprintf("%s: %s", s.ManaCost().Description(), strings.Join(descriptions, ", "))
 }
 
-func (s *Spell) Resolve(state *GameState, resolver ChoiceResolver) error {
+func (s *Spell) Resolve(state *GameState, player *Player) error {
 	if s.spellAbility == nil && s.card.IsPermanent() {
 		permanent, err := NewPermanent(s.card)
 		if err != nil {
 			return fmt.Errorf("failed to create permanent: %w", err)
 		}
-		state.Battlefield.Add(permanent)
+		player.Battlefield.Add(permanent)
 	}
-	if err := s.spellAbility.Resolve(state, resolver); err != nil {
+	if err := s.spellAbility.Resolve(state, player); err != nil {
 		return fmt.Errorf("cannot resolve spell ability: %w", err)
 	}
-	if err := state.Graveyard.Add(s.card); err != nil {
+	if err := player.Graveyard.Add(s.card); err != nil {
 		return fmt.Errorf("cannot move spell to graveyard: %w", err)
 	}
 	return nil

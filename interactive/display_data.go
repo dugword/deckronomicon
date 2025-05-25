@@ -12,39 +12,44 @@ type BoxData struct {
 }
 
 // GameStatusData creates the box data for game status information.
-func GameStatusData(state *game.GameState) BoxData {
+// TODO: Could probably get from state.CurrentPlayer
+func GameStatusData(state *game.GameState, player *game.Player) BoxData {
+	potentialMana := "(empty)"
+	manaPool := "(empty)"
+	// TODO: Potential mana is broken
+	if player.PotentialMana.AvailableGeneric() > 0 {
+		potentialMana = player.PotentialMana.Describe()
+	}
+	if player.ManaPool.AvailableGeneric() > 0 {
+		manaPool = player.ManaPool.Describe()
+	}
 	return BoxData{
 		Title: "Game Status",
 		Content: []string{
 			fmt.Sprintf("Current Player: Player %d", state.CurrentPlayer),
-			fmt.Sprintf("Player 1 Life: %d", state.Life),
-			fmt.Sprintf("Turn: %d", state.Turn),
+			fmt.Sprintf("Player 1 Life: %d", player.Life),
+			fmt.Sprintf("Turn: %d", player.Turn),
 			fmt.Sprintf("Phase: %s", state.CurrentPhase),
 			fmt.Sprintf("Step: %s", state.CurrentStep),
-			fmt.Sprintf("Library: %d cards", state.Library.Size()),
-			fmt.Sprintf("Graveyard: %d cards", len(state.Graveyard.Cards())),
-			fmt.Sprintf("Hand: %d cards", state.Hand.Size()),
+			fmt.Sprintf("Library: %d cards", player.Library.Size()),
+			fmt.Sprintf("Graveyard: %d cards", len(player.Graveyard.Cards())),
+			fmt.Sprintf("Hand: %d cards", player.Hand.Size()),
+			fmt.Sprintf("Potential Mana: %s", potentialMana),
+			fmt.Sprintf("Mana Pool: %s", manaPool),
 		},
 	}
 }
 
-// ManaPoolData creates the box data for displaying the player's mana pool.
-func ManaPoolData(state *game.GameState) BoxData {
-	potentialMana := "(empty)"
-	manaPool := "(empty)"
-	if state.PotentialMana.AvailableGeneric() > 0 {
-		potentialMana = state.PotentialMana.Describe()
-	}
-	if state.ManaPool.AvailableGeneric() > 0 {
-		manaPool = state.ManaPool.Describe()
-	}
-	lines := []string{
-		"Potential Mana: " + potentialMana,
-		"Mana Pool: " + manaPool,
-	}
+func OpponentData(state *game.GameState, player *game.Player) BoxData {
 	return BoxData{
-		Title:   "Mana Pool",
-		Content: lines,
+		Title: "Opponent Status",
+		Content: []string{
+			fmt.Sprintf("Opponent Life: %d", player.Life),
+			fmt.Sprintf("Library: %d cards", player.Library.Size()),
+			fmt.Sprintf("Graveyard: %d cards", len(player.Graveyard.Cards())),
+			fmt.Sprintf("Battlefield: %d permanents", player.Battlefield.Size()),
+			fmt.Sprintf("Hand: %d cards", player.Hand.Size()),
+		},
 	}
 }
 
@@ -59,9 +64,9 @@ func MessageData(state *game.GameState) BoxData {
 
 // BattlefieldData creates the box data for displaying permanents on the
 // battlefield.
-func BattlefieldData(state *game.GameState) BoxData {
+func BattlefieldData(player *game.Player) BoxData {
 	var lines []string
-	for _, permanent := range state.Battlefield.Permanents() {
+	for _, permanent := range player.Battlefield.Permanents() {
 		line := permanent.Name()
 		if permanent.IsTapped() {
 			line += " (tapped)"
@@ -78,9 +83,9 @@ func BattlefieldData(state *game.GameState) BoxData {
 }
 
 // GraveyardData creates the box data for displaying cards in the graveyard.
-func GraveyardData(state *game.GameState) BoxData {
+func GraveyardData(player *game.Player) BoxData {
 	var lines []string
-	for _, card := range state.Graveyard.Cards() {
+	for _, card := range player.Graveyard.Cards() {
 		line := card.Name()
 		lines = append(lines, line)
 	}
@@ -91,9 +96,9 @@ func GraveyardData(state *game.GameState) BoxData {
 }
 
 // HandData creates the box data for displaying cards in the player's hand.
-func HandData(state *game.GameState) BoxData {
+func HandData(player *game.Player) BoxData {
 	var lines []string
-	for _, card := range state.Hand.Cards() {
+	for _, card := range player.Hand.Cards() {
 		line := card.Name()
 		lines = append(lines, line)
 	}

@@ -37,7 +37,13 @@ import (
 )
 
 // AutoAgent implements PlayerAgent for automatic play
-type AutoPlayerAgent struct{}
+type AutoPlayerAgent struct {
+	player *game.Player
+}
+
+func (a *AutoPlayerAgent) Player() *game.Player {
+	return a.player
+}
 
 func NewAutoPlayerAgent() *AutoPlayerAgent {
 	return &AutoPlayerAgent{}
@@ -48,7 +54,7 @@ func (a *AutoPlayerAgent) ReportState(state *game.GameState) {
 }
 
 func (a *AutoPlayerAgent) GetNextAction(state *game.GameState) game.GameAction {
-	if state.Hand.Size() > 0 {
+	if a.player.Hand.Size() > 0 {
 		// Just play the first card if any
 		return game.GameAction{
 			Type: game.ActionPlay,

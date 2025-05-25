@@ -10,10 +10,10 @@ import (
 
 // Cost represents a cost that can be paid in the game.
 type Cost interface {
-	CanPay(state *GameState) bool
+	CanPay(*GameState, *Player) bool
 	Description() string
-	Pay(state *GameState, resolver ChoiceResolver) error
-	Add(cost Cost) Cost
+	Pay(*GameState, *Player) error
+	Add(Cost) Cost
 }
 
 // ManaPattern is a regex pattern that matches valid mana costs.
@@ -63,9 +63,9 @@ func (c *CompositeCost) Add(cost Cost) Cost {
 
 // CanPay checks if all costs in the composite cost can be paid with the
 // current game state.
-func (c *CompositeCost) CanPay(state *GameState) bool {
+func (c *CompositeCost) CanPay(state *GameState, player *Player) bool {
 	for _, cost := range c.Costs {
-		if !cost.CanPay(state) {
+		if !cost.CanPay(state, player) {
 			return false
 		}
 	}
@@ -99,18 +99,18 @@ func (c *CompositeCost) Description() string {
 
 // Pay pays all costs in the composite cost.
 // TODO: If one cost fails, we need to roll back the others.
-func (c *CompositeCost) Pay(state *GameState, resolver ChoiceResolver) error {
+func (c *CompositeCost) Pay(state *GameState, player *Player) error {
 	// TODO: Maybe there's a better way to do this, but this helps with the
 	// needing to roll back thing.
 	for _, cost := range c.Costs {
-		if !cost.CanPay(state) {
+		if !cost.CanPay(state, player) {
 			return fmt.Errorf(
 				"failed to pay composite cost",
 			)
 		}
 	}
 	for _, cost := range c.Costs {
-		if err := cost.Pay(state, resolver); err != nil {
+		if err := cost.Pay(state, player); err != nil {
 			return fmt.Errorf(
 				"failed to pay composite cost: %w",
 				err,
@@ -137,8 +137,9 @@ func (c *ManaCost) Add(cost Cost) Cost {
 }
 
 // CanPay checks if the cost can be paid with the current game state.
-func (c *ManaCost) CanPay(state *GameState) bool {
-	tempPool := state.ManaPool.Copy()
+// TODO Maybe this should just be *Player
+func (c *ManaCost) CanPay(state *GameState, player *Player) bool {
+	tempPool := player.ManaPool.Copy()
 	for color, amount := range c.Colors {
 		if !tempPool.Has(color, amount) {
 			return false
@@ -179,16 +180,16 @@ func (c *ManaCost) Description() string {
 
 // Pay pays the mana cost by using the mana from the mana pool.
 // TODO: Need to roll back if the cost is partially paid and fails.
-func (c *ManaCost) Pay(game *GameState, resolver ChoiceResolver) error {
+func (c *ManaCost) Pay(game *GameState, player *Player) error {
 	// Pay colored mana
 	for color, amount := range c.Colors {
-		if err := game.ManaPool.Use(color, amount); err != nil {
+		if err := player.ManaPool.Use(color, amount); err != nil {
 			return err
 		}
 	}
 	// Pay generic mana
 	if c.Generic > 0 {
-		choice, err := chooseManaForGeneric(c.Generic, game.ManaPool, resolver)
+		choice, err := chooseManaForGeneric(c.Generic, player)
 		if err != nil {
 			return err
 		}
@@ -197,7 +198,7 @@ func (c *ManaCost) Pay(game *GameState, resolver ChoiceResolver) error {
 			if err != nil {
 				return err
 			}
-			game.ManaPool.Use(color, amount)
+			player.ManaPool.Use(color, amount)
 		}
 	}
 	return nil
@@ -221,7 +222,7 @@ func (c *SacrificeCost) Add(cost Cost) Cost {
 
 // CanPay checks if the sacrifice cost can be paid with the current game
 // state.
-func (c *SacrificeCost) CanPay(game *GameState) bool {
+func (c *SacrificeCost) CanPay(game *GameState, player *Player) bool {
 	// TODO: Pretty much always true unless there is some state that says the
 	// permanent can't be sacrificed.
 	return true
@@ -233,7 +234,7 @@ func (c *SacrificeCost) Description() string {
 }
 
 // Pay pays the sacrifice cost by sacrificing the permanent.
-func (c *SacrificeCost) Pay(game *GameState, resolver ChoiceResolver) error {
+func (c *SacrificeCost) Pay(game *GameState, player *Player) error {
 	// TODO: Implement this
 	return errors.New("not implemented")
 }
@@ -254,7 +255,7 @@ func (c *TapCost) Add(cost Cost) Cost {
 }
 
 // CanPay checks if the tap cost can be paid with the current game state.
-func (c *TapCost) CanPay(game *GameState) bool {
+func (c *TapCost) CanPay(game *GameState, player *Player) bool {
 	return !c.Permanent.IsTapped()
 }
 
@@ -264,7 +265,7 @@ func (c *TapCost) Description() string {
 }
 
 // Pay pays the tap cost by tapping the permanent.
-func (c *TapCost) Pay(game *GameState, resolver ChoiceResolver) error {
+func (c *TapCost) Pay(game *GameState, player *Player) error {
 	if err := c.Permanent.Tap(); err != nil {
 		return fmt.Errorf("failed to pay {T} cost: %w", err)
 	}
@@ -295,12 +296,12 @@ func ParseManaCost(costStr string) (*ManaCost, error) {
 }
 
 // chooseManaForGeneric prompts the user to choose mana for a generic cost.
-func chooseManaForGeneric(genericCost int, manaPool *ManaPool, resolver ChoiceResolver) (map[string]int, error) {
+func chooseManaForGeneric(genericCost int, player *Player) (map[string]int, error) {
 	choice := make(map[string]int)
 	remaining := genericCost
 	for remaining > 0 {
 		choices := []Choice{}
-		for _, color := range manaPool.ColorsAvailable() {
+		for _, color := range player.ManaPool.ColorsAvailable() {
 			choices = append(choices, Choice{
 				Name: string(color),
 			})
@@ -308,7 +309,7 @@ func chooseManaForGeneric(genericCost int, manaPool *ManaPool, resolver ChoiceRe
 		if len(choices) == 0 {
 			return nil, errors.New("insufficient mana")
 		}
-		selected, err := resolver.ChooseOne(
+		selected, err := player.Agent.ChooseOne(
 			"Choose mana to use for generic cost",
 			NewChoiceSource("Pay Generic Cost", "Pay Generic Cost"),
 			choices,
@@ -321,7 +322,7 @@ func chooseManaForGeneric(genericCost int, manaPool *ManaPool, resolver ChoiceRe
 		if err != nil {
 			return nil, fmt.Errorf("failed to apply choice for generic mana: %w", err)
 		}
-		manaPool.Use(color, 1)
+		player.ManaPool.Use(color, 1)
 		choice[selected.Name]++
 		remaining--
 	}

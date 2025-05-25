@@ -1,5 +1,9 @@
 package interactive
 
+// TODO: Rethink and refactor this package and how it handles Player.
+// Did a bunch of quick and dirty changes to get it working with the new
+// game state and player system, but it could be cleaner and more consistent.
+
 import (
 	"bufio"
 	"fmt"
@@ -8,7 +12,7 @@ import (
 	"runtime"
 	"text/template"
 
-	game "deckronomicon/game"
+	"deckronomicon/game"
 )
 
 type DisplayData struct {
@@ -17,7 +21,7 @@ type DisplayData struct {
 	GameStatusData  BoxData
 	GraveyardData   BoxData
 	HandData        BoxData
-	ManaPoolData    BoxData
+	OpponentData    BoxData
 	MessageData     BoxData
 	StackData       BoxData
 }
@@ -35,18 +39,34 @@ type InteractivePlayerAgent struct {
 	DisplayData     DisplayData
 	DisplayTemplate *template.Template
 	Scanner         *bufio.Scanner
+	playerID        string
 	inputError      string
 	prompt          string
 }
 
+// Player returns the player ID controlled by this agent.
+func (a *InteractivePlayerAgent) PlayerID() string {
+	return a.playerID
+}
+
+// TODO maybe get from state.CurrentPlayer?
 func (a *InteractivePlayerAgent) UpdateDisplayData(state *game.GameState) {
+	// TODO: Handle these errors
+	player, err := state.GetPlayer(a.playerID)
+	if err != nil {
+		panic("InteractivePlayerAgent: Player not found in state: " + a.playerID)
+	}
+	opponent, err := state.GetOpponent(player.ID)
+	if err != nil {
+		panic("InteractivePlayerAgent: Opponent not found for player: " + player.ID)
+	}
 	a.DisplayData = DisplayData{
-		BattlefieldData: BattlefieldData(state),
+		BattlefieldData: BattlefieldData(player),
 		ChoiceData:      BoxData{Title: "Nothing to choose"},
-		GameStatusData:  GameStatusData(state),
-		GraveyardData:   GraveyardData(state),
-		HandData:        HandData(state),
-		ManaPoolData:    ManaPoolData(state),
+		GameStatusData:  GameStatusData(state, player),
+		GraveyardData:   GraveyardData(player),
+		HandData:        HandData(player),
+		OpponentData:    OpponentData(state, opponent),
 		MessageData:     MessageData(state),
 		StackData:       StackData(state),
 	}
@@ -60,7 +80,7 @@ func (a *InteractivePlayerAgent) BuildDisplayBoxes() DisplayBoxes {
 	return DisplayBoxes{
 		GameStatusBox: CombineBoxesSideBySide(
 			CreateBox(a.DisplayData.GameStatusData),
-			CreateBox(a.DisplayData.ManaPoolData),
+			CreateBox(a.DisplayData.OpponentData),
 		),
 		PlaySpaceBox: CombineBoxesSideBySide(
 			CombineBoxesSideBySide(
@@ -79,12 +99,13 @@ func (a *InteractivePlayerAgent) BuildDisplayBoxes() DisplayBoxes {
 
 // NewInteractivePlayerAgent creates a new InteractivePlayerAgent with the
 // given scanner.
-func NewInteractivePlayerAgent(scanner *bufio.Scanner) *InteractivePlayerAgent {
+func NewInteractivePlayerAgent(scanner *bufio.Scanner, playerID string) *InteractivePlayerAgent {
 	tmpl := template.New("display")
 	tmpl = template.Must(tmpl.ParseFiles(
 		"./interactive/display.tmpl",
 	))
 	return &InteractivePlayerAgent{
+		playerID:        playerID,
 		DisplayData:     DisplayData{},
 		Scanner:         scanner,
 		DisplayTemplate: tmpl,
@@ -107,6 +128,7 @@ func ClearScreen() {
 }
 
 // ReportState displays the current game state in a terminal UI.
+// TODO maybe get player from state.CurrentPlayer?
 func (a *InteractivePlayerAgent) ReportState(state *game.GameState) {
 	a.UpdateDisplayData(state)
 	displayBoxes := a.BuildDisplayBoxes()
@@ -125,6 +147,7 @@ func (a *InteractivePlayerAgent) ReportState(state *game.GameState) {
 
 func (a *InteractivePlayerAgent) GetNextAction(state *game.GameState) *game.GameAction {
 	for {
+		// TODO Don't call this here, run update or something
 		a.ReportState(state)
 		PrintCommands(state.Cheat)
 		// TODO: maybe move the prompt to the read functions?

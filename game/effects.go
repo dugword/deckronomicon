@@ -8,7 +8,7 @@ import (
 
 // Effect represents an effect that can be applied to a game state.
 type Effect struct {
-	Apply       func(*GameState, ChoiceResolver) error
+	Apply       func(*GameState, *Player) error
 	Description string
 	Tags        []EffectTag
 }
@@ -37,10 +37,14 @@ func BuildEffect(source GameObject, spec EffectSpec) (*Effect, error) {
 		return BuildEffectDraw(source, spec.Modifiers)
 	case "PutBackOnTop":
 		return BuildEffectPutBackOnTop(source, spec.Modifiers)
+	case "Mill":
+		return BuildEffectMill(source, spec.Modifiers)
 	case "Scry":
 		return BuildEffectScry(source, spec.Modifiers)
 	case "Search":
 		return BuildEffectSearch(source, spec.Modifiers)
+	case "SuffleFromGraveyard":
+		return BuildEffectShuffleFromGraveyard(source, spec.Modifiers)
 	case "Replicate":
 		return BuildEffectReplicate(source, spec.Modifiers)
 	case "Tap":
@@ -49,7 +53,7 @@ func BuildEffect(source GameObject, spec EffectSpec) (*Effect, error) {
 		return &Effect{
 			Description: fmt.Sprintf("unknown effect: %s", spec.ID),
 			Tags:        []EffectTag{{Key: "Unknown", Value: spec.ID}},
-			Apply: func(state *GameState, resolver ChoiceResolver) error {
+			Apply: func(state *GameState, player *Player) error {
 				return nil
 			},
 		}, nil
@@ -81,8 +85,8 @@ func BuildEffectDraw(source GameObject, modifiers []EffectModifier) (*Effect, er
 	}
 	effect.Description = fmt.Sprintf("draw %d cards", count)
 	effect.Tags = tags
-	effect.Apply = func(state *GameState, resolver ChoiceResolver) error {
-		if err := state.Draw(n); err != nil {
+	effect.Apply = func(state *GameState, player *Player) error {
+		if err := state.Draw(n, player); err != nil {
 			fmt.Errorf("failed to draw %d cards: %w", n, err)
 		}
 		return nil
@@ -114,8 +118,8 @@ func BuildEffectAddMana(source GameObject, modifiers []EffectModifier) (*Effect,
 	}
 	effect.Description = fmt.Sprintf("add %s", mana)
 	effect.Tags = tags
-	effect.Apply = func(state *GameState, resolver ChoiceResolver) error {
-		if err := state.ManaPool.AddMana(mana); err != nil {
+	effect.Apply = func(state *GameState, player *Player) error {
+		if err := player.ManaPool.AddMana(mana); err != nil {
 			return err
 		}
 		return nil
@@ -165,7 +169,7 @@ func BuildEffectAdditionalMana(source GameObject, modifiers []EffectModifier) (*
 	id := getNextEventID()
 	eventHandler := EventHandler{
 		ID: id,
-		Callback: func(event Event, state *GameState, resolver ChoiceResolver) {
+		Callback: func(event Event, state *GameState, player *Player) {
 			// Move this into the register so I don't have to check for
 			// it.
 			if event.Type != EventTapForMana {
@@ -174,7 +178,7 @@ func BuildEffectAdditionalMana(source GameObject, modifiers []EffectModifier) (*
 			if !event.Source.HasSubtype(subtype) {
 				return
 			}
-			if err := state.ManaPool.AddMana(mana); err != nil {
+			if err := player.ManaPool.AddMana(mana); err != nil {
 				// TODO: Handle this better
 				panic("failed to add mana: " + err.Error())
 			}
@@ -187,13 +191,81 @@ func BuildEffectAdditionalMana(source GameObject, modifiers []EffectModifier) (*
 	}
 	effect.Tags = tags
 	effect.Description = fmt.Sprintf("add additional %s when you tap an %s for mana", mana, target)
-	effect.Apply = func(state *GameState, resolver ChoiceResolver) error {
+	effect.Apply = func(state *GameState, player *Player) error {
 		state.RegisterListenerUntil(
 			eventHandler,
 			EventEndStep,
 		)
 		return nil
 	}
+	return &effect, nil
+}
+
+// BuildEffectMill creates an effect that mills cards from the top of the
+// library.
+// Supported Modifier Keys (last applies):
+//   - Count: <Cards to mill> Default: 1
+//   - Target <target> Player | Self | Opponent
+func BuildEffectMill(source GameObject, effectModifiers []EffectModifier) (*Effect, error) {
+	effect := Effect{}
+	count := "1"
+	var target string
+	for _, modifier := range effectModifiers {
+		if modifier.Key == "Count" {
+			count = modifier.Value
+		}
+		if modifier.Key == "Target" {
+			target = modifier.Value
+		}
+	}
+	if target != "Player" && target != "Self" && target != "Opponent" {
+		// TODO Support more targets
+		// return nil, fmt.Errorf("invalid target: %s, must be Player, Self, or Opponent", target)
+		return nil, fmt.Errorf("invalid target: %s, must be Player")
+	}
+	n, err := strconv.Atoi(count)
+	if err != nil {
+		return nil, fmt.Errorf("invalid count: %s", count)
+	}
+	effect.Apply = func(state *GameState, player *Player) error {
+		// Get the target player
+		choices := []Choice{}
+		for _, player := range state.Players {
+			choices = append(choices, Choice{
+				Name: player.ID,
+				ID:   player.ID,
+			})
+		}
+		choice, err := player.Agent.ChooseOne("Choose a player to mill", source, choices)
+		if err != nil {
+			return fmt.Errorf("failed to choose player: %w", err)
+		}
+		var targetPlayer *Player
+		// TODO Implement a DetPlayer(ID) function
+		for _, player := range state.Players {
+			if player.ID == choice.ID {
+				targetPlayer = player
+				break
+			}
+		}
+		if targetPlayer == nil {
+			return fmt.Errorf("failed to find player: %s", choice.ID)
+		}
+		for range n {
+			taken, err := targetPlayer.Library.TakeTop()
+			if err != nil {
+				// Not an error to mill on an empty library
+				if errors.Is(err, ErrLibraryEmpty) {
+					return nil
+				}
+				return fmt.Errorf("failed to take top cards: %w", err)
+			}
+			targetPlayer.Graveyard.Add(taken)
+		}
+		return nil
+	}
+	effect.Description = fmt.Sprintf("mill %d cards from your library", n)
+	effect.Tags = []EffectTag{{Key: "Mill", Value: count}}
 	return &effect, nil
 }
 
@@ -214,8 +286,8 @@ func BuildEffectPutBackOnTop(source GameObject, effectModifiers []EffectModifier
 	if err != nil {
 		return nil, fmt.Errorf("invalid count: %s", count)
 	}
-	effect.Apply = func(state *GameState, resolver ChoiceResolver) error {
-		if err := PutNBackOnTop(state, 2, source, resolver); err != nil {
+	effect.Apply = func(state *GameState, player *Player) error {
+		if err := PutNBackOnTop(state, 2, source, player); err != nil {
 			return err
 		}
 		return nil
@@ -242,8 +314,8 @@ func BuildEffectScry(source GameObject, effectModifiers []EffectModifier) (*Effe
 		return nil, fmt.Errorf("invalid count: %s", count)
 	}
 	effect.Description = fmt.Sprintf("look at the top %d cards of your library, then put them back on top or bottom of your library in any order.", n)
-	effect.Apply = func(state *GameState, resolver ChoiceResolver) error {
-		if err := Scry(state, source, n, resolver); err != nil {
+	effect.Apply = func(state *GameState, player *Player) error {
+		if err := Scry(state, source, n, player); err != nil {
 			return err
 		}
 		return nil
@@ -274,10 +346,10 @@ func BuildEffectDiscard(source GameObject, effectModifiers []EffectModifier) (*E
 		return nil, fmt.Errorf("invalid count: %s", count)
 	}
 	// TODO: This could be more elegant
-	var effectFunc func(state *GameState, resolver ChoiceResolver) error
+	var effectFunc func(state *GameState, player *Player) error
 
-	fn := func(state *GameState, resolver ChoiceResolver) error {
-		if err := state.Discard(n, source, resolver); err != nil {
+	fn := func(state *GameState, player *Player) error {
+		if err := state.Discard(n, source, player); err != nil {
 			return err
 		}
 		return nil
@@ -290,16 +362,16 @@ func BuildEffectDiscard(source GameObject, effectModifiers []EffectModifier) (*E
 		id := getNextEventID()
 		eventHandler = EventHandler{
 			ID: id,
-			Callback: func(event Event, state *GameState, resolver ChoiceResolver) {
+			Callback: func(event Event, state *GameState, player *Player) {
 				if event.Type != EventEndStep {
 					return
 				}
 				// TODO Handle errors some how...
-				_ = fn(state, resolver)
+				_ = fn(state, player)
 				state.DeregisterListener(id)
 				return
 			}}
-		effectFunc = func(state *GameState, resolver ChoiceResolver) error {
+		effectFunc = func(state *GameState, player *Player) error {
 			state.RegisterListener(eventHandler)
 			return nil
 		}
@@ -336,13 +408,13 @@ func BuildEffectSearch(source GameObject, effectModifiers []EffectModifier) (*Ef
 	if err != nil {
 		return nil, fmt.Errorf("invalid subtype: %s", subtype)
 	}
-	effect.Apply = func(state *GameState, resolver ChoiceResolver) error {
-		objects := state.Library.FindAllBySubtype(subtypeEnum)
+	effect.Apply = func(state *GameState, player *Player) error {
+		objects := player.Library.FindAllBySubtype(subtypeEnum)
 		if len(objects) == 0 {
 			return fmt.Errorf("no cards of subtype %s found", subtype)
 		}
 		choices := CreateObjectChoices(objects, ZoneLibrary)
-		chosen, err := resolver.ChooseOne(
+		chosen, err := player.Agent.ChooseOne(
 			fmt.Sprintf("Choose a card to put into your hand"),
 			source,
 			choices,
@@ -350,16 +422,56 @@ func BuildEffectSearch(source GameObject, effectModifiers []EffectModifier) (*Ef
 		if err != nil {
 			return fmt.Errorf("failed to choose card: %w", err)
 		}
-		card, err := state.Library.Take(chosen.ID)
+		card, err := player.Library.Take(chosen.ID)
 		if err != nil {
 			return fmt.Errorf("failed to take card: %w", err)
 		}
-		state.Library.Shuffle()
-		state.Hand.Add(card)
+		player.Library.Shuffle()
+		player.Hand.Add(card)
 		return nil
 	}
 	effect.Description = fmt.Sprintf("search library for a card of subtype %s", subtype)
 	effect.Tags = []EffectTag{{Key: "Tutor", Value: subtype}}
+	return &effect, nil
+}
+
+// BuildEffectShuffleFromGraveyard creates an effect that shuffles cards from
+// the graveyard back into the library.
+// Supported Modifier Keys (last applies):
+//   - Count: <Cards to shuffle> Default: 1
+func BuildEffectShuffleFromGraveyard(source GameObject, effectModifiers []EffectModifier) (*Effect, error) {
+	effect := Effect{}
+	count := "1"
+	for _, modifier := range effectModifiers {
+		if modifier.Key == "Count" {
+			count = modifier.Value
+		}
+	}
+	n, err := strconv.Atoi(count)
+	if err != nil {
+		return nil, fmt.Errorf("invalid count: %s", count)
+	}
+	effect.Apply = func(state *GameState, player *Player) error {
+		for range n {
+			choices := CreateObjectChoices(player.Graveyard.GetAll(), ZoneGraveyard)
+			if len(choices) == 0 {
+				break
+			}
+			chosen, err := player.Agent.ChooseOne("Choose cards to shuffle into your library", source, choices)
+			if err != nil {
+				return fmt.Errorf("failed to choose cards: %w", err)
+			}
+			card, err := player.Graveyard.Get(chosen.ID)
+			if err != nil {
+				return fmt.Errorf("failed to get card from graveyard: %w", err)
+			}
+			player.Library.Add(card)
+			player.Library.Shuffle()
+		}
+		return nil
+	}
+	effect.Description = fmt.Sprintf("shuffle %d cards from your graveyard into your library", n)
+	effect.Tags = []EffectTag{{Key: "ShuffleFromGraveyard", Value: count}}
 	return &effect, nil
 }
 
@@ -379,7 +491,7 @@ func BuildEffectReplicate(source GameObject, effectModifiers []EffectModifier) (
 		return nil, fmt.Errorf("source is not a card: %s", source.ID())
 	}
 	effect := Effect{}
-	effect.Apply = func(state *GameState, resolver ChoiceResolver) error {
+	effect.Apply = func(state *GameState, player *Player) error {
 		spell, err := NewSpell(card)
 		if err != nil {
 			return fmt.Errorf("failed to create spell: %w", err)
@@ -411,14 +523,14 @@ func BuildEffectTap(source GameObject, effectModifiers []EffectModifier) (*Effec
 	if target != "Permanent" {
 		return nil, fmt.Errorf("only Permanent target is supported: %s", target)
 	}
-	effect.Apply = func(state *GameState, resolver ChoiceResolver) error {
-		cards := state.Battlefield.GetAll()
+	effect.Apply = func(state *GameState, player *Player) error {
+		cards := player.Battlefield.GetAll()
 		if len(cards) == 0 {
 			// TODO: Spells can't be cast without targets
 			return errors.New("no available targets")
 		}
 		choices := CreateObjectChoices(cards, ZoneBattlefield)
-		chosen, err := resolver.ChooseOne(
+		chosen, err := player.Agent.ChooseOne(
 			fmt.Sprintf("Choose a card to tap"),
 			source,
 			choices,
@@ -426,7 +538,7 @@ func BuildEffectTap(source GameObject, effectModifiers []EffectModifier) (*Effec
 		if err != nil {
 			return fmt.Errorf("failed to choose card: %w", err)
 		}
-		permanent, err := state.Battlefield.Get(chosen.ID)
+		permanent, err := player.Battlefield.Get(chosen.ID)
 		if err != nil {
 			return fmt.Errorf("failed to get permanent: %w", err)
 		}
@@ -448,10 +560,10 @@ func BuildEffectTap(source GameObject, effectModifiers []EffectModifier) (*Effec
 	return &effect, nil
 }
 
-func Scry(state *GameState, source GameObject, n int, resolver ChoiceResolver) error {
+func Scry(state *GameState, source GameObject, n int, player *Player) error {
 	var taken []GameObject
 	for range n {
-		card, err := state.Library.TakeTop()
+		card, err := player.Library.TakeTop()
 		if err != nil {
 			// Not an error to scry on an empty library
 			if errors.Is(err, ErrLibraryEmpty) {
@@ -474,7 +586,7 @@ func Scry(state *GameState, source GameObject, n int, resolver ChoiceResolver) e
 				})
 			}
 		}
-		chosen, err := resolver.ChooseOne(
+		chosen, err := player.Agent.ChooseOne(
 			"Choose a card to place",
 			source,
 			choices,
@@ -506,7 +618,7 @@ func Scry(state *GameState, source GameObject, n int, resolver ChoiceResolver) e
 				ID:   ChoiceBottom,
 			},
 		}
-		placement, err := resolver.ChooseOne(
+		placement, err := player.Agent.ChooseOne(
 			fmt.Sprintf("Place %s on top or bottom of your library?", chosenCard.Name()),
 			source,
 			topBottomchoices,
@@ -515,9 +627,9 @@ func Scry(state *GameState, source GameObject, n int, resolver ChoiceResolver) e
 			return fmt.Errorf("failed to choose placement: %w", err)
 		}
 		if placement.ID == ChoiceTop {
-			state.Library.AddTop(chosenCard)
+			player.Library.AddTop(chosenCard)
 		} else {
-			state.Library.Add(chosenCard)
+			player.Library.Add(chosenCard)
 		}
 	}
 	return nil

@@ -13,7 +13,7 @@ import (
 /*
 type Ability interface {
 	Description() string
-	Resolve(game *GameState, resolver ChoiceResolver) error
+	Resolve(game *GameState, agent PlayerAgent) error
 }
 */
 
@@ -95,9 +95,9 @@ func (a *ActivatedAbility) IsManaAbility() bool {
 
 // Resolve resolves the activated ability. Any costs must be paid before
 // resolving the ability.
-func (a *ActivatedAbility) Resolve(state *GameState, resolver ChoiceResolver) error {
+func (a *ActivatedAbility) Resolve(state *GameState, player *Player) error {
 	for _, effect := range a.Effects {
-		if err := effect.Apply(state, resolver); err != nil {
+		if err := effect.Apply(state, player); err != nil {
 			return fmt.Errorf("cannot resolve effect: %w", err)
 		}
 	}
@@ -184,9 +184,9 @@ func (a *SpellAbility) Description() string {
 }
 
 // Resolve resolves the spell ability by applying its effects.
-func (a *SpellAbility) Resolve(state *GameState, resolver ChoiceResolver) error {
+func (a *SpellAbility) Resolve(state *GameState, player *Player) error {
 	for _, effect := range a.Effects {
-		if err := effect.Apply(state, resolver); err != nil {
+		if err := effect.Apply(state, player); err != nil {
 			return fmt.Errorf("cannot resolve effect: %w", err)
 		}
 	}
@@ -210,9 +210,9 @@ func (a *TriggeredAbility) Description() string {
 }
 
 // Resolve resolves the triggered ability by applying its effects.
-func (a *TriggeredAbility) Resolve(state *GameState, resolver ChoiceResolver) error {
+func (a *TriggeredAbility) Resolve(state *GameState, player *Player) error {
 	for _, effect := range a.Effects {
-		if err := effect.Apply(state, resolver); err != nil {
+		if err := effect.Apply(state, player); err != nil {
 			return fmt.Errorf("cannot resolve effect: %w", err)
 		}
 	}

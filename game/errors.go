@@ -5,6 +5,13 @@ import (
 	"fmt"
 )
 
+// TODO: Define standard errors here for things like "no actions available"
+// and also define custom error types for things like InvalidAction so I know
+// if I can recover from them or not
+
+// Game errors
+var ErrInvalidAction = errors.New("invalid action")
+
 // Sentinel error
 var ErrLibraryEmpty = errors.New("library empty")
 var ErrGameOver = errors.New("game over")
