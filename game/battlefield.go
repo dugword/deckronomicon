@@ -34,14 +34,14 @@ func (b *Battlefield) Add(object GameObject) error {
 	return nil
 }
 
-func (b *Battlefield) AvailableActivatedAbilities(state *GameState) []*ActivatedAbility {
+func (b *Battlefield) AvailableActivatedAbilities(state *GameState, player *Player) []*ActivatedAbility {
 	var abilities []*ActivatedAbility
 	for _, permanent := range b.permanents {
 		for _, ability := range permanent.ActivatedAbilities() {
 			if !ability.CanPlay(state) {
 				continue
 			}
-			if ability.Cost.CanPay(state) {
+			if ability.Cost.CanPay(state, player) {
 				abilities = append(abilities, ability)
 			}
 		}
@@ -53,7 +53,7 @@ func (b *Battlefield) AvailableActivatedAbilities(state *GameState) []*Activated
 // battlefield. This exists to satisfy the Zone interface. Permanents on the
 // battlefield generally cannot be played. There is no rule that prevents a
 // card from enabling this, but I don't think any exist.
-func (b *Battlefield) AvailableToPlay(*GameState) []GameObject {
+func (b *Battlefield) AvailableToPlay(*GameState, *Player) []GameObject {
 	return nil
 }
 

@@ -27,14 +27,14 @@ func (h *Hand) Add(object GameObject) error {
 	return nil
 }
 
-func (h *Hand) AvailableActivatedAbilities(state *GameState) []*ActivatedAbility {
+func (h *Hand) AvailableActivatedAbilities(state *GameState, player *Player) []*ActivatedAbility {
 	var abilities []*ActivatedAbility
 	for _, card := range h.cards {
 		for _, ability := range card.ActivatedAbilities() {
 			if !ability.CanPlay(state) {
 				continue
 			}
-			if !ability.Cost.CanPay(state) {
+			if !ability.Cost.CanPay(state, player) {
 				continue
 			}
 			if ability.Zone != ZoneHand {
@@ -46,19 +46,21 @@ func (h *Hand) AvailableActivatedAbilities(state *GameState) []*ActivatedAbility
 	return abilities
 }
 
-func (h *Hand) AvailableToPlay(state *GameState) []GameObject {
+func (h *Hand) AvailableToPlay(state *GameState, player *Player) []GameObject {
 	var available []GameObject
 	for _, card := range h.cards {
 		if state.CanCastSorcery() {
-			if card.IsLand() && state.LandDrop == false {
-				available = append(available, card)
-				continue
-			} else if card.ManaCost().CanPay(state) {
+			if card.IsLand() {
+				if player.LandDrop == false {
+					available = append(available, card)
+					continue
+				}
+			} else if card.ManaCost().CanPay(state, player) {
 				available = append(available, card)
 				continue
 			}
 		}
-		if card.ManaCost().CanPay(state) && card.HasCardType(CardTypeInstant) {
+		if card.ManaCost().CanPay(state, player) && card.HasCardType(CardTypeInstant) {
 			available = append(available, card)
 			continue
 		}

@@ -28,15 +28,27 @@ const (
 	StepCleanup           = "Cleanup"
 )
 
+type GamePhase struct {
+	Name  string
+	Steps []GameStep
+}
+
+type GameStep struct {
+	Name    string
+	Handler func(g *GameState, player *Player) error
+	// TODO This name sucks
+	EventEvent EventType
+}
+
 var beginningPhase = GamePhase{
 	Name: PhaseBeginning,
 	Steps: []GameStep{
 		{
 			Name:       StepUntap,
 			EventEvent: EventUntapStep,
-			Handler: func(g *GameState, agent PlayerAgent) error {
+			Handler: func(g *GameState, player *Player) error {
 				g.Log("Untapping all permanents")
-				actionResult, err := ActionUntapFunc(g, UntapAll, agent)
+				actionResult, err := ActionUntapFunc(g, player, UntapAll)
 				if err != nil {
 					return fmt.Errorf("failed to untap: %w", err)
 				}
@@ -47,16 +59,16 @@ var beginningPhase = GamePhase{
 		{
 			Name:       StepUpkeep,
 			EventEvent: EventUpkeepStep,
-			Handler: wrapStep(func(g *GameState, agent PlayerAgent) error {
+			Handler: wrapStep(func(g *GameState, player *Player) error {
 				return nil
 			}),
 		},
 		{
 			Name:       StepDraw,
 			EventEvent: EventDrawStep,
-			Handler: wrapStep(func(g *GameState, agent PlayerAgent) error {
+			Handler: wrapStep(func(g *GameState, player *Player) error {
 				g.Log("Drawing a card")
-				actionResult, err := ActionDrawFunc(g, "1", agent)
+				actionResult, err := ActionDrawFunc(g, player, "1")
 				if err != nil {
 					return fmt.Errorf("failed to draw: %w", err)
 				}
@@ -73,7 +85,7 @@ var preCombatMainPhase = GamePhase{
 		{
 			Name:       StepPreCombatMain,
 			EventEvent: EventPrecombatMainPhase,
-			Handler: wrapStep(func(g *GameState, agent PlayerAgent) error {
+			Handler: wrapStep(func(g *GameState, player *Player) error {
 				return nil
 			}),
 		},
@@ -87,28 +99,28 @@ var combatPhase = GamePhase{
 			Name:       StepBeginningOfCombat,
 			EventEvent: EventBeginningOfCombatStep,
 
-			Handler: wrapStep(func(g *GameState, agent PlayerAgent) error {
+			Handler: wrapStep(func(g *GameState, player *Player) error {
 				return nil
 			}),
 		},
 		{
 			Name:       StepDeclareAttackers,
 			EventEvent: EventDeclareAttackersStep,
-			Handler: wrapStep(func(g *GameState, agent PlayerAgent) error {
+			Handler: wrapStep(func(g *GameState, player *Player) error {
 				return nil
 			}),
 		},
 		{
 			Name:       StepDeclareBlockers,
 			EventEvent: EventDeclareBlockersStep,
-			Handler: wrapStep(func(g *GameState, agent PlayerAgent) error {
+			Handler: wrapStep(func(g *GameState, player *Player) error {
 				return nil
 			}),
 		},
 		{
 			Name:       StepCombatDamage,
 			EventEvent: EventCombatDamageStep,
-			Handler: wrapStep(func(g *GameState, agent PlayerAgent) error {
+			Handler: wrapStep(func(g *GameState, player *Player) error {
 				return nil
 			}),
 		},
@@ -116,7 +128,7 @@ var combatPhase = GamePhase{
 			Name: StepEndOfCombat,
 
 			EventEvent: EventEndOfCombatStep,
-			Handler: wrapStep(func(g *GameState, agent PlayerAgent) error {
+			Handler: wrapStep(func(g *GameState, player *Player) error {
 				return nil
 			}),
 		},
@@ -129,7 +141,7 @@ var postCombatMainPhase = GamePhase{
 		{
 			Name:       StepPostCombatMain,
 			EventEvent: EventPostcombatMainPhase,
-			Handler: wrapStep(func(g *GameState, agent PlayerAgent) error {
+			Handler: wrapStep(func(g *GameState, player *Player) error {
 				return nil
 			}),
 		},
@@ -142,25 +154,24 @@ var endingPhase = GamePhase{
 		{
 			Name:       StepEnd,
 			EventEvent: EventEndStep,
-			Handler: wrapStep(func(g *GameState, agent PlayerAgent) error {
+			Handler: wrapStep(func(g *GameState, player *Player) error {
 				return nil
 			}),
 		},
 		{
 			Name:       StepCleanup,
 			EventEvent: EventCleanupStep,
-			Handler: func(g *GameState, agent PlayerAgent) error {
-				toDiscard := g.Hand.Size() - g.MaxHandSize
+			Handler: func(g *GameState, player *Player) error {
+				toDiscard := player.Hand.Size() - player.MaxHandSize
 				if toDiscard > 0 {
 					g.Log(fmt.Sprintf("Discarding %d cards to maintain max hand size", toDiscard))
-					actionResult, err := ActionDiscardFunc(g, strconv.Itoa(toDiscard), agent)
+					actionResult, err := ActionDiscardFunc(g, player, strconv.Itoa(toDiscard))
 					if err != nil {
 						return fmt.Errorf("failed to discard cards: %w", err)
 					}
 					g.Message = actionResult.Message
 					return nil
 				}
-				g.ManaPool.Empty()
 				actionResult := &ActionResult{
 					Message: "Cleanup step completed",
 				}

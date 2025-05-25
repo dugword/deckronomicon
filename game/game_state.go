@@ -2,130 +2,105 @@ package game
 
 import (
 	"deckronomicon/configs"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"os"
-	"strconv"
 	"strings"
 )
 
 // GameState represents the current state of the game.
 type GameState struct {
-	Battlefield        *Battlefield
+	ActivePlayer       *Player
+	NonActivePlayer    *Player
 	Cheat              bool
 	CardPool           string
 	CurrentPhase       string
 	CurrentPlayer      int
 	CurrentStep        string
-	Library            *Library
 	EventListeners     []EventHandler
-	Exile              []*Card
-	Graveyard          *Graveyard
-	Hand               *Hand
-	LandDrop           bool
 	LastActionFailed   bool
-	Life               int
-	ManaPool           *ManaPool
-	MaxHandSize        int
+	Players            []*Player
 	MaxTurns           int
 	Message            string
 	MessageLog         []string
-	Mulligans          int
-	PotentialMana      *ManaPool
 	SpellsCastThisTurn []string
 	Stack              *Stack
-	Stops              []string
 	StormCount         int
-	// TODO: I don't like this, need to rethink how to handle this
-	StartingHand   []string
-	Turn           int
-	TurnCount      int
-	TurnMessageLog []string
+	TurnMessageLog     []string
 }
 
 // NewGameState creates a new GameState instance.
 func NewGameState() *GameState {
 	gameState := GameState{
-		Battlefield:        NewBattlefield(),
 		EventListeners:     []EventHandler{},
-		Exile:              []*Card{}, // TODO: make this a struct
-		Graveyard:          NewGraveyard(),
-		Hand:               NewHand(),
-		Library:            NewLibrary(),
-		ManaPool:           NewManaPool(),
-		Mulligans:          0,
-		PotentialMana:      NewManaPool(),
+		Players:            []*Player{},
 		SpellsCastThisTurn: []string{}, // TODO: Rethink how this is managed
 		Stack:              NewStack(),
-		Stops:              []string{StepPreCombatMain},
 		TurnMessageLog:     []string{}, // TODO: this sucks, make better
 	}
 	return &gameState
 }
 
-func (g *GameState) DrawStartingHand(startingHand []string) error {
-	for _, cardName := range startingHand {
-		card, err := g.Library.FindByName(cardName)
+func (g *GameState) DrawStartingHand(player *Player) error {
+	for _, cardName := range player.StartingHand {
+		card, err := player.Library.TakeByName(cardName)
 		if err != nil {
-			return fmt.Errorf("failed to find card %s in library: %w", cardName, err)
+			return fmt.Errorf("failed to take card %s from library: %w", cardName, err)
 		}
-		g.Hand.Add(card)
+		player.Hand.Add(card)
 	}
-	result, err := g.ResolveAction(&GameAction{
-		Type:   ActionDraw,
-		Target: strconv.Itoa(g.MaxHandSize - g.Hand.Size()),
-	}, nil)
-	if err != nil {
+	if err := g.Draw(player.MaxHandSize-len(player.StartingHand), player); err != nil {
 		return fmt.Errorf("failed to draw starting hand: %w", err)
 	}
-	g.Log(result.Message)
+	g.Log(fmt.Sprintf("drawn starting hand for %s: %s", player.ID, strings.Join(player.StartingHand, ", ")))
 	return nil
 }
 
 // InitializeNewGame initializes a new game with the given configuration.
 // TODO: DOn't pass agent here
-func (g *GameState) InitializeNewGame(config *configs.Config) error {
-	// TODO: Consolidate config file with other configs so they can all be set
-	// by either envars or cli flags or config file.
-	data, err := os.ReadFile(config.ConfigFile)
-	if err != nil {
-		return fmt.Errorf("failed to read config file: %w", err)
-	}
-	var configFile struct {
-		StartingHand []string `json:"StartingHand"`
-	}
-	if err := json.Unmarshal(data, &configFile); err != nil {
-		return fmt.Errorf("failed to unmarshal config file: %w", err)
-	}
+func (g *GameState) InitializeNewGame(
+	scenario *configs.Scenerio,
+	player *Player,
+	opponent *Player,
+	config *configs.Config,
+) error {
 	g.Cheat = config.Cheat
-	g.MaxTurns = config.MaxTurns
-	g.Life = config.StartingLife
-	g.MaxHandSize = 7
+	g.MaxTurns = scenario.Setup.MaxTurns
 	g.CardPool = config.CardPool
-	library, err := importDeck(config.DeckList, g.CardPool)
+	playerLibrary, err := importDeck(scenario.PlayerDeck, g.CardPool)
 	if err != nil {
 		return err
 	}
-	g.Library = library
-	g.Library.Shuffle()
-	g.Hand = &Hand{}
-	if err := g.DrawStartingHand(configFile.StartingHand); err != nil {
+	player.Library = playerLibrary
+	player.Library.Shuffle()
+	opponentLibrary, err := importDeck(scenario.OpponentDeck, g.CardPool)
+	if err != nil {
+		return err
+	}
+	opponent.Library = opponentLibrary
+	opponent.Library.Shuffle()
+	// TODO: Do something with the scenario setup for on the play.
+	g.Players = []*Player{player, opponent}
+	g.ActivePlayer = player
+	g.NonActivePlayer = opponent
+	// TODO Move this to game engine/mulligan
+	if err := g.DrawStartingHand(player); err != nil {
 		return fmt.Errorf("failed to draw starting hand: %w", err)
 	}
-	g.ManaPool = NewManaPool()
-	g.Battlefield = &Battlefield{}
+	if err := g.DrawStartingHand(opponent); err != nil {
+		return fmt.Errorf("failed to draw starting hand: %w", err)
+	}
+
 	return nil
 }
 
 // Discard discards n cards from the player's hand.
-func (g *GameState) Discard(n int, source ChoiceSource, resolver ChoiceResolver) error {
-	if n > g.Hand.Size() {
-		n = g.Hand.Size()
+func (g *GameState) Discard(n int, source ChoiceSource, player *Player) error {
+	if n > player.Hand.Size() {
+		n = player.Hand.Size()
 	}
 	for range n {
-		choices := CreateObjectChoices(g.Hand.GetAll(), ZoneHand)
-		choice, err := resolver.ChooseOne(
+		choices := CreateObjectChoices(player.Hand.GetAll(), ZoneHand)
+		choice, err := player.Agent.ChooseOne(
 			"Which card to discard from hand",
 			source,
 			choices,
@@ -133,22 +108,22 @@ func (g *GameState) Discard(n int, source ChoiceSource, resolver ChoiceResolver)
 		if err != nil {
 			return fmt.Errorf("failed to choose card to discard: %w", err)
 		}
-		card, err := g.Hand.Get(choice.ID)
+		card, err := player.Hand.Get(choice.ID)
 		if err != nil {
 			return fmt.Errorf("failed to get card from hand: %w", err)
 		}
-		g.Hand.Remove(card.ID())
-		g.Graveyard.Add(card)
+		player.Hand.Remove(card.ID())
+		player.Graveyard.Add(card)
 	}
 	return nil
 }
 
 // Draw draws n cards from the library into the player's hand.
-func (g *GameState) Draw(n int) error {
-	var drawn []GameObject
+// TODO: Probably just needs *PLayer
+func (g *GameState) Draw(n int, player *Player) error {
 	var names []string
 	for range n {
-		card, err := g.Library.TakeTop()
+		card, err := player.Library.TakeTop()
 		if err != nil {
 			if errors.Is(err, ErrLibraryEmpty) {
 				return PlayerLostError{
@@ -157,33 +132,11 @@ func (g *GameState) Draw(n int) error {
 			}
 			return err
 		}
-		drawn = append(drawn, card)
+		player.Hand.Add(card)
 		names = append(names, card.Name())
-	}
-	for _, card := range drawn {
-		// TODO: rethink if I want to add one at a time or accept a slice
-		g.Hand.Add(card)
 	}
 	g.Log(fmt.Sprintf("drew: %s", strings.Join(names, ", ")))
 	return nil
-}
-
-func (g *GameState) Zones() []Zone {
-	return []Zone{
-		g.Battlefield,
-		g.Library,
-		g.Hand,
-		g.Graveyard,
-	}
-}
-
-func (g *GameState) GetZone(zone string) (Zone, error) {
-	for _, z := range g.Zones() {
-		if z.ZoneType() == zone {
-			return z, nil
-		}
-	}
-	return nil, fmt.Errorf("zone %s not found", zone)
 }
 
 /*
@@ -205,29 +158,34 @@ func (g *GameState) CastSpell(card *Card) error {
 
 // TODO: Need to do something smarter here, this doesn't account for
 // additional mana effects like high tide.
-func GetPotentialMana(state *GameState) *ManaPool {
-	tempGameState := GameState{
-		ManaPool: NewManaPool(),
-	}
-	for _, permanent := range state.Battlefield.permanents {
-		// TODO change this to canpay
-		if permanent.IsTapped() {
-			continue
+func GetPotentialMana(state *GameState, player *Player) *ManaPool {
+	// TODO FIX THIS
+	return NewManaPool()
+	/*
+		tempPlayer := Player{
+			ManaPool: NewManaPool(),
 		}
-		for _, ability := range permanent.ActivatedAbilities() {
-			if ability.IsManaAbility() {
-				ability.Resolve(&tempGameState, nil) // pass mock resolver
+		for _, permanent := range agent.Player().Battlefield.permanents {
+			// TODO change this to canpay
+			if permanent.IsTapped() {
+				continue
+			}
+			for _, ability := range permanent.ActivatedAbilities() {
+				if ability.IsManaAbility() {
+					// TODO
+					ability.Resolve(state, agent)
+				}
 			}
 		}
-	}
-	return tempGameState.ManaPool
+		return tempPlayer.ManaPool
+	*/
 }
 
 // TODO Revist this
-func PutNBackOnTop(state *GameState, n int, source ChoiceSource, resolver ChoiceResolver) error {
+func PutNBackOnTop(state *GameState, n int, source ChoiceSource, player *Player) error {
 	for range n {
-		choices := CreateObjectChoices(state.Hand.GetAll(), ZoneHand)
-		choice, err := resolver.ChooseOne(
+		choices := CreateObjectChoices(player.Hand.GetAll(), ZoneHand)
+		choice, err := player.Agent.ChooseOne(
 			"Which card to put back on top",
 			source,
 			choices,
@@ -235,24 +193,31 @@ func PutNBackOnTop(state *GameState, n int, source ChoiceSource, resolver Choice
 		if err != nil {
 			return fmt.Errorf("failed to choose card to put back on top: %w", err)
 		}
-		card, err := state.Hand.Take(choice.ID)
+		card, err := player.Hand.Take(choice.ID)
 		if err != nil {
 			return fmt.Errorf("failed to take card from hand: %w", err)
 		}
-		state.Library.AddTop(card)
+		player.Library.AddTop(card)
 	}
 	return nil
 }
 
+// TODO Rethink this function
+// Calculating mana by activating all abilities seems like a bad idea
+// because I could impact other game state
 func CanPotentiallyPayFor(state *GameState, manaCost *ManaCost) bool {
-	simulated := GetPotentialMana(state)
-	for color, need := range manaCost.Colors {
-		if simulated.Has(color, need) {
-			return false
+	return false
+	// TODO:
+	/*
+		simulated := GetPotentialMana(state)
+		for color, need := range manaCost.Colors {
+			if simulated.Has(color, need) {
+				return false
+			}
+			simulated.Use(color, need)
 		}
-		simulated.Use(color, need)
-	}
-	return simulated.HasGeneric(manaCost.Generic)
+		return simulated.HasGeneric(manaCost.Generic)
+	*/
 }
 
 func (g *GameState) CanCastSorcery() bool {
@@ -274,11 +239,21 @@ func (g *GameState) IsPlayerTurn(playerID int) bool {
 	return g.CurrentPlayer == playerID
 }
 
-func (g *GameState) ShouldAutoPass() bool {
-	for _, stop := range g.Stops {
-		if stop == g.CurrentStep {
-			return false
+func (g *GameState) GetPlayer(id string) (*Player, error) {
+	for _, player := range g.Players {
+		if player.ID == id {
+			return player, nil
 		}
 	}
-	return true
+	return nil, fmt.Errorf("player with ID %s not found", id)
+}
+
+// TODO This would faile with more than 1 player
+func (g *GameState) GetOpponent(id string) (*Player, error) {
+	for _, player := range g.Players {
+		if player.ID != id {
+			return player, nil
+		}
+	}
+	return nil, errors.New("opponent not found")
 }

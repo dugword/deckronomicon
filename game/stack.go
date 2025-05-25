@@ -7,7 +7,7 @@ import (
 
 type Resolvable interface {
 	Description() string
-	Resolve(*GameState, ChoiceResolver) error
+	Resolve(*GameState, *Player) error
 }
 
 type Stack struct {

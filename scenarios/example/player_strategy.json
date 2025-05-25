@@ -28,8 +28,18 @@
       "then": {
         "action": "play",
         "target": "Preordain",
-        "preactions": [{"action": "", "target": ""}],
-        "postactions": [{"action": "", "target": ""}]
+        "preactions": [
+          {
+            "action": "",
+            "target": ""
+          }
+        ],
+        "postactions": [
+          {
+            "action": "",
+            "target": ""
+          }
+        ]
       },
       "enabled": true
     },
@@ -45,8 +55,18 @@
       "then": {
         "action": "play",
         "target": "Brainstorm",
-        "preactions": [{"action": "", "target": ""}],
-        "postactions": [{"action": "", "target": ""}]
+        "preactions": [
+          {
+            "action": "",
+            "target": ""
+          }
+        ],
+        "postactions": [
+          {
+            "action": "",
+            "target": ""
+          }
+        ]
       },
       "enabled": true
     }

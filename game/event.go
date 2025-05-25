@@ -51,7 +51,7 @@ func getNextEventID() int {
 type EventHandler struct {
 	// TODO: UUID
 	ID       int
-	Callback func(Event, *GameState, ChoiceResolver)
+	Callback func(Event, *GameState, *Player)
 }
 
 // RegisterListener registers a new event listener.
@@ -73,9 +73,9 @@ func (g *GameState) DeregisterListener(id int) {
 func (g *GameState) RegisterOneShotListener(listener EventHandler) {
 	wrappedListener := EventHandler{
 		ID: listener.ID,
-		Callback: func(event Event, state *GameState, resolver ChoiceResolver) {
+		Callback: func(event Event, state *GameState, player *Player) {
 			// Call the original listener's callback
-			listener.Callback(event, state, resolver)
+			listener.Callback(event, state, player)
 			// Deregister the listener after it has been called
 			state.DeregisterListener(listener.ID)
 		},
@@ -89,7 +89,7 @@ func (g *GameState) RegisterListenerUntil(listener EventHandler, untilEvent Even
 	cleanUpID := getNextEventID()
 	cleanUpHandler := EventHandler{
 		ID: cleanUpID,
-		Callback: func(event Event, state *GameState, resolver ChoiceResolver) {
+		Callback: func(event Event, state *GameState, player *Player) {
 			if event.Type == untilEvent {
 				state.DeregisterListener(listener.ID)
 				state.DeregisterListener(cleanUpID)
@@ -101,9 +101,9 @@ func (g *GameState) RegisterListenerUntil(listener EventHandler, untilEvent Even
 }
 
 // EmitEvent emits an event to all registered listeners.
-func (g *GameState) EmitEvent(evt Event, resolver ChoiceResolver) {
+func (g *GameState) EmitEvent(evt Event, player *Player) {
 	for _, listener := range g.EventListeners {
-		listener.Callback(evt, g, resolver)
+		listener.Callback(evt, g, player)
 	}
 }
 
@@ -113,9 +113,9 @@ func NewTriggeredListener(ta TriggeredAbility) (EventHandler, int) {
 	id := getNextEventID()
 	return EventHandler{
 		ID: id,
-		Callback: func(event Event, state *GameState, resolver ChoiceResolver) {
+		Callback: func(event Event, state *GameState, player *Player) {
 			if ta.TriggerCondition(event) {
-				ta.Resolve(state, resolver)
+				ta.Resolve(state, player)
 			}
 		},
 	}, id

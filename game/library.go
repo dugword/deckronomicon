@@ -11,7 +11,7 @@ type Library struct {
 	cards []*Card
 }
 
-// Cards returns the cards in the hand.
+// Cards returns the cards in the Library.
 // TODO: for display remove later - why? Probably should directly manipulate
 // this
 func (l *Library) Cards() []*Card {
@@ -29,7 +29,7 @@ func NewLibrary() *Library {
 // AvailableActivatedAbilities returns a list of activated abilities that can
 // be activated from the library. This exits to satisfy the Zone interface.
 // Cards in the library cannot have a activated ability.
-func (l *Library) AvailableActivatedAbilities(*GameState) []*ActivatedAbility {
+func (l *Library) AvailableActivatedAbilities(*GameState, *Player) []*ActivatedAbility {
 	return nil
 }
 
@@ -37,7 +37,7 @@ func (l *Library) AvailableActivatedAbilities(*GameState) []*ActivatedAbility {
 // library. This exists to satisfy the Zone interface. Cards in the library
 // generally cannot be played. (Some cards enable this, but they are
 // exceptions and not currently implemented.)
-func (l *Library) AvailableToPlay(*GameState) []GameObject {
+func (l *Library) AvailableToPlay(*GameState, *Player) []GameObject {
 	return nil
 }
 
@@ -70,7 +70,7 @@ func (l *Library) Find(id string) (GameObject, error) {
 	return nil, fmt.Errorf("card with ID %s not found", id)
 }
 
-// FindByName finds the first card in the hand by name.
+// FindByName finds the first card in the Library by name.
 func (l *Library) FindByName(name string) (GameObject, error) {
 	for _, card := range l.cards {
 		if card.Name() == name {
@@ -126,6 +126,17 @@ func (l *Library) Take(id string) (GameObject, error) {
 		}
 	}
 	return nil, fmt.Errorf("card with ID %s not found", id)
+}
+
+// TakeByName takes the first card in the library by name.
+func (l *Library) TakeByName(name string) (GameObject, error) {
+	for i, card := range l.cards {
+		if card.Name() == name {
+			l.cards = append(l.cards[:i], l.cards[i+1:]...)
+			return card, nil
+		}
+	}
+	return nil, fmt.Errorf("card with name %s not found", name)
 }
 
 // TakeCards removes the top N cards from the library and returns them.

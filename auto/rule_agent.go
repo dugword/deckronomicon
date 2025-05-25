@@ -57,14 +57,21 @@ import (
 type RuleBasedAgent struct {
 	Rules       []Rule
 	ChoiceRules []ChoiceRule
+	playerID    string
+}
+
+func (a *RuleBasedAgent) PlayerID() string {
+	return a.playerID
 }
 
 // NewRuleBasedAgent creates a new RuleBasedAgent instance and loads the rules
 // from the specified JSON file. The rules are parsed and stored in the agent
 // for use during gameplay. The rules are stored by priority, with higher
 // priority rules evaluated first.
-func NewRuleBasedAgent(ruleFile string) *RuleBasedAgent {
-	agent := &RuleBasedAgent{}
+func NewRuleBasedAgent(ruleFile string, playerID string) *RuleBasedAgent {
+	agent := &RuleBasedAgent{
+		playerID: playerID,
+	}
 	agent.LoadRules(ruleFile)
 	return agent
 }
@@ -111,6 +118,11 @@ func (a *RuleBasedAgent) Confirm(prompt string, source game.ChoiceSource) (bool,
 // (ActionPass) is returned. The method also handles special cases, such as
 // conceding if the last action failed.
 func (a *RuleBasedAgent) GetNextAction(state *game.GameState) *game.GameAction {
+	player, err := state.GetPlayer(a.playerID)
+	if err != nil {
+		fmt.Println("ERROR: could not find player with ID =>", a.playerID)
+		os.Exit(1)
+	}
 	// TODO: make this configurable in the rules
 	if state.LastActionFailed {
 		return &game.GameAction{Type: game.ActionConcede}
@@ -118,7 +130,7 @@ func (a *RuleBasedAgent) GetNextAction(state *game.GameState) *game.GameAction {
 	for _, rule := range a.Rules {
 		fmt.Println("Rule =>", rule.Name)
 		// TODO: change to !disabled so we don't need it in every rule
-		conditionSetMatched, err := MatchesConditionSet(state, rule.When)
+		conditionSetMatched, err := MatchesConditionSet(state, player, rule.When)
 		if err != nil {
 			// TODO: handle this better
 			panic("need to handle this as an error")
@@ -128,7 +140,7 @@ func (a *RuleBasedAgent) GetNextAction(state *game.GameState) *game.GameAction {
 			// TODO This could be more elegant
 			if gameAction.Type == game.ActionPlay {
 				if rule.Then.Target != "" {
-					object, err := state.Hand.FindByName(rule.Then.Target)
+					object, err := player.Hand.FindByName(rule.Then.Target)
 					if err != nil {
 						fmt.Println("ERROR: could not find card in hand =>", rule.Then.Target)
 						os.Exit(1)
@@ -142,12 +154,12 @@ func (a *RuleBasedAgent) GetNextAction(state *game.GameState) *game.GameAction {
 
 					// TODO canCast should probably be an error?
 					preactions, canCast := PlanManaActivation(
-						state.Battlefield.Permanents(),
+						player.Battlefield.Permanents(),
 						card.ManaCost(),
 					)
 					if !canCast {
 						fmt.Println("ERROR (HANDLE THIS BETTER): can not cast even if I tap all my lands")
-						for _, p := range state.Battlefield.Permanents() {
+						for _, p := range player.Battlefield.Permanents() {
 							fmt.Println("Permanent =>", p.Name())
 						}
 						os.Exit(0)

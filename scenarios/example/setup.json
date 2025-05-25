@@ -1,4 +1,9 @@
 {
+  "PlayerName": "You",
+  "OpponentName": "Opponent",
+  "OnThePlay": true,
+  "StartingLife": 20,
+  "MaxTurns": 100,
   "StartingHand": [
     "Brainstorm",
     "Gigadrowse",

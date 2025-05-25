@@ -56,32 +56,17 @@ func CreateActivatedAbilityChoices(abilities []*ActivatedAbility) []Choice {
 	return choices
 }
 
-/*
-func (h *Hand) CardChoices() []Choice {
-	var choices []Choice
-	for _, card := range h.cards {
-		choices = append(choices, Choice{Name: card.Name(), ID: card.ID()})
-	}
-	return choices
-}
-*/
-
-// ChoiceResolver is an interface for resolving player choices.
-// Maybe do something where I can pass in "play Island" and it'll take the second param as the Choice and only prompt if it is missing
-// maybe support typing in the number or the name of the card
-type ChoiceResolver interface {
-	ChooseOne(prompt string, source ChoiceSource, choices []Choice) (Choice, error)
-	//ChooseN(prompt string, choices []Choice, n int) []Choice
-	//ChooseUpToN(prompt string, choices []Choice, n int) []Choice
-	//ChooseAny(prompt string, choices []Choice) []Choice
-	Confirm(prompt string, source ChoiceSource) (bool, error)
-	EnterNumber(prompt string, source ChoiceSource) (int, error)
-}
-
 // PlayerAgent defines how player decisions are made.
 type PlayerAgent interface {
-	ChoiceResolver
+	// TODO: Not sure I love this here
+	//ChooseAny(prompt string, choices []Choice) []Choice
+	//ChooseN(prompt string, choices []Choice, n int) []Choice
+	//ChooseUpToN(prompt string, choices []Choice, n int) []Choice
+	ChooseOne(prompt string, source ChoiceSource, choices []Choice) (Choice, error)
+	Confirm(prompt string, source ChoiceSource) (bool, error)
+	EnterNumber(prompt string, source ChoiceSource) (int, error)
 	GetNextAction(state *GameState) *GameAction
+	PlayerID() string
 	ReportState(state *GameState)
 }
 

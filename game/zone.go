@@ -13,8 +13,10 @@ const (
 
 type Zone interface {
 	Add(object GameObject) error
-	AvailableActivatedAbilities(*GameState) []*ActivatedAbility
-	AvailableToPlay(*GameState) []GameObject
+	// This probably makes more sense as a method of Player
+	AvailableActivatedAbilities(*GameState, *Player) []*ActivatedAbility
+	// This probably makes more sense as a method of Player
+	AvailableToPlay(*GameState, *Player) []GameObject
 	Find(id string) (GameObject, error)
 	FindByName(name string) (GameObject, error)
 	FindAllBySubtype(subtype Subtype) []GameObject
