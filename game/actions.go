@@ -92,7 +92,7 @@ func ActionActivateFunc(state *GameState, target string, resolver ChoiceResolver
 	}
 	if len(abilities) == 0 {
 		// TODO: Do I need to check this?
-		return nil, fmt.Errorf("no activated abilities available")
+		return nil, errors.New("no activated abilities available")
 	}
 	choices := CreateActivatedAbilityChoices(abilities)
 	choice, err := resolver.ChooseOne(
@@ -210,7 +210,7 @@ func ActionAddManaFunc(state *GameState, target string, resolver ChoiceResolver)
 // This is a cheat.
 func ActionConjureFunc(state *GameState, target string, resolver ChoiceResolver) (*ActionResult, error) {
 	if target == "" {
-		return nil, fmt.Errorf("no card name provided")
+		return nil, errors.New("no card name provided")
 	}
 	cardPoolData, err := LoadCardPoolData(state.CardPool)
 	if err != nil {
@@ -464,7 +464,7 @@ func ActionViewFunc(state *GameState, target string, resolver PlayerAgent) (*Act
 	if choice.Name == ZoneGraveyard {
 		return viewGraveyard(state, resolver)
 	}
-	return nil, fmt.Errorf("unknown zone or not yet implemented")
+	return nil, errors.New("unknown zone or not yet implemented")
 }
 
 // TODO: There's probably an abstraction we can set up for viewHand, viewBattlefield, and viewGraveyard

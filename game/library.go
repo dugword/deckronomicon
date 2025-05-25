@@ -1,6 +1,7 @@
 package game
 
 import (
+	"errors"
 	"fmt"
 	"math/rand/v2"
 )
@@ -44,7 +45,7 @@ func (l *Library) AvailableToPlay(*GameState) []GameObject {
 func (l *Library) Add(object GameObject) error {
 	card, ok := object.(*Card)
 	if !ok {
-		return fmt.Errorf("object is not a card")
+		return errors.New("object is not a card")
 	}
 	l.cards = append(l.cards, card)
 	return nil
@@ -54,7 +55,7 @@ func (l *Library) Add(object GameObject) error {
 func (l *Library) AddTop(object GameObject) error {
 	card, ok := object.(*Card)
 	if !ok {
-		return fmt.Errorf("object is not a card")
+		return errors.New("object is not a card")
 	}
 	l.cards = append([]*Card{card}, l.cards...)
 	return nil

@@ -1,6 +1,9 @@
 package game
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 type Graveyard struct {
 	cards []*Card
@@ -21,7 +24,7 @@ func (g *Graveyard) Cards() []*Card {
 func (g *Graveyard) Add(object GameObject) error {
 	card, ok := object.(*Card)
 	if !ok {
-		return fmt.Errorf("object is not a card")
+		return errors.New("object is not a card")
 	}
 	g.cards = append(g.cards, card)
 	return nil

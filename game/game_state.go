@@ -35,6 +35,7 @@ type GameState struct {
 	PotentialMana      *ManaPool
 	SpellsCastThisTurn []string
 	Stack              *Stack
+	Stops              []string
 	StormCount         int
 	// TODO: I don't like this, need to rethink how to handle this
 	StartingHand   []string
@@ -57,6 +58,7 @@ func NewGameState() *GameState {
 		PotentialMana:      NewManaPool(),
 		SpellsCastThisTurn: []string{}, // TODO: Rethink how this is managed
 		Stack:              NewStack(),
+		Stops:              []string{StepPreCombatMain},
 		TurnMessageLog:     []string{}, // TODO: this sucks, make better
 	}
 	return &gameState
@@ -270,4 +272,13 @@ func (g *GameState) StackIsEmpty() bool {
 
 func (g *GameState) IsPlayerTurn(playerID int) bool {
 	return g.CurrentPlayer == playerID
+}
+
+func (g *GameState) ShouldAutoPass() bool {
+	for _, stop := range g.Stops {
+		if stop == g.CurrentStep {
+			return false
+		}
+	}
+	return true
 }
