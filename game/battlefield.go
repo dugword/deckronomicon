@@ -66,27 +66,6 @@ func (b *Battlefield) Find(id string) (GameObject, error) {
 	return nil, fmt.Errorf("permanent with ID %s not found", id)
 }
 
-// FindByName finds the first permanent in the battlefield by name.
-func (b *Battlefield) FindByName(name string) (GameObject, error) {
-	for _, permanent := range b.permanents {
-		if permanent.Name() == name {
-			return permanent, nil
-		}
-	}
-	return nil, fmt.Errorf("card with name %s not found", name)
-}
-
-// FindAllBySubtype finds all permanents in the battlefield by subtype.
-func (b *Battlefield) FindAllBySubtype(subtype Subtype) []GameObject {
-	var found []GameObject
-	for _, permanent := range b.permanents {
-		if permanent.HasSubtype(subtype) {
-			found = append(found, permanent)
-		}
-	}
-	return found
-}
-
 func (b *Battlefield) Get(id string) (GameObject, error) {
 	for _, permanent := range b.permanents {
 		if permanent.ID() == id {
@@ -133,27 +112,6 @@ func (b *Battlefield) ZoneType() string {
 }
 
 // Battlefield Specific Methods
-
-// FindTappedPermanent returns the first tapped permanent with the given name.
-func (b *Battlefield) FindTappedPermanent(name string) (*Permanent, error) {
-	for _, p := range b.permanents {
-		if p.Name() == name && p.IsTapped() {
-			return p, nil
-		}
-	}
-	return nil, fmt.Errorf("tapped permanent with name %s not found", name)
-}
-
-// GetTappedPermanents returns all tapped permanents on the battlefield.
-func (b *Battlefield) GetTappedPermanents() []GameObject {
-	var permanents []GameObject
-	for _, p := range b.permanents {
-		if p.IsTapped() {
-			permanents = append(permanents, p)
-		}
-	}
-	return permanents
-}
 
 // RemoveSummoningSickness removes summoning sickness from all permanents
 func (b *Battlefield) RemoveSummoningSickness() {

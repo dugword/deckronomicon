@@ -67,27 +67,6 @@ func (g *Graveyard) Find(id string) (GameObject, error) {
 	return nil, fmt.Errorf("card witg ID %s not found", id)
 }
 
-// FindByName finds the first card in the graveyard by name.
-func (g *Graveyard) FindByName(name string) (GameObject, error) {
-	for _, card := range g.cards {
-		if card.Name() == name {
-			return card, nil
-		}
-	}
-	return nil, fmt.Errorf("card with name %s not found", name)
-}
-
-// FindAllBySubtype finds all cards in the graveyard by subtype.
-func (g *Graveyard) FindAllBySubtype(subtype Subtype) []GameObject {
-	cards := []GameObject{}
-	for _, card := range g.cards {
-		if card.HasSubtype(subtype) {
-			cards = append(cards, card)
-		}
-	}
-	return cards
-}
-
 func (g *Graveyard) Get(id string) (GameObject, error) {
 	for _, card := range g.cards {
 		if card.ID() == id {

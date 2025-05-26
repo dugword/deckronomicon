@@ -70,32 +70,10 @@ func (l *Library) Find(id string) (GameObject, error) {
 	return nil, fmt.Errorf("card with ID %s not found", id)
 }
 
-// FindByName finds the first card in the Library by name.
-func (l *Library) FindByName(name string) (GameObject, error) {
-	for _, card := range l.cards {
-		if card.Name() == name {
-			return card, nil
-		}
-	}
-	return nil, fmt.Errorf("card with name %s not found", name)
-}
-
-// FindAllByManaValue finds all cards in the library by ManaValue.
-func (l *Library) FindAllByManaValue(manavalue int) []GameObject {
+func (l *Library) FindBy(filter FilterFunc) []GameObject {
 	var foundCards []GameObject
 	for _, card := range l.cards {
-		if card.ManaValue() == manavalue {
-			foundCards = append(foundCards, card)
-		}
-	}
-	return foundCards
-}
-
-// FindAllBySubtype finds all cards in the library by subtype.
-func (l *Library) FindAllBySubtype(subtype Subtype) []GameObject {
-	var foundCards []GameObject
-	for _, card := range l.cards {
-		if card.HasSubtype(subtype) {
+		if filter(card) {
 			foundCards = append(foundCards, card)
 		}
 	}

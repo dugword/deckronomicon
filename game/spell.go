@@ -107,6 +107,26 @@ func (s *Spell) HasSubtype(subtype Subtype) bool {
 	return false
 }
 
+func (s *Spell) HasColor(color Color) bool {
+	if s.colors == nil {
+		return false
+	}
+	switch color {
+	case ColorBlack:
+		return s.colors.Black
+	case ColorBlue:
+		return s.colors.Blue
+	case ColorGreen:
+		return s.colors.Green
+	case ColorRed:
+		return s.colors.Red
+	case ColorWhite:
+		return s.colors.White
+	default:
+		return false
+	}
+}
+
 // HasType checks if the spell has the specified card type.
 func (s *Spell) HasType(cardType CardType) bool {
 	return s.HasType(cardType)

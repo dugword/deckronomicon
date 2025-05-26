@@ -10,14 +10,14 @@
   "SpellAbility": {
     "Effects": [
       {
-        "ID": "Tutor",
+        "ID": "Search",
         "Modifiers": [
           {
-            "Key": "CardType",
+            "Key": "TargetCardType",
             "Value": "Instant"
           },
           {
-            "Key": "Color",
+            "Key": "TargetColor",
             "Value": "U"
           }
         ]

@@ -26,12 +26,6 @@ func (e *Exile) AvailableToPlay(*GameState, PlayerAgent) []GameObject {
 func (e *Exile) Find(id string) (GameObject, error) {
 	return nil, nil
 }
-func (e *Exile) FindByName(name string) (GameObject, error) {
-	return nil, nil
-}
-func (e *Exile) FindAllBySubtype(subtype Subtype) []GameObject {
-	return nil
-}
 func (e *Exile) Get(id string) (GameObject, error) {
 	return nil, nil
 }

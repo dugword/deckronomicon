@@ -139,6 +139,26 @@ func (p *Permanent) Colors() *Colors {
 	return p.colors
 }
 
+func (p *Permanent) HasColor(color Color) bool {
+	if p.colors == nil {
+		return false
+	}
+	switch color {
+	case ColorBlack:
+		return p.colors.Black
+	case ColorBlue:
+		return p.colors.Blue
+	case ColorGreen:
+		return p.colors.Green
+	case ColorRed:
+		return p.colors.Red
+	case ColorWhite:
+		return p.colors.White
+	default:
+		return false
+	}
+}
+
 // HasType checks if the permanent has the specified card type.
 func (p *Permanent) HasCardType(cardType CardType) bool {
 	for _, t := range p.cardTypes {

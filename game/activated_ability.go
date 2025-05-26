@@ -15,8 +15,18 @@ type ActivatedAbility struct {
 	Speed   string
 }
 
+func (a *ActivatedAbility) HasCardType(CardType) bool {
+	// Activated abilities do not have subtypes.
+	return false
+}
+
 func (a *ActivatedAbility) HasSubtype(Subtype) bool {
 	// Activated abilities do not have subtypes.
+	return false
+}
+
+func (a *ActivatedAbility) HasColor(Color) bool {
+	// Activated abilities do not have colors.
 	return false
 }
 func (a *ActivatedAbility) Name() string {
