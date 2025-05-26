@@ -164,6 +164,13 @@ func (p *Permanent) ManaCost() *ManaCost {
 	return p.manaCost
 }
 
+func (p *Permanent) ManaValue() int {
+	if p.manaCost == nil {
+		return 0
+	}
+	return p.manaCost.ManaValue()
+}
+
 // Name returns the name of the permanent.
 func (p *Permanent) Name() string {
 	return p.name

@@ -23,7 +23,8 @@ type ActivatedAbilitySpec struct {
 	EffectSpecs []EffectSpec `json:"Effects,omitempty"`
 	// TODO: This might need to be a slice if an ability is activatedable from
 	// multiple zones.
-	Zone string `json:"Zone,omitempty"`
+	Speed string `json:"Speed,omitempty"`
+	Zone  string `json:"Zone,omitempty"`
 }
 
 type SpellAbilitySpec struct {

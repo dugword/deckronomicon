@@ -61,6 +61,10 @@ func (s *Spell) ActivatedAbilities() []*ActivatedAbility {
 	return nil
 }
 
+func (s *Spell) Card() *Card {
+	return s.card
+}
+
 // CardTypes returns the card types of the spell.
 func (s *Spell) CardTypes() []CardType {
 	return s.cardTypes
@@ -121,6 +125,13 @@ func (s *Spell) Loyalty() int {
 // ManaCost returns the mana cost of the spell.
 func (s *Spell) ManaCost() *ManaCost {
 	return s.manaCost
+}
+
+func (s *Spell) ManaValue() int {
+	if s.manaCost == nil {
+		return 0
+	}
+	return s.manaCost.ManaValue()
 }
 
 // Name returns the name of the spell.

@@ -4,10 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 // Effect represents an effect that can be applied to a game state.
 type Effect struct {
+	// Should this be named Name since it's not a unique ID?
+	ID string
 	// TODO: Should this be named handler?
 	Apply       func(*GameState, *Player) error
 	Description string
@@ -23,33 +26,38 @@ type EffectTag struct {
 }
 
 // TODO  would be good to ensure all BuildEffect functions return the same
-// type EffectBuilder func(source GameObject, effectModifiers []EffectModifier) (*Effect, error)
+// type EffectBuilder func(source GameObject, spec EffectSpec) (*Effect, error)
 
 // BuildEffect creates an effect based on the provided EffectSpec.
 func BuildEffect(source GameObject, spec EffectSpec) (*Effect, error) {
 	switch spec.ID {
 	case "AdditionalMana":
-		return BuildEffectAdditionalMana(source, spec.Modifiers)
+		return BuildEffectAdditionalMana(source, spec)
 	case "AddMana":
-		return BuildEffectAddMana(source, spec.Modifiers)
+		return BuildEffectAddMana(source, spec)
+	case "CounterSpell":
+		return BuildEffectCounterSpell(source, spec)
 	case "Discard":
-		return BuildEffectDiscard(source, spec.Modifiers)
+		return BuildEffectDiscard(source, spec)
 	case "Draw":
-		return BuildEffectDraw(source, spec.Modifiers)
+		return BuildEffectDraw(source, spec)
 	case "PutBackOnTop":
-		return BuildEffectPutBackOnTop(source, spec.Modifiers)
+		return BuildEffectPutBackOnTop(source, spec)
 	case "Mill":
-		return BuildEffectMill(source, spec.Modifiers)
+		return BuildEffectMill(source, spec)
 	case "Scry":
-		return BuildEffectScry(source, spec.Modifiers)
-	case "Search":
-		return BuildEffectSearch(source, spec.Modifiers)
+		return BuildEffectScry(source, spec)
+	case "Transmute":
+		return BuildEffectTransmute(source, spec)
+	case "Typecycling":
+		return BuildEffectTypecycling(source, spec)
 	case "ShuffleFromGraveyard":
-		return BuildEffectShuffleFromGraveyard(source, spec.Modifiers)
+		return BuildEffectShuffleFromGraveyard(source, spec)
 	case "Tap":
-		return BuildEffectTap(source, spec.Modifiers)
+		return BuildEffectTap(source, spec)
 	default:
 		return &Effect{
+			ID:          "UnknownEffect",
 			Description: fmt.Sprintf("unknown effect: %s", spec.ID),
 			Tags:        []EffectTag{{Key: "Unknown", Value: spec.ID}},
 			Apply: func(state *GameState, player *Player) error {
@@ -62,11 +70,11 @@ func BuildEffect(source GameObject, spec EffectSpec) (*Effect, error) {
 // BuildEffectDraw creates a draw effect based on the provided modifiers.
 // Keys: Count, Type
 // Default: Count: 1
-func BuildEffectDraw(source GameObject, modifiers []EffectModifier) (*Effect, error) {
-	effect := Effect{}
+func BuildEffectDraw(source GameObject, spec EffectSpec) (*Effect, error) {
+	effect := Effect{ID: spec.ID}
 	count := "1"
 	var drawType string
-	for _, modifier := range modifiers {
+	for _, modifier := range spec.Modifiers {
 		if modifier.Key == "Count" {
 			count = modifier.Value
 		}
@@ -97,10 +105,10 @@ func BuildEffectDraw(source GameObject, modifiers []EffectModifier) (*Effect, er
 // pool.
 // Supported Modifier Keys (concats multiple modifiers):
 //   - Mana: <ManaString>
-func BuildEffectAddMana(source GameObject, modifiers []EffectModifier) (*Effect, error) {
-	effect := Effect{}
+func BuildEffectAddMana(source GameObject, spec EffectSpec) (*Effect, error) {
+	effect := Effect{ID: spec.ID}
 	var mana string
-	for _, modifier := range modifiers {
+	for _, modifier := range spec.Modifiers {
 		if modifier.Key == "Mana" {
 			mana += modifier.Value
 		}
@@ -132,11 +140,11 @@ func BuildEffectAddMana(source GameObject, modifiers []EffectModifier) (*Effect,
 //   - Mana: <ManaString>
 //   - Target: <subtype>
 //   - Duration: <eventType>
-func BuildEffectAdditionalMana(source GameObject, modifiers []EffectModifier) (*Effect, error) {
+func BuildEffectAdditionalMana(source GameObject, spec EffectSpec) (*Effect, error) {
 	var mana string
 	var target string
 	var duration string
-	for _, modifier := range modifiers {
+	for _, modifier := range spec.Modifiers {
 		if modifier.Key == "Mana" {
 			mana += modifier.Value
 		}
@@ -164,7 +172,7 @@ func BuildEffectAdditionalMana(source GameObject, modifiers []EffectModifier) (*
 	if err != nil {
 		return nil, fmt.Errorf("invalid target subtype: %s", target)
 	}
-	effect := Effect{}
+	effect := Effect{ID: spec.ID}
 	id := getNextEventID()
 	eventHandler := EventHandler{
 		ID: id,
@@ -200,6 +208,86 @@ func BuildEffectAdditionalMana(source GameObject, modifiers []EffectModifier) (*
 	return &effect, nil
 }
 
+// BuildEffectCounterSpell creates an effect that counters a spell.
+// Supported Modifier Keys (last applies):
+//   - Target: <target> CardType
+//
+// Multiple targets can be specified and will be OR'd together.
+// If no target is specified, the effect will counter any spell.
+func BuildEffectCounterSpell(source GameObject, spec EffectSpec) (*Effect, error) {
+	effect := Effect{ID: spec.ID}
+	var targetTypes []string
+	for _, modifier := range spec.Modifiers {
+		if modifier.Key == "Target" {
+			targetTypes = append(targetTypes, modifier.Value)
+		}
+	}
+	var cardTypes []CardType
+	if len(targetTypes) != 0 {
+		for _, target := range targetTypes {
+			cardType, err := StringToCardType(target)
+			if err != nil {
+				return nil, fmt.Errorf("invalid target card type: %s", target)
+			}
+			cardTypes = append(cardTypes, cardType)
+		}
+	}
+	effect.Apply = func(state *GameState, player *Player) error {
+		resolvables := state.Stack.GetAll()
+		var spells []GameObject
+		for _, resolvable := range resolvables {
+			spell, ok := resolvable.(*Spell)
+			if !ok {
+				continue
+			}
+			if len(cardTypes) == 0 {
+				spells = append(spells, spell)
+			}
+			for _, cardType := range cardTypes {
+				if spell.HasCardType(cardType) {
+					spells = append(spells, spell)
+					break // No need to check other types if one matches
+				}
+			}
+		}
+		choices := CreateObjectChoices(spells, ZoneStack)
+		if len(choices) == 0 {
+			return fmt.Errorf("no spells to counter")
+		}
+		chosen, err := player.Agent.ChooseOne(
+			"Choose a spell to counter",
+			source,
+			choices,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to choose spell: %w", err)
+		}
+		// Ensure the spell is on the stack
+		if _, err := state.Stack.Get(chosen.ID); err != nil {
+			// TODO: Handle fizzling consistently
+			state.Log("spell fizzled - no targets")
+			return nil
+		}
+		object, err := state.Stack.Take(chosen.ID)
+		if err != nil {
+			return fmt.Errorf("failed to remove spell from stack: %w", err)
+		}
+		spell, ok := object.(*Spell)
+		if !ok {
+			return fmt.Errorf("object is not a spell: %s", object.ID())
+		}
+		player.Graveyard.Add(spell.Card())
+		return nil
+	}
+	effect.Description = fmt.Sprintf("counter a spell of type %s", strings.Join(targetTypes, ", "))
+	var tags []EffectTag
+	for _, target := range targetTypes {
+		tags = append(tags, EffectTag{Key: "CounterSpell", Value: target})
+	}
+	effect.Tags = tags
+	return &effect, nil
+}
+
 // BuildEffectMill creates an effect that mills cards from the top of the
 // library.
 // Supported Modifier Keys (last applies):
@@ -207,11 +295,11 @@ func BuildEffectAdditionalMana(source GameObject, modifiers []EffectModifier) (*
 //   - Target <target> Player | Self | Opponent
 //
 // TODO: Target needs to be selected on cast, not on resolution.
-func BuildEffectMill(source GameObject, effectModifiers []EffectModifier) (*Effect, error) {
-	effect := Effect{}
+func BuildEffectMill(source GameObject, spec EffectSpec) (*Effect, error) {
+	effect := Effect{ID: spec.ID}
 	count := "1"
 	var target string
-	for _, modifier := range effectModifiers {
+	for _, modifier := range spec.Modifiers {
 		if modifier.Key == "Count" {
 			count = modifier.Value
 		}
@@ -274,10 +362,10 @@ func BuildEffectMill(source GameObject, effectModifiers []EffectModifier) (*Effe
 // the library.
 // Supported Modifier Keys (last applies):
 //   - Count: <Cards to put back> Default: 1
-func BuildEffectPutBackOnTop(source GameObject, effectModifiers []EffectModifier) (*Effect, error) {
-	effect := Effect{}
+func BuildEffectPutBackOnTop(source GameObject, spec EffectSpec) (*Effect, error) {
+	effect := Effect{ID: spec.ID}
 	count := "1"
-	for _, modifier := range effectModifiers {
+	for _, modifier := range spec.Modifiers {
 		if modifier.Key != "Count" {
 			continue
 		}
@@ -301,10 +389,10 @@ func BuildEffectPutBackOnTop(source GameObject, effectModifiers []EffectModifier
 // BuildEffectScry creates an effect that allows the player to scry.
 // Supported Modifier Keys (last applies):
 //   - Count: <Cards to scry> Default: 1
-func BuildEffectScry(source GameObject, effectModifiers []EffectModifier) (*Effect, error) {
-	effect := Effect{}
+func BuildEffectScry(source GameObject, spec EffectSpec) (*Effect, error) {
+	effect := Effect{ID: spec.ID}
 	count := "1"
-	for _, modifier := range effectModifiers {
+	for _, modifier := range spec.Modifiers {
 		if modifier.Key != "Count" {
 			continue
 		}
@@ -330,11 +418,11 @@ func BuildEffectScry(source GameObject, effectModifiers []EffectModifier) (*Effe
 // Supported Modifier Keys (last applies):
 //   - Count: <Cards to discard> Default: 1
 //   - Delay: <Delay until> EndStep
-func BuildEffectDiscard(source GameObject, effectModifiers []EffectModifier) (*Effect, error) {
-	effect := Effect{}
+func BuildEffectDiscard(source GameObject, spec EffectSpec) (*Effect, error) {
+	effect := Effect{ID: spec.ID}
 	count := "1"
 	var delay string
-	for _, modifier := range effectModifiers {
+	for _, modifier := range spec.Modifiers {
 		if modifier.Key == "Count" {
 			count = modifier.Value
 		}
@@ -391,13 +479,51 @@ func BuildEffectDiscard(source GameObject, effectModifiers []EffectModifier) (*E
 	return &effect, nil
 }
 
-// BuildEffectSearch creates an effect that search cards from the library.
+// BuildEffectTransmute creates an effect that allows the player to transmute
+// a card from their hand.
+// Supported Modifier Keys (last applies):
+func BuildEffectTransmute(source GameObject, spec EffectSpec) (*Effect, error) {
+	effect := Effect{ID: spec.ID}
+	card, ok := source.(*Card)
+	if !ok {
+		return nil, fmt.Errorf("source is not a card: %T", source)
+	}
+	effect.Apply = func(state *GameState, player *Player) error {
+		objects := player.Library.FindAllByManaValue(card.ManaValue())
+		if len(objects) == 0 {
+			return fmt.Errorf(
+				"no cards with mana value %s found", card.ManaValue(),
+			)
+		}
+		choices := CreateObjectChoices(objects, ZoneLibrary)
+		chosen, err := player.Agent.ChooseOne(
+			fmt.Sprintf("Choose a card to put into your hand"),
+			source,
+			choices,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to choose card: %w", err)
+		}
+		card, err := player.Library.Take(chosen.ID)
+		if err != nil {
+			return fmt.Errorf("failed to take card: %w", err)
+		}
+		player.Library.Shuffle()
+		player.Hand.Add(card)
+		return nil
+	}
+	effect.Description = fmt.Sprintf("search library for a card of mana value %d", card.ManaValue())
+	effect.Tags = []EffectTag{{Key: "Transmute", Value: strconv.Itoa(card.ManaValue())}}
+	return &effect, nil
+}
+
+// BuildEffectTypecycling creates an effect that search cards from the library.
 // Supported Modifier Keys (last applies):
 //   - Subtype <subtype>
-func BuildEffectSearch(source GameObject, effectModifiers []EffectModifier) (*Effect, error) {
-	effect := Effect{}
+func BuildEffectTypecycling(source GameObject, spec EffectSpec) (*Effect, error) {
+	effect := Effect{ID: spec.ID}
 	var subtype string
-	for _, modifier := range effectModifiers {
+	for _, modifier := range spec.Modifiers {
 		if modifier.Key == "Subtype" {
 			subtype = modifier.Value
 		}
@@ -432,7 +558,7 @@ func BuildEffectSearch(source GameObject, effectModifiers []EffectModifier) (*Ef
 		return nil
 	}
 	effect.Description = fmt.Sprintf("search library for a card of subtype %s", subtype)
-	effect.Tags = []EffectTag{{Key: "Tutor", Value: subtype}}
+	effect.Tags = []EffectTag{{Key: "Typecycling", Value: subtype}}
 	return &effect, nil
 }
 
@@ -440,10 +566,10 @@ func BuildEffectSearch(source GameObject, effectModifiers []EffectModifier) (*Ef
 // the graveyard back into the library.
 // Supported Modifier Keys (last applies):
 //   - Count: <Cards to shuffle> Default: 1
-func BuildEffectShuffleFromGraveyard(source GameObject, effectModifiers []EffectModifier) (*Effect, error) {
-	effect := Effect{}
+func BuildEffectShuffleFromGraveyard(source GameObject, spec EffectSpec) (*Effect, error) {
+	effect := Effect{ID: spec.ID}
 	count := "1"
-	for _, modifier := range effectModifiers {
+	for _, modifier := range spec.Modifiers {
 		if modifier.Key == "Count" {
 			count = modifier.Value
 		}
@@ -488,10 +614,10 @@ func BuildEffectShuffleFromGraveyard(source GameObject, effectModifiers []Effect
 //   - Target: Permanent
 //
 // TODO: Support other targets
-func BuildEffectTap(source GameObject, effectModifiers []EffectModifier) (*Effect, error) {
-	effect := Effect{}
+func BuildEffectTap(source GameObject, spec EffectSpec) (*Effect, error) {
+	effect := Effect{ID: spec.ID}
 	var target string
-	for _, modifier := range effectModifiers {
+	for _, modifier := range spec.Modifiers {
 		if modifier.Key == "Target" {
 			target = modifier.Value
 		}

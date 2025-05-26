@@ -47,7 +47,7 @@ func CreateActivatedAbilityChoices(abilities []*ActivatedAbility) []Choice {
 	var choices []Choice
 	for _, ability := range abilities {
 		choices = append(choices, Choice{
-			ID:     ability.ID,
+			ID:     ability.ID(),
 			Name:   ability.Description(),
 			Source: ability.source.Name(),
 			Zone:   ability.Zone,
