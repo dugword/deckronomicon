@@ -59,7 +59,10 @@ func BuildEffect(source GameObject, spec EffectSpec) (*Effect, error) {
 		return BuildEffectShuffleFromGraveyard(source, spec)
 	case "Tap":
 		return BuildEffectTap(source, spec)
+	case "TapOrUntap":
+		return BuildEffectTapOrUntap(source, spec)
 	default:
+		panic("effect not implemented: " + spec.ID)
 		return &Effect{
 			ID:          "UnknownEffect",
 			Description: fmt.Sprintf("unknown effect: %s", spec.ID),
@@ -314,6 +317,8 @@ func BuildEffectLookAndChoose(source GameObject, spec EffectSpec) (*Effect, erro
 		if modifier.Key == "Choose" {
 			chooseCount = modifier.Value
 		}
+		// TODO: Could probably just have this be "type" and figure out if
+		// it's a card type or color
 		if modifier.Key == "TargetCardType" {
 			cardType, err := StringToCardType(modifier.Value)
 			if err != nil {
@@ -633,6 +638,8 @@ func BuildEffectSearch(source GameObject, spec EffectSpec) (*Effect, error) {
 	effect := Effect{ID: spec.ID}
 	var filters []FilterFunc
 	for _, modifier := range spec.Modifiers {
+		// TODO: Could probably just have this be "type" and figure out if
+		// it's a card type or color
 		if modifier.Key == "TargetCardType" {
 			cardType, err := StringToCardType(modifier.Value)
 			if err != nil {
@@ -865,6 +872,86 @@ func BuildEffectTap(source GameObject, spec EffectSpec) (*Effect, error) {
 	}
 	effect.Description = fmt.Sprintf("tap a card of type %s", target)
 	effect.Tags = []EffectTag{{Key: "Tap", Value: target}}
+	return &effect, nil
+}
+
+// BuildEffectTapOrUntap creates an effect that taps or untaps a card.
+// Supported Modifier Keys (last applies):
+// TODO
+//   - Target: Permanent // Permanent should be the default and only need to
+//     specify if there's a more specific choice
+func BuildEffectTapOrUntap(source GameObject, spec EffectSpec) (*Effect, error) {
+	effect := Effect{ID: spec.ID}
+	var target string
+	for _, modifier := range spec.Modifiers {
+		if modifier.Key == "Target" {
+			target = modifier.Value
+		}
+	}
+	if target == "" {
+		return nil, errors.New("no target provided")
+	}
+	if target != "Permanent" {
+		return nil, fmt.Errorf("only Permanent target is supported: %s", target)
+	}
+	effect.Apply = func(state *GameState, player *Player) error {
+		cards := player.Battlefield.GetAll()
+		if len(cards) == 0 {
+			return errors.New("no available targets")
+		}
+		choices := CreateObjectChoices(cards, ZoneBattlefield)
+		chosen, err := player.Agent.ChooseOne(
+			fmt.Sprintf("Choose a card to tap or untap"),
+			source,
+			choices,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to choose card: %w", err)
+		}
+		permanent, err := player.Battlefield.Get(chosen.ID)
+		if err != nil {
+			return fmt.Errorf("failed to get permanent: %w", err)
+		}
+		p, ok := permanent.(*Permanent)
+		if !ok {
+			return fmt.Errorf("object is not a permanent: %s", chosen.ID)
+		}
+		var action string
+		if p.IsTapped() {
+			action = "untap"
+			accept, err := player.Agent.Confirm(
+				fmt.Sprintf("Do you want to untap %s?", p.Name()),
+				source,
+			)
+			if err != nil {
+				return fmt.Errorf("failed to confirm untap: %w", err)
+			}
+			if accept {
+				p.Untap()
+			}
+		} else {
+			action = "tap"
+			accept, err := player.Agent.Confirm(
+				fmt.Sprintf("Do you want to tap %s?", p.Name()),
+				source,
+			)
+			if err != nil {
+				return fmt.Errorf("failed to confirm tap: %w", err)
+			}
+			if accept {
+				if err := p.Tap(); err != nil {
+					if errors.Is(err, ErrAlreadyTapped) {
+						return nil // Not an error to tap a card that's already tapped.
+					}
+					return fmt.Errorf("failed to tap card: %w", err)
+				}
+			}
+		}
+		state.Log(fmt.Sprintf("%s %s", action, p.Name()))
+		return nil
+	}
+	effect.Description = fmt.Sprintf("tap or untap a card of type %s", target)
+	effect.Tags = []EffectTag{{Key: "TapOrUntap", Value: target}}
 	return &effect, nil
 }
 

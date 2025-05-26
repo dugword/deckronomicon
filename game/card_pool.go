@@ -10,6 +10,7 @@ import (
 
 type EffectSpec struct {
 	ID        string           `json:"ID,omitempty"`
+	Optional  bool             `json:"Optional,omitempty"`
 	Modifiers []EffectModifier `json:"Modifiers,omitempty"`
 }
 
