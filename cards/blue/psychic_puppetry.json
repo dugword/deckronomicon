@@ -11,6 +11,7 @@
     "Effects": [
       {
         "ID": "TapOrUntap",
+        "Optional": true,
         "Modifiers": [
           {
             "Key": "Target",
