@@ -43,6 +43,11 @@ func (a *TriggeredAbility) Resolve(state *GameState, player *Player) error {
 func (a *TriggeredAbility) HasSubtype(Subtype) bool {
 	return false
 }
+
+func (a *TriggeredAbility) ManaValue() int {
+	return 0
+}
+
 func (a *TriggeredAbility) Name() string {
 	return a.name
 }

@@ -71,7 +71,17 @@ func (s *Stack) Remove(id string) error {
 }
 
 func (s *Stack) Take(id string) (GameObject, error) {
-	return nil, nil
+	for i, resolvable := range s.stack {
+		gameObject, ok := resolvable.(GameObject)
+		if !ok {
+			return nil, fmt.Errorf("resolvable is not a GameObject")
+		}
+		if gameObject.ID() == id {
+			s.stack = append(s.stack[:i], s.stack[i+1:]...)
+			return gameObject, nil
+		}
+	}
+	return nil, fmt.Errorf("object with ID %s not found in stack", id)
 }
 
 func (s *Stack) Size() int {

@@ -10,6 +10,7 @@ type GameObject interface {
 	StaticAbilities() []*StaticAbility
 	HasStaticAbility(string) bool
 	ID() string
+	ManaValue() int
 	/*
 		Card() *Card
 		CardTypes() []CardType

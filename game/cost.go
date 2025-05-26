@@ -178,6 +178,16 @@ func (c *ManaCost) Description() string {
 	return strings.Join(colors, "")
 }
 
+func (c *ManaCost) ManaValue() int {
+	// The mana value is the total of generic mana and colored mana.
+	// Each colored mana counts as 1, and generic mana counts as its value.
+	manaValue := c.Generic
+	for _, amount := range c.Colors {
+		manaValue += amount
+	}
+	return manaValue
+}
+
 // Pay pays the mana cost by using the mana from the mana pool.
 // TODO: Need to roll back if the cost is partially paid and fails.
 func (c *ManaCost) Pay(game *GameState, player *Player) error {

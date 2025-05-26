@@ -174,7 +174,7 @@ func ActionActivateFunc(state *GameState, player *Player, target string) (*Actio
 	}
 	var ability *ActivatedAbility
 	for _, a := range abilities {
-		if a.ID == choice.ID {
+		if a.ID() == choice.ID {
 			ability = a
 			break
 		}
@@ -185,24 +185,22 @@ func ActionActivateFunc(state *GameState, player *Player, target string) (*Actio
 	if err := ability.Cost.Pay(state, player); err != nil {
 		return nil, fmt.Errorf("cannot pay activated ability cost: %w", err)
 	}
-	if err := ability.Resolve(state, player); err != nil {
-		return nil, fmt.Errorf("cannot resolve ability: %w", err)
-	}
-	// TODO: Need to validate stack order of triggers and abilities
-	// Emit trigger events
-	// TODO: Make this a function or something so all the conditional logic
-	// isn't in the action function.
-	// TODO: Make this more generic
-	{
-		// Tap for Mana
+	state.Log("Activating ability: " + ability.Description())
+	// Mana abilities
+	if ability.IsManaAbility() {
+		if err := ability.Resolve(state, player); err != nil {
+			return nil, fmt.Errorf("failed to resolve mana ability: %w", err)
+		}
 		_, ok := ability.Cost.(*TapCost)
 		if ok {
-			if ability.IsManaAbility() {
-				state.EmitEvent(Event{
-					Type:   EventTapForMana,
-					Source: ability.source,
-				}, player)
-			}
+			state.EmitEvent(Event{
+				Type:   EventTapForMana,
+				Source: ability.source,
+			}, player)
+		}
+	} else {
+		if err := state.Stack.Add(ability); err != nil {
+			return nil, fmt.Errorf("failed to add ability to stack: %w", err)
 		}
 	}
 	state.Log(fmt.Sprintf(
@@ -214,7 +212,7 @@ func ActionActivateFunc(state *GameState, player *Player, target string) (*Actio
 	)
 	return &ActionResult{
 		Message: fmt.Sprintf(
-			"ability resolved: %s (%s)",
+			"ability activated: %s (%s)",
 			ability.source.Name(),
 			ability.Description(),
 		),

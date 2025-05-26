@@ -279,3 +279,7 @@ func (c *Card) Supertypes() []Supertype {
 func (c *Card) Toughness() int {
 	return c.toughness
 }
+
+func (c *Card) ManaValue() int {
+	return c.ManaCost().ManaValue()
+}

@@ -25,7 +25,7 @@
       "Cost": "{1}",
       "Effects": [
         {
-          "ID": "Search",
+          "ID": "Typecycling",
           "Modifiers": [
             {
               "Key": "Subtype",
