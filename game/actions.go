@@ -691,11 +691,14 @@ func actionCastSpellFunc(state *GameState, player *Player, card *Card) (result *
 		return nil, fmt.Errorf("failed to remove card from hand: %w", err)
 	}
 	state.Log("Casing spell: " + card.Name())
-	if err := spell.Replicate(replicateCount); err != nil {
-		return nil, fmt.Errorf("failed to replicate spell: %w", err)
-	}
 	if err := state.Stack.Add(spell); err != nil {
 		return nil, fmt.Errorf("failed to add spell to stack: %w", err)
+	}
+	if replicateCount > 0 {
+		replicateAbility := BuildReplicateAbility(card, replicateCount)
+		if err := state.Stack.Add(replicateAbility); err != nil {
+			return nil, fmt.Errorf("failed to add replicate trigger to stack: %w", err)
+		}
 	}
 	return &ActionResult{
 		Message: "played card: " + card.Name(),

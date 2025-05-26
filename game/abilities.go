@@ -189,31 +189,8 @@ func (a *SpellAbility) Resolve(state *GameState, player *Player) error {
 		if err := effect.Apply(state, player); err != nil {
 			return fmt.Errorf("cannot resolve effect: %w", err)
 		}
-	}
-	return nil
-}
-
-// TriggeredAbility represents abilities that trigger on specific events.
-type TriggeredAbility struct {
-	// Cost Cost // TODO: Additional Cost
-	Effects          []Effect
-	TriggerCondition func(event Event) bool
-}
-
-// Description returns a string representation of the triggered ability.
-func (a *TriggeredAbility) Description() string {
-	var descriptions []string
-	for _, effect := range a.Effects {
-		descriptions = append(descriptions, effect.Description)
-	}
-	return strings.Join(descriptions, ", ")
-}
-
-// Resolve resolves the triggered ability by applying its effects.
-func (a *TriggeredAbility) Resolve(state *GameState, player *Player) error {
-	for _, effect := range a.Effects {
-		if err := effect.Apply(state, player); err != nil {
-			return fmt.Errorf("cannot resolve effect: %w", err)
+		for _, p := range state.Players {
+			p.Agent.ReportState(state)
 		}
 	}
 	return nil

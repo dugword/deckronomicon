@@ -6,6 +6,7 @@ import (
 )
 
 type Resolvable interface {
+	Name() string
 	Description() string
 	Resolve(*GameState, *Player) error
 }

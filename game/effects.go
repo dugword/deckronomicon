@@ -8,6 +8,7 @@ import (
 
 // Effect represents an effect that can be applied to a game state.
 type Effect struct {
+	// TODO: Should this be named handler?
 	Apply       func(*GameState, *Player) error
 	Description string
 	Tags        []EffectTag
@@ -43,10 +44,8 @@ func BuildEffect(source GameObject, spec EffectSpec) (*Effect, error) {
 		return BuildEffectScry(source, spec.Modifiers)
 	case "Search":
 		return BuildEffectSearch(source, spec.Modifiers)
-	case "SuffleFromGraveyard":
+	case "ShuffleFromGraveyard":
 		return BuildEffectShuffleFromGraveyard(source, spec.Modifiers)
-	case "Replicate":
-		return BuildEffectReplicate(source, spec.Modifiers)
 	case "Tap":
 		return BuildEffectTap(source, spec.Modifiers)
 	default:
@@ -206,6 +205,8 @@ func BuildEffectAdditionalMana(source GameObject, modifiers []EffectModifier) (*
 // Supported Modifier Keys (last applies):
 //   - Count: <Cards to mill> Default: 1
 //   - Target <target> Player | Self | Opponent
+//
+// TODO: Target needs to be selected on cast, not on resolution.
 func BuildEffectMill(source GameObject, effectModifiers []EffectModifier) (*Effect, error) {
 	effect := Effect{}
 	count := "1"
@@ -457,13 +458,20 @@ func BuildEffectShuffleFromGraveyard(source GameObject, effectModifiers []Effect
 			if len(choices) == 0 {
 				break
 			}
-			chosen, err := player.Agent.ChooseOne("Choose cards to shuffle into your library", source, choices)
+			chosen, err := player.Agent.ChooseOne(
+				"Choose cards to shuffle into your library",
+				source,
+				AddOptionalChoice(choices),
+			)
 			if err != nil {
 				return fmt.Errorf("failed to choose cards: %w", err)
 			}
-			card, err := player.Graveyard.Get(chosen.ID)
+			if chosen.ID == ChoiceNone {
+				break
+			}
+			card, err := player.Graveyard.Take(chosen.ID)
 			if err != nil {
-				return fmt.Errorf("failed to get card from graveyard: %w", err)
+				return fmt.Errorf("failed to take card from graveyard: %w", err)
 			}
 			player.Library.Add(card)
 			player.Library.Shuffle()
@@ -472,35 +480,6 @@ func BuildEffectShuffleFromGraveyard(source GameObject, effectModifiers []Effect
 	}
 	effect.Description = fmt.Sprintf("shuffle %d cards from your graveyard into your library", n)
 	effect.Tags = []EffectTag{{Key: "ShuffleFromGraveyard", Value: count}}
-	return &effect, nil
-}
-
-// BuildEffectReplicate creates an effect that replicates a spell for each
-// tiem the replicate cost is paid.
-// Supported Modifier Keys (last applies):
-//   - Cost: <cost>
-func BuildEffectReplicate(source GameObject, effectModifiers []EffectModifier) (*Effect, error) {
-	var costString string
-	for _, modifier := range effectModifiers {
-		if modifier.Key == "Cost" {
-			costString += modifier.Value
-		}
-	}
-	card, ok := source.(*Card)
-	if !ok {
-		return nil, fmt.Errorf("source is not a card: %s", source.ID())
-	}
-	effect := Effect{}
-	effect.Apply = func(state *GameState, player *Player) error {
-		spell, err := NewSpell(card)
-		if err != nil {
-			return fmt.Errorf("failed to create spell: %w", err)
-		}
-		state.Stack.Add(spell)
-		return nil
-	}
-	effect.Description = fmt.Sprintf("replicate for %s", costString)
-	effect.Tags = []EffectTag{{Key: "Replicate", Value: costString}}
 	return &effect, nil
 }
 

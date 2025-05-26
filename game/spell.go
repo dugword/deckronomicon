@@ -133,25 +133,6 @@ func (s *Spell) Power() int {
 	return s.power
 }
 
-// Replicate is used to replicate a spell. It creates a new instance of the
-// spell with the same properties. This is used during casting spells that
-// have the Replicate ability.
-func (s *Spell) Replicate(count int) error {
-	for range count {
-		/*
-			// Create a new spell instance with the same properties.
-			newSpell, err := NewSpell(s.card)
-			if err != nil {
-				return fmt.Errorf("failed to replicate spell: %w", err)
-			}
-			// Add the new spell to the stack or wherever it needs to go.
-			// This part is game-specific and not implemented here.
-			fmt.Println("Replicated spell:", newSpell.Name())
-		*/
-	}
-	return nil
-}
-
 // Description returns a string representation of the activated ability.
 func (s *Spell) Description() string {
 	var descriptions []string
