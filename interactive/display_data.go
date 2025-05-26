@@ -120,6 +120,18 @@ func StackData(state *game.GameState) BoxData {
 	}
 }
 
+// RevealedData creates the box data for displaying cards in the player's hand.
+func RevealedData(player *game.Player) BoxData {
+	var lines []string
+	for _, spell := range player.Revealed.GetAll() {
+		lines = append(lines, spell.Name())
+	}
+	return BoxData{
+		Title:   "Revealed Cards",
+		Content: lines,
+	}
+}
+
 func GroupedChoicesData(title string, choices []game.Choice) (BoxData, []game.Choice) {
 	grouped := make(map[string][]game.Choice)
 	for _, choice := range choices {
