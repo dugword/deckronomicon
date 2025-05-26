@@ -140,7 +140,7 @@ func (a *RuleBasedAgent) GetNextAction(state *game.GameState) *game.GameAction {
 			// TODO This could be more elegant
 			if gameAction.Type == game.ActionPlay {
 				if rule.Then.Target != "" {
-					object, err := player.Hand.FindByName(rule.Then.Target)
+					object, err := game.FindFirstBy(player.Hand, game.HasName(rule.Then.Target))
 					if err != nil {
 						fmt.Println("ERROR: could not find card in hand =>", rule.Then.Target)
 						os.Exit(1)

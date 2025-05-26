@@ -47,6 +47,8 @@ func BuildEffect(source GameObject, spec EffectSpec) (*Effect, error) {
 		return BuildEffectMill(source, spec)
 	case "Scry":
 		return BuildEffectScry(source, spec)
+	case "Search":
+		return BuildEffectSearch(source, spec)
 	case "Transmute":
 		return BuildEffectTransmute(source, spec)
 	case "Typecycling":
@@ -479,6 +481,65 @@ func BuildEffectDiscard(source GameObject, spec EffectSpec) (*Effect, error) {
 	return &effect, nil
 }
 
+// BuildEffectSearch creates an effect that allows the player to search
+// their library for a card and put it into their hand.
+// Supported Modifier Keys
+//   - Target: <target> CardType | Color
+//
+// Multiple targets can be specified and will be AND'd together.gt
+func BuildEffectSearch(source GameObject, spec EffectSpec) (*Effect, error) {
+	effect := Effect{ID: spec.ID}
+	var filters []FilterFunc
+	for _, modifier := range spec.Modifiers {
+		if modifier.Key == "TargetCardType" {
+			cardType, err := StringToCardType(modifier.Value)
+			if err != nil {
+				return nil, fmt.Errorf("invalid target card type: %s", modifier.Value)
+			}
+			filters = append(filters, HasCardType(cardType))
+		}
+		if modifier.Key == "TargetColor" {
+			color, err := StringToColor(modifier.Value)
+			if err != nil {
+				return nil, fmt.Errorf("invalid target color: %s", modifier.Value)
+			}
+			filters = append(filters, HasColor(color))
+		}
+	}
+	effect.Apply = func(state *GameState, player *Player) error {
+		objects := player.Library.FindBy(And(filters...))
+		if len(objects) == 0 {
+			return fmt.Errorf("no cards found matching the specified targets")
+		}
+		choices := CreateObjectChoices(objects, ZoneLibrary)
+		chosen, err := player.Agent.ChooseOne(
+			fmt.Sprintf("Choose a card to put into your hand"),
+			source,
+			choices,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to choose card: %w", err)
+		}
+		card, err := player.Library.Take(chosen.ID)
+		if err != nil {
+			return fmt.Errorf("failed to take card: %w", err)
+		}
+		player.Library.Shuffle()
+		player.Hand.Add(card)
+
+		return nil
+	}
+	effect.Description = fmt.Sprintf("search library for a card matching the specified targets")
+	var tags []EffectTag
+	for _, modifier := range spec.Modifiers {
+		if strings.HasPrefix(modifier.Key, "Target") {
+			tags = append(tags, EffectTag{Key: "Search", Value: modifier.Value})
+		}
+	}
+	effect.Tags = tags
+	return &effect, nil
+}
+
 // BuildEffectTransmute creates an effect that allows the player to transmute
 // a card from their hand.
 // Supported Modifier Keys (last applies):
@@ -489,7 +550,7 @@ func BuildEffectTransmute(source GameObject, spec EffectSpec) (*Effect, error) {
 		return nil, fmt.Errorf("source is not a card: %T", source)
 	}
 	effect.Apply = func(state *GameState, player *Player) error {
-		objects := player.Library.FindAllByManaValue(card.ManaValue())
+		objects := FindBy(player.Library, HasManaValue(card.ManaValue()))
 		if len(objects) == 0 {
 			return fmt.Errorf(
 				"no cards with mana value %s found", card.ManaValue(),
@@ -536,7 +597,7 @@ func BuildEffectTypecycling(source GameObject, spec EffectSpec) (*Effect, error)
 		return nil, fmt.Errorf("invalid subtype: %s", subtype)
 	}
 	effect.Apply = func(state *GameState, player *Player) error {
-		objects := player.Library.FindAllBySubtype(subtypeEnum)
+		objects := FindBy(player.Library, HasSubtype(subtypeEnum))
 		if len(objects) == 0 {
 			return fmt.Errorf("no cards of subtype %s found", subtype)
 		}

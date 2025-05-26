@@ -12,14 +12,12 @@ const (
 )
 
 type Zone interface {
+	// TODO make this accept multiple GameObjects
 	Add(object GameObject) error
 	// This probably makes more sense as a method of Player
 	AvailableActivatedAbilities(*GameState, *Player) []*ActivatedAbility
 	// This probably makes more sense as a method of Player
 	AvailableToPlay(*GameState, *Player) []GameObject
-	Find(id string) (GameObject, error)
-	FindByName(name string) (GameObject, error)
-	FindAllBySubtype(subtype Subtype) []GameObject
 	Get(id string) (GameObject, error)
 	GetAll() []GameObject
 	Remove(id string) error

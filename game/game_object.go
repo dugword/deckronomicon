@@ -5,6 +5,8 @@ package game
 // object's properties and abilities.
 type GameObject interface {
 	HasSubtype(Subtype) bool
+	HasCardType(CardType) bool
+	HasColor(color Color) bool
 	Name() string
 	ActivatedAbilities() []*ActivatedAbility
 	StaticAbilities() []*StaticAbility

@@ -40,6 +40,14 @@ func (a *TriggeredAbility) Resolve(state *GameState, player *Player) error {
 	return nil
 }
 
+func (a *TriggeredAbility) HasColor(Color) bool {
+	return false
+}
+
+func (a *TriggeredAbility) HasCardType(CardType) bool {
+	return false
+}
+
 func (a *TriggeredAbility) HasSubtype(Subtype) bool {
 	return false
 }

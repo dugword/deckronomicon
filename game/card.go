@@ -187,6 +187,26 @@ func (c *Card) HasCardType(cardType CardType) bool {
 	return false
 }
 
+func (c *Card) HasColor(color Color) bool {
+	if c.colors == nil {
+		return false
+	}
+	switch color {
+	case ColorBlack:
+		return c.colors.Black
+	case ColorBlue:
+		return c.colors.Blue
+	case ColorGreen:
+		return c.colors.Green
+	case ColorRed:
+		return c.colors.Red
+	case ColorWhite:
+		return c.colors.White
+	default:
+		return false
+	}
+}
+
 // HasStaticAbility checks if the card has a specific static ability.
 func (c *Card) HasStaticAbility(id string) bool {
 	for _, ability := range c.staticAbilities {

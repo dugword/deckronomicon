@@ -77,27 +77,6 @@ func (h *Hand) Find(id string) (GameObject, error) {
 	return nil, fmt.Errorf("card with ID %s not found", id)
 }
 
-// FindByName finds the first card in the hand by name.
-func (h *Hand) FindByName(name string) (GameObject, error) {
-	for _, card := range h.cards {
-		if card.Name() == name {
-			return card, nil
-		}
-	}
-	return nil, fmt.Errorf("card with name %s not found", name)
-}
-
-// FindAllBySubtype finds all cards in the hand by subtype.
-func (h *Hand) FindAllBySubtype(subtype Subtype) []GameObject {
-	var found []GameObject
-	for _, card := range h.cards {
-		if card.HasSubtype(subtype) {
-			found = append(found, card)
-		}
-	}
-	return found
-}
-
 func (h *Hand) Get(id string) (GameObject, error) {
 	for _, card := range h.cards {
 		if card.ID() == id {
