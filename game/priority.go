@@ -87,17 +87,17 @@ func (g *GameState) HandlePriority(player *Player) error {
 		g.Log("Resolving stack...")
 		object, err := g.Stack.Pop()
 		if err != nil {
-			return fmt.Errorf("failed to pop spell from stack: %w", err)
+			return fmt.Errorf("failed to pop resolvable from stack: %w", err)
 		}
-		spell, ok := object.(*Spell)
+		resolvable, ok := object.(Resolvable)
 		if !ok {
-			return fmt.Errorf("object is not a spell: %T\n", object)
+			return fmt.Errorf("object is not resolvable: %T\n", object)
 		}
-		g.Log("Resolving spell: " + spell.Name())
-		if err := spell.Resolve(g, player); err != nil {
-			return fmt.Errorf("failed to resolve spell: %w", err)
+		g.Log("Resolving: " + resolvable.Name())
+		if err := resolvable.Resolve(g, player); err != nil {
+			return fmt.Errorf("failed to resolve: %w", err)
 		}
-		g.Log("Spell resolved: " + spell.Name())
+		g.Log("Rsolved: " + resolvable.Name())
 	}
 	return nil
 }

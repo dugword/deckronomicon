@@ -12,7 +12,7 @@ type Setup struct {
 	OnThePlay            bool     `json:"OnThePlay"`
 	OpponentName         string   `json:"OpponentName"`
 	OpponentStartingHand []string `json:"OpponentStartingHand"`
-	PlayerName           string   `json:"player_name"`
+	PlayerName           string   `json:"PlayerName"`
 	PlayerStartingHand   []string `json:"StartingHand"`
 	StartingLife         int      `json:"StartingLife"`
 }
