@@ -22,9 +22,10 @@ type Player struct {
 	MaxHandSize   int
 	Mulligans     int
 	PotentialMana *ManaPool
-	Turn          int
+	Revealed      *Revealed
 	Stops         []string
 	StartingHand  []string
+	Turn          int
 }
 
 // NewPlayer creates a new Player instance.
@@ -43,6 +44,7 @@ func NewPlayer(agent PlayerAgent) *Player {
 		// I don't like this, but it works for now
 		MaxHandSize:   7,
 		PotentialMana: NewManaPool(),
+		Revealed:      NewRevealed(),
 		Stops:         []string{StepPreCombatMain},
 	}
 	return &player

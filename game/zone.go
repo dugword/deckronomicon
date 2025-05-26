@@ -9,6 +9,7 @@ const (
 	ZoneHand        = "Hand"
 	ZoneLibrary     = "Library"
 	ZoneStack       = "Stack"
+	ZoneRevealed    = "Revealed"
 )
 
 type Zone interface {

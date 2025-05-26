@@ -21,8 +21,9 @@ type DisplayData struct {
 	GameStatusData  BoxData
 	GraveyardData   BoxData
 	HandData        BoxData
-	OpponentData    BoxData
 	MessageData     BoxData
+	OpponentData    BoxData
+	RevealedData    BoxData
 	StackData       BoxData
 }
 
@@ -68,6 +69,7 @@ func (a *InteractivePlayerAgent) UpdateDisplayData(state *game.GameState) {
 		HandData:        HandData(player),
 		OpponentData:    OpponentData(state, opponent),
 		MessageData:     MessageData(state),
+		RevealedData:    RevealedData(player),
 		StackData:       StackData(state),
 	}
 }
@@ -77,6 +79,16 @@ func (a *InteractivePlayerAgent) UpdateChoiceData(choiceData BoxData) {
 }
 
 func (a *InteractivePlayerAgent) BuildDisplayBoxes() DisplayBoxes {
+	playerBox := CombineBoxesSideBySide(
+		CreateBox(a.DisplayData.HandData),
+		CreateBox(a.DisplayData.ChoiceData),
+	)
+	if len(a.DisplayData.RevealedData.Content) > 0 {
+		playerBox = CombineBoxesSideBySide(
+			playerBox,
+			CreateBox(a.DisplayData.RevealedData),
+		)
+	}
 	return DisplayBoxes{
 		GameStatusBox: CombineBoxesSideBySide(
 			CreateBox(a.DisplayData.GameStatusData),
@@ -89,10 +101,7 @@ func (a *InteractivePlayerAgent) BuildDisplayBoxes() DisplayBoxes {
 			),
 			CreateBox(a.DisplayData.StackData),
 		),
-		PlayerBox: CombineBoxesSideBySide(
-			CreateBox(a.DisplayData.HandData),
-			CreateBox(a.DisplayData.ChoiceData),
-		),
+		PlayerBox:  playerBox,
 		MessageBox: CreateBox(a.DisplayData.MessageData),
 	}
 }
@@ -132,7 +141,6 @@ func ClearScreen() {
 func (a *InteractivePlayerAgent) ReportState(state *game.GameState) {
 	a.UpdateDisplayData(state)
 	displayBoxes := a.BuildDisplayBoxes()
-	ClearScreen()
 	if err := a.DisplayTemplate.ExecuteTemplate(
 		// TODO: use passed in stdout from Run
 		os.Stdout,

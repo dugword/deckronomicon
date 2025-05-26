@@ -340,7 +340,7 @@ func ActionFindFunc(state *GameState, player *Player, target string) (*ActionRes
 	var card GameObject
 	var err error
 	if target != "" {
-		card, err = FindFirstBy(player.Library, HasName(target))
+		card, err = FindFirstInZoneBy(player.Library, HasName(target))
 		if err != nil {
 			return nil, fmt.Errorf("failed to find card in library: %w", err)
 		}
@@ -452,7 +452,7 @@ func ActionUntapFunc(state *GameState, player *Player, target string) (*ActionRe
 	var err error
 	var selectedObject GameObject
 	if target != "" {
-		selectedObject, err = FindFirstBy(
+		selectedObject, err = FindFirstInZoneBy(
 			player.Battlefield,
 			And(IsTapped(), HasName(target)),
 		)
@@ -461,7 +461,7 @@ func ActionUntapFunc(state *GameState, player *Player, target string) (*ActionRe
 		}
 	}
 	if selectedObject == nil {
-		objects := FindBy(player.Battlefield, IsTapped())
+		objects := FindInZoneBy(player.Battlefield, IsTapped())
 		choices := CreateObjectChoices(objects, ZoneBattlefield)
 		choice, err := player.Agent.ChooseOne(
 			"Which permanent to untap",
