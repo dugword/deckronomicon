@@ -14,6 +14,10 @@ func NewDummyAgent(playerID string) *DummyAgent {
 	return &DummyAgent{playerID: playerID}
 }
 
+func (d *DummyAgent) ChooseMany(prompt string, source game.ChoiceSource, choices []game.Choice) ([]game.Choice, error) {
+	return choices, nil // Always choose all available options
+}
+
 func (d *DummyAgent) ChooseOne(prompt string, source game.ChoiceSource, choices []game.Choice) (game.Choice, error) {
 	return choices[0], nil // Always choose the first option
 }

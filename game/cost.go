@@ -367,9 +367,10 @@ func ParseManaCost(costStr string) (*ManaCost, error) {
 func chooseManaForGeneric(genericCost int, player *Player) (map[string]int, error) {
 	choice := make(map[string]int)
 	remaining := genericCost
+	tempPool := player.ManaPool.Copy()
 	for remaining > 0 {
 		choices := []Choice{}
-		for _, color := range player.ManaPool.ColorsAvailable() {
+		for _, color := range tempPool.ColorsAvailable() {
 			choices = append(choices, Choice{
 				Name: string(color),
 			})
@@ -390,7 +391,7 @@ func chooseManaForGeneric(genericCost int, player *Player) (map[string]int, erro
 		if err != nil {
 			return nil, fmt.Errorf("failed to apply choice for generic mana: %w", err)
 		}
-		player.ManaPool.Use(color, 1)
+		tempPool.Use(color, 1)
 		choice[selected.Name]++
 		remaining--
 	}

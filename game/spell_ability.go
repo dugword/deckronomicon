@@ -11,6 +11,14 @@ type SpellAbility struct {
 	Effects []*Effect
 }
 
+// Splice
+func (s *SpellAbility) Splice(spell *SpellAbility) {
+	if spell == nil {
+		return
+	}
+	s.Effects = append(s.Effects, spell.Effects...)
+}
+
 // BuildSpellAbility builds a spell ability from the given specification.
 func BuildSpellAbility(spec *SpellAbilitySpec, source GameObject) (*SpellAbility, error) {
 	ability := SpellAbility{}

@@ -656,6 +656,8 @@ func actionCastSpellFunc(state *GameState, player *Player, card *Card, zone stri
 	}
 	var spellCost Cost
 	var isFlashback bool
+	// var isSplice bool
+	// var spliceCost Cost
 	if zone == ZoneGraveyard {
 		for _, ability := range spell.StaticAbilities() {
 			if ability.ID != AbilityKeywordFlashback {
@@ -675,6 +677,70 @@ func actionCastSpellFunc(state *GameState, player *Player, card *Card, zone stri
 	} else {
 		spellCost = spell.ManaCost()
 	}
+	var toSplice []GameObject
+	if spell.HasSubtype(SubtypeArcane) {
+		spliceCards := FindInZoneBy(
+			player.Hand,
+			And(
+				HasStaticAbility(AbilityKeywordSplice),
+				HasStaticAbilityModifier(
+					AbilityKeywordSplice,
+					EffectTag{Key: "Onto", Value: "Arcane"},
+				),
+			),
+		)
+		// var spliceCosts []Cost
+		choices := CreateObjectChoices(spliceCards, ZoneHand)
+		chosen, err := player.Agent.ChooseMany(
+			"Choose cards to splice onto the spell",
+			NewChoiceSource(AbilityKeywordSplice, AbilityKeywordSplice),
+			AddOptionalChoice(choices),
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to choose card: %w", err)
+		}
+		for _, c := range chosen {
+			if c.ID == ChoiceNone {
+				break
+			}
+			spliceCard, err := player.Hand.Get(c.ID)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get splice card from hand: %w", err)
+			}
+			for _, ability := range spliceCard.StaticAbilities() {
+				if ability.ID != AbilityKeywordSplice {
+					continue
+				}
+				for _, modifier := range ability.Modifiers {
+					if modifier.Key != "Cost" {
+						continue
+					}
+					spliceCost, err := NewCost(modifier.Value, spell)
+					if err != nil {
+						return nil, fmt.Errorf("failed to create splice cost: %w", err)
+					}
+					accept, err := player.Agent.Confirm(
+						fmt.Sprintf("Splice %s onto %s for %s?",
+							spliceCard.Name(),
+							spell.Name(),
+							spliceCost.Description(),
+						),
+						NewChoiceSource(AbilityKeywordSplice, AbilityKeywordSplice),
+					)
+					if err != nil {
+						return nil, fmt.Errorf("failed to confirm splice cost: %w", err)
+					}
+					if !accept {
+						continue
+					}
+					state.Log("adding splice to toSplice...")
+					spellCost = spellCost.Add(spliceCost)
+					toSplice = append(toSplice, spliceCard)
+				}
+			}
+		}
+	}
+
 	var isReplicate bool
 	var replicateCost Cost
 	var replicateCount int
@@ -705,8 +771,18 @@ func actionCastSpellFunc(state *GameState, player *Player, card *Card, zone stri
 	for range replicateCount {
 		spellCost = spellCost.Add(replicateCost)
 	}
+	fmt.Println("Spell cost: ", spellCost.Description())
 	if err := spellCost.Pay(state, player); err != nil {
 		return nil, err
+	}
+	state.Log("toSplice size: " + strconv.Itoa(len(toSplice)))
+	for _, spliceCard := range toSplice {
+		card, ok := spliceCard.(*Card)
+		if !ok {
+			return nil, fmt.Errorf("object is not a card: %w", err)
+		}
+		state.Log("Splicing " + card.Name() + " onto " + spell.Name())
+		spell.Splice(card)
 	}
 	cardZone, err := player.GetZone(zone)
 	if err != nil {
@@ -718,6 +794,9 @@ func actionCastSpellFunc(state *GameState, player *Player, card *Card, zone stri
 	state.Log("Casing spell: " + card.Name())
 	if isFlashback {
 		spell.Flashback()
+	}
+	for _, effect := range spell.SpellAbility().Effects {
+		fmt.Println("Effect ID: ", effect.ID)
 	}
 	if err := state.Stack.Add(spell); err != nil {
 		return nil, fmt.Errorf("failed to add spell to stack: %w", err)

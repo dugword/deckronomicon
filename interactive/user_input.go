@@ -13,6 +13,48 @@ func (a *InteractivePlayerAgent) Prompt(message string) {
 	fmt.Printf("%s %s", message, a.prompt)
 }
 
+// ReadNumberMany prompts the user to enter many numbers, and returns a slice of
+// numbers.
+func (a *InteractivePlayerAgent) ReadNumberMany(max int) ([]int, error) {
+	tokens := a.ReadInputTokens()
+	var numbers []int
+	for _, part := range tokens {
+		number, err := strconv.Atoi(part)
+		if err != nil {
+			return nil, fmt.Errorf("invalid number: %w", err)
+		}
+		if number < 0 {
+			return nil, fmt.Errorf("number less than zero")
+		}
+		if max != -1 && number > max {
+			return nil, fmt.Errorf("number greater than max")
+		}
+		numbers = append(numbers, number)
+	}
+	return numbers, nil
+}
+
+// ReadInputTokens reads input from the interactive console and returns a
+// slice of tokens.
+func (a *InteractivePlayerAgent) ReadInputTokens() []string {
+	if !a.Scanner.Scan() {
+		if err := a.Scanner.Err(); err != nil {
+			fmt.Println("Input error or interrupted:", err)
+		} else {
+			fmt.Println("EOF received. Exiting.")
+		}
+		os.Exit(0)
+	}
+	parts := strings.Fields(a.Scanner.Text())
+	var tokens []string
+	for _, part := range parts {
+		for _, s := range strings.Split(part, ",") {
+			tokens = append(tokens, strings.TrimSpace(s))
+		}
+	}
+	return tokens
+}
+
 // ReadInput from the interactive console. Trim whitespace and return only the first token.
 func (a *InteractivePlayerAgent) ReadInput() (action, target string) {
 	if !a.Scanner.Scan() {

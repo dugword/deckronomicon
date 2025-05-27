@@ -3,27 +3,5 @@
   "OpponentName": "Opponent",
   "OnThePlay": true,
   "StartingLife": 20,
-  "MaxTurns": 100,
-  "StartingHand": [
-    "Brainstorm",
-    "Gigadrowse",
-    "High Tide",
-    "Preordain",
-    "Stream of Thought",
-    "Hidden Strings",
-    "Ideas Unbound",
-    "Merchant Scroll",
-    "Muddle the Mixture",
-    "Peer Through Depths",
-    "Psychic Puppetry",
-    "Pieces of the Puzzle",
-    "Deep Analysis",
-    "Lorien Revealed",
-    "Island",
-    "Island",
-    "Island",
-    "Island",
-    "Island",
-    "Island"
-  ]
+  "MaxTurns": 100
 }
