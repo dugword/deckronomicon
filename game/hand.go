@@ -121,10 +121,3 @@ func (h *Hand) Size() int {
 func (h *Hand) ZoneType() string {
 	return ZoneHand
 }
-
-// Cards returns the cards in the hand.
-// TODO: for display remove later - why? Probably should directly manipulate
-// this
-func (h *Hand) Cards() []*Card {
-	return h.cards
-}

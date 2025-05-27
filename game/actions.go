@@ -436,7 +436,7 @@ func ActionPlayFunc(state *GameState, player *Player, target string) (result *Ac
 	if c.HasCardType(CardTypeLand) {
 		return actionPlayLandFunc(state, player, c)
 	}
-	return actionCastSpellFunc(state, player, c)
+	return actionCastSpellFunc(state, player, c, choice.Zone)
 }
 
 // ActionUntapFunc handles the untap action. This is performed automatically
@@ -649,12 +649,32 @@ func actionPlayLandFunc(state *GameState, player *Player, card *Card) (result *A
 
 // TODO: Maybe this should be a method off of GameState
 // or maybe a method off of Card, e.g. card.Cast() like Ability.Resolve()
-func actionCastSpellFunc(state *GameState, player *Player, card *Card) (result *ActionResult, err error) {
+func actionCastSpellFunc(state *GameState, player *Player, card *Card, zone string) (result *ActionResult, err error) {
 	spell, err := NewSpell(card)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create spell from %s: %w", card.Name(), err)
 	}
-	var spellCost Cost = spell.ManaCost()
+	var spellCost Cost
+	var isFlashback bool
+	if zone == ZoneGraveyard {
+		for _, ability := range spell.StaticAbilities() {
+			if ability.ID != AbilityKeywordFlashback {
+				continue
+			}
+			isFlashback = true
+			for _, modifier := range ability.Modifiers {
+				if modifier.Key != "Cost" {
+					continue
+				}
+				spellCost, err = NewCost(modifier.Value, spell)
+				if err != nil {
+					return nil, fmt.Errorf("failed to create cost: %w", err)
+				}
+			}
+		}
+	} else {
+		spellCost = spell.ManaCost()
+	}
 	var isReplicate bool
 	var replicateCost Cost
 	var replicateCount int
@@ -688,10 +708,17 @@ func actionCastSpellFunc(state *GameState, player *Player, card *Card) (result *
 	if err := spellCost.Pay(state, player); err != nil {
 		return nil, err
 	}
-	if err := player.Hand.Remove(card.ID()); err != nil {
+	cardZone, err := player.GetZone(zone)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get zone %s: %w", zone, err)
+	}
+	if err := cardZone.Remove(card.ID()); err != nil {
 		return nil, fmt.Errorf("failed to remove card from hand: %w", err)
 	}
 	state.Log("Casing spell: " + card.Name())
+	if isFlashback {
+		spell.Flashback()
+	}
 	if err := state.Stack.Add(spell); err != nil {
 		return nil, fmt.Errorf("failed to add spell to stack: %w", err)
 	}

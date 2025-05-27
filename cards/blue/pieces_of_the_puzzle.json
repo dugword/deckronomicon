@@ -21,11 +21,11 @@
             "Value": "2"
           },
           {
-            "Key": "CardType",
+            "Key": "TargetCardType",
             "Value": "Instant"
           },
           {
-            "Key": "CardType",
+            "Key": "TargetCardType",
             "Value": "Sorcery"
           },
           {

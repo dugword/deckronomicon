@@ -88,6 +88,7 @@ var Commands = map[string]Command{
 // CommandAliases is a map of command aliases to their corresponding command
 // names.
 var CommandAliases = map[string]string{
+	"cast": "play",
 	"exit": "concede",
 	"quit": "concede",
 	"tap":  "activate",

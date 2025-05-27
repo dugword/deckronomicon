@@ -24,28 +24,28 @@ func MatchesConditionSet(state *game.GameState, player *game.Player, cond Condit
 		}
 	}
 	// --- Hand Checks ---
-	if !allCardsPresent(cond.HandContains, player.Hand.Cards()) {
+	if !allCardsPresent(cond.HandContains, player.Hand.GetAll()) {
 		return false, nil
 	}
-	if len(cond.HandContainsAny) > 0 && !anyCardPresent(cond.HandContainsAny, player.Hand.Cards()) {
+	if len(cond.HandContainsAny) > 0 && !anyCardPresent(cond.HandContainsAny, player.Hand.GetAll()) {
 		return false, nil
 	}
-	if !allGroupsSatisfied(cond.HandContainsAllGroups, player.Hand.Cards()) {
+	if !allGroupsSatisfied(cond.HandContainsAllGroups, player.Hand.GetAll()) {
 		return false, nil
 	}
-	if len(cond.HandContainsAnyGroups) > 0 && !anyGroupSatisfied(cond.HandContainsAnyGroups, player.Hand.Cards()) {
+	if len(cond.HandContainsAnyGroups) > 0 && !anyGroupSatisfied(cond.HandContainsAnyGroups, player.Hand.GetAll()) {
 		return false, nil
 	}
-	if !allCardsAbsent(cond.HandLacks, player.Hand.Cards()) {
+	if !allCardsAbsent(cond.HandLacks, player.Hand.GetAll()) {
 		return false, nil
 	}
-	if len(cond.HandLacksAny) > 0 && !anyCardAbsent(cond.HandLacksAny, player.Hand.Cards()) {
+	if len(cond.HandLacksAny) > 0 && !anyCardAbsent(cond.HandLacksAny, player.Hand.GetAll()) {
 		return false, nil
 	}
-	if !allGroupsAbsent(cond.HandLacksAllGroups, player.Hand.Cards()) {
+	if !allGroupsAbsent(cond.HandLacksAllGroups, player.Hand.GetAll()) {
 		return false, nil
 	}
-	if !noGroupFullyPresent(cond.HandLacksAnyGroups, player.Hand.Cards()) {
+	if !noGroupFullyPresent(cond.HandLacksAnyGroups, player.Hand.GetAll()) {
 		return false, nil
 	}
 
@@ -79,28 +79,28 @@ func MatchesConditionSet(state *game.GameState, player *game.Player, cond Condit
 	*/
 
 	// --- Graveyard Checks ---
-	if !allCardsPresent(cond.GraveyardContains, player.Graveyard.Cards()) {
+	if !allCardsPresent(cond.GraveyardContains, player.Graveyard.GetAll()) {
 		return false, nil
 	}
-	if len(cond.GraveyardContainsAny) > 0 && !anyCardPresent(cond.GraveyardContainsAny, player.Graveyard.Cards()) {
+	if len(cond.GraveyardContainsAny) > 0 && !anyCardPresent(cond.GraveyardContainsAny, player.Graveyard.GetAll()) {
 		return false, nil
 	}
-	if !allGroupsSatisfied(cond.GraveyardContainsAllGroups, player.Graveyard.Cards()) {
+	if !allGroupsSatisfied(cond.GraveyardContainsAllGroups, player.Graveyard.GetAll()) {
 		return false, nil
 	}
-	if len(cond.GraveyardContainsAnyGroups) > 0 && !anyGroupSatisfied(cond.GraveyardContainsAnyGroups, player.Graveyard.Cards()) {
+	if len(cond.GraveyardContainsAnyGroups) > 0 && !anyGroupSatisfied(cond.GraveyardContainsAnyGroups, player.Graveyard.GetAll()) {
 		return false, nil
 	}
-	if !allCardsAbsent(cond.GraveyardLacks, player.Graveyard.Cards()) {
+	if !allCardsAbsent(cond.GraveyardLacks, player.Graveyard.GetAll()) {
 		return false, nil
 	}
-	if len(cond.GraveyardLacksAny) > 0 && !anyCardAbsent(cond.GraveyardLacksAny, player.Graveyard.Cards()) {
+	if len(cond.GraveyardLacksAny) > 0 && !anyCardAbsent(cond.GraveyardLacksAny, player.Graveyard.GetAll()) {
 		return false, nil
 	}
-	if !allGroupsAbsent(cond.GraveyardLacksAllGroups, player.Graveyard.Cards()) {
+	if !allGroupsAbsent(cond.GraveyardLacksAllGroups, player.Graveyard.GetAll()) {
 		return false, nil
 	}
-	if !noGroupFullyPresent(cond.GraveyardLacksAnyGroups, player.Graveyard.Cards()) {
+	if !noGroupFullyPresent(cond.GraveyardLacksAnyGroups, player.Graveyard.GetAll()) {
 		return false, nil
 	}
 
@@ -114,7 +114,7 @@ func MatchesConditionSet(state *game.GameState, player *game.Player, cond Condit
 	if cond.CardsInHand != "" && !evaluateIntComparison(player.Hand.Size(), cond.CardsInHand) {
 		return false, nil
 	}
-	if cond.GraveyardSize != "" && !evaluateIntComparison(len(player.Graveyard.Cards()), cond.GraveyardSize) {
+	if cond.GraveyardSize != "" && !evaluateIntComparison(player.Graveyard.Size(), cond.GraveyardSize) {
 		return false, nil
 	}
 	if cond.SpellCountThisTurn != "" && !evaluateIntComparison(state.StormCount, cond.SpellCountThisTurn) {

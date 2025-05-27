@@ -140,6 +140,7 @@ func ClearScreen() {
 // TODO maybe get player from state.CurrentPlayer?
 func (a *InteractivePlayerAgent) ReportState(state *game.GameState) {
 	a.UpdateDisplayData(state)
+	// ClearScreen()
 	displayBoxes := a.BuildDisplayBoxes()
 	if err := a.DisplayTemplate.ExecuteTemplate(
 		// TODO: use passed in stdout from Run
