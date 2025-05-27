@@ -317,6 +317,9 @@ func BuildEffectLookAndChoose(source GameObject, spec EffectSpec) (*Effect, erro
 		if modifier.Key == "Choose" {
 			chooseCount = modifier.Value
 		}
+		if modifier.Key == "Rest" {
+			restZone = modifier.Value
+		}
 		// TODO: Could probably just have this be "type" and figure out if
 		// it's a card type or color
 		if modifier.Key == "TargetCardType" {
@@ -420,6 +423,12 @@ func BuildEffectLookAndChoose(source GameObject, spec EffectSpec) (*Effect, erro
 					if err := player.Library.Add(card); err != nil {
 						return fmt.Errorf("failed to add card to library: %w", err)
 					}
+				}
+			}
+		case "Graveyard":
+			for _, card := range objects {
+				if err := player.Graveyard.Add(card); err != nil {
+					return fmt.Errorf("failed to add card to graveyard: %w", err)
 				}
 			}
 		default:

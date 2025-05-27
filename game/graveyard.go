@@ -16,11 +16,6 @@ func NewGraveyard() *Graveyard {
 	}
 }
 
-// TODO Remove access to this
-func (g *Graveyard) Cards() []*Card {
-	return g.cards
-}
-
 func (g *Graveyard) Add(object GameObject) error {
 	card, ok := object.(*Card)
 	if !ok {
@@ -55,7 +50,18 @@ func (g *Graveyard) AvailableActivatedAbilities(state *GameState, player *Player
 // graveyard. Static abilities such as Flashback and Unearth are not
 // implemented yet so this wil return nil.
 func (g *Graveyard) AvailableToPlay(state *GameState, player *Player) []GameObject {
-	return nil
+	var found []GameObject
+	for _, card := range g.cards {
+		fmt.Println("Checking card:", card.ID())
+		for _, ability := range card.StaticAbilities() {
+			fmt.Println("Checking ability:", card.ID())
+			if ability.ID == AbilityKeywordFlashback {
+				fmt.Println("Found Flashback ability on card:", card.ID())
+				found = append(found, card)
+			}
+		}
+	}
+	return found
 }
 
 func (g *Graveyard) Find(id string) (GameObject, error) {

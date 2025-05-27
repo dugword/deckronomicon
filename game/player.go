@@ -34,6 +34,7 @@ func NewPlayer(agent PlayerAgent) *Player {
 	player := Player{
 		Agent:       agent,
 		Battlefield: NewBattlefield(),
+		Exile:       NewExile(),
 		Graveyard:   NewGraveyard(),
 		Hand:        NewHand(),
 		ID:          agent.PlayerID(),

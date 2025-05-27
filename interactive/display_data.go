@@ -32,7 +32,8 @@ func GameStatusData(state *game.GameState, player *game.Player) BoxData {
 			fmt.Sprintf("Phase: %s", state.CurrentPhase),
 			fmt.Sprintf("Step: %s", state.CurrentStep),
 			fmt.Sprintf("Library: %d cards", player.Library.Size()),
-			fmt.Sprintf("Graveyard: %d cards", len(player.Graveyard.Cards())),
+			fmt.Sprintf("Graveyard: %d cards", player.Graveyard.Size()),
+			fmt.Sprintf("Exile: %d cards", player.Exile.Size()),
 			fmt.Sprintf("Hand: %d cards", player.Hand.Size()),
 			fmt.Sprintf("Potential Mana: %s", potentialMana),
 			fmt.Sprintf("Mana Pool: %s", manaPool),
@@ -46,7 +47,7 @@ func OpponentData(state *game.GameState, player *game.Player) BoxData {
 		Content: []string{
 			fmt.Sprintf("Opponent Life: %d", player.Life),
 			fmt.Sprintf("Library: %d cards", player.Library.Size()),
-			fmt.Sprintf("Graveyard: %d cards", len(player.Graveyard.Cards())),
+			fmt.Sprintf("Graveyard: %d cards", player.Graveyard.Size()),
 			fmt.Sprintf("Battlefield: %d permanents", player.Battlefield.Size()),
 			fmt.Sprintf("Hand: %d cards", player.Hand.Size()),
 		},
@@ -85,7 +86,7 @@ func BattlefieldData(player *game.Player) BoxData {
 // GraveyardData creates the box data for displaying cards in the graveyard.
 func GraveyardData(player *game.Player) BoxData {
 	var lines []string
-	for _, card := range player.Graveyard.Cards() {
+	for _, card := range player.Graveyard.GetAll() {
 		line := card.Name()
 		lines = append(lines, line)
 	}
@@ -98,7 +99,7 @@ func GraveyardData(player *game.Player) BoxData {
 // HandData creates the box data for displaying cards in the player's hand.
 func HandData(player *game.Player) BoxData {
 	var lines []string
-	for _, card := range player.Hand.Cards() {
+	for _, card := range player.Hand.GetAll() {
 		line := card.Name()
 		lines = append(lines, line)
 	}

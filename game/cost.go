@@ -20,6 +20,8 @@ type Cost interface {
 // TODO: Support X costs and other special cases.
 var ManaPattern = regexp.MustCompile(`^(?:\{[0-9WUBRGC]+\})*$`)
 
+var LifeCostPattern = regexp.MustCompile(`^Pay \d+ life$`)
+
 // NewCost creates a new cost based on the input string and the source.
 // TODO: Maybe rename to NewCost, only return a composit cost when there's
 // more than one
@@ -41,6 +43,12 @@ func NewCost(input string, source GameObject) (Cost, error) {
 				return nil, fmt.Errorf("failed to parse mana cost %s: %w", trimmed, err)
 			}
 			costs = append(costs, manaCost)
+		case isLifeCost(trimmed):
+			lifeCost, err := ParseLifeCost(trimmed)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse life cost %s: %w", trimmed, err)
+			}
+			costs = append(costs, lifeCost)
 		default:
 			return nil, fmt.Errorf("unknown cost %s", trimmed)
 		}
@@ -117,6 +125,56 @@ func (c *CompositeCost) Pay(state *GameState, player *Player) error {
 			)
 		}
 	}
+	return nil
+}
+
+type LifeCost struct {
+	Amount int
+	Player *Player
+}
+
+// TODO Maybe make this a a AddCosts(costs ...Cost) Cost function so I don't
+// have to implement it on everything
+func (c *LifeCost) Add(cost Cost) Cost {
+	cc := CompositeCost{
+		Costs: []Cost{},
+	}
+	cc.Costs = append(cc.Costs, c)
+	cc.Costs = append(cc.Costs, cost)
+	return &cc
+}
+
+func ParseLifeCost(input string) (*LifeCost, error) {
+	// Example input: "Pay 3 life"
+	re := regexp.MustCompile(`^Pay (\d+) life$`)
+	matches := re.FindStringSubmatch(input)
+	if len(matches) != 2 {
+		return nil, fmt.Errorf("invalid life cost format: %s", input)
+	}
+	amount, err := strconv.Atoi(matches[1])
+	if err != nil {
+		return nil, fmt.Errorf("invalid life amount: %s", matches[1])
+	}
+	return &LifeCost{Amount: amount}, nil
+}
+
+func (l *LifeCost) CanPay(state *GameState, player *Player) bool {
+	// Check if the player has enough life to pay the cost
+	return player.Life >= l.Amount
+}
+
+func (l *LifeCost) Description() string {
+	// Return a string representation of the life cost
+	return fmt.Sprintf("Pay %d life", l.Amount)
+}
+
+func (l *LifeCost) Pay(state *GameState, player *Player) error {
+	// Check if the player can pay the cost
+	if !l.CanPay(state, player) {
+		return fmt.Errorf("not enough life to pay cost: %d", l.Amount)
+	}
+	// Subtract the life cost from the player's life total
+	player.Life -= l.Amount
 	return nil
 }
 
@@ -342,6 +400,10 @@ func chooseManaForGeneric(genericCost int, player *Player) (map[string]int, erro
 // isManaCost checks if the input string is a valid mana cost.
 func isMana(input string) bool {
 	return ManaPattern.MatchString(input)
+}
+
+func isLifeCost(input string) bool {
+	return LifeCostPattern.MatchString(input)
 }
 
 // isTapCost checks if the input string is a tap cost.

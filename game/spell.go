@@ -10,6 +10,7 @@ type Spell struct {
 	card            *Card
 	cardTypes       []CardType
 	colors          *Colors
+	flashback       bool
 	id              string
 	loyalty         int
 	manaCost        *ManaCost
@@ -185,6 +186,12 @@ func (s *Spell) Resolve(state *GameState, player *Player) error {
 	if err := s.spellAbility.Resolve(state, player); err != nil {
 		return fmt.Errorf("cannot resolve spell ability: %w", err)
 	}
+	if s.flashback {
+		if err := player.Exile.Add(s.card); err != nil {
+			return fmt.Errorf("cannot move spell to exile: %w", err)
+		}
+		return nil
+	}
 	if err := player.Graveyard.Add(s.card); err != nil {
 		return fmt.Errorf("cannot move spell to graveyard: %w", err)
 	}
@@ -220,4 +227,8 @@ func (s *Spell) Supertypes() []Supertype {
 // Toughness returns the toughness of the spell.
 func (s *Spell) Toughness() int {
 	return s.toughness
+}
+
+func (s *Spell) Flashback() {
+	s.flashback = true
 }

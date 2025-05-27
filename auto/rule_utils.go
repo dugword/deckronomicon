@@ -8,7 +8,7 @@ import (
 
 // hasCardNamed checks if a card with the given name exists in the slice of
 // cards.
-func hasCardNamed(cards []*game.Card, name string) bool {
+func hasCardNamed(cards []game.GameObject, name string) bool {
 	for _, c := range cards {
 		if strings.EqualFold(c.Name(), name) {
 			return true
@@ -19,7 +19,7 @@ func hasCardNamed(cards []*game.Card, name string) bool {
 
 // hasPermanentNamed checks if a permanent with the given name exists in the
 // slice of permanents.
-func hasPermanentNamed(perms []*game.Permanent, name string) bool {
+func hasPermanentNamed(perms []game.Permanent, name string) bool {
 	for _, p := range perms {
 		if strings.EqualFold(p.Name(), name) {
 			return true
@@ -30,7 +30,7 @@ func hasPermanentNamed(perms []*game.Permanent, name string) bool {
 
 // allCardsPresent checks if all cards with the given names exist in the slice
 // of cards.
-func allCardsPresent(names []string, cards []*game.Card) bool {
+func allCardsPresent(names []string, cards []game.GameObject) bool {
 	for _, name := range names {
 		if !hasCardNamed(cards, name) {
 			return false
@@ -41,7 +41,7 @@ func allCardsPresent(names []string, cards []*game.Card) bool {
 
 // anyCardPresent checks if any card with the given names exists in the slice
 // of cards.
-func anyCardPresent(names []string, cards []*game.Card) bool {
+func anyCardPresent(names []string, cards []game.GameObject) bool {
 	for _, name := range names {
 		if hasCardNamed(cards, name) {
 			return true
@@ -52,7 +52,7 @@ func anyCardPresent(names []string, cards []*game.Card) bool {
 
 // anyCardAbsent checks if any card with the given names does not exist in
 // the slice of cards.
-func allCardsAbsent(names []string, cards []*game.Card) bool {
+func allCardsAbsent(names []string, cards []game.GameObject) bool {
 	for _, name := range names {
 		if hasCardNamed(cards, name) {
 			return false
@@ -63,7 +63,7 @@ func allCardsAbsent(names []string, cards []*game.Card) bool {
 
 // anyCardAbsent checks if any card with the given names does not exist in
 // the slice of cards.
-func anyCardAbsent(names []string, cards []*game.Card) bool {
+func anyCardAbsent(names []string, cards []game.GameObject) bool {
 	for _, name := range names {
 		if !hasCardNamed(cards, name) {
 			return true
@@ -75,7 +75,7 @@ func anyCardAbsent(names []string, cards []*game.Card) bool {
 // allGroupsSatisfied checks if all groups of cards are satisfied by the
 // given cards. A group is satisfied if at least one card in the group is
 // present in the slice of cards.
-func allGroupsSatisfied(groups [][]string, cards []*game.Card) bool {
+func allGroupsSatisfied(groups [][]string, cards []game.GameObject) bool {
 	for _, group := range groups {
 		found := false
 		for _, name := range group {
@@ -94,7 +94,7 @@ func allGroupsSatisfied(groups [][]string, cards []*game.Card) bool {
 // anyGroupSatisfied checks if any group of cards is satisfied by the given
 // cards. A group is satisfied if at least one card in the group is present
 // in the slice of cards.
-func anyGroupSatisfied(groups [][]string, cards []*game.Card) bool {
+func anyGroupSatisfied(groups [][]string, cards []game.GameObject) bool {
 	for _, group := range groups {
 		for _, name := range group {
 			if hasCardNamed(cards, name) {
@@ -108,7 +108,7 @@ func anyGroupSatisfied(groups [][]string, cards []*game.Card) bool {
 // anyGroupAbsent checks if any group of cards is not satisfied by the
 // given cards. A group is not satisfied if none of the cards in the group
 // are present in the slice of cards.
-func allGroupsAbsent(groups [][]string, cards []*game.Card) bool {
+func allGroupsAbsent(groups [][]string, cards []game.GameObject) bool {
 	for _, group := range groups {
 		allPresent := true
 		for _, name := range group {
@@ -127,7 +127,7 @@ func allGroupsAbsent(groups [][]string, cards []*game.Card) bool {
 // noGroupFullyPresent checks if no group of cards is fully present in the
 // given cards. A group is fully present if all cards in the group are
 // present in the slice of cards.
-func noGroupFullyPresent(groups [][]string, cards []*game.Card) bool {
+func noGroupFullyPresent(groups [][]string, cards []game.GameObject) bool {
 	for _, group := range groups {
 		groupPresent := true
 		for _, name := range group {
