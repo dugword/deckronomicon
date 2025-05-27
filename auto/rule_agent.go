@@ -76,6 +76,10 @@ func NewRuleBasedAgent(ruleFile string, playerID string) *RuleBasedAgent {
 	return agent
 }
 
+func (a *RuleBasedAgent) ChooseMany(prompt string, source game.ChoiceSource, choices []game.Choice) ([]game.Choice, error) {
+	panic("not yet implemented")
+}
+
 // LoadRules loads the rules from a JSON file and parses them into the
 // RuleBasedAgent instance.
 func (a *RuleBasedAgent) LoadRules(path string) {

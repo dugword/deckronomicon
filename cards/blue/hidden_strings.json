@@ -11,27 +11,21 @@
     "Effects": [
       {
         "ID": "TapOrUntap",
+        "Optional": true,
         "Modifiers": [
           {
             "Key": "Target",
             "Value": "Permanent"
-          },
-          {
-            "Key": "Optional",
-            "Value": "True"
           }
         ]
       },
       {
         "ID": "TapOrUntap",
+        "Optional": true,
         "Modifiers": [
           {
             "Key": "Target",
             "Value": "Permanent"
-          },
-          {
-            "Key": "Optional",
-            "Value": "True"
           }
         ]
       }

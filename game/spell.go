@@ -232,3 +232,13 @@ func (s *Spell) Toughness() int {
 func (s *Spell) Flashback() {
 	s.flashback = true
 }
+
+func (s *Spell) Splice(card *Card) error {
+	// TODO: This is what was missing
+	spell, err := NewSpell(card)
+	if err != nil {
+		return fmt.Errorf("failed to create spell for splice: %w", err)
+	}
+	s.spellAbility.Splice(spell.spellAbility)
+	return nil
+}

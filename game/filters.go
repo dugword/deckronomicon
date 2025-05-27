@@ -115,6 +115,27 @@ func HasName(name string) FilterFunc {
 	}
 }
 
+func HasStaticAbility(ability string) FilterFunc {
+	return func(object GameObject) bool {
+		return object.HasStaticAbility(ability)
+	}
+}
+
+func HasStaticAbilityModifier(keyword string, modifier EffectTag) FilterFunc {
+	return func(object GameObject) bool {
+		for _, ability := range object.StaticAbilities() {
+			if ability.ID == keyword {
+				for _, mod := range ability.Modifiers {
+					if mod == modifier {
+						return true
+					}
+				}
+			}
+		}
+		return false
+	}
+}
+
 func HasSubtype(subtype Subtype) FilterFunc {
 	return func(object GameObject) bool {
 		return object.HasSubtype(subtype)
