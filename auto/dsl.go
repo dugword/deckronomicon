@@ -1,5 +1,6 @@
 package auto
 
+/*
 import "fmt"
 
 // These helper functions create strategy condition trees in Go code.
@@ -44,6 +45,7 @@ func LifeTotal(op string, value int) ConditionNode {
 }
 */
 
+/*
 // TODO Think about how to handle expressions vs op/values
 func LifeTotal(expr string) ConditionNode {
 	stat, op, value, err := parseStatShortcut("lifeTotal", expr)

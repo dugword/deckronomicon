@@ -1,20 +1,6 @@
 {
   "Name": "Player Strategy",
   "Description": "High Tide Combo Strategy",
-  "Definitions": {
-    "MyLand": [
-      "Island",
-      "Snow-Covered Island"
-    ],
-    "ComboPiece": [
-      "High Tide",
-      "Psychic Puppetry"
-    ],
-    "Arcane": [
-      "Peer Through Depths",
-      "Ideas Unbound"
-    ]
-  },
   "Modes": [
     {
       "Name": "Combo",
@@ -22,12 +8,12 @@
       "When": {
         "InHand": {
           "And": [
-            "Black Lotus",
             "High Tide",
             "Psychic Puppetry",
             {
               "Or": [
-                "$ComboPiece"
+                "High Tide",
+                "Psychic Puppetry"
               ]
             }
           ]
@@ -63,21 +49,35 @@
   "Rules": {
     "Setup": [
       {
-        "Name": "Make land drop",
+        "Name": "Make Land Drop",
         "When": {
           "Step": "PrecombatMain",
           "LandDrop": false,
           "InZone": {
             "Zone": "Hand",
             "Cards": [
-              "$MyLand"
+              "Island",
+              "Snow-Covered Island"
             ]
           }
         },
         "Then": {
           "Play": [
-            "$MyLand"
+            "Island",
+            "Snow-Covered Island"
           ]
+        }
+      },
+      {
+        "Name": "Look for Lands",
+        "When": {
+          "Step": "PrecombatMain",
+          "InZone": {
+            "Zone": "Battlefield",
+            "Cards": {
+              "Subtype": "Island"
+            }
+          }
         }
       }
     ],

@@ -51,7 +51,10 @@ func (g *GameState) RunPriorityLoop(player *Player) error {
 	for {
 		player.PotentialMana = GetPotentialMana(g, player)
 		player.Agent.ReportState(g)
-		action := player.Agent.GetNextAction(g)
+		action, err := player.Agent.GetNextAction(g)
+		if err != nil {
+			return fmt.Errorf("failed to get next action from agent: %w", err)
+		}
 		if !PlayerActions[action.Type] {
 			if !g.Cheat {
 				g.Message = fmt.Sprintf("Invalid player action: %s", action.Type)

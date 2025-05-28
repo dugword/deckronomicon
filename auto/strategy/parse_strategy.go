@@ -1,4 +1,4 @@
-package auto
+package strategy
 
 import (
 	"encoding/json"

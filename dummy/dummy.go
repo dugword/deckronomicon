@@ -30,8 +30,8 @@ func (d *DummyAgent) EnterNumber(prompt string, source game.ChoiceSource) (int, 
 	return 1, nil // Always enter 1
 }
 
-func (d *DummyAgent) GetNextAction(state *game.GameState) *game.GameAction {
-	return &game.GameAction{Type: game.ActionPass}
+func (d *DummyAgent) GetNextAction(state *game.GameState) (*game.GameAction, error) {
+	return &game.GameAction{Type: game.ActionPass}, nil
 }
 
 func (d *DummyAgent) PlayerID() string {

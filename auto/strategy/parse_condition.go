@@ -1,4 +1,4 @@
-package auto
+package strategy
 
 import (
 	"fmt"
@@ -217,6 +217,7 @@ func (p *StrategyParser) parseCardConditionNode(data any) CardCondition {
 			case "CardType":
 				return p.parseCardTypeCondition(val)
 			case "Subtype":
+				return p.parseCardSubtypeCondition(val)
 			case "Supertype":
 			case "Color":
 			case "ManaCost":
@@ -246,6 +247,15 @@ func (p *StrategyParser) parseCardTypeCondition(value any) CardCondition {
 		return nil
 	}
 	return &CardTypeCondition{CardType: typeStr}
+}
+
+func (p *StrategyParser) parseCardSubtypeCondition(value any) CardCondition {
+	typeStr, ok := value.(string)
+	if !ok {
+		p.errors.Add(fmt.Errorf("expected string for 'Subtype', got %T", value))
+		return nil
+	}
+	return &CardSubtypeCondition{Subtype: typeStr}
 }
 
 /*
