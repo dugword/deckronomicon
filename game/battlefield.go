@@ -34,19 +34,19 @@ func (b *Battlefield) Add(object GameObject) error {
 	return nil
 }
 
-func (b *Battlefield) AvailableActivatedAbilities(state *GameState, player *Player) []*ActivatedAbility {
-	var abilities []*ActivatedAbility
+func (b *Battlefield) AvailableActivatedAbilities(state *GameState, player *Player) []GameObject {
+	var objects []GameObject
 	for _, permanent := range b.permanents {
 		for _, ability := range permanent.ActivatedAbilities() {
 			if !ability.CanPlay(state) {
 				continue
 			}
 			if ability.Cost.CanPay(state, player) {
-				abilities = append(abilities, ability)
+				objects = append(objects, ability)
 			}
 		}
 	}
-	return abilities
+	return objects
 }
 
 // AvailableToPlay returns a list of permanents that can be played from the

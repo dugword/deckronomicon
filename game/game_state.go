@@ -99,7 +99,7 @@ func (g *GameState) Discard(n int, source ChoiceSource, player *Player) error {
 		n = player.Hand.Size()
 	}
 	for range n {
-		choices := CreateObjectChoices(player.Hand.GetAll(), ZoneHand)
+		choices := CreateChoices(player.Hand.GetAll(), ZoneHand)
 		choice, err := player.Agent.ChooseOne(
 			"Which card to discard from hand",
 			source,
@@ -184,7 +184,7 @@ func GetPotentialMana(state *GameState, player *Player) *ManaPool {
 // TODO Revist this
 func PutNBackOnTop(state *GameState, n int, source ChoiceSource, player *Player) error {
 	for range n {
-		choices := CreateObjectChoices(player.Hand.GetAll(), ZoneHand)
+		choices := CreateChoices(player.Hand.GetAll(), ZoneHand)
 		choice, err := player.Agent.ChooseOne(
 			"Which card to put back on top",
 			source,

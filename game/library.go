@@ -29,7 +29,7 @@ func NewLibrary() *Library {
 // AvailableActivatedAbilities returns a list of activated abilities that can
 // be activated from the library. This exits to satisfy the Zone interface.
 // Cards in the library cannot have a activated ability.
-func (l *Library) AvailableActivatedAbilities(*GameState, *Player) []*ActivatedAbility {
+func (l *Library) AvailableActivatedAbilities(*GameState, *Player) []GameObject {
 	return nil
 }
 

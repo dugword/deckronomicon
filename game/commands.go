@@ -7,6 +7,8 @@ type Command struct {
 	Description string
 }
 
+// TODO: Add more commands, add stop, remove stop, set mode,
+
 // Commands is a map of command names to their corresponding Command structs.
 var Commands = map[string]Command{
 	"addmana": {

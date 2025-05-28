@@ -22,7 +22,7 @@ func (e *Exile) Add(object GameObject) error {
 }
 
 // This probably makes more sense as a method of Player
-func (e *Exile) AvailableActivatedAbilities(*GameState, PlayerAgent) []*ActivatedAbility {
+func (e *Exile) AvailableActivatedAbilities(*GameState, PlayerAgent) []GameObject {
 	return nil
 }
 

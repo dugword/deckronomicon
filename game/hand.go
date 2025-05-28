@@ -27,8 +27,8 @@ func (h *Hand) Add(object GameObject) error {
 	return nil
 }
 
-func (h *Hand) AvailableActivatedAbilities(state *GameState, player *Player) []*ActivatedAbility {
-	var abilities []*ActivatedAbility
+func (h *Hand) AvailableActivatedAbilities(state *GameState, player *Player) []GameObject {
+	var objects []GameObject
 	for _, card := range h.cards {
 		for _, ability := range card.ActivatedAbilities() {
 			if !ability.CanPlay(state) {
@@ -40,10 +40,10 @@ func (h *Hand) AvailableActivatedAbilities(state *GameState, player *Player) []*
 			if ability.Zone != ZoneHand {
 				continue
 			}
-			abilities = append(abilities, ability)
+			objects = append(objects, ability)
 		}
 	}
-	return abilities
+	return objects
 }
 
 func (h *Hand) AvailableToPlay(state *GameState, player *Player) []GameObject {

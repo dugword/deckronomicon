@@ -27,8 +27,8 @@ func (g *Graveyard) Add(object GameObject) error {
 
 // AvailableActivatedAbilities returns all activated abilities of the cards in
 // the graveyard.
-func (g *Graveyard) AvailableActivatedAbilities(state *GameState, player *Player) []*ActivatedAbility {
-	abilities := []*ActivatedAbility{}
+func (g *Graveyard) AvailableActivatedAbilities(state *GameState, player *Player) []GameObject {
+	var objects []GameObject
 	for _, card := range g.cards {
 		for _, ability := range card.ActivatedAbilities() {
 			if !ability.CanPlay(state) {
@@ -40,10 +40,10 @@ func (g *Graveyard) AvailableActivatedAbilities(state *GameState, player *Player
 			if ability.Zone != ZoneGraveyard {
 				continue
 			}
-			abilities = append(abilities, ability)
+			objects = append(objects, ability)
 		}
 	}
-	return abilities
+	return objects
 }
 
 // AvailableToPlay returns a list of cards that can be played from the
