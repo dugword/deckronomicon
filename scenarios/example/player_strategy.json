@@ -66,6 +66,7 @@
         "Name": "Make land drop",
         "When": {
           "Step": "PrecombatMain",
+          "LandDrop": false,
           "InZone": {
             "Zone": "Hand",
             "Cards": [

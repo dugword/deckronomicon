@@ -48,7 +48,7 @@ var beginningPhase = GamePhase{
 			EventEvent: EventUntapStep,
 			Handler: func(g *GameState, player *Player) error {
 				g.Log("Untapping all permanents")
-				actionResult, err := ActionUntapFunc(g, player, UntapAll)
+				actionResult, err := ActionUntapFunc(g, player, ActionTarget{Name: UntapAll})
 				if err != nil {
 					return fmt.Errorf("failed to untap: %w", err)
 				}
@@ -68,7 +68,7 @@ var beginningPhase = GamePhase{
 			EventEvent: EventDrawStep,
 			Handler: wrapStep(func(g *GameState, player *Player) error {
 				g.Log("Drawing a card")
-				actionResult, err := ActionDrawFunc(g, player, "1")
+				actionResult, err := ActionDrawFunc(g, player, ActionTarget{Name: "1"})
 				if err != nil {
 					return fmt.Errorf("failed to draw: %w", err)
 				}
@@ -165,7 +165,7 @@ var endingPhase = GamePhase{
 				toDiscard := player.Hand.Size() - player.MaxHandSize
 				if toDiscard > 0 {
 					g.Log(fmt.Sprintf("Discarding %d cards to maintain max hand size", toDiscard))
-					actionResult, err := ActionDiscardFunc(g, player, strconv.Itoa(toDiscard))
+					actionResult, err := ActionDiscardFunc(g, player, ActionTarget{Name: strconv.Itoa(toDiscard)})
 					if err != nil {
 						return fmt.Errorf("failed to discard cards: %w", err)
 					}

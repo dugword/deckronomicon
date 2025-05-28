@@ -94,6 +94,17 @@ func (c *StepCondition) Evaluate(ctx *EvaluatorContext) (bool, error) {
 	return false, nil
 }
 
+type LandDropCondition struct {
+	LandDrop bool `json:"LandDrop"`
+}
+
+func (c *LandDropCondition) Evaluate(ctx *EvaluatorContext) (bool, error) {
+	if ctx.player.LandDrop == c.LandDrop {
+		return true, nil
+	}
+	return false, nil
+}
+
 type ModeCondition struct {
 	Mode string `json:"Mode"`
 }

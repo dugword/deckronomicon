@@ -38,6 +38,8 @@ func (p *StrategyParser) parseConditionNode(raw any) ConditionNode {
 				conditionNodes = append(conditionNodes, p.parseInZoneAliasCondition("Hand", v))
 			case "InZone":
 				conditionNodes = append(conditionNodes, p.parseInZoneCondition(v))
+			case "LandDrop":
+				conditionNodes = append(conditionNodes, p.parseLandDropCondition(v))
 			default:
 				p.errors.Add(fmt.Errorf("unknown condition key: %s", k))
 				return nil
@@ -54,6 +56,17 @@ func (p *StrategyParser) parseConditionNode(raw any) ConditionNode {
 	default:
 		p.errors.Add(fmt.Errorf("expected condition object, got %T", raw))
 		return nil
+	}
+}
+
+func (p *StrategyParser) parseLandDropCondition(value interface{}) ConditionNode {
+	landDrop, ok := value.(bool)
+	if !ok {
+		p.errors.Add(fmt.Errorf("expected boolean for 'LandDrop' condition, got %T", value))
+		return nil
+	}
+	return &LandDropCondition{
+		LandDrop: landDrop,
 	}
 }
 

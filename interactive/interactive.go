@@ -72,7 +72,7 @@ func (a *InteractivePlayerAgent) GetNextAction(state *game.GameState) *game.Game
 			a.inputError = "Invalid input. Try again."
 			continue
 		}
-		command.Action.Target = arg
+		command.Action.Target = game.ActionTarget{Name: arg}
 		return &command.Action
 	}
 }
