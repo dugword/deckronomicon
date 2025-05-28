@@ -23,7 +23,7 @@
   "ActivatedAbilities": [
     {
       "Name": "Islandcycling",
-      "Cost": "{1}",
+      "Cost": "{1}, Discard this card",
       "Effects": [
         {
           "ID": "Typecycling",
