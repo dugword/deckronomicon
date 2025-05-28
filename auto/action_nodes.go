@@ -52,7 +52,7 @@ func (a *ActivateAction) Resolve(ctx *EvaluatorContext) (*game.GameAction, error
 	}
 	return &game.GameAction{
 		Type:   game.ActionActivate,
-		Target: object.Name(),
+		Target: game.ActionTarget{ID: object.ID()},
 	}, nil
 }
 
@@ -81,6 +81,6 @@ func (p *PlayAction) Resolve(ctx *EvaluatorContext) (*game.GameAction, error) {
 	}
 	return &game.GameAction{
 		Type:   game.ActionPlay,
-		Target: object.Name(),
+		Target: game.ActionTarget{ID: object.ID()},
 	}, nil
 }

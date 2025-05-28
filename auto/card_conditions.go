@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+// TODO Maybe make this the same as Condition with an evaluate method
 type CardCondition interface {
 	// TODO This shold return an error,
 	Matches(objs []game.GameObject, defs map[string][]string) bool
