@@ -1,16 +1,11 @@
 package auto
 
 import (
+	"deckronomicon/auto/strategy"
 	"deckronomicon/game"
 	"deckronomicon/ui"
 	"fmt"
 )
-
-type EvaluatorContext struct {
-	state    *game.GameState
-	player   *game.Player
-	strategy *Strategy
-}
 
 type RuleBasedAgent struct {
 	// Rules       []Rule
@@ -18,26 +13,9 @@ type RuleBasedAgent struct {
 	playerID    string
 	verbose     bool
 	LastAction  string
-	strategy    *Strategy
+	strategy    *strategy.Strategy
 	uiBuffer    *ui.Buffer // Buffer for UI updates
 	interactive bool       // Whether the agent is interactive or not
-}
-
-type Rule struct {
-	Name        string         `json:"Name"`
-	Description string         `json:"Description"`
-	RawWhen     map[string]any `json:"When"`
-	When        ConditionNode  `json:"-"`
-	RawThen     map[string]any `json:"Then"`
-	Then        ActionNode     `json:"-"`
-}
-
-type Strategy struct {
-	Name        string              `json:"Name,omitempty"`
-	Description string              `json:"Description,omitempty"`
-	Definitions map[string][]string `json:"Definitions,omitempty"`
-	Modes       []Rule              `json:"Modes,omitempty"`
-	Rules       map[string][]Rule   `json:"Rules,omitempty"`
 }
 
 func (a *RuleBasedAgent) PlayerID() string {
@@ -57,7 +35,7 @@ func NewRuleBasedAgent(strategyFile string, playerID string, interactive bool) (
 		interactive: interactive,
 		uiBuffer:    ui.NewBuffer(),
 	}
-	strategy, err := LoadStrategy(strategyFile)
+	strategy, err := strategy.LoadStrategy(strategyFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load strategy: %w", err)
 	}
@@ -77,16 +55,15 @@ func (a *RuleBasedAgent) Confirm(prompt string, source game.ChoiceSource) (bool,
 	return true, nil
 }
 
-func (a *RuleBasedAgent) GetNextAction(state *game.GameState) *game.GameAction {
+func (a *RuleBasedAgent) GetNextAction(state *game.GameState) (*game.GameAction, error) {
 	player, err := state.GetPlayer(a.playerID)
 	if err != nil {
-		// TODO: handle this more gracefully
-		panic("player not found in game state")
+		return nil, fmt.Errorf("player not found in state: %s", a.playerID)
 	}
-	ctx := &EvaluatorContext{
-		state:    state,
-		player:   player,
-		strategy: a.strategy,
+	ctx := &strategy.EvaluatorContext{
+		State:    state,
+		Player:   player,
+		Strategy: a.strategy,
 	}
 	for _, mode := range a.strategy.Modes {
 		if mode.Name == player.Mode {
@@ -94,8 +71,7 @@ func (a *RuleBasedAgent) GetNextAction(state *game.GameState) *game.GameAction {
 		}
 		result, err := mode.When.Evaluate(ctx)
 		if err != nil {
-			panic("failed to evaluate condition for mode")
-			return nil
+			return nil, fmt.Errorf("failed to evaluate condition for mode %s: %w", mode.Name, err)
 		}
 		if result {
 			player.Mode = mode.Name
@@ -107,8 +83,7 @@ func (a *RuleBasedAgent) GetNextAction(state *game.GameState) *game.GameAction {
 	for _, rule := range a.strategy.Rules[player.Mode] {
 		result, err := rule.When.Evaluate(ctx)
 		if err != nil {
-			panic("failed to evaluate condition for rule")
-			return nil
+			return nil, fmt.Errorf("failed to evaluate condition for rule %s: %w", rule.Name, err)
 		}
 		if !result {
 			continue
@@ -116,23 +91,23 @@ func (a *RuleBasedAgent) GetNextAction(state *game.GameState) *game.GameAction {
 		matchedRule = rule.Name
 		action, err = rule.Then.Resolve(ctx)
 		if err != nil {
-			panic(err)
+			return nil, fmt.Errorf("failed to resolve action for rule %s: %w", rule.Name, err)
 		}
 		break // Stop after the first matching rule
 	}
 	a.uiBuffer.UpdateFromState(state, a.playerID)
 	if err := a.uiBuffer.Render(); err != nil {
-		panic(fmt.Errorf("error rendering UI buffer: %w", err))
+		return nil, fmt.Errorf("failed to render UI buffer: %w", err)
 	}
 	if action == nil {
 		fmt.Println("No action matched for player:", a.playerID)
 		enterToContinue()
-		return &game.GameAction{Type: game.ActionPass} // No action matched, just pass
+		return &game.GameAction{Type: game.ActionPass}, nil // No action matched, just pass
 	}
 	fmt.Println("Matched rule: ", matchedRule)
 	fmt.Println("Action chosen for player: ", action.Type)
 	enterToContinue()
-	return action
+	return action, nil
 }
 
 func (a *RuleBasedAgent) EnterNumber(string, game.ChoiceSource) (int, error) {

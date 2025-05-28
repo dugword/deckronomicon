@@ -1,4 +1,4 @@
-package auto
+package strategy
 
 import (
 	"deckronomicon/game"
@@ -18,6 +18,7 @@ type NameMatchCondition struct {
 	Name string
 }
 
+// TODO: Move the expansion logic to parse time
 func (c *NameMatchCondition) Matches(objs []game.GameObject, defs map[string][]string) bool {
 	for _, obj := range objs {
 		if obj.Name() == c.Name {
@@ -38,6 +39,23 @@ func (c *CardTypeCondition) Matches(objs []game.GameObject, defs map[string][]st
 	}
 	for _, obj := range objs {
 		if obj.HasCardType(cardType) {
+			return true
+		}
+	}
+	return false
+}
+
+type CardSubtypeCondition struct {
+	Subtype string // e.g., "Island", "Elf", etc.
+}
+
+func (c *CardSubtypeCondition) Matches(objs []game.GameObject, defs map[string][]string) bool {
+	subtype, err := game.StringToSubtype(c.Subtype)
+	if err != nil {
+		panic(err) // or handle error appropriately
+	}
+	for _, obj := range objs {
+		if obj.HasSubtype(subtype) {
 			return true
 		}
 	}

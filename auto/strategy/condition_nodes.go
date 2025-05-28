@@ -1,4 +1,4 @@
-package auto
+package strategy
 
 import (
 	"deckronomicon/game"
@@ -7,6 +7,11 @@ import (
 
 type ConditionNode interface {
 	Evaluate(ctx *EvaluatorContext) (bool, error)
+}
+
+type CollectableCondition interface {
+	ConditionNode
+	Collect(ctx *EvaluatorContext) ([]game.GameObject, error)
 }
 
 // Card condition
@@ -88,7 +93,7 @@ type StepCondition struct {
 func (c *StepCondition) Evaluate(ctx *EvaluatorContext) (bool, error) {
 	// You’ll need to implement actual step checking logic here
 	// For now, just return true if the step matches
-	if ctx.state.CurrentStep == c.Step {
+	if ctx.State.CurrentStep == c.Step {
 		return true, nil
 	}
 	return false, nil
@@ -99,7 +104,7 @@ type LandDropCondition struct {
 }
 
 func (c *LandDropCondition) Evaluate(ctx *EvaluatorContext) (bool, error) {
-	if ctx.player.LandDrop == c.LandDrop {
+	if ctx.Player.LandDrop == c.LandDrop {
 		return true, nil
 	}
 	return false, nil
@@ -112,7 +117,7 @@ type ModeCondition struct {
 func (c *ModeCondition) Evaluate(ctx *EvaluatorContext) (bool, error) {
 	// You’ll need to implement actual mode checking logic here
 	// For now, just return true if the mode matches
-	if ctx.player.Mode == c.Mode {
+	if ctx.Player.Mode == c.Mode {
 		return true, nil
 	}
 	return false, nil
@@ -128,11 +133,11 @@ func (c *InZoneCondition) Evaluate(ctx *EvaluatorContext) (bool, error) {
 	if c.Cards == nil {
 		return true, nil // No specific cards means always true
 	}
-	zone, err := ctx.player.GetZone(c.Zone)
+	zone, err := ctx.Player.GetZone(c.Zone)
 	if err != nil {
 		return false, fmt.Errorf("error getting zone '%s': %w", c.Zone, err)
 	}
-	if c.Cards.Matches(zone.GetAll(), ctx.strategy.Definitions) {
+	if c.Cards.Matches(zone.GetAll(), ctx.Strategy.Definitions) {
 		return true, nil // Zone contains the specified cards
 	}
 	return false, nil

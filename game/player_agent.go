@@ -10,7 +10,7 @@ type PlayerAgent interface {
 	ChooseOne(prompt string, source ChoiceSource, choices []Choice) (Choice, error)
 	Confirm(prompt string, source ChoiceSource) (bool, error)
 	EnterNumber(prompt string, source ChoiceSource) (int, error)
-	GetNextAction(state *GameState) *GameAction
+	GetNextAction(state *GameState) (*GameAction, error)
 	PlayerID() string
 	ReportState(state *GameState)
 }

@@ -48,7 +48,7 @@ func (a *InteractivePlayerAgent) ReportState(state *game.GameState) {
 
 }
 
-func (a *InteractivePlayerAgent) GetNextAction(state *game.GameState) *game.GameAction {
+func (a *InteractivePlayerAgent) GetNextAction(state *game.GameState) (*game.GameAction, error) {
 	for {
 		// TODO Don't call this here, run update or something
 		a.ReportState(state)
@@ -73,6 +73,6 @@ func (a *InteractivePlayerAgent) GetNextAction(state *game.GameState) *game.Game
 			continue
 		}
 		command.Action.Target = game.ActionTarget{Name: arg}
-		return &command.Action
+		return &command.Action, nil
 	}
 }

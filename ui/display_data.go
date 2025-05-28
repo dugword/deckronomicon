@@ -114,12 +114,14 @@ func (b *Buffer) UpdateChoices(title string, choices []game.Choice) {
 // GameStatusData creates the box data for game status information.
 // TODO: Could probably get from state.CurrentPlayer
 func GameStatusData(state *game.GameState, player *game.Player) BoxData {
-	potentialMana := "(empty)"
+	// potentialMana := "(empty)"
 	manaPool := "(empty)"
-	// TODO: Potential mana is broken
-	if player.PotentialMana.AvailableGeneric() > 0 {
-		potentialMana = player.PotentialMana.Describe()
-	}
+	/*
+		// TODO: Potential mana is broken
+		if player.PotentialMana.AvailableGeneric() > 0 {
+			potentialMana = player.PotentialMana.Describe()
+		}
+	*/
 	if player.ManaPool.AvailableGeneric() > 0 {
 		manaPool = player.ManaPool.Describe()
 	}
@@ -136,7 +138,7 @@ func GameStatusData(state *game.GameState, player *game.Player) BoxData {
 			fmt.Sprintf("Graveyard: %d cards", player.Graveyard.Size()),
 			fmt.Sprintf("Exile: %d cards", player.Exile.Size()),
 			fmt.Sprintf("Hand: %d cards", player.Hand.Size()),
-			fmt.Sprintf("Potential Mana: %s", potentialMana),
+			// fmt.Sprintf("Potential Mana: %s", potentialMana),
 			fmt.Sprintf("Mana Pool: %s", manaPool),
 		},
 	}

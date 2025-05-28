@@ -1,5 +1,6 @@
 package auto
 
+/*
 var SampleDSLStrategy = []Rule{
 	/*
 		{
@@ -33,5 +34,6 @@ var SampleDSLStrategy = []Rule{
 				),
 				Then: Cast("Weather the Storm"),
 			},
-	*/
+
 }
+*/
