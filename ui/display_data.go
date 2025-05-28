@@ -127,6 +127,7 @@ func GameStatusData(state *game.GameState, player *game.Player) BoxData {
 		Title: "Game Status",
 		Content: []string{
 			fmt.Sprintf("Current Player: Player %d", state.CurrentPlayer),
+			fmt.Sprintf("Player Mode: %s", player.Mode),
 			fmt.Sprintf("Player 1 Life: %d", player.Life),
 			fmt.Sprintf("Turn: %d", player.Turn),
 			fmt.Sprintf("Phase: %s", state.CurrentPhase),

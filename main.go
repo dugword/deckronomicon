@@ -77,6 +77,7 @@ func Run(
 		playerAgent, err = auto.NewRuleBasedAgent(
 			scenario.PlayerStrategy,
 			scenario.Setup.PlayerName,
+			true, // TODO: Make this configurable
 		)
 		if err != nil {
 			return fmt.Errorf("failed to create rule based agent: %w", err)

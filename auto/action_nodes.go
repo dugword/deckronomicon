@@ -2,6 +2,8 @@ package auto
 
 import (
 	"deckronomicon/game"
+	"errors"
+	"strings"
 )
 
 type ActionNode interface {
@@ -29,26 +31,29 @@ type ActivateAction struct {
 }
 
 func (a *ActivateAction) Resolve(ctx *EvaluatorContext) (*game.GameAction, error) {
-	panic("fix me")
-	/*
-		available := ctx.player.GetAvailableToActivate(ctx.state)
-		expanded, err := expandDefinitions(a.AbilityNames, ctx.strategy.Definitions)
-		if err != nil {
-			return nil, err
-		}
-		var filters []game.FilterFunc
-		for _, name := range expanded {
-			filters = append(filters, game.HasName(name))
-		}
-		object, err := game.FindFirstBy(objects, game.Or(filters...))
-		if err != nil {
-			return nil, errors.New("abilites not found: " + strings.Join(a.AbilityNames, ", "))
-		}
-		return &game.GameAction{
-			Type:   game.ActionActivate,
-			Target: object.Name(),
-		}, nil
-	*/
+	var available []game.GameObject
+	// TODO: This should be a method of Player so I don't have to iterate through a map. Think through managing this,
+	// maybe have player return choices?
+	for _, objects := range ctx.player.GetAvailableToActivate(ctx.state) {
+		available = append(available, objects...)
+	}
+
+	expanded, err := expandDefinitions(a.AbilityNames, ctx.strategy.Definitions)
+	if err != nil {
+		return nil, err
+	}
+	var filters []game.FilterFunc
+	for _, name := range expanded {
+		filters = append(filters, game.HasName(name))
+	}
+	object, err := game.FindFirstBy(available, game.Or(filters...))
+	if err != nil {
+		return nil, errors.New("abilites not found: " + strings.Join(a.AbilityNames, ", "))
+	}
+	return &game.GameAction{
+		Type:   game.ActionActivate,
+		Target: object.Name(),
+	}, nil
 }
 
 type PlayAction struct {
@@ -58,24 +63,24 @@ type PlayAction struct {
 }
 
 func (p *PlayAction) Resolve(ctx *EvaluatorContext) (*game.GameAction, error) {
-	panic("fix me")
-	/*
-		objects := ctx.player.GetAvailableToPlay(ctx.state)
-		expaned, err := expandDefinitions(p.CardNames, ctx.strategy.Definitions)
-		if err != nil {
-			return nil, err
-		}
-		var filters []game.FilterFunc
-		for _, name := range expaned {
-			filters = append(filters, game.HasName(name))
-		}
-		object, err := game.FindFirstBy(objects, game.Or(filters...))
-		if err != nil {
-			return nil, errors.New("cards not found: " + strings.Join(expaned, ", "))
-		}
-		return &game.GameAction{
-			Type:   game.ActionPlay,
-			Target: object.Name(),
-		}, nil
-	*/
+	var available []game.GameObject
+	for _, objects := range ctx.player.GetAvailableToPlay(ctx.state) {
+		available = append(available, objects...)
+	}
+	expaned, err := expandDefinitions(p.CardNames, ctx.strategy.Definitions)
+	if err != nil {
+		return nil, err
+	}
+	var filters []game.FilterFunc
+	for _, name := range expaned {
+		filters = append(filters, game.HasName(name))
+	}
+	object, err := game.FindFirstBy(available, game.Or(filters...))
+	if err != nil {
+		return nil, errors.New("cards not found: " + strings.Join(expaned, ", "))
+	}
+	return &game.GameAction{
+		Type:   game.ActionPlay,
+		Target: object.Name(),
+	}, nil
 }
