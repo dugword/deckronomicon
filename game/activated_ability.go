@@ -30,25 +30,31 @@ func (a *ActivatedAbility) HasColor(Color) bool {
 	// Activated abilities do not have colors.
 	return false
 }
+
 func (a *ActivatedAbility) Name() string {
-	return a.name
+	return fmt.Sprintf("%s: %s", a.source.Name(), a.name)
 }
+
 func (a *ActivatedAbility) ActivatedAbilities() []*ActivatedAbility {
 	// Activated abilities do not have activated abilities.
 	return nil
 }
+
 func (a *ActivatedAbility) StaticAbilities() []*StaticAbility {
 	// Activated abilities do not have static abilities.
 	return nil
 }
+
 func (a *ActivatedAbility) HasStaticAbility(string) bool {
 	// Activated abilities do not have static abilities.
 	return false
 }
+
 func (a *ActivatedAbility) ID() string {
 	// Activated abilities have an ID.
 	return a.id
 }
+
 func (a *ActivatedAbility) ManaValue() int {
 	// Activated abilities do not have a mana value.
 	return 0

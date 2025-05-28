@@ -155,15 +155,12 @@ func (g *GameState) ResolveAction(action *GameAction, player *Player) (result *A
 // TODO: Support more than one activated ability
 // TODO: Support activated abilities in hand and graveyard
 func ActionActivateFunc(state *GameState, player *Player, target string) (*ActionResult, error) {
-	var abilities []*ActivatedAbility
-	for _, zone := range player.Zones() {
-		abilities = append(abilities, zone.AvailableActivatedAbilities(state, player)...)
-	}
-	if len(abilities) == 0 {
+	available := player.GetAvailableToActivate(state)
+	choices := CreateGroupedChoices(available)
+	if len(choices) == 0 {
 		// TODO: Do I need to check this?
 		return nil, errors.New("no activated abilities available")
 	}
-	choices := CreateActivatedAbilityChoices(abilities)
 	choice, err := player.Agent.ChooseOne(
 		"Which ability to activate",
 		ActionActivate,
@@ -176,14 +173,13 @@ func ActionActivateFunc(state *GameState, player *Player, target string) (*Actio
 		return &ActionResult{Message: "No choice made"}, nil
 	}
 	var ability *ActivatedAbility
-	for _, a := range abilities {
-		if a.ID() == choice.ID {
-			ability = a
-			break
-		}
-	}
-	if ability == nil {
+	object, err := FindFirstBy(available[choice.Zone], HasID(choice.ID))
+	if err != nil {
 		return nil, fmt.Errorf("failed to find activated ability: %w", err)
+	}
+	ability, ok := object.(*ActivatedAbility)
+	if !ok {
+		return nil, fmt.Errorf("object is not an activated ability: %w", err)
 	}
 	if err := ability.Cost.Pay(state, player); err != nil {
 		return nil, fmt.Errorf("cannot pay activated ability cost: %w", err)
@@ -348,7 +344,7 @@ func ActionFindFunc(state *GameState, player *Player, target string) (*ActionRes
 			return nil, fmt.Errorf("failed to find card in library: %w", err)
 		}
 	} else {
-		choices := CreateObjectChoices(
+		choices := CreateChoices(
 			player.Library.GetAll(),
 			ZoneLibrary,
 		)
@@ -387,7 +383,8 @@ func ActionLandDropFunc(state *GameState, player *Player, target string) (*Actio
 // ActionPlayFunc handles the play action. This is performed by the player to
 // play a card from their hand. The target is the name of the card to play.
 func ActionPlayFunc(state *GameState, player *Player, target string) (result *ActionResult, err error) {
-	choices := CreateObjectChoices(player.GetAvailableToPlay(state), ZoneHand)
+	available := player.GetAvailableToPlay(state)
+	choices := CreateGroupedChoices(available)
 	if len(choices) == 0 {
 		return nil, errors.New("no cards available to play")
 	}
@@ -460,7 +457,7 @@ func ActionUntapFunc(state *GameState, player *Player, target string) (*ActionRe
 	}
 	if selectedObject == nil {
 		objects := FindInZoneBy(player.Battlefield, IsTapped())
-		choices := CreateObjectChoices(objects, ZoneBattlefield)
+		choices := CreateChoices(objects, ZoneBattlefield)
 		choice, err := player.Agent.ChooseOne(
 			"Which permanent to untap",
 			ActionUntap,
@@ -688,7 +685,7 @@ func actionCastSpellFunc(state *GameState, player *Player, card *Card, zone stri
 			),
 		)
 		// var spliceCosts []Cost
-		choices := CreateObjectChoices(spliceCards, ZoneHand)
+		choices := CreateChoices(spliceCards, ZoneHand)
 		chosen, err := player.Agent.ChooseMany(
 			"Choose cards to splice onto the spell",
 			NewChoiceSource(AbilityKeywordSplice, AbilityKeywordSplice),

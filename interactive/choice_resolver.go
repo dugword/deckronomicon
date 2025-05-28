@@ -3,7 +3,6 @@ package interactive
 import (
 	"deckronomicon/game"
 	"fmt"
-	"os"
 )
 
 var choiceBoxTmpl = `{{.TopLine}}
@@ -45,33 +44,25 @@ func (a *InteractivePlayerAgent) ChooseMany(prompt string, source game.ChoiceSou
 		return nil, fmt.Errorf("no choices available")
 	}
 	title := fmt.Sprintf("%s requires a choice", source.Name())
-	groupedChoicesData, orderedChoices := GroupedChoicesData(title, choices)
-	a.UpdateChoiceData(groupedChoicesData)
-	displayBoxes := a.BuildDisplayBoxes()
-	ClearScreen()
-	if err := a.DisplayTemplate.ExecuteTemplate(
-		os.Stdout,
-		"display.tmpl",
-		displayBoxes,
-	); err != nil {
-		fmt.Println("Error executing template:", err)
-		os.Exit(1)
+	a.uiBuffer.UpdateChoices(title, choices)
+	if err := a.uiBuffer.Render(); err != nil {
+		return nil, fmt.Errorf("error rendering UI buffer: %w", err)
 	}
 	for {
 		a.Prompt(prompt)
-		max := len(orderedChoices) - 1 // 0 based
-		choices, err := a.ReadNumberMany(max)
+		max := len(choices) - 1 // 0 based
+		selected, err := a.ReadNumberMany(max)
 		if err != nil {
 			fmt.Printf("Invalid choice. Please enter numbers: %d - %d\n", 0, max)
 			continue
 		}
-		if len(choices) == 0 {
+		if len(selected) == 0 {
 			fmt.Println("You must choose at least one option.")
 			continue
 		}
 		var selectedChoices []game.Choice
-		for _, choice := range choices {
-			selectedChoices = append(selectedChoices, orderedChoices[choice])
+		for _, choice := range selected {
+			selectedChoices = append(selectedChoices, choices[choice])
 		}
 		return selectedChoices, nil
 	}
@@ -84,28 +75,19 @@ func (a *InteractivePlayerAgent) ChooseOne(prompt string, source game.ChoiceSour
 		return game.Choice{}, fmt.Errorf("no choices available")
 	}
 	title := fmt.Sprintf("%s requires a choice", source.Name())
-	groupedChoicesData, orderedChoices := GroupedChoicesData(title, choices)
-	a.UpdateChoiceData(groupedChoicesData)
-	displayBoxes := a.BuildDisplayBoxes()
-	ClearScreen()
-	if err := a.DisplayTemplate.ExecuteTemplate(
-		// TODO: use passed in stdout from Run
-		os.Stdout,
-		"display.tmpl",
-		displayBoxes,
-	); err != nil {
-		fmt.Println("Error executing template:", err)
-		// TODO: handle error return to main
-		os.Exit(1)
+	a.uiBuffer.UpdateChoices(title, choices)
+	if err := a.uiBuffer.Render(); err != nil {
+		return game.Choice{}, fmt.Errorf("error rendering UI buffer: %w", err)
 	}
+
 	for {
 		a.Prompt(prompt)
-		max := len(orderedChoices) - 1 // 0 based
+		max := len(choices) - 1 // 0 based
 		choice, err := a.ReadInputNumber(max)
 		if err != nil {
 			fmt.Printf("Invalid choice. Please enter a number: %d - %d\n", 0, max)
 			continue
 		}
-		return orderedChoices[choice], nil
+		return choices[choice], nil
 	}
 }

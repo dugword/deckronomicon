@@ -7,42 +7,19 @@ package interactive
 import (
 	"bufio"
 	"fmt"
-	"os"
-	"os/exec"
-	"runtime"
-	"text/template"
 
 	"deckronomicon/game"
+	"deckronomicon/ui"
 )
-
-type DisplayData struct {
-	BattlefieldData BoxData
-	ChoiceData      BoxData
-	GameStatusData  BoxData
-	GraveyardData   BoxData
-	HandData        BoxData
-	MessageData     BoxData
-	OpponentData    BoxData
-	RevealedData    BoxData
-	StackData       BoxData
-}
-
-type DisplayBoxes struct {
-	GameStatusBox Box
-	MessageBox    Box
-	PlaySpaceBox  Box
-	PlayerBox     Box
-}
 
 // InteractivePlayerAgent implements the PlayerAgent interface for interactive
 // play.
 type InteractivePlayerAgent struct {
-	DisplayData     DisplayData
-	DisplayTemplate *template.Template
-	Scanner         *bufio.Scanner
-	playerID        string
-	inputError      string
-	prompt          string
+	uiBuffer   *ui.Buffer
+	Scanner    *bufio.Scanner
+	playerID   string
+	inputError string
+	prompt     string
 }
 
 // Player returns the player ID controlled by this agent.
@@ -50,108 +27,25 @@ func (a *InteractivePlayerAgent) PlayerID() string {
 	return a.playerID
 }
 
-// TODO maybe get from state.CurrentPlayer?
-func (a *InteractivePlayerAgent) UpdateDisplayData(state *game.GameState) {
-	// TODO: Handle these errors
-	player, err := state.GetPlayer(a.playerID)
-	if err != nil {
-		panic("InteractivePlayerAgent: Player not found in state: " + a.playerID)
-	}
-	opponent, err := state.GetOpponent(player.ID)
-	if err != nil {
-		panic("InteractivePlayerAgent: Opponent not found for player: " + player.ID)
-	}
-	a.DisplayData = DisplayData{
-		BattlefieldData: BattlefieldData(player),
-		ChoiceData:      BoxData{Title: "Nothing to choose"},
-		GameStatusData:  GameStatusData(state, player),
-		GraveyardData:   GraveyardData(player),
-		HandData:        HandData(player),
-		OpponentData:    OpponentData(state, opponent),
-		MessageData:     MessageData(state),
-		RevealedData:    RevealedData(player),
-		StackData:       StackData(state),
-	}
-}
-
-func (a *InteractivePlayerAgent) UpdateChoiceData(choiceData BoxData) {
-	a.DisplayData.ChoiceData = choiceData
-}
-
-func (a *InteractivePlayerAgent) BuildDisplayBoxes() DisplayBoxes {
-	playerBox := CombineBoxesSideBySide(
-		CreateBox(a.DisplayData.HandData),
-		CreateBox(a.DisplayData.ChoiceData),
-	)
-	if len(a.DisplayData.RevealedData.Content) > 0 {
-		playerBox = CombineBoxesSideBySide(
-			playerBox,
-			CreateBox(a.DisplayData.RevealedData),
-		)
-	}
-	return DisplayBoxes{
-		GameStatusBox: CombineBoxesSideBySide(
-			CreateBox(a.DisplayData.GameStatusData),
-			CreateBox(a.DisplayData.OpponentData),
-		),
-		PlaySpaceBox: CombineBoxesSideBySide(
-			CombineBoxesSideBySide(
-				CreateBox(a.DisplayData.GraveyardData),
-				CreateBox(a.DisplayData.BattlefieldData),
-			),
-			CreateBox(a.DisplayData.StackData),
-		),
-		PlayerBox:  playerBox,
-		MessageBox: CreateBox(a.DisplayData.MessageData),
-	}
-}
-
 // NewInteractivePlayerAgent creates a new InteractivePlayerAgent with the
 // given scanner.
 func NewInteractivePlayerAgent(scanner *bufio.Scanner, playerID string) *InteractivePlayerAgent {
-	tmpl := template.New("display")
-	tmpl = template.Must(tmpl.ParseFiles(
-		"./interactive/display.tmpl",
-	))
 	return &InteractivePlayerAgent{
-		playerID:        playerID,
-		DisplayData:     DisplayData{},
-		Scanner:         scanner,
-		DisplayTemplate: tmpl,
-		prompt:          ">> ",
-	}
-}
-
-// ClearScreen clears the terminal screen.
-func ClearScreen() {
-	switch runtime.GOOS {
-	case "windows":
-		cmd := exec.Command("cmd", "/c", "cls")
-		cmd.Stdout = os.Stdout
-		cmd.Run()
-	default:
-		cmd := exec.Command("clear")
-		cmd.Stdout = os.Stdout
-		cmd.Run()
+		playerID: playerID,
+		uiBuffer: ui.NewBuffer(),
+		Scanner:  scanner,
+		prompt:   ">> ",
 	}
 }
 
 // ReportState displays the current game state in a terminal UI.
 // TODO maybe get player from state.CurrentPlayer?
 func (a *InteractivePlayerAgent) ReportState(state *game.GameState) {
-	a.UpdateDisplayData(state)
-	ClearScreen()
-	displayBoxes := a.BuildDisplayBoxes()
-	if err := a.DisplayTemplate.ExecuteTemplate(
-		// TODO: use passed in stdout from Run
-		os.Stdout,
-		"display.tmpl",
-		displayBoxes,
-	); err != nil {
-		fmt.Println("Error executing template:", err)
-		// TODO: handle error return to main
-		os.Exit(1)
+	a.uiBuffer.UpdateFromState(state, a.playerID)
+	if err := a.uiBuffer.Render(); err != nil {
+		panic(fmt.Sprintf("Error rendering UI buffer: %v", err))
 	}
+
 }
 
 func (a *InteractivePlayerAgent) GetNextAction(state *game.GameState) *game.GameAction {

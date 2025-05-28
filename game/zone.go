@@ -16,7 +16,7 @@ type Zone interface {
 	// TODO make this accept multiple GameObjects
 	Add(object GameObject) error
 	// This probably makes more sense as a method of Player
-	AvailableActivatedAbilities(*GameState, *Player) []*ActivatedAbility
+	AvailableActivatedAbilities(*GameState, *Player) []GameObject
 	// This probably makes more sense as a method of Player
 	AvailableToPlay(*GameState, *Player) []GameObject
 	Get(id string) (GameObject, error)

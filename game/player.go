@@ -69,23 +69,23 @@ func (p *Player) Zones() []Zone {
 	}
 }
 
-func (p *Player) GetAvailableToPlay(state *GameState) []GameObject {
-	var available []GameObject
+func (p *Player) GetAvailableToPlay(state *GameState) map[string][]GameObject {
+	available := map[string][]GameObject{}
 	for _, zone := range p.Zones() {
-		available = append(available, zone.AvailableToPlay(state, p)...)
+		available[zone.ZoneType()] = append(available[zone.ZoneType()], zone.AvailableToPlay(state, p)...)
 	}
 	return available
 }
 
-func (p *Player) GetAvailableToActivate(state *GameState) []GameObject {
-	var objects []GameObject
+func (p *Player) GetAvailableToActivate(state *GameState) map[string][]GameObject {
+	available := map[string][]GameObject{}
 	for _, zone := range p.Zones() {
 		// TODO: Make this reutrn objects
 		for _, ability := range zone.AvailableActivatedAbilities(state, p) {
-			objects = append(objects, ability)
+			available[zone.ZoneType()] = append(available[zone.ZoneType()], ability)
 		}
 	}
-	return objects
+	return available
 
 }
 

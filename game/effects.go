@@ -257,7 +257,7 @@ func BuildEffectCounterSpell(source GameObject, spec EffectSpec) (*Effect, error
 				}
 			}
 		}
-		choices := CreateObjectChoices(spells, ZoneStack)
+		choices := CreateChoices(spells, ZoneStack)
 		if len(choices) == 0 {
 			return fmt.Errorf("no spells to counter")
 		}
@@ -370,7 +370,7 @@ func BuildEffectLookAndChoose(source GameObject, spec EffectSpec) (*Effect, erro
 			state.ActivePlayer.Agent.ReportState(state)
 		}()
 		for range nChoose {
-			choices := CreateObjectChoices(
+			choices := CreateChoices(
 				FindBy(objects, Or(filters...)),
 				ZoneRevealed,
 			)
@@ -400,7 +400,7 @@ func BuildEffectLookAndChoose(source GameObject, spec EffectSpec) (*Effect, erro
 		case "Library":
 			if order == "Any" {
 				for len(objects) > 0 {
-					choices := CreateObjectChoices(objects, ZoneLibrary)
+					choices := CreateChoices(objects, ZoneLibrary)
 					chosen, err := player.Agent.ChooseOne(
 						"Choose a card to put on the bottom of your library",
 						source,
@@ -669,7 +669,7 @@ func BuildEffectSearch(source GameObject, spec EffectSpec) (*Effect, error) {
 		if len(objects) == 0 {
 			return fmt.Errorf("no cards found matching the specified targets")
 		}
-		choices := CreateObjectChoices(objects, ZoneLibrary)
+		choices := CreateChoices(objects, ZoneLibrary)
 		chosen, err := player.Agent.ChooseOne(
 			fmt.Sprintf("Choose a card to put into your hand"),
 			source,
@@ -714,7 +714,7 @@ func BuildEffectTransmute(source GameObject, spec EffectSpec) (*Effect, error) {
 				"no cards with mana value %s found", card.ManaValue(),
 			)
 		}
-		choices := CreateObjectChoices(objects, ZoneLibrary)
+		choices := CreateChoices(objects, ZoneLibrary)
 		chosen, err := player.Agent.ChooseOne(
 			fmt.Sprintf("Choose a card to put into your hand"),
 			source,
@@ -759,7 +759,7 @@ func BuildEffectTypecycling(source GameObject, spec EffectSpec) (*Effect, error)
 		if len(objects) == 0 {
 			return fmt.Errorf("no cards of subtype %s found", subtype)
 		}
-		choices := CreateObjectChoices(objects, ZoneLibrary)
+		choices := CreateChoices(objects, ZoneLibrary)
 		chosen, err := player.Agent.ChooseOne(
 			fmt.Sprintf("Choose a card to put into your hand"),
 			source,
@@ -799,7 +799,7 @@ func BuildEffectShuffleFromGraveyard(source GameObject, spec EffectSpec) (*Effec
 	}
 	effect.Apply = func(state *GameState, player *Player) error {
 		for range n {
-			choices := CreateObjectChoices(player.Graveyard.GetAll(), ZoneGraveyard)
+			choices := CreateChoices(player.Graveyard.GetAll(), ZoneGraveyard)
 			if len(choices) == 0 {
 				break
 			}
@@ -853,7 +853,7 @@ func BuildEffectTap(source GameObject, spec EffectSpec) (*Effect, error) {
 			// TODO: Spells can't be cast without targets
 			return errors.New("no available targets")
 		}
-		choices := CreateObjectChoices(cards, ZoneBattlefield)
+		choices := CreateChoices(cards, ZoneBattlefield)
 		chosen, err := player.Agent.ChooseOne(
 			fmt.Sprintf("Choose a card to tap"),
 			source,
@@ -908,7 +908,7 @@ func BuildEffectTapOrUntap(source GameObject, spec EffectSpec) (*Effect, error) 
 		if len(cards) == 0 {
 			return errors.New("no available targets")
 		}
-		choices := CreateObjectChoices(cards, ZoneBattlefield)
+		choices := CreateChoices(cards, ZoneBattlefield)
 		chosen, err := player.Agent.ChooseOne(
 			fmt.Sprintf("Choose a card to tap or untap"),
 			source,
