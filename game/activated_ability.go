@@ -32,7 +32,7 @@ func (a *ActivatedAbility) HasColor(Color) bool {
 }
 
 func (a *ActivatedAbility) Name() string {
-	return fmt.Sprintf("%s: %s", a.source.Name(), a.name)
+	return fmt.Sprintf("%s - %s", a.source.Name(), a.name)
 }
 
 func (a *ActivatedAbility) ActivatedAbilities() []*ActivatedAbility {

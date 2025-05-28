@@ -13,7 +13,15 @@ type Cost interface {
 	CanPay(*GameState, *Player) bool
 	Description() string
 	Pay(*GameState, *Player) error
-	Add(Cost) Cost
+}
+
+func AddCosts(costs ...Cost) Cost {
+	// If there's only one cost, return it directly.
+	if len(costs) == 1 {
+		return costs[0]
+	}
+	// Otherwise, return a composite cost.
+	return &CompositeCost{Costs: costs}
 }
 
 // ManaPattern is a regex pattern that matches valid mana costs.
@@ -49,6 +57,12 @@ func NewCost(input string, source GameObject) (Cost, error) {
 				return nil, fmt.Errorf("failed to parse life cost %s: %w", trimmed, err)
 			}
 			costs = append(costs, lifeCost)
+		case isDiscardCost(trimmed):
+			card, ok := source.(*Card)
+			if !ok {
+				return nil, fmt.Errorf("source %s not a card", source.Name())
+			}
+			costs = append(costs, &DiscardCost{Card: card})
 		default:
 			return nil, fmt.Errorf("unknown cost %s", trimmed)
 		}
@@ -62,11 +76,6 @@ func NewCost(input string, source GameObject) (Cost, error) {
 // CompositeCost represents a cost that is a combination of multiple costs.
 type CompositeCost struct {
 	Costs []Cost
-}
-
-func (c *CompositeCost) Add(cost Cost) Cost {
-	c.Costs = append(c.Costs, cost)
-	return c
 }
 
 // CanPay checks if all costs in the composite cost can be paid with the
@@ -133,17 +142,6 @@ type LifeCost struct {
 	Player *Player
 }
 
-// TODO Maybe make this a a AddCosts(costs ...Cost) Cost function so I don't
-// have to implement it on everything
-func (c *LifeCost) Add(cost Cost) Cost {
-	cc := CompositeCost{
-		Costs: []Cost{},
-	}
-	cc.Costs = append(cc.Costs, c)
-	cc.Costs = append(cc.Costs, cost)
-	return &cc
-}
-
 func ParseLifeCost(input string) (*LifeCost, error) {
 	// Example input: "Pay 3 life"
 	re := regexp.MustCompile(`^Pay (\d+) life$`)
@@ -182,16 +180,6 @@ func (l *LifeCost) Pay(state *GameState, player *Player) error {
 type ManaCost struct {
 	Colors  map[Color]int
 	Generic int
-}
-
-// AddCost adds a cost to the mana cost.
-func (c *ManaCost) Add(cost Cost) Cost {
-	cc := CompositeCost{
-		Costs: []Cost{},
-	}
-	cc.Costs = append(cc.Costs, c)
-	cc.Costs = append(cc.Costs, cost)
-	return &cc
 }
 
 // CanPay checks if the cost can be paid with the current game state.
@@ -278,16 +266,6 @@ type SacrificeCost struct {
 	Permanent *Permanent
 }
 
-// AddCost adds a cost to the mana cost.
-func (c *SacrificeCost) Add(cost Cost) Cost {
-	cc := CompositeCost{
-		Costs: []Cost{},
-	}
-	cc.Costs = append(cc.Costs, c)
-	cc.Costs = append(cc.Costs, cost)
-	return &cc
-}
-
 // CanPay checks if the sacrifice cost can be paid with the current game
 // state.
 func (c *SacrificeCost) CanPay(game *GameState, player *Player) bool {
@@ -307,19 +285,40 @@ func (c *SacrificeCost) Pay(game *GameState, player *Player) error {
 	return errors.New("not implemented")
 }
 
+type DiscardCost struct {
+	Card *Card
+}
+
+func (c *DiscardCost) CanPay(game *GameState, player *Player) bool {
+	if _, err := player.Hand.Get(c.Card.ID()); err != nil {
+		return false
+	}
+	return true
+}
+
+func (c *DiscardCost) Description() string {
+	return fmt.Sprintf("discard %s", c.Card.Name())
+}
+
+func (c *DiscardCost) Pay(game *GameState, player *Player) error {
+	// Check if the player can pay the discard cost
+	if !c.CanPay(game, player) {
+		return fmt.Errorf("cannot discard card %s", c.Card.Name())
+	}
+	// Remove the card from the player's hand
+	card, err := player.Hand.Take(c.Card.ID())
+	if err != nil {
+		return fmt.Errorf("failed to discard card %s: %w", c.Card.Name(), err)
+	}
+	if err := player.Graveyard.Add(card); err != nil {
+		return fmt.Errorf("failed to move discarded card %s to graveyard: %w", c.Card.Name(), err)
+	}
+	return nil
+}
+
 // TapCost represents a cost that requires tapping the permanent.
 type TapCost struct {
 	Permanent *Permanent
-}
-
-// AddCost adds a cost to the mana cost.
-func (c *TapCost) Add(cost Cost) Cost {
-	cc := CompositeCost{
-		Costs: []Cost{},
-	}
-	cc.Costs = append(cc.Costs, c)
-	cc.Costs = append(cc.Costs, cost)
-	return &cc
 }
 
 // CanPay checks if the tap cost can be paid with the current game state.
@@ -410,4 +409,8 @@ func isLifeCost(input string) bool {
 // isTapCost checks if the input string is a tap cost.
 func isTapCost(input string) bool {
 	return input == "{T}"
+}
+
+func isDiscardCost(input string) bool {
+	return input == "Discard this card"
 }

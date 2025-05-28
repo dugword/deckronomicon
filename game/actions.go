@@ -729,7 +729,7 @@ func actionCastSpellFunc(state *GameState, player *Player, card *Card, zone stri
 						continue
 					}
 					state.Log("adding splice to toSplice...")
-					spellCost = spellCost.Add(spliceCost)
+					spellCost = AddCosts(spellCost, spliceCost)
 					toSplice = append(toSplice, spliceCard)
 				}
 			}
@@ -764,7 +764,7 @@ func actionCastSpellFunc(state *GameState, player *Player, card *Card, zone stri
 		}
 	}
 	for range replicateCount {
-		spellCost = spellCost.Add(replicateCost)
+		spellCost = AddCosts(spellCost, replicateCost)
 	}
 	fmt.Println("Spell cost: ", spellCost.Description())
 	if err := spellCost.Pay(state, player); err != nil {
