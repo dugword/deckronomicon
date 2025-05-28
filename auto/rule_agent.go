@@ -2,6 +2,7 @@ package auto
 
 import (
 	"deckronomicon/game"
+	"deckronomicon/ui"
 	"fmt"
 )
 
@@ -14,10 +15,12 @@ type EvaluatorContext struct {
 type RuleBasedAgent struct {
 	// Rules       []Rule
 	// ChoiceRules []ChoiceRule
-	playerID   string
-	verbose    bool
-	LastAction string
-	strategy   *Strategy
+	playerID    string
+	verbose     bool
+	LastAction  string
+	strategy    *Strategy
+	uiBuffer    *ui.Buffer // Buffer for UI updates
+	interactive bool       // Whether the agent is interactive or not
 }
 
 type Rule struct {
@@ -46,11 +49,13 @@ func (a *RuleBasedAgent) PlayerID() string {
 func (a *RuleBasedAgent) ReportState(state *game.GameState) {
 }
 
-func NewRuleBasedAgent(strategyFile string, playerID string) (*RuleBasedAgent, error) {
+func NewRuleBasedAgent(strategyFile string, playerID string, interactive bool) (*RuleBasedAgent, error) {
 	agent := RuleBasedAgent{
 		// TODO : make this configurable
-		verbose:  true,
-		playerID: playerID,
+		verbose:     true,
+		playerID:    playerID,
+		interactive: interactive,
+		uiBuffer:    ui.NewBuffer(),
 	}
 	strategy, err := LoadStrategy(strategyFile)
 	if err != nil {
@@ -84,51 +89,49 @@ func (a *RuleBasedAgent) GetNextAction(state *game.GameState) *game.GameAction {
 		strategy: a.strategy,
 	}
 	for _, mode := range a.strategy.Modes {
-		fmt.Println("Evaluating mode:", mode.Name)
 		if mode.Name == player.Mode {
 			continue // Skip the current mode
 		}
 		result, err := mode.When.Evaluate(ctx)
 		if err != nil {
-			fmt.Println("Error evaluating condition for mode:", mode.Name, "-", err)
 			panic("failed to evaluate condition for mode")
 			return nil
 		}
 		if result {
-			fmt.Println("Matched mode:", mode.Name)
 			player.Mode = mode.Name
-			fmt.Println("We did it! Switched to mode:", player.Mode)
 			break
 		}
-		fmt.Println("Mode", mode.Name, "did not match")
 	}
 	var action *game.GameAction
+	var matchedRule string
 	for _, rule := range a.strategy.Rules[player.Mode] {
-		fmt.Println("Evaluating rule:", rule.Name)
 		result, err := rule.When.Evaluate(ctx)
 		if err != nil {
-			fmt.Println("Error evaluating condition for rule:", rule.Name, "-", err)
 			panic("failed to evaluate condition for rule")
 			return nil
 		}
-		if result {
-			fmt.Println("!!!!!!! Matched rule:", rule.Name)
-			fmt.Println("then =>", rule.Then)
-			action, err = rule.Then.Resolve(ctx)
-			if err != nil {
-				fmt.Println("Error evaluating action for rule:", rule.Name, "-", err)
-				a.debugPrintStuff(state)
-				return &game.GameAction{Type: game.ActionPass} // If there's an error, just pass}
-			}
-			break // Stop after the first matching rule
+		if !result {
+			continue
 		}
+		matchedRule = rule.Name
+		action, err = rule.Then.Resolve(ctx)
+		if err != nil {
+			panic(err)
+		}
+		break // Stop after the first matching rule
+	}
+	a.uiBuffer.UpdateFromState(state, a.playerID)
+	if err := a.uiBuffer.Render(); err != nil {
+		panic(fmt.Errorf("error rendering UI buffer: %w", err))
 	}
 	if action == nil {
-		fmt.Println("@@@@@@ No action matched in mode:", player.Mode)
-		a.debugPrintStuff(state)
+		fmt.Println("No action matched for player:", a.playerID)
+		enterToContinue()
 		return &game.GameAction{Type: game.ActionPass} // No action matched, just pass
 	}
-	a.debugPrintStuff(state)
+	fmt.Println("Matched rule: ", matchedRule)
+	fmt.Println("Action chosen for player: ", action.Type)
+	enterToContinue()
 	return action
 }
 
