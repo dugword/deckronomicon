@@ -1,0 +1,34 @@
+[
+  {
+    "name": "Early Setup",
+    "description": "Play Lorien Revealed when setup pieces are in hand.",
+    "when": {
+      "and": [
+        { "inZone": { "zone": "Hand", "cards": ["Lorien Revealed"] } },
+        {
+          "or": [
+            { "inZone": { "zone": "Hand", "cards": ["Combo Piece A"] } },
+            { "inZone": { "zone": "Hand", "cards": ["Combo Piece B"] } }
+          ]
+        },
+        { "not": { "inZone": { "zone": "Battlefield", "cards": ["Disruption Card"] } } },
+        { "playerStat": { "stat": "handSize", "op": ">=", "value": 5 } }
+      ]
+    },
+    "then": {
+      "action": "Cast",
+      "card": "Lorien Revealed"
+    }
+  },
+  {
+    "name": "Emergency Defense",
+    "description": "Switch to panic mode if life total is too low.",
+    "when": {
+      "playerStat": { "stat": "lifeTotal", "op": "<", "value": 6 }
+    },
+    "then": {
+      "action": "Cast",
+      "card": "Weather the Storm"
+    }
+  }
+]

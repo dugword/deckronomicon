@@ -5,6 +5,7 @@
   "Name": "Remote Isle",
   "ActivatedAbilities": [
     {
+      "Name": "Add {U} Mana",
       "Cost": "{T}",
       "Effects": [
         {
@@ -19,6 +20,7 @@
       ]
     },
     {
+      "Name": "Cycling",
       "Cost": "{2},Discard this card",
       "Effects": [
         {

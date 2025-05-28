@@ -20,6 +20,7 @@ type EffectModifier struct {
 }
 
 type ActivatedAbilitySpec struct {
+	Name        string       `json:"Name,omitempty"`
 	Cost        string       `json:"Cost,omitempty"`
 	EffectSpecs []EffectSpec `json:"Effects,omitempty"`
 	// TODO: This might need to be a slice if an ability is activatedable from

@@ -73,10 +73,14 @@ func Run(
 		)
 	} else {
 		logger.Log("Creating rule based player agent...")
-		playerAgent = auto.NewRuleBasedAgent(
+		var err error
+		playerAgent, err = auto.NewRuleBasedAgent(
 			scenario.PlayerStrategy,
 			scenario.Setup.PlayerName,
 		)
+		if err != nil {
+			return fmt.Errorf("failed to create rule based agent: %w", err)
+		}
 	}
 	opponentAgent := dummy.NewDummyAgent(
 		scenario.Setup.OpponentName,

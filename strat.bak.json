@@ -20,43 +20,28 @@
       "Name": "Combo",
       "Description": "Begin combo turn",
       "When": {
-        "InHand": {
-          "And": [
-            "Black Lotus",
-            "High Tide",
-            "Psychic Puppetry",
-            {
-              "Or": [
-                "$ComboPiece"
-              ]
-            }
-          ]
-        }
+        "HandContains": [
+          "Black Lotus"
+        ],
+        "has_played_land": true
       }
     },
     {
       "Name": "Panic",
       "Description": "Emergency mode",
       "When": {
-        "Mode": "Combo",
-        "InZone": {
-          "Zone": "Hand",
-          "Cards": [
-            "Island"
-          ]
-        }
+        "HandContains": [
+          "Black Lotus"
+        ]
       }
     },
     {
       "Name": "Win",
       "Description": "Winning the game",
       "When": {
-        "InZone": {
-          "Zone": "Hand",
-          "Cards": [
-            "Black Lotus"
-          ]
-        }
+        "HandContains": [
+          "Black Lotus"
+        ]
       }
     }
   ],
@@ -65,33 +50,32 @@
       {
         "Name": "Make land drop",
         "When": {
-          "Step": "PrecombatMain",
-          "InZone": {
-            "Zone": "Hand",
-            "Cards": [
-              "$MyLand"
-            ]
-          }
+          "HandContains": [
+            "Island"
+          ],
+          "CurrentStep": [
+            "Precombat Main", "Postcombat Main"
+          ],
+          "HasPlayedLand": false
         },
         "Then": {
-          "Play": [
-            "$MyLand"
-          ]
+          "Action": "Play",
+          "Target": "Island"
         }
       }
     ],
     "Combo": [
-      {
+      {, "Postcombat Main"
         "Name": "Cast High Tide",
         "When": {
-          "InZone": {
-            "Zone": "Hand",
-            "Cards": [
-              "Black Lotus"
-            ]
-          }
+          "HandContains": [
+            "Black Lotus"
+          ]
         },
-        "Then": {}
+        "Then": {
+          "Action": "cast",
+          "Target": "High Tide"
+        }
       }
     ]
   }

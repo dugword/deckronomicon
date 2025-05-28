@@ -38,6 +38,7 @@ func (s *Stack) AvailableToPlay(*GameState) []GameObject {
 	return nil
 }
 
+/*
 func (s *Stack) Find(id string) (GameObject, error) {
 	return nil, nil
 }
@@ -49,8 +50,10 @@ func (s *Stack) FindByName(name string) (GameObject, error) {
 func (s *Stack) FindAllBySubtype(subtype Subtype) []GameObject {
 	return nil
 }
+*/
 
 func (s *Stack) Get(id string) (GameObject, error) {
+	panic("not implemented")
 	return nil, nil
 }
 
@@ -67,6 +70,7 @@ func (s *Stack) GetAll() []GameObject {
 }
 
 func (s *Stack) Remove(id string) error {
+	panic("not implemented")
 	return nil
 }
 

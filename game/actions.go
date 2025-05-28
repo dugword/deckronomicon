@@ -99,7 +99,10 @@ func (g *GameState) ResolveAction(action *GameAction, player *Player) (result *A
 		return nil, PlayerLostError{Reason: Conceded}
 	case ActionPass:
 		g.Log("Action: pass")
-		return &ActionResult{Pass: true}, nil
+		return &ActionResult{
+			Message: "Player passed",
+			Pass:    true,
+		}, nil
 	case ActionPlay:
 		// todo: make this nicer
 		g.Log("Action: play " + action.Target)
@@ -384,12 +387,7 @@ func ActionLandDropFunc(state *GameState, player *Player, target string) (*Actio
 // ActionPlayFunc handles the play action. This is performed by the player to
 // play a card from their hand. The target is the name of the card to play.
 func ActionPlayFunc(state *GameState, player *Player, target string) (result *ActionResult, err error) {
-	var choices []Choice
-	for _, zone := range player.Zones() {
-		cards := zone.AvailableToPlay(state, player)
-		cs := CreateObjectChoices(cards, zone.ZoneType())
-		choices = append(choices, cs...)
-	}
+	choices := CreateObjectChoices(player.GetAvailableToPlay(state), ZoneHand)
 	if len(choices) == 0 {
 		return nil, errors.New("no cards available to play")
 	}

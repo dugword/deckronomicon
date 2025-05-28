@@ -3,6 +3,9 @@ package game
 // TODO: Rework this file with better handling for wrapper functions and ID
 // managment for cleanup.
 
+// TODO: This needs to have some kind of status display, e.g. I want to see
+// that there are X High Tide effects in play.
+
 // Event represents an event in the game.
 type Event struct {
 	Type   EventType

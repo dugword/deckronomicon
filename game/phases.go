@@ -7,9 +7,9 @@ import (
 
 const (
 	PhaseBeginning      = "Beginning"
-	PhasePreCombatMain  = "PreCombatMain"
+	PhasePrecombatMain  = "PrecombatMain"
 	PhaseCombat         = "Combat"
-	PhasePostCombatMain = "PostCombatMain"
+	PhasePostcombatMain = "PostcombatMain"
 	PhaseEnding         = "Ending"
 )
 
@@ -17,13 +17,13 @@ const (
 	StepUntap             = "Untap"
 	StepUpkeep            = "Upkeep"
 	StepDraw              = "Draw"
-	StepPreCombatMain     = "PreCombatMain"
+	StepPrecombatMain     = "PrecombatMain"
 	StepBeginningOfCombat = "BeginningOfCombat"
 	StepDeclareAttackers  = "DeclareAttackers"
 	StepDeclareBlockers   = "DeclareBlockers"
 	StepCombatDamage      = "CombatDamage"
 	StepEndOfCombat       = "EndOfCombat"
-	StepPostCombatMain    = "PostCombatMain"
+	StepPostcombatMain    = "PostcombatMain"
 	StepEnd               = "End"
 	StepCleanup           = "Cleanup"
 )
@@ -79,11 +79,11 @@ var beginningPhase = GamePhase{
 	},
 }
 
-var preCombatMainPhase = GamePhase{
-	Name: PhasePreCombatMain,
+var precombatMainPhase = GamePhase{
+	Name: PhasePrecombatMain,
 	Steps: []GameStep{
 		{
-			Name:       StepPreCombatMain,
+			Name:       StepPrecombatMain,
 			EventEvent: EventPrecombatMainPhase,
 			Handler: wrapStep(func(g *GameState, player *Player) error {
 				return nil
@@ -135,11 +135,11 @@ var combatPhase = GamePhase{
 	},
 }
 
-var postCombatMainPhase = GamePhase{
-	Name: PhasePostCombatMain,
+var postcombatMainPhase = GamePhase{
+	Name: PhasePostcombatMain,
 	Steps: []GameStep{
 		{
-			Name:       StepPostCombatMain,
+			Name:       StepPostcombatMain,
 			EventEvent: EventPostcombatMainPhase,
 			Handler: wrapStep(func(g *GameState, player *Player) error {
 				return nil
