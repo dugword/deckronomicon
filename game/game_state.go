@@ -228,7 +228,7 @@ func (g *GameState) CanCastSorcery() bool {
 }
 
 func (g *GameState) IsMainPhase() bool {
-	return g.CurrentPhase == PhasePreCombatMain || g.CurrentPhase == PhasePostCombatMain
+	return g.CurrentPhase == PhasePrecombatMain || g.CurrentPhase == PhasePostcombatMain
 }
 
 func (g *GameState) StackIsEmpty() bool {

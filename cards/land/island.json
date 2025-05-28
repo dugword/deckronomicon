@@ -11,6 +11,7 @@
   ],
   "ActivatedAbilities": [
     {
+      "Name": "Add {U} Mana",
       "Cost": "{T}",
       "Effects": [
         {

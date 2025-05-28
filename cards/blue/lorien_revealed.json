@@ -22,6 +22,7 @@
   },
   "ActivatedAbilities": [
     {
+      "Name": "Islandcycling",
       "Cost": "{1}",
       "Effects": [
         {

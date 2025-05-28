@@ -94,14 +94,14 @@ func (g *GameState) RunTurn(player *Player) error {
 	if err := g.RunPhase(beginningPhase, player); err != nil {
 		return fmt.Errorf("failed to run beginning phase: %w", err)
 	}
-	if err := g.RunPhase(preCombatMainPhase, player); err != nil {
-		return fmt.Errorf("failed to run pre-combat main phase: %w", err)
+	if err := g.RunPhase(precombatMainPhase, player); err != nil {
+		return fmt.Errorf("failed to run precombat main phase: %w", err)
 	}
 	if err := g.RunPhase(combatPhase, player); err != nil {
 		return fmt.Errorf("failed to run combat phase: %w", err)
 	}
-	if err := g.RunPhase(postCombatMainPhase, player); err != nil {
-		return fmt.Errorf("failed to run post-combat main phase: %w", err)
+	if err := g.RunPhase(postcombatMainPhase, player); err != nil {
+		return fmt.Errorf("failed to run postcombat main phase: %w", err)
 	}
 	if err := g.RunPhase(endingPhase, player); err != nil {
 		return fmt.Errorf("failed to run ending phase: %w", err)

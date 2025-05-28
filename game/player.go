@@ -8,6 +8,12 @@ import "fmt"
 
 // TODO Maybe PlayerAgent should be a field of Player.
 
+// TODO Not sure how I want to handle the "Modes" of a player, standardize them here or let them be defiend ad-hoc,
+// in the strategy rules.
+const (
+	ModeSetup = "Setup"
+)
+
 type Player struct {
 	Agent         PlayerAgent
 	Battlefield   *Battlefield
@@ -20,6 +26,7 @@ type Player struct {
 	Life          int
 	ManaPool      *ManaPool
 	MaxHandSize   int
+	Mode          string
 	Mulligans     int
 	PotentialMana *ManaPool
 	Revealed      *Revealed
@@ -44,9 +51,11 @@ func NewPlayer(agent PlayerAgent) *Player {
 		ManaPool: NewManaPool(),
 		// I don't like this, but it works for now
 		MaxHandSize:   7,
+		Mode:          ModeSetup,
 		PotentialMana: NewManaPool(),
 		Revealed:      NewRevealed(),
-		Stops:         []string{StepPreCombatMain},
+		// TODO: Make this configurable
+		Stops: []string{StepDraw, StepPrecombatMain},
 	}
 	return &player
 }
@@ -58,6 +67,26 @@ func (p *Player) Zones() []Zone {
 		p.Hand,
 		p.Graveyard,
 	}
+}
+
+func (p *Player) GetAvailableToPlay(state *GameState) []GameObject {
+	var available []GameObject
+	for _, zone := range p.Zones() {
+		available = append(available, zone.AvailableToPlay(state, p)...)
+	}
+	return available
+}
+
+func (p *Player) GetAvailableToActivate(state *GameState) []GameObject {
+	var objects []GameObject
+	for _, zone := range p.Zones() {
+		// TODO: Make this reutrn objects
+		for _, ability := range zone.AvailableActivatedAbilities(state, p) {
+			objects = append(objects, ability)
+		}
+	}
+	return objects
+
 }
 
 func (p *Player) GetZone(zone string) (Zone, error) {

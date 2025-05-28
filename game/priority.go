@@ -58,10 +58,6 @@ func (g *GameState) RunPriorityLoop(player *Player) error {
 				continue
 			}
 		}
-		if action.Type == ActionPass {
-			g.Log("Player passed priority")
-			return nil
-		}
 		result, err := g.ResolveAction(action, player)
 		if err != nil {
 			if errors.Is(err, ErrGameOver) {
@@ -73,6 +69,9 @@ func (g *GameState) RunPriorityLoop(player *Player) error {
 			continue
 		}
 		g.Message = result.Message
+		if result.Pass {
+			return nil
+		}
 	}
 }
 

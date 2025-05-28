@@ -58,7 +58,11 @@
     },
     {
       "name": "Island",
-      "count": 15
+      "count": 8
+    },
+    {
+      "name": "Snow-Covered Island",
+      "count": 7
     }
   ]
 }

@@ -7,6 +7,7 @@ import (
 
 // ActivatedAbility represents abilities that require activation costs.
 type ActivatedAbility struct {
+	name    string
 	Cost    Cost
 	Effects []*Effect
 	id      string
@@ -30,14 +31,7 @@ func (a *ActivatedAbility) HasColor(Color) bool {
 	return false
 }
 func (a *ActivatedAbility) Name() string {
-	// Activated abilities do not have a name.
-	// TODO: Maybe make this the source name + something
-	// or the EffectID, or maybe Name: join(EfectID, ", ")
-	var ids []string
-	for _, effect := range a.Effects {
-		ids = append(ids, effect.ID)
-	}
-	return fmt.Sprintf("%s: %s", a.source.Name(), strings.Join(ids, ", "))
+	return a.name
 }
 func (a *ActivatedAbility) ActivatedAbilities() []*ActivatedAbility {
 	// Activated abilities do not have activated abilities.
@@ -76,6 +70,7 @@ func BuildActivatedAbility(spec ActivatedAbilitySpec, source GameObject) (*Activ
 		zone = spec.Zone
 	}
 	ability := ActivatedAbility{
+		name:   spec.Name,
 		id:     GetNextID(),
 		source: source,
 		Zone:   zone,
