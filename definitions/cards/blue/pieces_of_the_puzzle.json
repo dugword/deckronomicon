@@ -1,0 +1,24 @@
+{
+  "CardTypes": [
+    "Sorcery"
+  ],
+  "Color": [
+    "U"
+  ],
+  "ManaCost": "{2}{U}",
+  "Name": "Pieces of the Puzzle",
+  "SpellAbility": {
+    "Effects": [
+      {
+        "Name": "LookAndChoose",
+        "Modifiers": {
+            "Look": 5,
+            "Choose": 2,
+            "CardTypes": ["Instant", "Sorcery"],
+            "Rest": "Graveyard"
+          }
+        }
+    ]
+  },
+  "RulesText": "Reveal the top five cards of your library. Put up to two instant and/or sorcery cards from among them into your hand and the rest into your graveyard."
+}

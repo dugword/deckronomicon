@@ -1,0 +1,29 @@
+{
+  "CardTypes": [
+    "Instant"
+  ],
+  "Color": [
+    "U"
+  ],
+  "ManaCost": "{1}{U}",
+  "Name": "Psychic Puppetry",
+  "SpellAbility": {
+    "Effects": [
+      {
+        "Name": "TapOrUntap",
+        "Modifiers": {
+            "Target": "Permanent"
+          }
+      }
+    ]
+  },
+  "StaticAbilities": [
+    {
+      "Name": "Splice",
+      "Modifiers": {
+        "Onto": "Arcane",
+        "Cost": "{U}"
+      }
+    }
+  ]
+}

@@ -1,68 +1,69 @@
 {
-  "cards": [
+  "Name": "High Tide Combo",
+  "Cards": [
     {
-      "name": "Brainstorm",
-      "count": 4
+      "Name": "Brainstorm",
+      "Count": 4
     },
     {
-      "name": "Gigadrowse",
-      "count": 1
+      "Name": "Gigadrowse",
+      "Count": 1
     },
     {
-      "name": "High Tide",
-      "count": 4
+      "Name": "High Tide",
+      "Count": 4
     },
     {
-      "name": "Preordain",
-      "count": 4
+      "Name": "Preordain",
+      "Count": 4
     },
     {
-      "name": "Stream of Thought",
-      "count": 2
+      "Name": "Stream of Thought",
+      "Count": 2
     },
     {
-      "name": "Hidden Strings",
-      "count": 4
+      "Name": "Hidden Strings",
+      "Count": 4
     },
     {
-      "name": "Ideas Unbound",
-      "count": 4
+      "Name": "Ideas Unbound",
+      "Count": 4
     },
     {
-      "name": "Merchant Scroll",
-      "count": 4
+      "Name": "Merchant Scroll",
+      "Count": 4
     },
     {
-      "name": "Muddle the Mixture",
-      "count": 2
+      "Name": "Muddle the Mixture",
+      "Count": 2
     },
     {
-      "name": "Peer Through Depths",
-      "count": 4
+      "Name": "Peer Through Depths",
+      "Count": 4
     },
     {
-      "name": "Psychic Puppetry",
-      "count": 4
+      "Name": "Psychic Puppetry",
+      "Count": 4
     },
     {
-      "name": "Pieces of the Puzzle",
-      "count": 3
+      "Name": "Pieces of the Puzzle",
+      "Count": 3
     },
     {
-      "name": "Deep Analysis",
-      "count": 1
+      "Name": "Deep Analysis",
+      "Count": 1
     },
     {
-      "name": "Lorien Revealed",
-      "count": 4
+      "Name": "Lorien Revealed",
+      "Count": 4
     },
     {
-      "name": "Island",
-      "count": 8
+      "Name": "Island",
+      "Count": 15
     },
     {
-      "name": "Snow-Covered Island",
-      "count": 7
+      "Name": "Snow-Covered Island",
+      "Count": 7
     }
   ]
 }
