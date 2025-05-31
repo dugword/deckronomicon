@@ -18,8 +18,11 @@ type ActionResult struct {
 	Pass    bool
 }
 
+// TODO: ActionAction sucks, maybe move it to the game package and have
+// game.Action
+
 // ResolveAction handles the resolution of game actions.
-func (e *Engine) ResolveAction(act *action.Action, player *player.Player) (result *ActionResult, err error) {
+func (e *Engine) ResolveAction(act *action.Action, player *player.Player) (result ActionResult, err error) {
 	switch act.Type {
 	case action.ActionActivate:
 		e.Log("Action: activate")
@@ -30,14 +33,14 @@ func (e *Engine) ResolveAction(act *action.Action, player *player.Player) (resul
 	case action.ActionCheat:
 		e.Log("Action: cheat... you cheater")
 		e.GameState.CheatsEnabled = true
-		return &ActionResult{Message: "Cheat mode enabled"}, nil
+		return ActionResult{Message: "Cheat mode enabled"}, nil
 	case action.ActionConcede:
 		e.Log("Action: concede")
 		// TODO: Should this be an error?
-		return nil, mtg.PlayerLostError{Reason: mtg.Conceded}
+		return ActionResult{}, mtg.PlayerLostError{Reason: mtg.Conceded}
 	case action.ActionPass:
 		e.Log("Action: pass")
-		return &ActionResult{
+		return ActionResult{
 			Message: "player.Player passed",
 			Pass:    true,
 		}, nil
@@ -68,14 +71,14 @@ func (e *Engine) ResolveAction(act *action.Action, player *player.Player) (resul
 		return ActionLandDropFunc(e.GameState, player, act.Target)
 	case action.CheatPeek:
 		e.Log("CHEAT! Action: peek")
-		return &ActionResult{
+		return ActionResult{
 			// TODO: No .cards access
 			Message: "Top Card: " + player.Library.Peek().Name(),
 		}, nil
 	case action.CheatShuffle:
 		e.Log("CHEAT! Action: shuffle")
 		player.Library.Shuffle()
-		return &ActionResult{Message: "Library shuffled"}, nil
+		return ActionResult{Message: "Library shuffled"}, nil
 	case action.CheatDiscard:
 		e.Log("CHEAT! Action: discard")
 		// TODO: Name is a bad field for this, but it works for now
@@ -83,7 +86,7 @@ func (e *Engine) ResolveAction(act *action.Action, player *player.Player) (resul
 	default:
 		e.Log("Unknown Action: " + string(act.Type))
 		// TODO: Should this be an error? Need to think through error handling
-		return &ActionResult{Message: "Unknown Action"}, nil
+		return ActionResult{Message: "Unknown Action"}, nil
 	}
 }
 
@@ -93,7 +96,7 @@ func (e *Engine) ResolveAction(act *action.Action, player *player.Player) (resul
 // card.
 // TODO: Support more than one activated ability
 // TODO: Support activated abilities in hand and graveyard
-func ActionActivateFunc(state *GameState, player *player.Player, target action.ActionTarget) (*ActionResult, error) {
+func ActionActivateFunc(state *GameState, player *player.Player, target action.ActionTarget) (ActionResult, error) {
 	/*
 		available := player.GetAvailableToActivate(state)
 		choices := CreateGroupedChoices(available)
@@ -110,7 +113,7 @@ func ActionActivateFunc(state *GameState, player *player.Player, target action.A
 			return nil, fmt.Errorf("failed to choose ability: %w", err)
 		}
 		if choice.ID == ChoiceNone {
-			return &ActionResult{Message: "No choice made"}, nil
+			return ActionResult{Message: "No choice made"}, nil
 		}
 		var ability *ActivatedAbility
 		object, err := FindFirstBy(available[choice.Zone], HasID(choice.ID))
@@ -149,7 +152,7 @@ func ActionActivateFunc(state *GameState, player *player.Player, target action.A
 			ability.Description(),
 		),
 		)
-		return &ActionResult{
+		return ActionResult{
 			Message: fmt.Sprintf(
 				"ability activated: %s (%s)",
 				ability.source.Name(),
@@ -157,13 +160,13 @@ func ActionActivateFunc(state *GameState, player *player.Player, target action.A
 			),
 		}, nil
 	*/
-	return nil, nil
+	return ActionResult{}, nil
 }
 
 // ActionAddManaFunc handles the add mana action. This is performed by the
 // player to add mana to their mana pool. The target is the amount of mana
 // to add. This is a cheat.
-func ActionAddManaFunc(state *GameState, player *player.Player, target action.ActionTarget) (*ActionResult, error) {
+func ActionAddManaFunc(state *GameState, player *player.Player, target action.ActionTarget) (ActionResult, error) {
 	// TODO: This is a hack, we should probably have a better way to
 	/*
 		mana := target.Name
@@ -206,18 +209,18 @@ func ActionAddManaFunc(state *GameState, player *player.Player, target action.Ac
 			mana = choice.ID
 		}
 		player.ManaPool.AddMana(mana)
-		return &ActionResult{
+		return ActionResult{
 			Message: fmt.Sprintf("%s mana added to pool", mana),
 		}, nil
 	*/
 
-	return nil, nil
+	return ActionResult{}, nil
 }
 
 // ActionConjureFunc handles the conjure action. This is performed by the
 // player to conjure a card. The target is the name of the card to conjure.
 // This is a cheat.
-func ActionConjureFunc(state *GameState, player *player.Player, target action.ActionTarget) (*ActionResult, error) {
+func ActionConjureFunc(state *GameState, player *player.Player, target action.ActionTarget) (ActionResult, error) {
 	/*
 		cardName := target.Name
 		if cardName == "" {
@@ -239,18 +242,18 @@ func ActionConjureFunc(state *GameState, player *player.Player, target action.Ac
 			return nil, fmt.Errorf("failed to add card to hand: %w", err)
 		}
 		state.Log("Conjured card: " + card.Name())
-		return &ActionResult{
+		return ActionResult{
 			Message: "conjured card: " + card.Name(),
 		}, nil
 	*/
-	return nil, nil
+	return ActionResult{}, nil
 }
 
 // ActionDiscardFunc handles the discard action. This is performed
 // automatically at the end of turn by during the clean up state. It can also
 // be performed manually by the player if Cheat is enabled in the game state.
 // The target is the number of cards to discard.
-func ActionDiscardFunc(state *GameState, player *player.Player, target action.ActionTarget) (*ActionResult, error) {
+func ActionDiscardFunc(state *GameState, player *player.Player, target action.ActionTarget) (ActionResult, error) {
 	/*
 		n, err := strconv.Atoi(target.Name)
 		if err != nil {
@@ -258,18 +261,18 @@ func ActionDiscardFunc(state *GameState, player *player.Player, target action.Ac
 		}
 		// TODO:
 		state.Discard(n, ActionDiscard, player)
-		return &ActionResult{
+		return ActionResult{
 			Message: "card discarded",
 		}, nil
 	*/
-	return nil, nil
+	return ActionResult{}, nil
 }
 
 // ActionDrawFunc handles the draw action. This is performed automatically at
 // the beginning of turn during the draw step. It can also be performed
 // manually by the player if Cheat is enabled in the game state. The target is
 // the number of cards to draw.
-func ActionDrawFunc(state *GameState, player *player.Player, target action.ActionTarget) (*ActionResult, error) {
+func ActionDrawFunc(state *GameState, player *player.Player, target action.ActionTarget) (ActionResult, error) {
 	/*
 		count := target.Name
 		n := 1
@@ -283,17 +286,17 @@ func ActionDrawFunc(state *GameState, player *player.Player, target action.Actio
 		if err := state.Draw(n, player); err != nil {
 			return nil, err
 		}
-		return &ActionResult{
+		return ActionResult{
 			Message: "card drawn",
 		}, nil
 	*/
-	return nil, nil
+	return ActionResult{}, nil
 }
 
 // ActionFindFunc handles the find action. This is performed by the player to
 // find a card in their library. The target is the name of the card to find.
 // This is a cheat.
-func ActionFindFunc(state *GameState, player *player.Player, target action.ActionTarget) (*ActionResult, error) {
+func ActionFindFunc(state *GameState, player *player.Player, target action.ActionTarget) (ActionResult, error) {
 	/*
 		var card game.Object
 		cardName := target.Name
@@ -324,19 +327,19 @@ func ActionFindFunc(state *GameState, player *player.Player, target action.Actio
 		if err := player.Hand.Add(card); err != nil {
 			return nil, fmt.Errorf("failed to add card to hand: %w", err)
 		}
-		return &ActionResult{
+		return ActionResult{
 			Message: "found card: " + card.Name(),
 		}, nil
 	*/
-	return nil, nil
+	return ActionResult{}, nil
 }
 
 // ActionLandDropFunc handles the land drop action. This is performed by the
 // player. Is resets the land drop flag for the player.
 // This is a cheat.
-func ActionLandDropFunc(state *GameState, player *player.Player, target action.ActionTarget) (*ActionResult, error) {
+func ActionLandDropFunc(state *GameState, player *player.Player, target action.ActionTarget) (ActionResult, error) {
 	player.LandDrop = false
-	return &ActionResult{
+	return ActionResult{
 		Message: "land drop reset",
 	}, nil
 }
@@ -345,7 +348,7 @@ func ActionLandDropFunc(state *GameState, player *player.Player, target action.A
 // function and share it with action activate.
 // ActionPlayFunc handles the play action. This is performed by the player to
 // play a card from their hand. The target is the name of the card to play.
-func ActionPlayFunc(state *GameState, player *player.Player, target action.ActionTarget) (result *ActionResult, err error) {
+func ActionPlayFunc(state *GameState, player *player.Player, target action.ActionTarget) (result ActionResult, err error) {
 	/*
 		available := player.GetAvailableToPlay(state)
 		choiceZone := ""
@@ -390,7 +393,7 @@ func ActionPlayFunc(state *GameState, player *player.Player, target action.Actio
 					return nil, fmt.Errorf("failed to choose card: %w", err)
 				}
 				if choice.ID == ChoiceNone {
-					return &ActionResult{Message: "No choice made"}, nil
+					return ActionResult{Message: "No choice made"}, nil
 				}
 			}
 			zone, err := player.GetZone(choice.Zone)
@@ -413,7 +416,7 @@ func ActionPlayFunc(state *GameState, player *player.Player, target action.Actio
 		}
 		return actionCastSpellFunc(state, player, c, choiceZone)
 	*/
-	return nil, nil
+	return ActionResult{}, nil
 }
 
 // ActionUntapFunc handles the untap action. This is performed automatically
@@ -421,12 +424,12 @@ func ActionPlayFunc(state *GameState, player *player.Player, target action.Actio
 // manually by the player if Cheat is enabled in the game state. The target
 // is the name of the card to untap. If target == const(UntapAll), all
 // permanents are untapped.
-func ActionUntapFunc(state *GameState, player *player.Player, target action.ActionTarget) (*ActionResult, error) {
+func ActionUntapFunc(state *GameState, player *player.Player, target action.ActionTarget) (ActionResult, error) {
 	/*
 		permanentName := target.Name
 		if permanentName == UntapAll {
 			player.Battlefield.UntapPermanents()
-			return &ActionResult{Message: "all permanents untapped"}, nil
+			return ActionResult{Message: "all permanents untapped"}, nil
 		}
 		var err error
 		var selectedObject game.Object
@@ -452,7 +455,7 @@ func ActionUntapFunc(state *GameState, player *player.Player, target action.Acti
 			}
 			if choice.ID == ChoiceNone {
 				// TODO: Make this a constant
-				return &ActionResult{Message: "no choice made"}, nil
+				return ActionResult{Message: "no choice made"}, nil
 			}
 			selectedObject, err = player.Battlefield.Get(choice.ID)
 			if err != nil {
@@ -464,18 +467,18 @@ func ActionUntapFunc(state *GameState, player *player.Player, target action.Acti
 			return nil, fmt.Errorf("object is not a permanent: %w", err)
 		}
 		selectedPermanent.Untap()
-		return &ActionResult{
+		return ActionResult{
 			Message: fmt.Sprintf("%s untapped", selectedObject.Name()),
 		}, nil
 	*/
-	return nil, nil
+	return ActionResult{}, nil
 }
 
 // ActionViewFunc handles the view action. This is performed by the player
 // to view a card in their hand, battlefield, or graveyard. The target is
 // the zone to view. The player can choose to view their hand, battlefield,
 // or graveyard. They will then be prompted to view a specific card.
-func ActionViewFunc(state *GameState, player *player.Player, target action.ActionTarget) (*ActionResult, error) {
+func ActionViewFunc(state *GameState, player *player.Player, target action.ActionTarget) (ActionResult, error) {
 	/*
 		var choice Choice
 		// TODO: Don't like this
@@ -499,7 +502,7 @@ func ActionViewFunc(state *GameState, player *player.Player, target action.Actio
 				return nil, fmt.Errorf("failed to choose zone: %w", err)
 			}
 			if choice.ID == ChoiceNone {
-				return &ActionResult{Message: "No choice made"}, nil
+				return ActionResult{Message: "No choice made"}, nil
 			}
 		} else {
 			choice = Choice{Name: target.Name}
@@ -515,12 +518,12 @@ func ActionViewFunc(state *GameState, player *player.Player, target action.Actio
 		}
 		return nil, errors.New("unknown zone or not yet implemented")
 	*/
-	return nil, nil
+	return ActionResult{}, nil
 }
 
 // TODO: There's probably an abstraction we can set up for viewHand, viewBattlefield, and viewGraveyard
 // probably a general abstraction for cards/permanents and zones
-func viewHand(state *GameState, player *player.Player) (result *ActionResult, err error) {
+func viewHand(state *GameState, player *player.Player) (result ActionResult, err error) {
 	/*
 		choices := state.Hand.CardChoices()
 		choice, err := player.PlayerAgent.ChooseOne(
@@ -532,20 +535,20 @@ func viewHand(state *GameState, player *player.Player) (result *ActionResult, er
 			return nil, fmt.Errorf("failed to choose card: %w", err)
 		}
 		if choice.ID == ChoiceNone {
-			return &ActionResult{Message: "No choice made"}, nil
+			return ActionResult{Message: "No choice made"}, nil
 		}
 		card, err := state.Hand.GetCard(choice.ID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get card from hand: %w", err)
 		}
 		state.Log("viewed " + card.Name())
-		result = &ActionResult{Message: fmt.Sprintf("CARD: %s :: %s :: %s", card.Name(), card.CardTypes(), card.RulesText())}
+		result = ActionResult{Message: fmt.Sprintf("CARD: %s :: %s :: %s", card.Name(), card.CardTypes(), card.RulesText())}
 		return result, nil
 	*/
-	return &ActionResult{Message: "No choice made"}, nil
+	return ActionResult{Message: "No choice made"}, nil
 }
 
-func viewBattlefield(state *GameState, player *player.Player) (result *ActionResult, err error) {
+func viewBattlefield(state *GameState, player *player.Player) (result ActionResult, err error) {
 	/*
 		var choices []Choice
 		permanents := state.Battlefield.Permanents()
@@ -561,20 +564,20 @@ func viewBattlefield(state *GameState, player *player.Player) (result *ActionRes
 			return nil, fmt.Errorf("failed to choose card: %w", err)
 		}
 		if choice.ID == ChoiceNone {
-			return &ActionResult{Message: "No choice made"}, nil
+			return ActionResult{Message: "No choice made"}, nil
 		}
 		card, err := state.Battlefield.GetPermanent(choice.ID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get permanent from battlefield: %w", err)
 		}
 		state.Log("viewed " + card.Name())
-		result = &ActionResult{Message: fmt.Sprintf("CARD: %s :: %s", card.Name, card.RulesText)}
+		result = ActionResult{Message: fmt.Sprintf("CARD: %s :: %s", card.Name, card.RulesText)}
 		return result, nil
 	*/
-	return &ActionResult{Message: "No choice made"}, nil
+	return ActionResult{Message: "No choice made"}, nil
 }
 
-func viewGraveyard(state *GameState, player *player.Player) (result *ActionResult, err error) {
+func viewGraveyard(state *GameState, player *player.Player) (result ActionResult, err error) {
 	/*
 		var choices []Choice
 		// TODO Remove the .cards access
@@ -590,7 +593,7 @@ func viewGraveyard(state *GameState, player *player.Player) (result *ActionResul
 			return nil, fmt.Errorf("failed to choose card: %w", err)
 		}
 		if choice.ID == ChoiceNone {
-			return &ActionResult{Message: "No choice made"}, nil
+			return ActionResult{Message: "No choice made"}, nil
 		}
 		var selectedCard *card.Card
 		// TODO remove the .cards access
@@ -604,14 +607,14 @@ func viewGraveyard(state *GameState, player *player.Player) (result *ActionResul
 			return nil, fmt.Errorf("failed to get card from graveyard: %w", err)
 		}
 		state.Log("viewed " + selectedCard.Name())
-		result = &ActionResult{Message: fmt.Sprintf("CARD: %s :: %s", selectedCard.Name(), selectedCard.RulesText())}
+		result = ActionResult{Message: fmt.Sprintf("CARD: %s :: %s", selectedCard.Name(), selectedCard.RulesText())}
 		return result, nil
 	*/
-	return nil, nil
+	return ActionResult{}, nil
 }
 
 // TODO: Maybe this should be a method off of GameState
-func actionPlayLandFunc(state *GameState, player *player.Player, card *card.Card) (result *ActionResult, err error) {
+func actionPlayLandFunc(state *GameState, player *player.Player, card *card.Card) (result ActionResult, err error) {
 	/*
 		if card.HasCardType(game.CardTypeLand) {
 			if player.LandDrop {
@@ -630,16 +633,16 @@ func actionPlayLandFunc(state *GameState, player *player.Player, card *card.Card
 			)
 		}
 		player.Battlefield.Add(permanent)
-		return &ActionResult{
+		return ActionResult{
 			Message: "played land: " + card.Name(),
 		}, nil
 	*/
-	return nil, nil
+	return ActionResult{}, nil
 }
 
 // TODO: Maybe this should be a method off of GameState
 // or maybe a method off of Card, e.g. card.Cast() like Ability.Resolve()
-func actionCastSpellFunc(state *GameState, player *player.Player, card *card.Card, zone string) (result *ActionResult, err error) {
+func actionCastSpellFunc(state *GameState, player *player.Player, card *card.Card, zone string) (result ActionResult, err error) {
 	/*
 		spell, err := NewSpell(card)
 		if err != nil {
@@ -798,10 +801,10 @@ func actionCastSpellFunc(state *GameState, player *player.Player, card *card.Car
 				return nil, fmt.Errorf("failed to add replicate trigger to stack: %w", err)
 			}
 		}
-		return &ActionResult{
+		return ActionResult{
 			Message: "played card: " + card.Name(),
 		}, nil
 	*/
 
-	return nil, nil
+	return ActionResult{}, nil
 }

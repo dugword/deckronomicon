@@ -48,6 +48,10 @@ func (a *InteractivePlayerAgent) ReportState(state player.GameState) {
 		return
 	}
 	a.uiBuffer.UpdateFromState(s, a.player)
+	/// TODO: This should return an error instead of panicking
+	if err := a.uiBuffer.Render(); err != nil {
+		panic(fmt.Sprintf("Error rendering UI buffer: %v", err))
+	}
 }
 
 func (a *InteractivePlayerAgent) GetNextAction(state player.GameState) (action.Action, error) {

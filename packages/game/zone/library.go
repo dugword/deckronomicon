@@ -64,9 +64,8 @@ func (l *Library) Add(card *card.Card) {
 }
 
 // AddTop adds a card to the top of the library.
-func (l *Library) AddTop(c *card.Card) error {
+func (l *Library) AddTop(c *card.Card) {
 	l.cards = append([]*card.Card{c}, l.cards...)
-	return nil
 }
 
 func (l *Library) Get(id string) (*card.Card, error) {

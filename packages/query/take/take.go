@@ -18,8 +18,8 @@ func By[T query.Object](objects []T, predicate query.Predicate) (taken T, remain
 		if !predicate(object) {
 			continue
 		}
-		remaining = append(remaining[:1], objects[i+1:]...)
+		remaining = append(objects[:1], objects[i+1:]...)
 		return object, remaining, nil
 	}
-	return taken, remaining, query.ErrNotFound
+	return taken, objects, query.ErrNotFound
 }

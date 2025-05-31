@@ -78,7 +78,7 @@ func Run(
 	var players []*player.Player
 	for _, playerScenario := range scenario.Players {
 		logger.Log("Creating player agents...")
-		var playerAgent = player.Agent()
+		var playerAgent player.Agent
 		switch playerScenario.AgentType {
 		case "Interactive":
 			logger.Log("Creating interactive player agent...")
@@ -100,7 +100,10 @@ func Run(
 			logger.Log("Creating dummy player agent...")
 			playerAgent = dummy.NewDummyAgent()
 		default:
-			return fmt.Errorf("unknown player agent type: %s", playerSetup.Agent)
+			return fmt.Errorf(
+				"unknown player agent type: %s",
+				playerScenario.AgentType,
+			)
 		}
 		logger.Log("Player agents created!")
 		logger.Log("Creating new players...")
@@ -114,22 +117,21 @@ func Run(
 		players = append(players, plyr)
 	}
 	logger.Log("Initializing new game...")
-	if err := engine.InitializeNewGame(
+	engine := engine.InitializeNewGame(
 		scenario,
 		players,
 		cardDefinitions,
-	); err != nil {
-		return fmt.Errorf("failed to initialize new game state: %w", err)
-	}
+	)
 	logger.Log("New game initialized!")
 	logger.Log("Running game loop...")
-	err = state.RunGameLoop()
-	logger.Log("Game Message Log:\n" + strings.Join(state.MessageLog, "\n"))
+	err = engine.RunGameLoop()
 	// TODO: Split game state object from engine object.
-	err = state.RunGameLoop()
+	err = engine.RunGameLoop()
 	if err != nil && !errors.Is(err, mtg.ErrGameOver) {
 		return fmt.Errorf("game loop failed: %w", err)
 	}
+	// TODO: This sucks
+	logger.Log("Game Message Log:\n" + strings.Join(engine.GameState.MessageLog, "\n"))
 	logger.Log("Game over!")
 	return nil
 }

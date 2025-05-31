@@ -118,11 +118,11 @@ func LoadScenario(scenariosDir, scenario string) (*Scenario, error) {
 			player.StartingMode = "Setup"
 		}
 		if playerSetup.Strategy != "" {
-			var parts = []string{scenarioPath, playerSetup.Strategy}
+			fileName := playerSetup.Strategy
 			if !strings.HasSuffix(playerSetup.Strategy, ".json") {
-				parts = append(parts, ".json")
+				fileName += ".json"
 			}
-			player.StrategyFile = path.Join(parts...)
+			player.StrategyFile = path.Join(scenarioPath, fileName)
 		}
 		deckList, err := LoadDeckList(scenarioPath, playerSetup.DeckList)
 		if err != nil {
@@ -149,11 +149,11 @@ func LoadScenario(scenariosDir, scenario string) (*Scenario, error) {
 
 func LoadDeckList(scenarioPath, deckListFile string) (*DeckList, error) {
 	var deckList DeckList
-	deckListPathParts := []string{scenarioPath, deckListFile}
+	fileName := deckListFile
 	if !strings.HasSuffix(deckListFile, ".json") {
-		deckListPathParts = append(deckListPathParts, ".json")
+		fileName += ".json"
 	}
-	deckListPath := path.Join(deckListPathParts...)
+	deckListPath := path.Join(scenarioPath, fileName)
 	deckListData, err := os.ReadFile(deckListPath)
 	if err != nil {
 		return nil, fmt.Errorf(

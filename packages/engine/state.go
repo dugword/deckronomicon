@@ -13,12 +13,11 @@ import (
 
 // GameState represents the current state of the game.
 type GameState struct {
-	ActivePlayer     *player.Player
-	NonActivePlayers []*player.Player
-	CheatsEnabled    bool
-	CardPool         string
-	CardDefinitions  map[string]definition.Card
-	CurrentPhase     mtg.Phase
+	ActivePlayer    int
+	CheatsEnabled   bool
+	CardPool        string
+	CardDefinitions map[string]definition.Card
+	CurrentPhase    mtg.Phase
 	// CurrentPlayer int
 	CurrentStep mtg.Step
 	// EventListeners     []EventHandler
@@ -44,6 +43,17 @@ func NewGameState() *GameState {
 		TurnMessageLog:     []string{}, // TODO: this sucks, make better
 	}
 	return &gameState
+}
+
+func (g *GameState) NextPlayerTurn() {
+	g.ActivePlayer++
+	if g.ActivePlayer >= len(g.Players) {
+		g.ActivePlayer = 0
+	}
+}
+
+func (g *GameState) GetActivePlayer() *player.Player {
+	return g.Players[g.ActivePlayer]
 }
 
 func (g *GameState) GetPlayer(id string) (*player.Player, error) {

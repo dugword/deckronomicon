@@ -130,7 +130,7 @@ func GameStatusData(state *engine.GameState, player *player.Player) BoxData {
 	return BoxData{
 		Title: "Game Status",
 		Content: []string{
-			fmt.Sprintf("Current Player: Player %d", state.ActivePlayer.ID()),
+			fmt.Sprintf("Current Player: Player %d", state.GetActivePlayer().ID()),
 			fmt.Sprintf("Player Mode: %s", player.Mode),
 			fmt.Sprintf("Player 1 Life: %d", player.Life),
 			fmt.Sprintf("Turn: %d", player.Turn),
@@ -172,18 +172,16 @@ func MessageData(state *engine.GameState) BoxData {
 // battlefield.
 func BattlefieldData(player *player.Player) BoxData {
 	var lines []string
-	/*
-		for _, permanent := range player.Battlefield.Permanents() {
-			line := permanent.Name()
-			if permanent.IsTapped() {
-				line += " (tapped)"
-			}
-			if permanent.HasSummoningSickness() {
-				line += " (summoning sick)"
-			}
-			lines = append(lines, line)
+	for _, permanent := range player.Battlefield.GetAll() {
+		line := permanent.Name()
+		if permanent.IsTapped() {
+			line += " (tapped)"
 		}
-	*/
+		if permanent.HasSummoningSickness() {
+			line += " (summoning sick)"
+		}
+		lines = append(lines, line)
+	}
 	return BoxData{
 		Title:   "Battlefield",
 		Content: lines,
@@ -206,12 +204,10 @@ func GraveyardData(player *player.Player) BoxData {
 // HandData creates the box data for displaying cards in the player's hand.
 func HandData(player *player.Player) BoxData {
 	var lines []string
-	/*
-		for _, card := range player.Hand.GetAll() {
-			line := card.Name()
-			lines = append(lines, line)
-		}
-	*/
+	for _, card := range player.Hand.GetAll() {
+		line := card.Name()
+		lines = append(lines, line)
+	}
 	return BoxData{
 		Title:   "Hand",
 		Content: lines,
