@@ -1,0 +1,4 @@
+{
+    "todo": "this is a placeholder, not sure what effect JSON will look like",
+    "choices": "maybe declare the possible choices here so we can verify a strategy has rules for all possible choices"
+}

@@ -3,17 +3,21 @@ package main
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"strings"
 
-	"deckronomicon/auto"
-	"deckronomicon/configs"
-	"deckronomicon/dummy"
-	"deckronomicon/game"
-	"deckronomicon/interactive"
-	"deckronomicon/log"
+	"deckronomicon/packages/agent/auto"
+	"deckronomicon/packages/agent/dummy"
+	"deckronomicon/packages/agent/interactive"
+	"deckronomicon/packages/configs"
+	"deckronomicon/packages/engine"
+	"deckronomicon/packages/game/definition"
+	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/player"
+	"deckronomicon/packages/log"
 )
 
 // main is the entry point for the application.
@@ -61,65 +65,71 @@ func Run(
 	if err != nil {
 		return fmt.Errorf("failed to load scenario: %w", err)
 	}
-	logger.Log("Scenario loaded!")
-	logger.Log("Creating player agent...")
-	var playerAgent game.PlayerAgent
-	if config.Interactive {
-		logger.Log("Creating interactive player agent...")
-		scanner := bufio.NewScanner(stdin)
-		playerAgent = interactive.NewInteractivePlayerAgent(
-			scanner,
-			scenario.Setup.PlayerName,
-		)
-	} else {
-		logger.Log("Creating rule based player agent...")
-		var err error
-		playerAgent, err = auto.NewRuleBasedAgent(
-			scenario.PlayerStrategy,
-			scenario.Setup.PlayerName,
-			true, // TODO: Make this configurable
-		)
-		if err != nil {
-			return fmt.Errorf("failed to create rule based agent: %w", err)
+	if config.Cheat == true {
+		scenario.Setup.CheatsEnabled = true
+	}
+	logger.Log(fmt.Sprintf("Scenario '%s' loaded!", scenario.Name))
+	logger.Log("Loading card definitions...")
+	cardDefinitions, err := definition.LoadCardDefinitions(config.Definitions)
+	if err != nil {
+		return fmt.Errorf("failed to load card definitions: %w", err)
+	}
+	logger.Log("Card definitions loaded!")
+	var players []*player.Player
+	for _, playerScenario := range scenario.Players {
+		logger.Log("Creating player agents...")
+		var playerAgent = player.Agent()
+		switch playerScenario.AgentType {
+		case "Interactive":
+			logger.Log("Creating interactive player agent...")
+			scanner := bufio.NewScanner(stdin)
+			playerAgent = interactive.NewInteractivePlayerAgent(
+				scanner,
+			)
+		case "Auto":
+			logger.Log("Creating rule based player agent...")
+			var err error
+			playerAgent, err = auto.NewRuleBasedAgent(
+				playerScenario.StrategyFile,
+				config.Interactive,
+			)
+			if err != nil {
+				return fmt.Errorf("failed to create rule based agent: %w", err)
+			}
+		case "Dummy":
+			logger.Log("Creating dummy player agent...")
+			playerAgent = dummy.NewDummyAgent()
+		default:
+			return fmt.Errorf("unknown player agent type: %s", playerSetup.Agent)
 		}
+		logger.Log("Player agents created!")
+		logger.Log("Creating new players...")
+		plyr := player.New(
+			playerAgent,
+			playerScenario.Name,
+			playerScenario.StartingLife,
+			playerScenario.StartingMode,
+		)
+		logger.Log("Players created!")
+		players = append(players, plyr)
 	}
-	opponentAgent := dummy.NewDummyAgent(
-		scenario.Setup.OpponentName,
-	)
-	logger.Log("Player agent created!")
-	logger.Log("Creating new players...")
-	player := game.NewPlayer(
-		playerAgent,
-	)
-	// TODO I don't like this, but it works for now
-	player.StartingHand = scenario.Setup.PlayerStartingHand
-	opponent := game.NewPlayer(
-		opponentAgent,
-	)
-	// TODO I don't like this, but it works for now
-	opponent.StartingHand = scenario.Setup.OpponentStartingHand
-	logger.Log("Players created!")
-	logger.Log("Creating new game state...")
-	state := game.NewGameState()
-	logger.Log("New game state created!")
-	logger.Log("New players created!")
 	logger.Log("Initializing new game...")
-	if err := state.InitializeNewGame(
+	if err := engine.InitializeNewGame(
 		scenario,
-		player,
-		opponent,
-		config,
+		players,
+		cardDefinitions,
 	); err != nil {
-		return fmt.Errorf("failed to initialize new game: %w", err)
+		return fmt.Errorf("failed to initialize new game state: %w", err)
 	}
-	logger.Log("New game initalized!")
+	logger.Log("New game initialized!")
 	logger.Log("Running game loop...")
-	// TOOD: This still tracks game losses with application errors
-	// Those should be separated out
 	err = state.RunGameLoop()
 	logger.Log("Game Message Log:\n" + strings.Join(state.MessageLog, "\n"))
-	if err != nil {
+	// TODO: Split game state object from engine object.
+	err = state.RunGameLoop()
+	if err != nil && !errors.Is(err, mtg.ErrGameOver) {
 		return fmt.Errorf("game loop failed: %w", err)
 	}
+	logger.Log("Game over!")
 	return nil
 }

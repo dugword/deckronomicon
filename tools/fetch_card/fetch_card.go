@@ -87,6 +87,8 @@ func fetchAndWriteCard(name string) (string, error) {
 		return "", fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 	color := "colorless"
+	// TODO: use a different field here, we are putting lands in the wrong
+	// folder.
 	if len(s.ColorIdentity) == 1 {
 		color = colorFromIdentity(s.ColorIdentity[0])
 	} else {
