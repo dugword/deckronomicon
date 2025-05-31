@@ -62,7 +62,7 @@ func Run(args []string) error {
 	}
 	path, err := fetchAndWriteCard(*cardName)
 	if err != nil {
-		return fmt.Errorf("failed to fetch card: %w", err)
+		return fmt.Errorf("failed to fetch card %q: %w", *cardName, err)
 	}
 	fmt.Println("imported card to:", path)
 	return nil
@@ -72,7 +72,7 @@ func fetchAndWriteCard(name string) (string, error) {
 	url := fmt.Sprintf(ScryfallURLPattern, url.PathEscape(name))
 	resp, err := http.Get(url)
 	if err != nil {
-		return "", fmt.Errorf("failed to fetch card: %w", err)
+		return "", fmt.Errorf("failed to fetch card %q: %w", name, err)
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
@@ -87,6 +87,8 @@ func fetchAndWriteCard(name string) (string, error) {
 		return "", fmt.Errorf("failed to unmarshal response: %w", err)
 	}
 	color := "colorless"
+	// TODO: use a different field here, we are putting lands in the wrong
+	// folder.
 	if len(s.ColorIdentity) == 1 {
 		color = colorFromIdentity(s.ColorIdentity[0])
 	} else {
@@ -105,14 +107,14 @@ func fetchAndWriteCard(name string) (string, error) {
 	if s.Power != "" {
 		power, err := strconv.Atoi(s.Power)
 		if err != nil {
-			return "", fmt.Errorf("failed to parse power: %w", err)
+			return "", fmt.Errorf("failed to parse power %q: %w", s.Power, err)
 		}
 		dc.Power = power
 	}
 	if s.Toughness != "" {
 		toughness, err := strconv.Atoi(s.Toughness)
 		if err != nil {
-			return "", fmt.Errorf("failed to parse toughness: %w", err)
+			return "", fmt.Errorf("failed to parse toughness %q: %w", s.Toughness, err)
 		}
 		dc.Toughness = toughness
 	}
@@ -127,7 +129,7 @@ func writeCardJSON(color string, card CardImport) (string, error) {
 	nameSlug := strings.ToLower(strings.ReplaceAll(card.Name, " ", "_"))
 	dir := filepath.Join("cards", color)
 	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
-		return "", fmt.Errorf("failed to create directory: %w", err)
+		return "", fmt.Errorf("failed to create directory %q: %w", dir, err)
 	}
 	path := filepath.Join(dir, nameSlug+".json")
 	if _, err := os.Stat(path); err == nil {
@@ -135,7 +137,7 @@ func writeCardJSON(color string, card CardImport) (string, error) {
 	}
 	file, err := os.Create(path)
 	if err != nil {
-		return "", fmt.Errorf("failed to create file: %w", err)
+		return "", fmt.Errorf("failed to create file %q: %w", path, err)
 	}
 	defer file.Close()
 	enc := json.NewEncoder(file)

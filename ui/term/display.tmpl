@@ -1,0 +1,9 @@
+{{template "box" .PlayersStatusBox}}
+{{template "box" .GameStatusBox}}
+{{template "box" .PlaySpaceBox}}
+{{template "box" .MessageBox}}
+{{ define "box" }}{{.TopLine}}
+{{.Title}}
+{{.MiddleLine}}
+{{range .Lines}}{{.}}
+{{end}}{{.BottomLine}}{{end}}

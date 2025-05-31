@@ -1,7 +1,23 @@
 {
-  "PlayerName": "You",
-  "OpponentName": "Opponent",
-  "OnThePlay": true,
-  "StartingLife": 20,
-  "MaxTurns": 100
+  "ScenarioName": "Example Game Setup",
+  "MaxTurns": 100,
+  "OnThePlay": "You",
+  "Players": [
+    {
+      "Agent": "Interactive",
+      "Name": "You",
+      "DeckList": "player_deck",
+      "Strategy": "player_strategy",
+      "StartingLife": 20,
+      "StartingHand": [
+        "Island"
+      ],
+      "StartingMode": "Setup"
+    },
+    {
+      "Name": "Opponent",
+      "DeckList": "opponent_deck",
+      "Strategy": "opponent_strategy"
+    }
+  ]
 }

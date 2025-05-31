@@ -1,0 +1,27 @@
+{
+  "Name": "Mountain",
+  "CardTypes": [
+    "Land"
+  ],
+  "Subtypes": [
+    "Mountain"
+  ],
+  "Supertypes": [
+    "Basic"
+  ],
+  "ActivatedAbilities": [
+    {
+      "Name": "Add {R} Mana",
+      "Cost": "{T}",
+      "Effects": [
+        {
+          "Name": "AddMana",
+          "Modifiers": {
+            "Mana": "{R}"
+          }
+        }
+      ]
+    }
+  ],
+  "RulesText": "{T}: Add {R}."
+}

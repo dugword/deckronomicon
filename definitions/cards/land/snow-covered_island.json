@@ -1,0 +1,30 @@
+{
+  "Name": "Snow-Covered Island",
+  "CardTypes": [
+    "Land"
+  ],
+  "Subtypes": [
+    "Island"
+  ],
+  "Supertypes": [
+    "Basic",
+    "Snow"
+  ],
+  "ActivatedAbilities": [
+    {
+      "Name": "Add {U} Mana",
+      "Cost": "{T}",
+      "Effects": [
+        {
+          "Name": "AddMana",
+          "Modifiers": 
+            {
+              "Mana": "{U}"
+            }
+          
+        }
+      ]
+    }
+  ],
+  "RulesText": "{T}: Add {U}."
+}
