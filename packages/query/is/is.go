@@ -2,6 +2,7 @@ package is
 
 import (
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/permanent"
 	"deckronomicon/packages/query"
 )
 
@@ -19,6 +20,16 @@ func Land() query.Predicate {
 func Not(predicate query.Predicate) query.Predicate {
 	return func(obj query.Object) bool {
 		return !predicate(obj)
+	}
+}
+
+func Tapped() query.Predicate {
+	return func(obj query.Object) bool {
+		perm, ok := obj.(*permanent.Permanent)
+		if !ok || !perm.IsTapped() {
+			return false
+		}
+		return true
 	}
 }
 

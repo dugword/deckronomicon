@@ -1,7 +1,11 @@
 package query
 
 type View interface {
-	Get(id string) (Object, error)
+	Contains(predicate Predicate) bool
+	Count(predicate Predicate) int
+	Find(predicate Predicate) (Object, bool)
+	FindAll(predicate Predicate) []Object
+	Get(id string) (Object, bool)
 	GetAll() []Object
 	Name() string
 	Size() int
@@ -22,13 +26,24 @@ func NewView[T Object](name string, objects []T) View {
 	return &v
 }
 
-func (v *view) Get(id string) (Object, error) {
-	for _, obj := range v.objects {
-		if obj.ID() == id {
-			return obj, nil
-		}
-	}
-	return nil, ErrNotFound
+func (v *view) Contains(predicate Predicate) bool {
+	return Contains(v.objects, predicate)
+}
+
+func (v *view) Count(predicate Predicate) int {
+	return Count(v.objects, predicate)
+}
+
+func (v *view) Find(predicate Predicate) (Object, bool) {
+	return Find(v.objects, predicate)
+}
+
+func (v *view) FindAll(predicate Predicate) []Object {
+	return FindAll(v.objects, predicate)
+}
+
+func (v *view) Get(id string) (Object, bool) {
+	return Get(v.objects, id)
 }
 
 func (v *view) GetAll() []Object {

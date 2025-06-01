@@ -3,6 +3,7 @@ package cost
 import (
 	"deckronomicon/packages/game/core"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/query/has"
 	"errors"
 	"fmt"
 	"regexp"
@@ -297,7 +298,7 @@ type DiscardCost struct {
 }
 
 func (c *DiscardCost) CanPay(state core.State, player core.Player) bool {
-	if _, err := player.Hand().Get(c.card.ID()); err != nil {
+	if !player.Hand().Contains(has.ID(c.card.ID())) {
 		return false
 	}
 	return true

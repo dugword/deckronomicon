@@ -10,7 +10,6 @@ import (
 	"deckronomicon/packages/game/permanent"
 	"deckronomicon/packages/game/player"
 	"deckronomicon/packages/query"
-	"deckronomicon/packages/query/find"
 	"deckronomicon/packages/query/has"
 	"fmt"
 )
@@ -117,15 +116,12 @@ func ActionActivateFunc(state *GameState, player *player.Player, target action.A
 		return ActionResult{Message: "No choice made"}, nil
 	}
 	choiceZone := choice.Source.Name()
-	targetObj, err := find.FirstBy(available[choiceZone], has.ID(choice.ID))
-	if err != nil {
-		return ActionResult{}, fmt.Errorf(
-			"failed to find activated ability: %w",
-			err,
-		)
+	targetObj, ok := query.Find(available[choiceZone], has.ID(choice.ID))
+	if !ok {
+		return ActionResult{}, query.ErrNotFound
 	}
 	var ability *activated.Ability
-	ability, ok := targetObj.(*activated.Ability)
+	ability, ok = targetObj.(*activated.Ability)
 	if !ok {
 		return ActionResult{}, fmt.Errorf("object is not an activated ability: %w", err)
 	}

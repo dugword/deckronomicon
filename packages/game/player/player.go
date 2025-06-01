@@ -1,6 +1,7 @@
 package player
 
 import (
+	"deckronomicon/packages/game/card"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/game/zone"
 	"deckronomicon/packages/query"
@@ -84,6 +85,10 @@ func (p *Player) BottomCard(cardID string) error {
 	}
 	p.library.Add(card)
 	return nil
+}
+
+func (p *Player) CheatAddCard(card *card.Card) {
+	p.hand.Add(card)
 }
 
 func (p *Player) DiscardCard(cardID string) error {

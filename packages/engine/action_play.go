@@ -8,7 +8,6 @@ import (
 	"deckronomicon/packages/game/permanent"
 	"deckronomicon/packages/game/player"
 	"deckronomicon/packages/query"
-	"deckronomicon/packages/query/find"
 	"deckronomicon/packages/query/has"
 	"deckronomicon/packages/query/is"
 	"fmt"
@@ -104,9 +103,10 @@ func ActionPlayFunc(state *GameState, player *player.Player, target action.Actio
 			}
 		}
 		choiceZone = choice.Source.Name()
-		targetObj, err = find.FirstBy(available[choiceZone], has.ID(choice.ID))
-		if err != nil {
-			return ActionResult{}, fmt.Errorf("failed to find card to play: %w", err)
+		var ok bool
+		targetObj, ok = query.Find(available[choiceZone], has.ID(choice.ID))
+		if !ok {
+			return ActionResult{}, fmt.Errorf("failed to find card to play")
 		}
 	}
 	c, ok := targetObj.(*card.Card)

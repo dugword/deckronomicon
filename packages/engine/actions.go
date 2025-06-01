@@ -3,9 +3,16 @@ package engine
 import (
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/game/action"
+	"deckronomicon/packages/game/card"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/permanent"
 	"deckronomicon/packages/game/player"
+	"deckronomicon/packages/query"
+	"deckronomicon/packages/query/has"
+	"deckronomicon/packages/query/is"
+	"errors"
 	"fmt"
+	"strconv"
 )
 
 // TODO: This could theoretically conflict with a card name.
@@ -151,31 +158,29 @@ func ActionAddManaFunc(state *GameState, player *player.Player, target action.Ac
 // player to conjure a card. The target is the name of the card to conjure.
 // This is a cheat.
 func ActionConjureFunc(state *GameState, player *player.Player, target action.ActionTarget) (ActionResult, error) {
-	/*
-		cardName := target.Name
-		if cardName == "" {
-			return nil, errors.New("no card name provided")
-		}
-		cardPoolData, err := LoadCardPoolData(state.CardPool)
-		if err != nil {
-			return nil, fmt.Errorf("failed to load card pool data: %w", err)
-		}
-		cardData, ok := cardPoolData[cardName]
-		if !ok {
-			return nil, fmt.Errorf("card %s not found in card pool data", target)
-		}
-		card, err := NewCardFromCardData(cardData)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create card %s: %w", target, err)
-		}
-		if err := player.Hand.Add(card); err != nil {
-			return nil, fmt.Errorf("failed to add card to hand: %w", err)
-		}
-		state.Log("Conjured card: " + card.Name())
-		return ActionResult{
-			Message: "conjured card: " + card.Name(),
-		}, nil
-	*/
+	cardName := target.Name
+	if cardName == "" {
+		return ActionResult{}, errors.New("no card name provided")
+	}
+	cardDefinition, ok := state.CardDefinitions[cardName]
+	if !ok {
+		return ActionResult{}, fmt.Errorf(
+			"card %s not found in card definitions",
+			target,
+		)
+	}
+	card, err := card.NewCardFromCardDefinition(state, cardDefinition)
+	if err != nil {
+		return ActionResult{}, fmt.Errorf(
+			"failed to create card %s: %w",
+			target,
+			err,
+		)
+	}
+	player.CheatAddCard(card)
+	return ActionResult{
+		Message: "conjured card: " + card.Name(),
+	}, nil
 	return ActionResult{}, nil
 }
 
@@ -184,13 +189,17 @@ func ActionConjureFunc(state *GameState, player *player.Player, target action.Ac
 // be performed manually by the player if Cheat is enabled in the game state.
 // The target is the number of cards to discard.
 func ActionDiscardFunc(state *GameState, player *player.Player, target action.ActionTarget) (ActionResult, error) {
+	_, err := strconv.Atoi(target.Name)
+	if err != nil {
+		return ActionResult{}, fmt.Errorf(
+			"failed to convert %s to int: %w",
+			target,
+			err,
+		)
+	}
+	// TODO: Fix this
 	/*
-		n, err := strconv.Atoi(target.Name)
-		if err != nil {
-			return nil, fmt.Errorf("failed to convert %s to int: %w", target, err)
-		}
-		// TODO:
-		state.Discard(n, ActionDiscard, player)
+		Discard(n, ActionDiscard, player)
 		return ActionResult{
 			Message: "card discarded",
 		}, nil
@@ -203,23 +212,23 @@ func ActionDiscardFunc(state *GameState, player *player.Player, target action.Ac
 // manually by the player if Cheat is enabled in the game state. The target is
 // the number of cards to draw.
 func ActionDrawFunc(state *GameState, player *player.Player, target action.ActionTarget) (ActionResult, error) {
-	/*
-		count := target.Name
-		n := 1
-		var err error
-		if count != "" {
-			n, err = strconv.Atoi(count)
-			if err != nil {
-				return nil, fmt.Errorf("failed to convert %s to int: %w", count, err)
-			}
+	count := target.Name
+	n := 1
+	var err error
+	if count != "" {
+		n, err = strconv.Atoi(count)
+		if err != nil {
+			return ActionResult{}, fmt.Errorf("failed to convert %s to int: %w", count, err)
 		}
-		if err := state.Draw(n, player); err != nil {
-			return nil, err
+	}
+	for range n {
+		if _, err := player.DrawCard(); err != nil {
+			return ActionResult{}, fmt.Errorf("failed to draw card: %w", err)
 		}
-		return ActionResult{
-			Message: "card drawn",
-		}, nil
-	*/
+	}
+	return ActionResult{
+		Message: "card drawn",
+	}, nil
 	return ActionResult{}, nil
 }
 
@@ -227,40 +236,35 @@ func ActionDrawFunc(state *GameState, player *player.Player, target action.Actio
 // find a card in their library. The target is the name of the card to find.
 // This is a cheat.
 func ActionFindFunc(state *GameState, player *player.Player, target action.ActionTarget) (ActionResult, error) {
-	/*
-		var card game.Object
-		cardName := target.Name
-		var err error
-		if cardName != "" {
-			card, err = FindFirstInZoneBy(player.Library, HasName(cardName))
-			if err != nil {
-				return nil, fmt.Errorf("failed to find card in library: %w", err)
-			}
-		} else {
-			choices := CreateChoices(
-				player.Library.GetAll(),
-				ZoneLibrary,
-			)
-			choice, err := player.Agent.ChooseOne(
-				"Which card to find",
-				ChoiceSourceCheat,
-				AddOptionalChoice(choices),
-			)
-			if err != nil {
-				return nil, fmt.Errorf("failed to choose card: %w", err)
-			}
-			card, err = player.Library.Take(choice.ID)
+	var card query.Object
+	cardName := target.Name
+	if cardName != "" {
+		if err := player.Tutor(has.Name(target.Name)); err != nil {
+			return ActionResult{}, fmt.Errorf("failed to find card in library: %w", err)
 		}
+	} else {
+		choices := choose.CreateChoices(
+			player.Library().GetAll(),
+			choose.NewChoiceSource(string(mtg.ZoneLibrary)),
+		)
+		choice, err := player.Agent.ChooseOne(
+			"Which card to find",
+			choose.NewChoiceSource("Cheat"),
+			choose.AddOptionalChoice(choices),
+		)
 		if err != nil {
-			return nil, fmt.Errorf("failed to take card from library: %w", err)
+			return ActionResult{}, fmt.Errorf("failed to choose card: %w", err)
 		}
-		if err := player.Hand.Add(card); err != nil {
-			return nil, fmt.Errorf("failed to add card to hand: %w", err)
+		if err = player.Tutor(has.ID(choice.ID)); err != nil {
+			return ActionResult{}, fmt.Errorf(
+				"failed to tutor card: %w",
+				err,
+			)
 		}
-		return ActionResult{
-			Message: "found card: " + card.Name(),
-		}, nil
-	*/
+	}
+	return ActionResult{
+		Message: "found card: " + card.Name(),
+	}, nil
 	return ActionResult{}, nil
 }
 
@@ -280,52 +284,67 @@ func ActionLandDropFunc(state *GameState, player *player.Player, target action.A
 // is the name of the card to untap. If target == const(UntapAll), all
 // permanents are untapped.
 func ActionUntapFunc(state *GameState, player *player.Player, target action.ActionTarget) (ActionResult, error) {
-	/*
-		permanentName := target.Name
-		if permanentName == UntapAll {
-			player.Battlefield.UntapPermanents()
-			return ActionResult{Message: "all permanents untapped"}, nil
+	permanentName := target.Name
+	if permanentName == UntapAll {
+		for _, obj := range state.Battlefield().GetAll() {
+			perm, ok := obj.(*permanent.Permanent)
+			if !ok {
+				return ActionResult{}, ErrObjectNotPermanent
+			}
+			perm.Untap()
 		}
-		var err error
-		var selectedObject game.Object
-		if permanentName != "" {
-			selectedObject, err = FindFirstInZoneBy(
-				player.Battlefield,
-				And(IsTapped(), HasName(permanentName)),
-			)
-			if err != nil {
-				return nil, fmt.Errorf("failed to find permanent: %w", err)
-			}
-		}
-		if selectedObject == nil {
-			objects := FindInZoneBy(player.Battlefield, IsTapped())
-			choices := CreateChoices(objects, ZoneBattlefield)
-			choice, err := player.Agent.ChooseOne(
-				"Which permanent to untap",
-				ActionUntap,
-				AddOptionalChoice(choices),
-			)
-			if err != nil {
-				return nil, fmt.Errorf("failed to choose permanent: %w", err)
-			}
-			if choice.ID == ChoiceNone {
-				// TODO: Make this a constant
-				return ActionResult{Message: "no choice made"}, nil
-			}
-			selectedObject, err = player.Battlefield.Get(choice.ID)
-			if err != nil {
-				return nil, fmt.Errorf("failed to get permanent from battlefield: %w", err)
-			}
-		}
-		selectedPermanent, ok := selectedObject.(*Permanent)
+		return ActionResult{Message: "all permanents untapped"}, nil
+	}
+	var err error
+	var selectedObject query.Object
+	if permanentName != "" {
+		found, ok := state.Battlefield().Find(
+			query.And(has.Name(permanentName), is.Tapped()),
+		)
 		if !ok {
-			return nil, fmt.Errorf("object is not a permanent: %w", err)
+			return ActionResult{}, fmt.Errorf("failed to find permanent: %w", err)
 		}
-		selectedPermanent.Untap()
+		perm, ok := found.(*permanent.Permanent)
+		if !ok {
+			return ActionResult{}, fmt.Errorf("object is not a permanent: %w", err)
+		}
+		perm.Untap()
 		return ActionResult{
-			Message: fmt.Sprintf("%s untapped", selectedObject.Name()),
+			Message: fmt.Sprintf("%s untapped", perm.Name()),
 		}, nil
-	*/
+	}
+	if selectedObject == nil {
+		objects := state.Battlefield().FindAll(is.Tapped())
+		choices := choose.CreateChoices(
+			objects,
+			choose.NewChoiceSource(string(mtg.ZoneBattlefield)),
+		)
+		choice, err := player.Agent.ChooseOne(
+			"Which permanent to untap",
+			action.ActionUntap,
+			choose.AddOptionalChoice(choices),
+		)
+		if err != nil {
+			return ActionResult{}, fmt.Errorf("failed to choose permanent: %w", err)
+		}
+		if choice == choose.ChoiceNone {
+			// TODO: Make this a constant
+			return ActionResult{Message: "no choice made"}, nil
+		}
+		var ok bool
+		selectedObject, ok = state.Battlefield().Get(choice.ID)
+		if !ok {
+			return ActionResult{}, fmt.Errorf("failed to get permanent from battlefield: %w", err)
+		}
+	}
+	selectedPermanent, ok := selectedObject.(*permanent.Permanent)
+	if !ok {
+		return ActionResult{}, fmt.Errorf("object is not a permanent: %w", err)
+	}
+	selectedPermanent.Untap()
+	return ActionResult{
+		Message: fmt.Sprintf("%s untapped", selectedObject.Name()),
+	}, nil
 	return ActionResult{}, nil
 }
 
