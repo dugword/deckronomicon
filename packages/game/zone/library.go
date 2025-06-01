@@ -25,6 +25,7 @@ func NewLibrary() *Library {
 	return &library
 }
 
+// TODO Not sure if I like this here.
 func BuildLibrary(
 	state core.State,
 	deckList configs.DeckList,
@@ -119,19 +120,6 @@ func (l *Library) TakeBy(query query.Predicate) (*card.Card, error) {
 	return taken, nil
 }
 
-/*
-// TODO not sure if this is safe to modify a slice as I iterate over it
-	var taken []*card.Card
-	for i, card := range l.cards {
-		if query(card) {
-			l.cards = append(l.cards[:i], l.cards[i+1:]...)
-		}
-	}
-	return taken
-
-*/
-
-// TakeCards removes the top N cards from the library and returns them.
 func (l *Library) TakeTop() (*card.Card, error) {
 	if len(l.cards) == 0 {
 		return nil, mtg.ErrLibraryEmpty
@@ -155,24 +143,3 @@ func (l *Library) Shuffle() {
 func (l *Library) ZoneType() mtg.Zone {
 	return mtg.ZoneLibrary
 }
-
-// Library Specific Methods
-
-// TODO move these to player?
-
-/*
-// AvailableActivatedAbilities returns a list of activated abilities that can
-// be activated from the library. This exits to satisfy the Zone interface.
-// Cards in the library cannot have a activated ability.
-func (l *Library) AvailableActivatedAbilities(*GameState, *Player) []game.Object {
-	return nil
-}
-
-// AvailableToPlay returns a list of cards that can be played from the
-// library. This exists to satisfy the Zone interface. Cards in the library
-// generally cannot be played. (Some cards enable this, but they are
-// exceptions and not currently implemented.)
-func (l *Library) AvailableToPlay(*GameState, *Player) []game.Object {
-	return nil
-}
-*/

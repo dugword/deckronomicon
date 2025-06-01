@@ -1,25 +1,26 @@
 package spell
 
 import (
-	"deckronomicon/packages/game/ability/spell"
 	"deckronomicon/packages/game/ability/static"
 	"deckronomicon/packages/game/card"
+	"deckronomicon/packages/game/core"
 	"deckronomicon/packages/game/cost"
+	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/game/permanent"
-	"deckronomicon/packages/query/predicate"
+	"deckronomicon/packages/query"
+	"deckronomicon/packages/query/is"
 	"fmt"
 	"strings"
 )
 
-type Battlefield interface {
-	Add(permanent *permanent.Permanent) error
+// TODO make these interfaces private
+type BattlefieldAdder interface {
+	AddToBattlefield(permanent *permanent.Permanent)
 }
 
-// This sucks that this is here, it's only to satisfy the interface. Maybe
-// call report state in the caller instead.
-type Agent interface {
-	ReportState(State)
+type CardPlacer interface {
+	PlaceCard(card *card.Card, zone mtg.Zone) error
 }
 
 // Spell represents a spell object on the stack.
@@ -34,7 +35,7 @@ type Spell struct {
 	name            string
 	power           int
 	rulesText       string
-	spellAbility    *spell.Ability
+	effects         []*effect.Effect
 	staticAbilities []*static.Ability
 	subtypes        []mtg.Subtype
 	supertypes      []mtg.Supertype
@@ -42,7 +43,7 @@ type Spell struct {
 }
 
 // NewSpell creates a new Spell instance from a Card.
-func NewSpell(state state, card *card.Card) (*Spell, error) {
+func New(state core.State, card *card.Card) (*Spell, error) {
 	spell := Spell{
 		card:            card,
 		cardTypes:       card.CardTypes(),
@@ -75,6 +76,23 @@ func (s *Spell) Colors() mtg.Colors {
 	return s.colors
 }
 
+// Effects returns the effects of the spell.
+func (s *Spell) Effects() []*effect.Effect {
+	return s.effects
+}
+
+// Description returns a string representation of the activated ability.
+func (s *Spell) Description() string {
+	var descriptions []string
+	/*
+		for _, effect := range s.spellAbility.Effects {
+			descriptions = append(descriptions, effect.Description())
+		}
+	*/
+	// TODO: Support additional costs
+	return fmt.Sprintf("%s: %s", s.ManaCost().Description(), strings.Join(descriptions, ", "))
+}
+
 // ID returns the ID of the spell.
 func (s *Spell) ID() string {
 	return s.id
@@ -97,7 +115,7 @@ func (s *Spell) ManaValue() int {
 	return s.manaCost.ManaValue()
 }
 
-func (s *Spell) Match(p predicate.Predicate) bool {
+func (s *Spell) Match(p query.Predicate) bool {
 	return p(s)
 }
 
@@ -111,40 +129,39 @@ func (s *Spell) Power() int {
 	return s.power
 }
 
-// Description returns a string representation of the activated ability.
-func (s *Spell) Description() string {
-	var descriptions []string
-	for _, effect := range s.spellAbility.Effects {
-		descriptions = append(descriptions, effect.Description())
-	}
-	// TODO: Support additional costs
-	return fmt.Sprintf("%s: %s", s.ManaCost().Description(), strings.Join(descriptions, ", "))
-}
-
-/*
-func (s *Spell) Resolve(state state, player player) error {
-	if s.spellAbility == nil && s.card.Match(is.Permanent()) {
-		permanent, err := permanent.NewPermanent(s.card, state)
+func (s *Spell) Resolve(state core.State, player core.Player) error {
+	// TODO: Do I need to check for effects here?
+	if s.Effects == nil && s.card.Match(is.Permanent()) {
+		permanent, err := permanent.NewPermanent(s.card, state, player)
 		if err != nil {
 			return fmt.Errorf("failed to create permanent: %w", err)
 		}
-		player.Battlefield().Add(permanent)
-	}
-		if err := s.spellAbility.Resolve(state, player); err != nil {
-			return fmt.Errorf("cannot resolve spell ability: %w", err)
+		battlefieldAdder, ok := state.(BattlefieldAdder)
+		if !ok {
+			return fmt.Errorf("state does not implement BattlefieldAdder")
 		}
+		battlefieldAdder.AddToBattlefield(permanent)
+	}
+	for _, effect := range s.effects {
+		if err := effect.Apply(state, player); err != nil {
+			return fmt.Errorf("cannot resolve effect: %w", err)
+		}
+	}
+	cardPlacer, ok := state.(CardPlacer)
+	if !ok {
+		return fmt.Errorf("state does not implement CardPlacer")
+	}
 	if s.flashback {
-		if err := player.Exile.Add(s.card); err != nil {
-			return fmt.Errorf("cannot move spell to exile: %w", err)
+		if err := cardPlacer.PlaceCard(s.card, mtg.ZoneExile); err != nil {
+			return fmt.Errorf("cannot place card in exile: %w", err)
 		}
 		return nil
 	}
-	if err := player.Graveyard.Add(s.card); err != nil {
+	if err := cardPlacer.PlaceCard(s.card, mtg.ZoneGraveyard); err != nil {
 		return fmt.Errorf("cannot move spell to graveyard: %w", err)
 	}
 	return nil
 }
-*/
 
 // RulesText returns the rules text of the spell. The RulesText does not
 // impact the game logic.
@@ -152,14 +169,21 @@ func (s *Spell) RulesText() string {
 	return s.rulesText
 }
 
-// SpellAbility returns the spell ability of the spell.
-func (s *Spell) SpellAbility() *spell.Ability {
-	return s.spellAbility
-}
-
 // StaticAbilities returns the static abilities of the spell
 func (s *Spell) StaticAbilities() []*static.Ability {
 	return s.staticAbilities
+}
+
+func (s *Spell) StaticKeywords() []mtg.StaticKeyword {
+	var keywords []mtg.StaticKeyword
+	for _, ability := range s.staticAbilities {
+		keyword, ok := mtg.StringToStaticKeyword(ability.ID())
+		if !ok {
+			continue
+		}
+		keywords = append(keywords, keyword)
+	}
+	return keywords
 }
 
 // Subtypes returns the subtypes of the spell.
@@ -177,18 +201,13 @@ func (s *Spell) Toughness() int {
 	return s.toughness
 }
 
-/*
 func (s *Spell) Flashback() {
 	s.flashback = true
 }
 
-func (s *Spell) Splice(state state, card *card.Card) error {
-	// TODO: This is what was missing
-	spell, err := NewSpell(state, card)
-	if err != nil {
-		return fmt.Errorf("failed to create spell for splice: %w", err)
+func (s *Spell) Splice(state core.State, card *card.Card) error {
+	for _, effect := range card.SpellAbility() {
+		s.effects = append(s.effects, effect)
 	}
-	s.spellAbility.Splice(spell.spellAbility)
 	return nil
 }
-*/

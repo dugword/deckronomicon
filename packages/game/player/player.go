@@ -130,23 +130,6 @@ func (p *Player) GainLife(amount int) {
 	p.life += amount
 }
 
-func (p *Player) GetZone(zone mtg.Zone) (query.View, error) {
-	switch zone {
-	case mtg.ZoneExile:
-		return p.Exile(), nil
-	case mtg.ZoneGraveyard:
-		return p.Graveyard(), nil
-	case mtg.ZoneHand:
-		return p.Hand(), nil
-	case mtg.ZoneLibrary:
-		return p.Library(), nil
-	case mtg.ZoneRevealed:
-		return p.Revealed(), nil
-	default:
-		return nil, fmt.Errorf("unknown zone: %s", zone)
-	}
-}
-
 func (p *Player) Graveyard() query.View {
 	return query.NewView(p.graveyard.Name(), p.graveyard.GetAll())
 }
@@ -195,8 +178,20 @@ func (p *Player) ManaPool() *manaPool {
 	return p.manaPool.Copy()
 }
 
-func (p *Player) RemoveCardFromHand(cardID string) error {
-	return p.hand.Remove(cardID)
+func (p *Player) PlaceCard(card *card.Card, zone mtg.Zone) error {
+	switch zone {
+	case mtg.ZoneHand:
+		p.hand.Add(card)
+	case mtg.ZoneGraveyard:
+		p.graveyard.Add(card)
+	case mtg.ZoneExile:
+		p.exile.Add(card)
+	case mtg.ZoneLibrary:
+		p.library.Add(card)
+	default:
+		return fmt.Errorf("unknown zone: %s", zone)
+	}
+	return nil
 }
 
 func (p *Player) Revealed() query.View {
@@ -205,6 +200,21 @@ func (p *Player) Revealed() query.View {
 
 func (p *Player) ShuffleLibrary() {
 	p.library.Shuffle()
+}
+
+func (p *Player) TakeCard(cardID string, zone mtg.Zone) (*card.Card, error) {
+	switch zone {
+	case mtg.ZoneHand:
+		return p.hand.Take(cardID)
+	case mtg.ZoneGraveyard:
+		return p.graveyard.Take(cardID)
+	case mtg.ZoneExile:
+		return p.exile.Take(cardID)
+	case mtg.ZoneLibrary:
+		return p.library.Take(cardID)
+	default:
+		return nil, fmt.Errorf("unknown zone: %s", zone)
+	}
 }
 
 func (p *Player) Tutor(query query.Predicate) error {

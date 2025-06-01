@@ -31,7 +31,11 @@ func CardType(cardTypes ...mtg.CardType) query.Predicate {
 	return func(obj query.Object) bool {
 		for _, t := range cardTypes {
 			found := false
-			for _, cardType := range obj.CardTypes() {
+			cardObj, ok := obj.(query.CardObject)
+			if !ok {
+				return false
+			}
+			for _, cardType := range cardObj.CardTypes() {
 				if cardType == t {
 					found = true
 					break
@@ -48,7 +52,11 @@ func CardType(cardTypes ...mtg.CardType) query.Predicate {
 // TODO support multiple colors
 func Color(color mtg.Color) query.Predicate {
 	return func(obj query.Object) bool {
-		objColors := obj.Colors()
+		cardObj, ok := obj.(query.CardObject)
+		if !ok {
+			return false
+		}
+		objColors := cardObj.Colors()
 		switch color {
 		case mtg.ColorBlack:
 			return objColors.Black
@@ -78,13 +86,16 @@ func Name(name string) query.Predicate {
 	}
 }
 
-/*
-func StaticAbilities(abilities ...mtg.StaticKeyword) predicate.Predicate {
+func StaticKeyword(keywords ...mtg.StaticKeyword) query.Predicate {
 	return func(obj query.Object) bool {
-		for _, ability := range abilities {
+		for _, keyword := range keywords {
 			found := false
-			for _, objAbility := range obj.StaticAbilities() {
-				if objAbility == ability {
+			cardObj, ok := obj.(query.CardObject)
+			if !ok {
+				return false
+			}
+			for _, objKeyword := range cardObj.StaticKeywords() {
+				if objKeyword == keyword {
 					found = true
 					break
 				}
@@ -96,13 +107,16 @@ func StaticAbilities(abilities ...mtg.StaticKeyword) predicate.Predicate {
 		return true
 	}
 }
-*/
 
 func Subtype(subtypes ...mtg.Subtype) query.Predicate {
 	return func(obj query.Object) bool {
 		for _, subtype := range subtypes {
 			found := false
-			for _, objSubtype := range obj.Subtypes() {
+			cardObj, ok := obj.(query.CardObject)
+			if !ok {
+				return false
+			}
+			for _, objSubtype := range cardObj.Subtypes() {
 				if objSubtype == subtype {
 					found = true
 					break
@@ -120,7 +134,11 @@ func Supertype(supertypes ...mtg.Supertype) query.Predicate {
 	return func(obj query.Object) bool {
 		for _, supertype := range supertypes {
 			found := false
-			for _, objSupertype := range obj.Supertypes() {
+			cardObj, ok := obj.(query.CardObject)
+			if !ok {
+				return false
+			}
+			for _, objSupertype := range cardObj.Supertypes() {
 				if objSupertype == supertype {
 					found = true
 					break

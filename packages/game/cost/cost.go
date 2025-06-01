@@ -31,7 +31,7 @@ var LifeCostPattern = regexp.MustCompile(`^Pay \d+ life$`)
 // NewCost creates a new cost based on the input string and the source.
 // TODO: Maybe rename to NewCost, only return a composit cost when there's
 // more than one
-func NewCost(input string, source core.Object) (Cost, error) {
+func New(input string, source core.Object) (Cost, error) {
 	parts := strings.Split(input, ",")
 	var costs []Cost
 	for _, part := range parts {

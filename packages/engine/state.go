@@ -5,6 +5,7 @@ import (
 
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/permanent"
 	"deckronomicon/packages/game/player"
 	"deckronomicon/packages/game/zone"
 	"deckronomicon/packages/query"
@@ -46,6 +47,10 @@ func NewGameState() *GameState {
 		TurnMessageLog:     []string{}, // TODO: this sucks, make better
 	}
 	return &gameState
+}
+
+func (g *GameState) AddToBattlefield(perm *permanent.Permanent) {
+	g.battlefield.Add(perm)
 }
 
 func (g *GameState) Battlefield() query.View {

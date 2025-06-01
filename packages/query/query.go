@@ -6,15 +6,32 @@ import (
 
 // TODO Maybe break this into more specific interfaces
 type Object interface {
-	CardTypes() []mtg.CardType
-	Colors() mtg.Colors
 	Description() string
 	ID() string
 	Match(Predicate) bool
 	Name() string
+}
+
+type CardObject interface {
+	Object
+	CardTypes() []mtg.CardType
+	Colors() mtg.Colors
+	StaticKeywords() []mtg.StaticKeyword
 	Subtypes() []mtg.Subtype
 	Supertypes() []mtg.Supertype
 }
+
+type PermanentObject interface {
+	CardObject
+	IsTapped() bool
+	HasSummoningSickness() bool
+}
+
+type Card interface{}
+
+type Permanent interface{}
+
+type Ability interface{}
 
 // TODO add a ToString method to Predicate so we can have a string
 // representation of the predicate for debugging purposes

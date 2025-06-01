@@ -1,13 +1,7 @@
 package spell
 
-import (
-	"deckronomicon/packages/game/core"
-	"deckronomicon/packages/game/effect"
-	"fmt"
-	"strings"
-)
-
 // Ability represents abilities on instant or sorcery spells.
+/*
 type Ability struct {
 	// Cost    Cost // TODO: Additional costs?
 	Effects []*effect.Effect
@@ -39,3 +33,4 @@ func (a *Ability) Resolve(state core.State, plyr core.Player) error {
 	}
 	return nil
 }
+*/

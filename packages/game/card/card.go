@@ -2,10 +2,10 @@ package card
 
 import (
 	"deckronomicon/packages/game/ability/activated"
-	"deckronomicon/packages/game/ability/spell"
 	"deckronomicon/packages/game/ability/static"
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/definition"
+	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 )
@@ -32,7 +32,8 @@ type Card struct {
 	name                  string
 	power                 int
 	rulesText             string
-	spellAbility          *spell.Ability
+	spellAbility          []*effect.Effect
+	// TODO: Maybe this should just be spell spec? sepll effect spec?
 	spellAbilitySpec      *definition.SpellAbilitySpec
 	staticAbilities       []*static.Ability
 	staticAbilitySpecs    []*definition.StaticAbilitySpec
@@ -120,8 +121,7 @@ func (c *Card) RulesText() string {
 	return c.rulesText
 }
 
-// SpellAbility returns the spell ability of the card.
-func (c *Card) SpellAbility() *spell.Ability {
+func (c *Card) SpellAbility() []*effect.Effect {
 	return c.spellAbility
 }
 
@@ -135,6 +135,19 @@ func (c *Card) StaticAbilities() []*static.Ability {
 		abilities = append(abilities, ability)
 	}
 	return abilities
+}
+
+func (c *Card) StaticKeywords() []mtg.StaticKeyword {
+	var keywords []mtg.StaticKeyword
+	for _, ability := range c.staticAbilities {
+		if ability == nil {
+			continue
+		}
+		// TODO: Check this error or just use typed values all the way down.
+		keyword, _ := mtg.StringToStaticKeyword(ability.ID())
+		keywords = append(keywords, keyword)
+	}
+	return keywords
 }
 
 // Subtypes returns the subtypes of the card.

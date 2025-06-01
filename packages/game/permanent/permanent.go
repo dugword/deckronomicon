@@ -19,10 +19,12 @@ type Permanent struct {
 	card               *card.Card
 	cardTypes          []mtg.CardType
 	colors             mtg.Colors
+	controller         string
 	id                 string
 	loyalty            int
 	manaCost           *cost.ManaCost
 	name               string
+	owner              string
 	power              int
 	rulesText          string
 	staticAbilities    []*static.Ability
@@ -35,16 +37,18 @@ type Permanent struct {
 }
 
 // NewPermanent creates a new Permanent instance from a Card.
-func NewPermanent(card *card.Card, state core.State) (*Permanent, error) {
+func NewPermanent(card *card.Card, state core.State, player core.Player) (*Permanent, error) {
 	permanent := Permanent{
 		activatedAbilities: []*activated.Ability{},
 		card:               card,
 		cardTypes:          card.CardTypes(),
 		colors:             card.Colors(),
+		controller:         player.ID(),
 		id:                 state.GetNextID(),
 		loyalty:            card.Loyalty(),
 		manaCost:           card.ManaCost(),
 		name:               card.Name(),
+		owner:              player.ID(),
 		power:              card.Power(),
 		rulesText:          card.RulesText(),
 		staticAbilities:    card.StaticAbilities(),
@@ -155,6 +159,19 @@ func (p *Permanent) RulesText() string {
 // StaticAbilities returns the static abilities of the permanent.
 func (p *Permanent) StaticAbilities() []*static.Ability {
 	return p.staticAbilities
+}
+
+// StaticAbilities returns the static abilities of the permanent.
+func (p *Permanent) StaticKeywords() []mtg.StaticKeyword {
+	var keywords []mtg.StaticKeyword
+	for _, ability := range p.staticAbilities {
+		keyword, ok := mtg.StringToStaticKeyword(ability.ID())
+		if !ok {
+			continue
+		}
+		keywords = append(keywords, keyword)
+	}
+	return keywords
 }
 
 // Subtypes returns the subtypes of the permanent.

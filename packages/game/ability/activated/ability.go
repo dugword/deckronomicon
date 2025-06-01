@@ -5,7 +5,6 @@ import (
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/effect"
-	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 	"fmt"
 	"strings"
@@ -53,7 +52,7 @@ func BuildActivatedAbility(state core.State, spec definition.ActivatedAbilitySpe
 		Zone:   "",
 		Speed:  spec.Speed,
 	}
-	cost, err := cost.NewCost(spec.Cost, source)
+	cost, err := cost.New(spec.Cost, source)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create cost: %w", err)
 	}
@@ -81,33 +80,6 @@ func (a *Ability) CanActivate(state core.State, playerID string) bool {
 		return false
 	}
 	return true
-}
-
-// CardTypese returns the card types associated with the activated ability.
-// This exists to satisfy the Object interface, but activated abilities
-// typically do not have card types.
-func (a *Ability) CardTypes() []mtg.CardType {
-	return nil
-}
-
-// Subtypese returns the card types associated with the activated ability.
-// This exists to satisfy the Object interface, but activated abilities
-// typically do not have card types.
-func (a *Ability) Subtypes() []mtg.Subtype {
-	return nil
-}
-
-// Supertypes returns the card types associated with the activated ability.
-// This exists to satisfy the Object interface, but activated abilities
-// typically do not have card types.
-func (a *Ability) Supertypes() []mtg.Supertype {
-	return nil
-}
-
-func (a *Ability) Colors() mtg.Colors {
-	// Activated abilities typically do not have colors, but this method
-	// exists to satisfy the Card interface.
-	return mtg.Colors{}
 }
 
 // Description returns a string representation of the activated ability.
@@ -145,8 +117,8 @@ func (a *Ability) Resolve(state core.State, player core.Player) error {
 }
 
 // Tags returns the tags associated with the activated ability.
-func (a *Ability) Tags() []effect.Tag {
-	var tags []effect.Tag
+func (a *Ability) Tags() []core.Tag {
+	var tags []core.Tag
 	for _, effect := range a.Effects {
 		tags = append(tags, effect.Tags()...)
 	}

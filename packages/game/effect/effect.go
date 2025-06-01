@@ -9,7 +9,7 @@ type Effect struct {
 	// TODO: Should this be named handler?
 	Apply       func(core.State, core.Player) error
 	description string
-	tags        []Tag
+	tags        []core.Tag
 }
 
 func (e *Effect) ID() string {
@@ -24,15 +24,7 @@ func (e *Effect) Description() string {
 }
 
 // Tags returns the tags associated with the effect.
-func (e *Effect) Tags() []Tag {
+func (e *Effect) Tags() []core.Tag {
 	// Return the tags associated with the effect.
 	return e.tags
-}
-
-// Tag represents a tag associated with an effect. These are used to
-// define the effect and its properties. E.g. a Draw effect will have a tag
-// Key of "Count" and a Value of the number of cards to draw.
-type Tag struct {
-	Key   string
-	Value string
 }

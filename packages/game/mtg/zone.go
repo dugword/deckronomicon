@@ -16,6 +16,10 @@ const (
 	ZoneStack       Zone = "Stack"
 )
 
+func (z Zone) Name() string {
+	return string(z)
+}
+
 func StringToZone(s string) (Zone, error) {
 	stringToZone := map[string]Zone{
 		"Battlefield": ZoneBattlefield,

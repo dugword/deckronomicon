@@ -54,7 +54,7 @@ func BuildEffect(source query.Object, spec definition.EffectSpec) (*Effect, erro
 		return &Effect{
 			id:          "UnknownEffect",
 			description: fmt.Sprintf("unknown effect: %s", spec.ID),
-			tags:        []Tag{{Key: "Unknown", Value: spec.ID}},
+			tags:        []core.Tag{{Key: "Unknown", Value: spec.ID}},
 			Apply: func(state core.State, player core.Player) error {
 				return nil
 			},
@@ -81,9 +81,9 @@ func BuildEffectDraw(source query.Object, spec definition.EffectSpec) (*Effect, 
 	if err != nil {
 		return nil, fmt.Errorf("invalid count: %s", count)
 	}
-	tags := []Tag{{Key: "Draw", Value: count}}
+	tags := []core.Tag{{Key: "Draw", Value: count}}
 	if drawType != "" {
-		tags = append(tags, Tag{Key: "Type", Value: drawType})
+		tags = append(tags, core.Tag{Key: "Type", Value: drawType})
 	}
 	effect.description = fmt.Sprintf("draw %d cards", count)
 	effect.tags = tags
@@ -116,9 +116,9 @@ func BuildEffectAddMana(source query.Object, spec definition.EffectSpec) (*Effec
 	if !mtg.IsMana(mana) {
 		return nil, fmt.Errorf("invalid mana string: %s", mana)
 	}
-	var tags []Tag
+	var tags []core.Tag
 	for _, symbol := range mtg.ManaStringToManaSymbols(mana) {
-		tags = append(tags, Tag{Key: TagManaAbility, Value: symbol})
+		tags = append(tags, core.Tag{Key: TagManaAbility, Value: symbol})
 	}
 	effect.description = fmt.Sprintf("add %s", mana)
 	effect.tags = tags
@@ -193,7 +193,7 @@ func BuildEffectAdditionalMana(source query.Object, spec definition.EffectSpec) 
 			},
 		}
 	*/
-	var tags []Tag
+	var tags []core.Tag
 	/*
 		for _, symbol := range mtg.ManaStringToManaSymbols(mana) {
 			tags = append(tags, Tag{Key: AbilityTagManaAbility, Value: symbol})
@@ -288,9 +288,9 @@ func BuildEffectCounterSpell(source query.Object, spec definition.EffectSpec) (*
 		return nil
 	}
 	effect.description = fmt.Sprintf("counter a spell of type %s", strings.Join(targetTypes, ", "))
-	var tags []Tag
+	var tags []core.Tag
 	for _, target := range targetTypes {
-		tags = append(tags, Tag{Key: "CounterSpell", Value: target})
+		tags = append(tags, core.Tag{Key: "CounterSpell", Value: target})
 	}
 	effect.tags = tags
 	return &effect, nil
@@ -439,7 +439,7 @@ func BuildEffectLookAndChoose(source query.Object, spec definition.EffectSpec) (
 		*/
 		return nil
 	}
-	effect.tags = []Tag{
+	effect.tags = []core.Tag{
 		{Key: "Look", Value: lookCount},
 		{Key: "Choose", Value: chooseCount},
 		{Key: "Rest", Value: restZone},
@@ -517,7 +517,7 @@ func BuildEffectMill(source query.Object, spec definition.EffectSpec) (*Effect, 
 		return nil
 	}
 	effect.description = fmt.Sprintf("mill %d cards from your library", n)
-	effect.tags = []Tag{{Key: "Mill", Value: count}}
+	effect.tags = []core.Tag{{Key: "Mill", Value: count}}
 	return &effect, nil
 }
 
@@ -547,7 +547,7 @@ func BuildEffectPutBackOnTop(source query.Object, spec definition.EffectSpec) (*
 		return nil
 	}
 	effect.description = fmt.Sprintf("put %d cards from your hand on top of your library in any order", n)
-	effect.tags = []Tag{{Key: "PutBackOnTop", Value: count}}
+	effect.tags = []core.Tag{{Key: "PutBackOnTop", Value: count}}
 	return &effect, nil
 }
 
@@ -576,7 +576,7 @@ func BuildEffectScry(source query.Object, spec definition.EffectSpec) (*Effect, 
 		*/
 		return nil
 	}
-	effect.tags = []Tag{{Key: "Scry", Value: count}}
+	effect.tags = []core.Tag{{Key: "Scry", Value: count}}
 	return &effect, nil
 }
 
@@ -636,9 +636,9 @@ func BuildEffectDiscard(source query.Object, spec definition.EffectSpec) (*Effec
 			}
 		*/
 	}
-	tags := []Tag{{Key: "Discard", Value: count}}
+	tags := []core.Tag{{Key: "Discard", Value: count}}
 	if delay != "" {
-		tags = append(tags, Tag{Key: "Delay", Value: delay})
+		tags = append(tags, core.Tag{Key: "Delay", Value: delay})
 	}
 	description := fmt.Sprintf("discard %d cards", n)
 	if delay != "EndStep" {
