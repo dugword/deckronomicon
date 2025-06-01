@@ -5,15 +5,13 @@ import (
 	"deckronomicon/packages/game/ability/static"
 	"deckronomicon/packages/game/ability/triggered"
 	"deckronomicon/packages/game/card"
+	"deckronomicon/packages/game/core"
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/has"
+	"fmt"
 )
-
-type State interface {
-	GetNextID() string
-}
 
 // Permanent represents a permanent card on the battlefield.
 type Permanent struct {
@@ -37,7 +35,7 @@ type Permanent struct {
 }
 
 // NewPermanent creates a new Permanent instance from a Card.
-func NewPermanent(card *card.Card, state State) (*Permanent, error) {
+func NewPermanent(card *card.Card, state core.State) (*Permanent, error) {
 	permanent := Permanent{
 		activatedAbilities: []*activated.Ability{},
 		card:               card,
@@ -57,6 +55,17 @@ func NewPermanent(card *card.Card, state State) (*Permanent, error) {
 	}
 	if card.Match(has.CardType(mtg.CardTypeCreature)) {
 		permanent.summoningSickness = true
+	}
+	for _, spec := range card.ActivatedAbilitySpecs() {
+		// TODO: use better types
+		if spec.Zone == string(mtg.ZoneHand) || spec.Zone == string(mtg.ZoneGraveyard) {
+			continue
+		}
+		ability, err := activated.BuildActivatedAbility(state, *spec, &permanent)
+		if err != nil {
+			return nil, fmt.Errorf("failed to build activated ability: %w", err)
+		}
+		permanent.activatedAbilities = append(permanent.activatedAbilities, ability)
 	}
 	return &permanent, nil
 }
@@ -79,6 +88,10 @@ func (p *Permanent) CardTypes() []mtg.CardType {
 // Colors returns the colors of the permanent.
 func (p *Permanent) Colors() mtg.Colors {
 	return p.colors
+}
+
+func (p *Permanent) Description() string {
+	return p.rulesText
 }
 
 func (p *Permanent) ID() string {

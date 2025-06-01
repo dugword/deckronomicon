@@ -22,144 +22,171 @@ type GameStep struct {
 	// // EventEvent EventType
 }
 
-var beginningPhase = GamePhase{
-	Name: mtg.PhaseBeginning,
-	Steps: []GameStep{
-		{
-			Name: mtg.StepUntap,
-			// EventEvent: EventUntapStep,
-			Handler: func(state *GameState, player *player.Player) error {
-				// state.Log("Untapping all permanents")
-				actionResult, err := ActionUntapFunc(state, player, action.ActionTarget{Name: UntapAll})
-				if err != nil {
-					return fmt.Errorf("failed to untap: %w", err)
-				}
-				state.Message = actionResult.Message
-				return nil
-			},
-		},
-		{
-			Name: mtg.StepUpkeep,
-			// EventEvent: EventUpkeepStep,
-			Handler: wrapStep(func(state *GameState, player *player.Player) error {
-				return nil
-			}),
-		},
-		{
-			Name: mtg.StepDraw,
-			// EventEvent: EventDrawStep,
-			Handler: wrapStep(func(state *GameState, player *player.Player) error {
-				// state.Log("Drawing a card")
-				actionResult, err := ActionDrawFunc(state, player, action.ActionTarget{Name: "1"})
-				if err != nil {
-					return fmt.Errorf("failed to draw: %w", err)
-				}
-				state.Message = actionResult.Message
-				return nil
-			}),
-		},
-	},
-}
-
-var precombatMainPhase = GamePhase{
-	Name: mtg.PhasePrecombatMain,
-	Steps: []GameStep{
-		{
-			Name: mtg.StepPrecombatMain,
-			// EventEvent: EventPrecombatMainPhase,
-			Handler: wrapStep(func(state *GameState, player *player.Player) error {
-				return nil
-			}),
-		},
-	},
-}
-
-var combatPhase = GamePhase{
-	Name: mtg.PhaseCombat,
-	Steps: []GameStep{
-		{
-			Name: mtg.StepBeginningOfCombat,
-			// EventEvent: EventBeginningOfCombatStep,
-
-			Handler: wrapStep(func(state *GameState, player *player.Player) error {
-				return nil
-			}),
-		},
-		{
-			Name: mtg.StepDeclareAttackers,
-			// EventEvent: EventDeclareAttackersStep,
-			Handler: wrapStep(func(state *GameState, player *player.Player) error {
-				return nil
-			}),
-		},
-		{
-			Name: mtg.StepDeclareBlockers,
-			// EventEvent: EventDeclareBlockersStep,
-			Handler: wrapStep(func(state *GameState, player *player.Player) error {
-				return nil
-			}),
-		},
-		{
-			Name: mtg.StepCombatDamage,
-			// EventEvent: EventCombatDamageStep,
-			Handler: wrapStep(func(state *GameState, player *player.Player) error {
-				return nil
-			}),
-		},
-		{
-			Name: mtg.StepEndOfCombat,
-
-			// EventEvent: EventEndOfCombatStep,
-			Handler: wrapStep(func(state *GameState, player *player.Player) error {
-				return nil
-			}),
-		},
-	},
-}
-
-var postcombatMainPhase = GamePhase{
-	Name: mtg.PhasePostcombatMain,
-	Steps: []GameStep{
-		{
-			Name: mtg.StepPostcombatMain,
-			// EventEvent: EventPostcombatMainPhase,
-			Handler: wrapStep(func(state *GameState, player *player.Player) error {
-				return nil
-			}),
-		},
-	},
-}
-
-var endingPhase = GamePhase{
-	Name: mtg.PhaseEnding,
-	Steps: []GameStep{
-		{
-			Name: mtg.StepEnd,
-			// EventEvent: EventEndStep,
-			Handler: wrapStep(func(state *GameState, player *player.Player) error {
-				return nil
-			}),
-		},
-		{
-			Name: mtg.StepCleanup,
-			// EventEvent: EventCleanupStep,
-			Handler: func(state *GameState, player *player.Player) error {
-				toDiscard := player.Hand.Size() - player.MaxHandSize
-				if toDiscard > 0 {
-					// state.Log(fmt.Sprintf("Discarding %d cards to maintain max hand size", toDiscard))
-					actionResult, err := ActionDiscardFunc(state, player, action.ActionTarget{Name: strconv.Itoa(toDiscard)})
+func (e *Engine) beginningPhase() *GamePhase {
+	return &GamePhase{
+		Name: mtg.PhaseBeginning,
+		Steps: []GameStep{
+			{
+				Name: mtg.StepUntap,
+				// EventEvent: EventUntapStep,
+				Handler: func(state *GameState, player *player.Player) error {
+					e.Log("Untapping all permanents")
+					actionResult, err := ActionUntapFunc(
+						state,
+						player,
+						action.ActionTarget{Name: UntapAll},
+					)
 					if err != nil {
-						return fmt.Errorf("failed to discard cards: %w", err)
+						return fmt.Errorf("failed to untap: %w", err)
 					}
 					state.Message = actionResult.Message
 					return nil
-				}
-				actionResult := &ActionResult{
-					Message: "Cleanup step completed",
-				}
-				state.Message = actionResult.Message
-				return nil
+				},
+			},
+			{
+				Name: mtg.StepUpkeep,
+				// EventEvent: EventUpkeepStep,
+				Handler: e.wrapStep(func(state *GameState, player *player.Player) error {
+					// TODO: Check for upkeep costs
+					return nil
+				}),
+			},
+			{
+				Name: mtg.StepDraw,
+				// EventEvent: EventDrawStep,
+				Handler: e.wrapStep(func(state *GameState, player *player.Player) error {
+					e.Log("Drawing a card")
+					actionResult, err := ActionDrawFunc(
+						state,
+						player,
+						action.ActionTarget{Name: "1"},
+					)
+					if err != nil {
+						return fmt.Errorf("failed to draw: %w", err)
+					}
+					state.Message = actionResult.Message
+					return nil
+				}),
 			},
 		},
-	},
+	}
+}
+
+func (e *Engine) precombatMainPhase() *GamePhase {
+	return &GamePhase{
+		Name: mtg.PhasePrecombatMain,
+		Steps: []GameStep{
+			{
+				Name: mtg.StepPrecombatMain,
+				// EventEvent: EventPrecombatMainPhase,
+				Handler: e.wrapStep(func(state *GameState, player *player.Player) error {
+					return nil
+				}),
+			},
+		},
+	}
+}
+
+func (e *Engine) combatPhase() *GamePhase {
+	return &GamePhase{
+		Name: mtg.PhaseCombat,
+		Steps: []GameStep{
+			{
+				Name: mtg.StepBeginningOfCombat,
+				// EventEvent: EventBeginningOfCombatStep,
+
+				Handler: e.wrapStep(func(state *GameState, player *player.Player) error {
+					return nil
+				}),
+			},
+			{
+				Name: mtg.StepDeclareAttackers,
+				// EventEvent: EventDeclareAttackersStep,
+				Handler: e.wrapStep(func(state *GameState, player *player.Player) error {
+					return nil
+				}),
+			},
+			{
+				Name: mtg.StepDeclareBlockers,
+				// EventEvent: EventDeclareBlockersStep,
+				Handler: e.wrapStep(func(state *GameState, player *player.Player) error {
+					return nil
+				}),
+			},
+			{
+				Name: mtg.StepCombatDamage,
+				// EventEvent: EventCombatDamageStep,
+				Handler: e.wrapStep(func(state *GameState, player *player.Player) error {
+					return nil
+				}),
+			},
+			{
+				Name: mtg.StepEndOfCombat,
+
+				// EventEvent: EventEndOfCombatStep,
+				Handler: e.wrapStep(func(state *GameState, player *player.Player) error {
+					return nil
+				}),
+			},
+		},
+	}
+}
+
+func (e *Engine) postcombatMainPhase() *GamePhase {
+	return &GamePhase{
+		Name: mtg.PhasePostcombatMain,
+		Steps: []GameStep{
+			{
+				Name: mtg.StepPostcombatMain,
+				// EventEvent: EventPostcombatMainPhase,
+				Handler: e.wrapStep(func(state *GameState, player *player.Player) error {
+					return nil
+				}),
+			},
+		},
+	}
+}
+
+func (e *Engine) endingPhase() *GamePhase {
+	return &GamePhase{
+		Name: mtg.PhaseEnding,
+		Steps: []GameStep{
+			{
+				Name: mtg.StepEnd,
+				// EventEvent: EventEndStep,
+				Handler: e.wrapStep(func(state *GameState, player *player.Player) error {
+					return nil
+				}),
+			},
+			{
+				Name: mtg.StepCleanup,
+				// EventEvent: EventCleanupStep,
+				Handler: func(state *GameState, player *player.Player) error {
+					toDiscard := player.Hand().Size() - player.MaxHandSize
+					if toDiscard > 0 {
+						e.Log(fmt.Sprintf(
+							"Discarding %d cards to maintain max hand size %d",
+							toDiscard,
+							player.MaxHandSize,
+						))
+						actionResult, err := ActionDiscardFunc(
+							state,
+							player,
+							action.ActionTarget{Name: strconv.Itoa(toDiscard)},
+						)
+						if err != nil {
+							return fmt.Errorf("failed to discard cards: %w", err)
+						}
+						state.Message = actionResult.Message
+						return nil
+					}
+					actionResult := &ActionResult{
+						Message: "Cleanup step completed",
+					}
+					state.Message = actionResult.Message
+					return nil
+				},
+			},
+		},
+	}
 }

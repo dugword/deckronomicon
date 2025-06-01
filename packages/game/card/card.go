@@ -10,10 +10,6 @@ import (
 	"deckronomicon/packages/query"
 )
 
-type state interface {
-	GetNextID() string
-}
-
 // Card represents a card in the game. It contains all the information about
 // the card, including its name, mana cost, power, toughness, and abilities.
 // The Card type is used to represent a card in the game and holds the specs
@@ -39,6 +35,7 @@ type Card struct {
 	spellAbility          *spell.Ability
 	spellAbilitySpec      *definition.SpellAbilitySpec
 	staticAbilities       []*static.Ability
+	staticAbilitySpecs    []*definition.StaticAbilitySpec
 	triggeredAbilitySpecs []*definition.TriggeredAbilitySpec
 	subtypes              []mtg.Subtype
 	supertypes            []mtg.Supertype
@@ -51,6 +48,10 @@ type Card struct {
 // that are not present on the permanent.
 func (c *Card) ActivatedAbilities() []*activated.Ability {
 	return c.activatedAbilities
+}
+
+func (c *Card) ActivatedAbilitySpecs() []*definition.ActivatedAbilitySpec {
+	return c.activatedAbilitySpecs
 }
 
 // CardTypes returns the card types of the card. A card can have multiple
@@ -66,8 +67,10 @@ func (c *Card) Colors() mtg.Colors {
 	return c.colors
 }
 
-// TODO: Can I have a generic "Has" method that takes a filter func and
-// checks?
+// TODO: Is this the best way to do this?
+func (c *Card) Description() string {
+	return c.rulesText
+}
 
 // ID returns the ID of the card. The ID is a unique identifier for the card
 // in the game and remamains the same as the card moves through zones. The ID

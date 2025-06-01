@@ -1,7 +1,7 @@
 package dummy
 
 import (
-	"deckronomicon/packages/choice"
+	"deckronomicon/packages/choose"
 	"deckronomicon/packages/game/action"
 	"deckronomicon/packages/game/player"
 )
@@ -16,19 +16,19 @@ func NewDummyAgent() *DummyAgent {
 	return &DummyAgent{}
 }
 
-func (d *DummyAgent) ChooseMany(prompt string, source choice.Source, choices []choice.Choice) ([]choice.Choice, error) {
+func (d *DummyAgent) ChooseMany(prompt string, source choose.Source, choices []choose.Choice) ([]choose.Choice, error) {
 	return choices, nil // Always choose all available options
 }
 
-func (d *DummyAgent) ChooseOne(prompt string, source choice.Source, choices []choice.Choice) (choice.Choice, error) {
+func (d *DummyAgent) ChooseOne(prompt string, source choose.Source, choices []choose.Choice) (choose.Choice, error) {
 	return choices[0], nil // Always choose the first option
 }
 
-func (d *DummyAgent) Confirm(prompt string, source choice.Source) (bool, error) {
+func (d *DummyAgent) Confirm(prompt string, source choose.Source) (bool, error) {
 	return true, nil // Always confirm
 }
 
-func (d *DummyAgent) EnterNumber(prompt string, source choice.Source) (int, error) {
+func (d *DummyAgent) EnterNumber(prompt string, source choose.Source) (int, error) {
 	return 1, nil // Always enter 1
 }
 

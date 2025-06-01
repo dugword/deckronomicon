@@ -1,22 +1,11 @@
 package spell
 
 import (
+	"deckronomicon/packages/game/core"
 	"deckronomicon/packages/game/effect"
 	"fmt"
 	"strings"
 )
-
-type State interface {
-	Players() []Player
-}
-
-type Player interface {
-	Agent() Agent
-}
-
-type Agent interface {
-	ReportState(State)
-}
 
 // Ability represents abilities on instant or sorcery spells.
 type Ability struct {
@@ -42,13 +31,10 @@ func (a *Ability) Description() string {
 }
 
 // Resolve resolves the spell ability by applying its effects.
-func (a *Ability) Resolve(state State, player Player) error {
+func (a *Ability) Resolve(state core.State, plyr core.Player) error {
 	for _, effect := range a.Effects {
-		if err := effect.Apply(state, player); err != nil {
+		if err := effect.Apply(state, plyr); err != nil {
 			return fmt.Errorf("cannot resolve effect: %w", err)
-		}
-		for _, p := range state.Players() {
-			p.Agent().ReportState(state)
 		}
 	}
 	return nil

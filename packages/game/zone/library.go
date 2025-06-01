@@ -3,6 +3,7 @@ package zone
 import (
 	"deckronomicon/packages/configs"
 	"deckronomicon/packages/game/card"
+	"deckronomicon/packages/game/core"
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
@@ -10,11 +11,6 @@ import (
 	"fmt"
 	"math/rand/v2"
 )
-
-// TODO should this live here?
-type state interface {
-	GetNextID() string
-}
 
 // Library represents the player's library.
 type Library struct {
@@ -30,7 +26,7 @@ func NewLibrary() *Library {
 }
 
 func BuildLibrary(
-	state state,
+	state core.State,
 	deckList configs.DeckList,
 	cardDefinitions map[string]definition.Card,
 ) (*Library, error) {
@@ -79,6 +75,10 @@ func (l *Library) Get(id string) (*card.Card, error) {
 
 func (l *Library) GetAll() []*card.Card {
 	return l.cards
+}
+
+func (l *Library) Name() string {
+	return string(mtg.ZoneLibrary)
 }
 
 // Peek returns the top N cards without modifying the library.

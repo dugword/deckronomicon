@@ -20,14 +20,6 @@ func (e *Exile) Add(card *card.Card) {
 	e.cards = append(e.cards, card)
 }
 
-func (e *Exile) Find(id string) (*card.Card, error) {
-	for _, card := range e.cards {
-		if card.ID() == id {
-			return card, nil
-		}
-	}
-	return nil, errors.New("card not found in exile")
-}
 func (e *Exile) Get(id string) (*card.Card, error) {
 	for _, card := range e.cards {
 		if card.ID() == id {
@@ -36,6 +28,7 @@ func (e *Exile) Get(id string) (*card.Card, error) {
 	}
 	return nil, errors.New("card not found in exile")
 }
+
 func (e *Exile) GetAll() []*card.Card {
 	var cards []*card.Card
 	for _, card := range e.cards {
@@ -43,6 +36,11 @@ func (e *Exile) GetAll() []*card.Card {
 	}
 	return cards
 }
+
+func (e *Exile) Name() string {
+	return string(mtg.ZoneExile)
+}
+
 func (e *Exile) Remove(id string) error {
 	for i, card := range e.cards {
 		if card.ID() == id {

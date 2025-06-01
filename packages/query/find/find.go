@@ -26,6 +26,20 @@ func By[T query.Object](objects []T, predicate query.Predicate) []T {
 	return result
 }
 
+func FirstBy[T query.Object](objects []T, predicate query.Predicate) (T, error) {
+	var result []T
+	for _, object := range objects {
+		if predicate(object) {
+			result = append(result, object)
+		}
+	}
+	if len(result) == 0 {
+		var notFound T
+		return notFound, query.ErrNotFound
+	}
+	return result[0], nil
+}
+
 /*
 func FindInZoneBy(zone Zone, filter FilterFunc) []game.Object {
 	objects := zone.GetAll()

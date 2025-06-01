@@ -1,8 +1,9 @@
 package ui
 
 import (
-	"deckronomicon/packages/choice"
+	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine"
+	"deckronomicon/packages/game/permanent"
 	"deckronomicon/packages/game/player"
 	"fmt"
 	"os"
@@ -69,7 +70,7 @@ func (b *Buffer) UpdateFromState(state *engine.GameState, player *player.Player)
 		return fmt.Errorf("opponent not found in state for player: %s", player.ID())
 	}
 	displayData := DisplayData{
-		BattlefieldData: BattlefieldData(player),
+		BattlefieldData: BattlefieldData(state),
 		ChoiceData:      BoxData{Title: "Nothing to choose"},
 		GameStatusData:  GameStatusData(state, player),
 		GraveyardData:   GraveyardData(player),
@@ -83,7 +84,7 @@ func (b *Buffer) UpdateFromState(state *engine.GameState, player *player.Player)
 	return nil
 }
 
-func (b *Buffer) UpdateChoices(title string, choices []choice.Choice) {
+func (b *Buffer) UpdateChoices(title string, choices []choose.Choice) {
 	if len(choices) == 0 {
 		b.displayData.ChoiceData = BoxData{Title: "Nothing to choose"}
 		return
@@ -93,20 +94,20 @@ func (b *Buffer) UpdateChoices(title string, choices []choice.Choice) {
 		Content: []string{},
 	}
 	// var subgroupTitle string
-	for _, choice := range choices {
+	for i, choice := range choices {
 		/*
 			if choice.Zone != "" && choice.Zone != subgroupTitle {
 				choiceData.Content = append(choiceData.Content, fmt.Sprintf("--- %s ---", choice.Zone))
 				subgroupTitle = choice.Zone
 			}
 		*/
-		var line = choice.Name
 		/*
 			if choice.Source != "" {
 				line = fmt.Sprintf("(%s) - %s", choice.Source, line)
 			}
-			line = fmt.Sprintf("%d: %s", i, line)
 		*/
+		var line = choice.Name
+		line = fmt.Sprintf("%d: %s", i, line)
 		choiceData.Content = append(choiceData.Content, line)
 	}
 	b.displayData.ChoiceData = choiceData
@@ -124,22 +125,22 @@ func GameStatusData(state *engine.GameState, player *player.Player) BoxData {
 			potentialMana = player.PotentialMana.Describe()
 		}
 	*/
-	if player.ManaPool.AvailableGeneric() > 0 {
-		manaPool = player.ManaPool.Describe()
+	if player.ManaPool().AvailableGeneric() > 0 {
+		manaPool = player.ManaPool().Describe()
 	}
 	return BoxData{
 		Title: "Game Status",
 		Content: []string{
-			fmt.Sprintf("Current Player: Player %d", state.GetActivePlayer().ID()),
+			fmt.Sprintf("Current Player: %s", state.GetActivePlayer().ID()),
 			fmt.Sprintf("Player Mode: %s", player.Mode),
 			fmt.Sprintf("Player 1 Life: %d", player.Life),
 			fmt.Sprintf("Turn: %d", player.Turn),
 			fmt.Sprintf("Phase: %s", state.CurrentPhase),
 			fmt.Sprintf("Step: %s", state.CurrentStep),
-			fmt.Sprintf("Library: %d cards", player.Library.Size()),
-			fmt.Sprintf("Graveyard: %d cards", player.Graveyard.Size()),
-			fmt.Sprintf("Exile: %d cards", player.Exile.Size()),
-			fmt.Sprintf("Hand: %d cards", player.Hand.Size()),
+			fmt.Sprintf("Library: %d cards", player.Library().Size()),
+			fmt.Sprintf("Graveyard: %d cards", player.Graveyard().Size()),
+			fmt.Sprintf("Exile: %d cards", player.Exile().Size()),
+			fmt.Sprintf("Hand: %d cards", player.Hand().Size()),
 			// fmt.Sprintf("Potential Mana: %s", potentialMana),
 			fmt.Sprintf("Mana Pool: %s", manaPool),
 		},
@@ -150,11 +151,11 @@ func OpponentData(state *engine.GameState, player *player.Player) BoxData {
 	return BoxData{
 		Title: "Opponent Status",
 		Content: []string{
-			fmt.Sprintf("Opponent Life: %d", player.Life),
-			fmt.Sprintf("Library: %d cards", player.Library.Size()),
-			fmt.Sprintf("Graveyard: %d cards", player.Graveyard.Size()),
-			fmt.Sprintf("Battlefield: %d permanents", player.Battlefield.Size()),
-			fmt.Sprintf("Hand: %d cards", player.Hand.Size()),
+			fmt.Sprintf("Opponent Life: %d", player.Life()),
+			fmt.Sprintf("Library: %d cards", player.Library().Size()),
+			fmt.Sprintf("Graveyard: %d cards", player.Graveyard().Size()),
+			fmt.Sprintf("Battlefield: %d permanents", state.Battlefield().Size()),
+			fmt.Sprintf("Hand: %d cards", player.Hand().Size()),
 		},
 	}
 }
@@ -170,14 +171,18 @@ func MessageData(state *engine.GameState) BoxData {
 
 // BattlefieldData creates the box data for displaying permanents on the
 // battlefield.
-func BattlefieldData(player *player.Player) BoxData {
+func BattlefieldData(state *engine.GameState) BoxData {
 	var lines []string
-	for _, permanent := range player.Battlefield.GetAll() {
-		line := permanent.Name()
-		if permanent.IsTapped() {
+	for _, obj := range state.Battlefield().GetAll() {
+		perm, ok := obj.(*permanent.Permanent)
+		if !ok {
+			continue // Skip if not a permanent
+		}
+		line := perm.Name()
+		if perm.IsTapped() {
 			line += " (tapped)"
 		}
-		if permanent.HasSummoningSickness() {
+		if perm.HasSummoningSickness() {
 			line += " (summoning sick)"
 		}
 		lines = append(lines, line)
@@ -191,7 +196,7 @@ func BattlefieldData(player *player.Player) BoxData {
 // GraveyardData creates the box data for displaying cards in the graveyard.
 func GraveyardData(player *player.Player) BoxData {
 	var lines []string
-	for _, card := range player.Graveyard.GetAll() {
+	for _, card := range player.Graveyard().GetAll() {
 		line := card.Name()
 		lines = append(lines, line)
 	}
@@ -204,7 +209,7 @@ func GraveyardData(player *player.Player) BoxData {
 // HandData creates the box data for displaying cards in the player's hand.
 func HandData(player *player.Player) BoxData {
 	var lines []string
-	for _, card := range player.Hand.GetAll() {
+	for _, card := range player.Hand().GetAll() {
 		line := card.Name()
 		lines = append(lines, line)
 	}
@@ -229,7 +234,7 @@ func StackData(state *engine.GameState) BoxData {
 // RevealedData creates the box data for displaying cards in the player's hand.
 func RevealedData(player *player.Player) BoxData {
 	var lines []string
-	for _, spell := range player.Revealed.GetAll() {
+	for _, spell := range player.Revealed().GetAll() {
 		lines = append(lines, spell.Name())
 	}
 	return BoxData{

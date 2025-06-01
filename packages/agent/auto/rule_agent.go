@@ -1,7 +1,7 @@
 package auto
 
 import (
-	"deckronomicon/packages/choice"
+	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine"
 	"deckronomicon/packages/game/action"
 	"deckronomicon/packages/game/player"
@@ -46,15 +46,15 @@ func NewRuleBasedAgent(strategyFile string, interactive bool) (*RuleBasedAgent, 
 	return &agent, nil
 }
 
-func (a *RuleBasedAgent) ChooseMany(prompt string, source choice.Source, choices []choice.Choice) ([]choice.Choice, error) {
+func (a *RuleBasedAgent) ChooseMany(prompt string, source choose.Source, choices []choose.Choice) ([]choose.Choice, error) {
 	panic("not yet implemented")
 }
 
-func (a *RuleBasedAgent) ChooseOne(prompt string, source choice.Source, choices []choice.Choice) (choice.Choice, error) {
+func (a *RuleBasedAgent) ChooseOne(prompt string, source choose.Source, choices []choose.Choice) (choose.Choice, error) {
 	return choices[0], nil // For now, just return the first choice
 }
 
-func (a *RuleBasedAgent) Confirm(prompt string, source choice.Source) (bool, error) {
+func (a *RuleBasedAgent) Confirm(prompt string, source choose.Source) (bool, error) {
 	return true, nil
 }
 
@@ -113,7 +113,7 @@ func (a *RuleBasedAgent) GetNextAction(state player.GameState) (action.Action, e
 	return act, nil
 }
 
-func (a *RuleBasedAgent) EnterNumber(string, choice.Source) (int, error) {
+func (a *RuleBasedAgent) EnterNumber(string, choose.Source) (int, error) {
 	// For now, just return a fixed number
 	return 0, nil
 }

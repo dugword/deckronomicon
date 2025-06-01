@@ -1,4 +1,12 @@
-package choice
+package choose
+
+import (
+	"deckronomicon/packages/query"
+	"errors"
+	"sort"
+)
+
+var ErrNoChoices = errors.New("no choices available")
 
 // Choice represents a choice made by the player.
 type Choice struct {
@@ -8,8 +16,26 @@ type Choice struct {
 	Source      Source
 }
 
+type Choosable interface {
+	ID() string
+	Name() string
+	Description() string
+}
+
 type Source interface {
 	Name() string
+}
+
+type choiceSource struct {
+	name string
+}
+
+func (c *choiceSource) Name() string {
+	return c.name
+}
+
+func NewChoiceSource(name string) Source {
+	return &choiceSource{name: name}
 }
 
 var ChoiceNone = Choice{
@@ -24,9 +50,21 @@ func AddOptionalChoice(choices []Choice) []Choice {
 	return choices
 }
 
-/*
+func CreateChoices[T Choosable](objects []T, source Source) []Choice {
+	var choices []Choice
+	for _, object := range objects {
+		choice := Choice{
+			ID:     object.ID(),
+			Name:   object.Name(),
+			Source: source,
+		}
+		choices = append(choices, choice)
+	}
+	return choices
+}
+
 // This was a good idea, but it needs to be reworked after the refactor
-func CreateGroupedChoices(gourpedObjects map[string][]game.Object) []Choice {
+func CreateGroupedChoices(gourpedObjects map[string][]query.Object) []Choice {
 	var choices []Choice
 	var groupNames []string
 	for groupName := range gourpedObjects {
@@ -37,16 +75,29 @@ func CreateGroupedChoices(gourpedObjects map[string][]game.Object) []Choice {
 		objects := gourpedObjects[groupName]
 		for _, object := range objects {
 			choices = append(choices, Choice{
-				ID:   object.ID(),
-				Name: object.Name(),
-				// Source: groupName,
-				Zone: groupName,
+				ID:     object.ID(),
+				Name:   object.Name(),
+				Source: NewChoiceSource(groupName),
 			})
 		}
 	}
 	return choices
 }
+
+/*
+func By[T query.Object](objects []T, predicate query.Predicate) []T {
+	var result []T
+	for _, object := range objects {
+		if predicate(object) {
+			result = append(result, object)
+		}
+	}
+	return result
+}
 */
+
+/*
+ */
 
 /*
 func GroupedChoicesData(title string, choices []game.Choice) (BoxData, []game.Choice) {

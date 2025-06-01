@@ -20,7 +20,7 @@ type Config struct {
 // specified.
 // TODO: Maybe make the .json suffix optional and support typing in the name
 // of the deck if it exists in the decks directory.
-func LoadConfig(args []string, getenv func(string) string) (*Config, error) {
+func LoadConfig(args []string, getenv func(string) string) (Config, error) {
 	var config Config
 	if v, err := strconv.ParseBool(getenv("VERBOSE")); err == nil {
 		config.Verbose = v
@@ -35,7 +35,7 @@ func LoadConfig(args []string, getenv func(string) string) (*Config, error) {
 	scenariosDir := flags.String("scenarios", "scenarios", "scenarios directory")
 	verbose := flags.Bool("verbose", config.Verbose, "verbose output")
 	if err := flags.Parse(args[1:]); err != nil {
-		return nil, err
+		return Config{}, err
 	}
 	config.Cheat = *cheat
 	config.Definitions = *definitions
@@ -43,5 +43,5 @@ func LoadConfig(args []string, getenv func(string) string) (*Config, error) {
 	config.Scenario = *scenario
 	config.ScenariosDir = *scenariosDir
 	config.Verbose = *verbose
-	return &config, nil
+	return config, nil
 }

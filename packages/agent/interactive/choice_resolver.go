@@ -1,7 +1,7 @@
 package interactive
 
 import (
-	"deckronomicon/packages/choice"
+	"deckronomicon/packages/choose"
 	"fmt"
 )
 
@@ -13,7 +13,7 @@ var choiceBoxTmpl = `{{.TopLine}}
 `
 
 // Confirm prompts the user to confirm an action.
-func (a *InteractivePlayerAgent) Confirm(prompt string, source choice.Source) (bool, error) {
+func (a *InteractivePlayerAgent) Confirm(prompt string, source choose.Source) (bool, error) {
 	for {
 		a.Prompt(prompt)
 		accept, err := a.ReadInputConfirm()
@@ -26,7 +26,7 @@ func (a *InteractivePlayerAgent) Confirm(prompt string, source choice.Source) (b
 }
 
 // EnterNumber prompts the user to enter a number.
-func (a *InteractivePlayerAgent) EnterNumber(prompt string, source choice.Source) (int, error) {
+func (a *InteractivePlayerAgent) EnterNumber(prompt string, source choose.Source) (int, error) {
 	for {
 		a.Prompt(prompt)
 		number, err := a.ReadInputNumber(-1)
@@ -39,7 +39,7 @@ func (a *InteractivePlayerAgent) EnterNumber(prompt string, source choice.Source
 }
 
 // ChooseMany prompts the user to choose many of the given choices.
-func (a *InteractivePlayerAgent) ChooseMany(prompt string, source choice.Source, choices []choice.Choice) ([]choice.Choice, error) {
+func (a *InteractivePlayerAgent) ChooseMany(prompt string, source choose.Source, choices []choose.Choice) ([]choose.Choice, error) {
 	if len(choices) == 0 {
 		return nil, fmt.Errorf("no choices available")
 	}
@@ -60,7 +60,7 @@ func (a *InteractivePlayerAgent) ChooseMany(prompt string, source choice.Source,
 			fmt.Println("You must choose at least one option.")
 			continue
 		}
-		var selectedChoices []choice.Choice
+		var selectedChoices []choose.Choice
 		for _, choice := range selected {
 			selectedChoices = append(selectedChoices, choices[choice])
 		}
@@ -70,16 +70,15 @@ func (a *InteractivePlayerAgent) ChooseMany(prompt string, source choice.Source,
 
 // ChoseOne prompts the user to choose one of the given choices.
 // TODO: Need to enable a way to cancel
-func (a *InteractivePlayerAgent) ChooseOne(prompt string, source choice.Source, choices []choice.Choice) (choice.Choice, error) {
+func (a *InteractivePlayerAgent) ChooseOne(prompt string, source choose.Source, choices []choose.Choice) (choose.Choice, error) {
 	if len(choices) == 0 {
-		return choice.Choice{}, fmt.Errorf("no choices available")
+		return choose.Choice{}, fmt.Errorf("no choices available")
 	}
 	title := fmt.Sprintf("%s requires a choice", source.Name())
 	a.uiBuffer.UpdateChoices(title, choices)
 	if err := a.uiBuffer.Render(); err != nil {
-		return choice.Choice{}, fmt.Errorf("error rendering UI buffer: %w", err)
+		return choose.Choice{}, fmt.Errorf("error rendering UI buffer: %w", err)
 	}
-
 	for {
 		a.Prompt(prompt)
 		max := len(choices) - 1 // 0 based

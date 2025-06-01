@@ -3,6 +3,7 @@ package card
 import (
 	"deckronomicon/packages/game/ability/activated"
 	"deckronomicon/packages/game/ability/static"
+	"deckronomicon/packages/game/core"
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/mtg"
@@ -16,7 +17,7 @@ import (
 // and an error if any occurred during the creation process. Any Activated
 // Abilities or Static Abilities that are available while the card is in the
 // players hand or graveyard are built and added to the card.
-func NewCardFromCardDefinition(state state, definition definition.Card) (*Card, error) {
+func NewCardFromCardDefinition(state core.State, definition definition.Card) (*Card, error) {
 	card := Card{
 		activatedAbilities: []*activated.Ability{},
 		definition:         &definition,
@@ -30,6 +31,7 @@ func NewCardFromCardDefinition(state state, definition definition.Card) (*Card, 
 		// definition and build them when needed?
 		activatedAbilitySpecs: definition.ActivatedAbilitySpecs,
 		spellAbilitySpec:      definition.SpellAbilitySpec,
+		staticAbilitySpecs:    definition.StaticAbilitySpecs,
 		triggeredAbilitySpecs: definition.TriggeredAbilitySpecs,
 	}
 	cardColors, err := mtg.StringsToColors(definition.Colors)
@@ -70,5 +72,25 @@ func NewCardFromCardDefinition(state state, definition definition.Card) (*Card, 
 	}
 	card.supertypes = supertypes
 	card.id = state.GetNextID()
+	for _, spec := range card.activatedAbilitySpecs {
+		// TODO: Do this check here or when I am checking for abilities to
+		// activate?
+		// TODO: Handle the types better, maybe make the spec a type
+		if spec.Zone == string(mtg.ZoneHand) || spec.Zone == string(mtg.ZoneGraveyard) {
+			// TODO: rename to just Build?
+			ability, err := activated.BuildActivatedAbility(state, *spec, &card)
+			if err != nil {
+				return nil, fmt.Errorf("failed to build activated ability: %w", err)
+			}
+			card.activatedAbilities = append(card.activatedAbilities, ability)
+		}
+	}
+	for _, spec := range card.staticAbilitySpecs {
+		staticAbility, err := static.BuildStaticAbility(*spec, &card)
+		if err != nil {
+			return nil, fmt.Errorf("failed to build static ability: %w", err)
+		}
+		card.staticAbilities = append(card.staticAbilities, staticAbility)
+	}
 	return &card, nil
 }

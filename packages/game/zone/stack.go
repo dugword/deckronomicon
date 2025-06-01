@@ -1,23 +1,17 @@
 package zone
 
 import (
+	"deckronomicon/packages/game/core"
+	"deckronomicon/packages/game/mtg"
 	"errors"
 	"fmt"
 )
-
-type State interface {
-	GetNextID() string
-}
-
-type Player interface {
-	Agent() any
-}
 
 type Resolvable interface {
 	Description() string
 	ID() string
 	Name() string
-	Resolve(State, Player) error
+	Resolve(core.State, core.Player) error
 }
 
 type Stack struct {
@@ -45,6 +39,10 @@ func (s *Stack) Get(id string) (Resolvable, error) {
 
 func (s *Stack) GetAll() []Resolvable {
 	return s.stack
+}
+
+func (s *Stack) Name() string {
+	return string(mtg.ZoneStack)
 }
 
 func (s *Stack) Remove(id string) error {

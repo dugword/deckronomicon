@@ -1,7 +1,11 @@
 package engine
 
 import (
+	"deckronomicon/packages/game/action"
+	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/game/player"
+	"errors"
+	"fmt"
 )
 
 // TODO Handle Preactions maybe?
@@ -30,80 +34,81 @@ if len(action.Preactions) > 0 {
 }
 */
 
-func wrapStep(handler func(*GameState, *player.Player) error) func(*GameState, *player.Player) error {
-	return func(g *GameState, player *player.Player) error {
-		if err := handler(g, player); err != nil {
+func (e *Engine) wrapStep(handler func(*GameState, *player.Player) error) func(*GameState, *player.Player) error {
+	return func(state *GameState, player *player.Player) error {
+		if err := handler(state, player); err != nil {
 			return err
 		}
-		if err := g.HandlePriority(player); err != nil {
+		if err := e.HandlePriority(player); err != nil {
 			return err
 		}
 		return nil
 	}
 }
 
-func (g *GameState) RunPriorityLoop(player *player.Player) error {
-	if !player.HasStop(g.CurrentStep) {
-		// player.Agent.ReportState(g)
+func (e *Engine) RunPriorityLoop(player *player.Player) error {
+	if !player.HasStop(e.GameState.CurrentStep) {
+		player.Agent.ReportState(e.GameState)
 		return nil
 	}
 	for {
 		// player.PotentialMana = GetPotentialMana(g, player)
-		// player.Agent.ReportState(g)
-		/*
-			action, err := player.Agent.GetNextAction(g)
-			if err != nil {
-				return fmt.Errorf("failed to get next action from agent: %w", err)
-			}
-			if !PlayerActions[action.Type] {
-				if !g.Cheat {
-					g.Message = fmt.Sprintf("Invalid player action: %s", action.Type)
-					continue
-				}
-			}
-			result, err := g.ResolveAction(action, player)
-			if err != nil {
-				if errors.Is(err, ErrGameOver) {
-					return err
-				}
-				errString := fmt.Sprintf("ERROR: %s", err)
-				g.Log(errString)
-				g.Message = errString
+		player.Agent.ReportState(e.GameState)
+		// TODO: Better package name so this doesn't conflict
+		act, err := player.Agent.GetNextAction(e.GameState)
+		if err != nil {
+			return fmt.Errorf(
+				"failed to get next action for %s: %w",
+				player.ID,
+				err,
+			)
+		}
+		if !action.PlayerActions[act.Type] {
+			if !e.GameState.CheatsEnabled {
+				e.GameState.Message = fmt.Sprintf("Invalid player action: %s", act.Type)
 				continue
 			}
-			g.Message = result.Message
-			if result.Pass {
-				return nil
+		}
+		result, err := e.ResolveAction(act, player)
+		if err != nil {
+			if errors.Is(err, mtg.ErrGameOver) {
+				return err
 			}
-		*/
+			errString := fmt.Sprintf("ERROR: %s", err)
+			e.Log(errString)
+			e.GameState.Message = errString
+			continue
+		}
+		e.GameState.Message = result.Message
+		if result.Pass {
+			return nil
+		}
 	}
 }
 
-func (g *GameState) HandlePriority(player *player.Player) error {
+func (e *Engine) HandlePriority(player *player.Player) error {
 	for {
-		/*
-			if err := g.RunPriorityLoop(player); err != nil {
-				return err
-			}
-			if g.Stack.Size() == 0 {
-				break
-			}
-			g.Log("Resolving stack...")
-			object, err := g.Stack.Pop()
-			if err != nil {
-				return fmt.Errorf("failed to pop resolvable from stack: %w", err)
-			}
-			// Resolve should live in this pacakge: engine
-			resolvable, ok := object.(Resolvable)
-			if !ok {
-				return fmt.Errorf("object is not resolvable: %T\n", object)
-			}
-			g.Log("Resolving: " + resolvable.Name())
-			if err := resolvable.Resolve(g, player); err != nil {
-				return fmt.Errorf("failed to resolve: %w", err)
-			}
-			g.Log("Rsolved: " + resolvable.Name())
-		*/
+		if err := e.RunPriorityLoop(player); err != nil {
+			return err
+		}
+		if e.GameState.Stack.Size() == 0 {
+			break
+		}
+		e.Log("Resolving stack...")
+		object, err := e.GameState.Stack.Pop()
+		if err != nil {
+			return fmt.Errorf("failed to pop resolvable from stack: %w", err)
+		}
+		// Resolve should live in this pacakge: engine
+		resolvable, ok := object.(Resolvable)
+		if !ok {
+			return fmt.Errorf("object is not resolvable: %T\n", object)
+		}
+		e.Log("Resolving: " + resolvable.Name())
+		if err := resolvable.Resolve(e.GameState, player); err != nil {
+			return fmt.Errorf("failed to resolve: %w", err)
+		}
+		e.Log("Rsolved: " + resolvable.Name())
 	}
 	return nil
 }

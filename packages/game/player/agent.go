@@ -1,7 +1,7 @@
 package player
 
 import (
-	"deckronomicon/packages/choice"
+	"deckronomicon/packages/choose"
 	"deckronomicon/packages/game/action"
 )
 
@@ -13,10 +13,10 @@ type Agent interface {
 	//ChooseAny(prompt string, choices []Choice) []Choice
 	//ChooseN(prompt string, choices []Choice, n int) []Choice
 	//ChooseUpToN(prompt string, choices []Choice, n int) []Choice
-	ChooseMany(prompt string, source choice.Source, choices []choice.Choice) ([]choice.Choice, error)
-	ChooseOne(prompt string, source choice.Source, choices []choice.Choice) (choice.Choice, error)
-	Confirm(prompt string, source choice.Source) (bool, error)
-	EnterNumber(prompt string, source choice.Source) (int, error)
+	ChooseMany(prompt string, source choose.Source, choices []choose.Choice) ([]choose.Choice, error)
+	ChooseOne(prompt string, source choose.Source, choices []choose.Choice) (choose.Choice, error)
+	Confirm(prompt string, source choose.Source) (bool, error)
+	EnterNumber(prompt string, source choose.Source) (int, error)
 	GetNextAction(GameState) (action.Action, error)
 	RegisterPlayer(*Player)
 	ReportState(GameState)

@@ -22,15 +22,6 @@ func (h *Hand) Add(card *card.Card) {
 	h.cards = append(h.cards, card)
 }
 
-func (h *Hand) Find(id string) (*card.Card, error) {
-	for _, card := range h.cards {
-		if card.ID() == id {
-			return card, nil
-		}
-	}
-	return nil, fmt.Errorf("card with ID %s not found", id)
-}
-
 func (h *Hand) Get(id string) (*card.Card, error) {
 	for _, card := range h.cards {
 		if card.ID() == id {
@@ -42,6 +33,12 @@ func (h *Hand) Get(id string) (*card.Card, error) {
 
 func (h *Hand) GetAll() []*card.Card {
 	return h.cards
+}
+
+// TODO: think if I want this to be "%s's Hand" or just "Hand"
+// Right now this is for the choose.Source interface.
+func (h *Hand) Name() string {
+	return string(mtg.ZoneHand)
 }
 
 func (h *Hand) Remove(id string) error {

@@ -1,7 +1,7 @@
 package cost
 
 import (
-	"deckronomicon/packages/game/mana"
+	"deckronomicon/packages/game/core"
 	"deckronomicon/packages/game/mtg"
 	"errors"
 	"fmt"
@@ -10,45 +10,10 @@ import (
 	"strings"
 )
 
-// TODO: Make this so only GameState can be passed in.
-type State any
-
-type Card interface {
-	ID() string
-	Name() string
-}
-
-type Zone interface {
-	Get(string) (Card, error)
-	Take(string) (Card, error)
-	Add(Card) error
-}
-
-// TODO: Make this so only Player can be passed in.
-type Player interface {
-	ChooseManaForGeneric(int) (map[string]int, error)
-	Graveyard() Zone
-	Hand() Zone
-	Life() int
-	LoseLife(int) error
-	ManaPool() *mana.Pool
-}
-
-// TODO: Make this so only Object can be passed in.
-type Object interface {
-	Name() string
-}
-
-// Cost represents a cost that can be paid in the
 type Cost interface {
-	CanPay(State, Player) bool
+	CanPay(state core.State, player core.Player) bool
 	Description() string
-	Pay(State, Player) error
-}
-
-type Permanent interface {
-	IsTapped() bool
-	Tap() error
+	Pay(state core.State, player core.Player) error
 }
 
 func AddCosts(costs ...Cost) Cost {
@@ -60,28 +25,24 @@ func AddCosts(costs ...Cost) Cost {
 	return &CompositeCost{costs: costs}
 }
 
-// ManaPattern is a regex pattern that matches valid mana costs.
-// TODO: Support X costs and other special cases.
-var ManaPattern = regexp.MustCompile(`^(?:\{[0-9WUBRGC]+\})*$`)
-
 var LifeCostPattern = regexp.MustCompile(`^Pay \d+ life$`)
 
 // NewCost creates a new cost based on the input string and the source.
 // TODO: Maybe rename to NewCost, only return a composit cost when there's
 // more than one
-func NewCost(input string, source Object) (Cost, error) {
+func NewCost(input string, source core.Object) (Cost, error) {
 	parts := strings.Split(input, ",")
 	var costs []Cost
 	for _, part := range parts {
 		trimmed := strings.TrimSpace(part)
 		switch {
 		case isTapCost(trimmed):
-			permanent, ok := source.(Permanent)
+			permanent, ok := source.(core.Permanent)
 			if !ok {
 				return nil, fmt.Errorf("source %s not permanent", source.Name())
 			}
 			costs = append(costs, &TapCost{permanent: permanent})
-		case isMana(trimmed):
+		case mtg.IsMana(trimmed):
 			manaCost, err := ParseManaCost(trimmed)
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse mana cost %s: %w", trimmed, err)
@@ -94,7 +55,7 @@ func NewCost(input string, source Object) (Cost, error) {
 			}
 			costs = append(costs, lifeCost)
 		case isDiscardCost(trimmed):
-			card, ok := source.(Card)
+			card, ok := source.(core.Card)
 			if !ok {
 				return nil, fmt.Errorf("source %s not a card", source.Name())
 			}
@@ -116,7 +77,7 @@ type CompositeCost struct {
 
 // CanPay checks if all costs in the composite cost can be paid with the
 // current game state.
-func (c *CompositeCost) CanPay(state State, player Player) bool {
+func (c *CompositeCost) CanPay(state core.State, player core.Player) bool {
 	for _, cost := range c.costs {
 		if !cost.CanPay(state, player) {
 			return false
@@ -152,7 +113,7 @@ func (c *CompositeCost) Description() string {
 
 // Pay pays all costs in the composite cost.
 // TODO: If one cost fails, we need to roll back the others.
-func (c *CompositeCost) Pay(state State, player Player) error {
+func (c *CompositeCost) Pay(state core.State, player core.Player) error {
 	// TODO: Maybe there's a better way to do this, but this helps with the
 	// needing to roll back thing.
 	for _, cost := range c.costs {
@@ -175,7 +136,7 @@ func (c *CompositeCost) Pay(state State, player Player) error {
 
 type LifeCost struct {
 	amount int
-	player *Player
+	player core.Player
 }
 
 func ParseLifeCost(input string) (*LifeCost, error) {
@@ -192,7 +153,7 @@ func ParseLifeCost(input string) (*LifeCost, error) {
 	return &LifeCost{amount: amount}, nil
 }
 
-func (l *LifeCost) CanPay(state State, player Player) bool {
+func (l *LifeCost) CanPay(state core.State, player core.Player) bool {
 	// Check if the player has enough life to pay the cost
 	return player.Life() >= l.amount
 }
@@ -202,7 +163,7 @@ func (l *LifeCost) Description() string {
 	return fmt.Sprintf("Pay %d life", l.amount)
 }
 
-func (l *LifeCost) Pay(state State, player Player) error {
+func (l *LifeCost) Pay(state core.State, player core.Player) error {
 	// Check if the player can pay the cost
 	if !l.CanPay(state, player) {
 		return fmt.Errorf("not enough life to pay cost: %d", l.amount)
@@ -222,17 +183,19 @@ type ManaCost struct {
 
 // CanPay checks if the cost can be paid with the current game state.
 // TODO Maybe this should just be *Player
-func (c *ManaCost) CanPay(state State, player Player) bool {
-	tempPool := player.ManaPool().Copy()
-	for color, amount := range c.colors {
-		if !tempPool.Has(color, amount) {
+func (c *ManaCost) CanPay(state core.State, player core.Player) bool {
+	/*
+		tempPool := player.ManaPool().Copy()
+		for color, amount := range c.colors {
+			if !tempPool.Has(color, amount) {
+				return false
+			}
+			tempPool.Use(color, amount)
+		}
+		if !tempPool.HasGeneric(c.generic) {
 			return false
 		}
-		tempPool.Use(color, amount)
-	}
-	if !tempPool.HasGeneric(c.generic) {
-		return false
-	}
+	*/
 	return true
 }
 
@@ -274,26 +237,32 @@ func (c *ManaCost) ManaValue() int {
 
 // Pay pays the mana cost by using the mana from the mana pool.
 // TODO: Need to roll back if the cost is partially paid and fails.
-func (c *ManaCost) Pay(game State, player Player) error {
+func (c *ManaCost) Pay(game core.State, player core.Player) error {
 	// Pay colored mana
-	for color, amount := range c.colors {
-		if err := player.ManaPool().Use(color, amount); err != nil {
-			return err
-		}
-	}
-	// Pay generic mana
-	if c.generic > 0 {
-		choice, err := player.ChooseManaForGeneric(c.generic)
-		if err != nil {
-			return err
-		}
-		for colorChoice, amount := range choice {
-			color, err := mtg.StringToColor(colorChoice)
-			if err != nil {
+	/*
+		for color, amount := range c.colors {
+			if err := player.ManaPool().Use(color, amount); err != nil {
 				return err
 			}
-			player.ManaPool().Use(color, amount)
 		}
+	*/
+	// Pay generic mana
+	if c.generic > 0 {
+		// TODO: Pay for generic
+		/*
+				choice, err := player.ChooseManaForGeneric(c.generic)
+				if err != nil {
+					return err
+				}
+
+			for colorChoice, amount := range choice {
+				color, err := mtg.StringToColor(colorChoice)
+				if err != nil {
+					return err
+				}
+				player.ManaPool().Use(color, amount)
+			}
+		*/
 	}
 	return nil
 }
@@ -301,12 +270,12 @@ func (c *ManaCost) Pay(game State, player Player) error {
 // SacrificeCost represents a cost that requires sacrificing the permanent.
 // TODO: Support sacrificing other permanents.
 type SacrificeCost struct {
-	permanent *Permanent
+	permanent core.Permanent
 }
 
 // CanPay checks if the sacrifice cost can be paid with the current game
 // state.
-func (c *SacrificeCost) CanPay(game State, player Player) bool {
+func (c *SacrificeCost) CanPay(game core.State, player core.Player) bool {
 	// TODO: Pretty much always true unless there is some state that says the
 	// permanent can't be sacrificed.
 	return true
@@ -318,16 +287,16 @@ func (c *SacrificeCost) Description() string {
 }
 
 // Pay pays the sacrifice cost by sacrificing the permanent.
-func (c *SacrificeCost) Pay(game State, player Player) error {
+func (c *SacrificeCost) Pay(game core.State, player core.Player) error {
 	// TODO: Implement this
 	return errors.New("not implemented")
 }
 
 type DiscardCost struct {
-	card Card
+	card core.Card
 }
 
-func (c *DiscardCost) CanPay(state State, player Player) bool {
+func (c *DiscardCost) CanPay(state core.State, player core.Player) bool {
 	if _, err := player.Hand().Get(c.card.ID()); err != nil {
 		return false
 	}
@@ -338,29 +307,28 @@ func (c *DiscardCost) Description() string {
 	return fmt.Sprintf("discard %s", c.card.Name())
 }
 
-func (c *DiscardCost) Pay(game State, player Player) error {
+func (c *DiscardCost) Pay(game core.State, player core.Player) error {
 	// Check if the player can pay the discard cost
 	if !c.CanPay(game, player) {
 		return fmt.Errorf("cannot discard card %s", c.card.Name())
 	}
-	// Remove the card from the player's hand
-	card, err := player.Hand().Take(c.card.ID())
-	if err != nil {
-		return fmt.Errorf("failed to discard card %s: %w", c.card.Name(), err)
-	}
-	if err := player.Graveyard().Add(card); err != nil {
-		return fmt.Errorf("failed to move discarded card %s to graveyard: %w", c.card.Name(), err)
+	if err := player.DiscardCard(c.card.ID()); err != nil {
+		return fmt.Errorf(
+			"failed to discard card %s: %w",
+			c.card.Name(),
+			err,
+		)
 	}
 	return nil
 }
 
 // TapCost represents a cost that requires tapping the permanent.
 type TapCost struct {
-	permanent Permanent
+	permanent core.Permanent
 }
 
 // CanPay checks if the tap cost can be paid with the current game state.
-func (c *TapCost) CanPay(game State, player Player) bool {
+func (c *TapCost) CanPay(game core.State, player core.Player) bool {
 	return !c.permanent.IsTapped()
 }
 
@@ -370,7 +338,7 @@ func (c *TapCost) Description() string {
 }
 
 // Pay pays the tap cost by tapping the permanent.
-func (c *TapCost) Pay(game State, player Player) error {
+func (c *TapCost) Pay(game core.State, player core.Player) error {
 	if err := c.permanent.Tap(); err != nil {
 		return fmt.Errorf("failed to pay {T} cost: %w", err)
 	}
@@ -398,11 +366,6 @@ func ParseManaCost(costStr string) (*ManaCost, error) {
 		}
 	}
 	return &manaCost, nil
-}
-
-// isManaCost checks if the input string is a valid mana cost.
-func isMana(input string) bool {
-	return ManaPattern.MatchString(input)
 }
 
 func isLifeCost(input string) bool {

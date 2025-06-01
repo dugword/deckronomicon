@@ -57,9 +57,10 @@ func (a ActionType) ID() string {
 	return string(a)
 }
 
-// player.PlayerActions is a map of game action types to booleans indicating if the
+// PlayerActions is a map of game action types to booleans indicating if the
 // action is a player action.
-var playerActions = map[ActionType]bool{
+// TODO make this a function that takes an ActionType and returns a bool
+var PlayerActions = map[ActionType]bool{
 	ActionActivate: true,
 	ActionCheat:    true,
 	ActionConcede:  true,

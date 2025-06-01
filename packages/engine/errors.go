@@ -11,6 +11,8 @@ var ErrMaxTurnsExceeded = fmt.Errorf("maximum turns exceeded: %w", mtg.ErrGameOv
 // Standard errors
 var ErrInvalidObjectType = errors.New("invalid object type")
 var ErrObjectNotFound = errors.New("object not found")
+var ErrObjectNotCard = errors.New("object is not a card")
+var ErrObjectNotPermanent = errors.New("object is not a permanent")
 
 // TODO: Define standard errors here for things like "no actions available"
 // and also define custom error types for things like InvalidAction so I know

@@ -43,7 +43,7 @@ func Run(
 	cancel context.CancelFunc,
 	args []string,
 	getenv func(string) string,
-	stdin *os.File,
+	stdin io.Reader,
 	stdout io.Writer,
 	stderr io.Writer,
 ) error {
@@ -75,47 +75,22 @@ func Run(
 		return fmt.Errorf("failed to load card definitions: %w", err)
 	}
 	logger.Log("Card definitions loaded!")
+	logger.Log("Creating new players...")
 	var players []*player.Player
 	for _, playerScenario := range scenario.Players {
-		logger.Log("Creating player agents...")
-		var playerAgent player.Agent
-		switch playerScenario.AgentType {
-		case "Interactive":
-			logger.Log("Creating interactive player agent...")
-			scanner := bufio.NewScanner(stdin)
-			playerAgent = interactive.NewInteractivePlayerAgent(
-				scanner,
-			)
-		case "Auto":
-			logger.Log("Creating rule based player agent...")
-			var err error
-			playerAgent, err = auto.NewRuleBasedAgent(
-				playerScenario.StrategyFile,
-				config.Interactive,
-			)
-			if err != nil {
-				return fmt.Errorf("failed to create rule based agent: %w", err)
-			}
-		case "Dummy":
-			logger.Log("Creating dummy player agent...")
-			playerAgent = dummy.NewDummyAgent()
-		default:
-			return fmt.Errorf(
-				"unknown player agent type: %s",
-				playerScenario.AgentType,
-			)
-		}
-		logger.Log("Player agents created!")
-		logger.Log("Creating new players...")
-		plyr := player.New(
-			playerAgent,
+		logger.Log(fmt.Sprintf(
+			"Creating player '%s' with agent type '%s'...\n",
 			playerScenario.Name,
-			playerScenario.StartingLife,
-			playerScenario.StartingMode,
-		)
-		logger.Log("Players created!")
-		players = append(players, plyr)
+			playerScenario.AgentType,
+		))
+		p, err := createPlayer(playerScenario, config, stdin)
+		if err != nil {
+			return fmt.Errorf("failed to create player: %s", playerScenario.Name)
+		}
+		players = append(players, p)
+		logger.Log(fmt.Sprintf("Player '%s' created!", p.ID()))
 	}
+	logger.Log("All players created!")
 	logger.Log("Initializing new game...")
 	engine := engine.InitializeNewGame(
 		scenario,
@@ -134,4 +109,42 @@ func Run(
 	logger.Log("Game Message Log:\n" + strings.Join(engine.GameState.MessageLog, "\n"))
 	logger.Log("Game over!")
 	return nil
+}
+
+func createPlayer(
+	playerScenario configs.Player,
+	config configs.Config,
+	stdin io.Reader,
+) (*player.Player, error) {
+	var playerAgent player.Agent
+	switch playerScenario.AgentType {
+	case "Interactive":
+		scanner := bufio.NewScanner(stdin)
+		playerAgent = interactive.NewInteractivePlayerAgent(
+			scanner,
+		)
+	case "Auto":
+		var err error
+		playerAgent, err = auto.NewRuleBasedAgent(
+			playerScenario.StrategyFile,
+			config.Interactive,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create rule based agent: %w", err)
+		}
+	case "Dummy":
+		playerAgent = dummy.NewDummyAgent()
+	default:
+		return nil, fmt.Errorf(
+			"unknown player agent type: %s",
+			playerScenario.AgentType,
+		)
+	}
+	p := player.New(
+		playerAgent,
+		playerScenario.Name,
+		playerScenario.StartingLife,
+		playerScenario.StartingMode,
+	)
+	return p, nil
 }

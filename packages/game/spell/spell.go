@@ -16,23 +16,6 @@ type Battlefield interface {
 	Add(permanent *permanent.Permanent) error
 }
 
-type state interface {
-	GetNextID() string
-	Players() []Player
-}
-
-type player interface {
-	Battlefield() Battlefield
-}
-
-type State interface {
-	Players() []Player
-}
-
-type Player interface {
-	Agent() Agent
-}
-
 // This sucks that this is here, it's only to satisfy the interface. Maybe
 // call report state in the caller instead.
 type Agent interface {

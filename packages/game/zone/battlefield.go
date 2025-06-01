@@ -36,6 +36,10 @@ func (b *Battlefield) GetAll() []*permanent.Permanent {
 	return b.permanents
 }
 
+func (b *Battlefield) Name() string {
+	return string(mtg.ZoneBattlefield)
+}
+
 func (b *Battlefield) Remove(id string) error {
 	for i, permanent := range b.permanents {
 		if permanent.ID() == id {

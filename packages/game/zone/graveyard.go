@@ -34,6 +34,10 @@ func (g *Graveyard) GetAll() []*card.Card {
 	return g.cards
 }
 
+func (g *Graveyard) Name() string {
+	return string(mtg.ZoneGraveyard)
+}
+
 func (g *Graveyard) Remove(id string) error {
 	for i, card := range g.cards {
 		if card.ID() == id {

@@ -1,17 +1,13 @@
 package effect
 
-// TODO Make this require something so only GameState is passed in
-type State any
-
-// TODO Make this require something so only Player is passed in
-type Player any
+import "deckronomicon/packages/game/core"
 
 // Effect represents an effect that can be applied to a game state.
 type Effect struct {
 	// Should this be named Name since it's not a unique ID?
 	id string
 	// TODO: Should this be named handler?
-	Apply       func(State, Player) error
+	Apply       func(core.State, core.Player) error
 	description string
 	tags        []Tag
 }

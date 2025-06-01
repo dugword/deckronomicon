@@ -7,13 +7,15 @@ import (
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/game/player"
 	"deckronomicon/packages/game/zone"
+	"deckronomicon/packages/query"
 	"errors"
 	"fmt"
 )
 
 // GameState represents the current state of the game.
 type GameState struct {
-	ActivePlayer    int
+	activePlayer    int
+	battlefield     *zone.Battlefield
 	CheatsEnabled   bool
 	CardPool        string
 	CardDefinitions map[string]definition.Card
@@ -22,7 +24,7 @@ type GameState struct {
 	CurrentStep mtg.Step
 	// EventListeners     []EventHandler
 	LastActionFailed   bool
-	Players            []*player.Player
+	players            []*player.Player
 	MaxTurns           int
 	Message            string
 	MessageLog         []string
@@ -36,7 +38,8 @@ type GameState struct {
 func NewGameState() *GameState {
 	// TODO hand on the play
 	gameState := GameState{
-		Players: []*player.Player{},
+		battlefield: zone.NewBattlefield(),
+		players:     []*player.Player{},
 		// EventListeners:     []EventHandler{},
 		SpellsCastThisTurn: []string{}, // TODO: Rethink how this is managed
 		Stack:              zone.NewStack(),
@@ -45,19 +48,23 @@ func NewGameState() *GameState {
 	return &gameState
 }
 
-func (g *GameState) NextPlayerTurn() {
-	g.ActivePlayer++
-	if g.ActivePlayer >= len(g.Players) {
-		g.ActivePlayer = 0
+func (g *GameState) Battlefield() query.View {
+	return query.NewView(g.battlefield.Name(), g.battlefield.GetAll())
+}
+
+func (g *GameState) CanCastSorcery(playerID string) bool {
+	if g.IsMainPhase() && g.StackIsEmpty() && g.IsPlayerActive(playerID) {
+		return true
 	}
+	return false
 }
 
 func (g *GameState) GetActivePlayer() *player.Player {
-	return g.Players[g.ActivePlayer]
+	return g.players[g.activePlayer]
 }
 
 func (g *GameState) GetPlayer(id string) (*player.Player, error) {
-	for _, player := range g.Players {
+	for _, player := range g.players {
 		if player.ID() == id {
 			return player, nil
 		}
@@ -67,10 +74,10 @@ func (g *GameState) GetPlayer(id string) (*player.Player, error) {
 
 // TODO: This will fail with more than 2 players
 func (g *GameState) GetOpponent(id string) (*player.Player, error) {
-	if len(g.Players) != 2 {
+	if len(g.players) != 2 {
 		panic("GetOpponent called with more than 2 players")
 	}
-	for _, player := range g.Players {
+	for _, player := range g.players {
 		if player.ID() != id {
 			return player, nil
 		}
@@ -81,6 +88,25 @@ func (g *GameState) GetOpponent(id string) (*player.Player, error) {
 func (g *GameState) IsMainPhase() bool {
 	return g.CurrentPhase == mtg.PhasePrecombatMain ||
 		g.CurrentPhase == mtg.PhasePostcombatMain
+}
+
+func (g *GameState) IsPlayerActive(playerID string) bool {
+	return g.GetActivePlayer().ID() == playerID
+}
+
+func (g *GameState) NextPlayerTurn() {
+	g.activePlayer++
+	if g.activePlayer >= len(g.players) {
+		g.activePlayer = 0
+	}
+}
+
+func (g *GameState) Players() []*player.Player {
+	return g.players
+}
+
+func (g *GameState) StackIsEmpty() bool {
+	return g.Stack.Size() == 0
 }
 
 /*
@@ -167,22 +193,4 @@ func CanPotentiallyPayFor(state *GameState, manaCost *ManaCost) bool {
 */
 
 /*
-func (g *GameState) CanCastSorcery() bool {
-	if g.IsMainPhase() && g.StackIsEmpty() && g.IsPlayerTurn(g.CurrentPlayer) {
-		return true
-	}
-	return false
-}
-*/
-
-/*
-func (g *GameState) StackIsEmpty() bool {
-	return g.Stack.Size() == 0
-}
-*/
-
-/*
-func (g *GameState) IsPlayerTurn(playerID string) bool {
-	return g.ActivePlayer.ID() == playerID
-}
-*/
+ */

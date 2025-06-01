@@ -37,6 +37,10 @@ func (r *Revealed) GetAll() []*card.Card {
 	return r.cards
 }
 
+func (r *Revealed) Name() string {
+	return string(mtg.ZoneRevealed)
+}
+
 func (r *Revealed) Remove(id string) error {
 	for i, card := range r.cards {
 		if card.ID() == id {

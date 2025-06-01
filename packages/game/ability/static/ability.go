@@ -1,15 +1,16 @@
 package static
 
 import (
+	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/effect"
-	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/query"
 	"fmt"
 	"strings"
 )
 
 // StaticAbility represents continuous effects.
 type Ability struct {
-	ID mtg.StaticKeyword
+	id string
 	// TODO: I don't like this, it feels close but not quite right.
 	// I think tags should mostly be informational and for finding stuff, not
 	// impacting the actual effect logic.
@@ -33,4 +34,20 @@ func (a *Ability) Description() string {
 		)
 	}
 	return strings.Join(descriptions, ", ")
+}
+
+// BuildStaticAbility builds a static ability from the given specification.
+func BuildStaticAbility(spec definition.StaticAbilitySpec, source query.Object) (*Ability, error) {
+	ability := Ability{
+		// TODO: Use string types
+		id: string(spec.ID),
+	}
+	for _, modifer := range spec.Modifiers {
+		efectTag := effect.Tag{
+			Key:   modifer.Key,
+			Value: modifer.Value,
+		}
+		ability.Modifiers = append(ability.Modifiers, efectTag)
+	}
+	return &ability, nil
 }

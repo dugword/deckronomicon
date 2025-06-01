@@ -1,4 +1,4 @@
-package mana
+package player
 
 import (
 	"deckronomicon/packages/game/mtg"
@@ -8,27 +8,14 @@ import (
 	"strings"
 )
 
-// Pool represents a pool of mana available to the player.
-type Pool struct {
+// pool represents a pool of mana available to the player.
+type manaPool struct {
 	pool map[mtg.Color]int
 }
 
-// ManaStringToManaSymbols converts a mana string to a slice of mana symbols.
-// The string should be in the format "{W}{U}{B}{R}{G}{C}".
-func ManaStringToManaSymbols(mana string) []string {
-	re := regexp.MustCompile(`\{([^}]+)\}`)
-	matches := re.FindAllStringSubmatch(mana, -1)
-	var manaSymbols []string
-	for _, match := range matches {
-		symbol := fmt.Sprintf("{%s}", strings.ToUpper(match[1]))
-		manaSymbols = append(manaSymbols, symbol)
-	}
-	return manaSymbols
-}
-
 // NewPool creates a new empty mana pool.
-func NewPool() *Pool {
-	pool := Pool{
+func newManaPool() *manaPool {
+	pool := manaPool{
 		pool: map[mtg.Color]int{},
 	}
 	return &pool
@@ -36,14 +23,14 @@ func NewPool() *Pool {
 
 // Add adds mana to the mana pool.
 // TODO: Do I need to validate color? Or should I just assume it's valid?
-func (p *Pool) Add(color mtg.Color, amount int) {
+func (p *manaPool) Add(color mtg.Color, amount int) {
 	p.pool[color] += amount
 }
 
 // AddMana adds mana to the mana pool from a string representation of a
 // mana pool. The string should be in the format "{W}{U}{B}{R}{G}{C}".
 // TODO: Centralize this with the mana cost parser.
-func (p *Pool) AddMana(mana string) error {
+func (p *manaPool) AddMana(mana string) error {
 	re := regexp.MustCompile(`\{([^}]+)\}`)
 	matches := re.FindAllStringSubmatch(mana, -1)
 	for _, match := range matches {
@@ -57,11 +44,11 @@ func (p *Pool) AddMana(mana string) error {
 	return nil
 }
 
-func (p *Pool) Available(color mtg.Color) int {
+func (p *manaPool) Available(color mtg.Color) int {
 	return p.pool[color]
 }
 
-func (p *Pool) AvailableGeneric() int {
+func (p *manaPool) AvailableGeneric() int {
 	total := 0
 	for _, amount := range p.pool {
 		total += amount
@@ -71,7 +58,7 @@ func (p *Pool) AvailableGeneric() int {
 
 // ColorsAvailable returns a slice of colors that are available in the mana
 // pool.
-func (p *Pool) ColorsAvailable() []mtg.Color {
+func (p *manaPool) ColorsAvailable() []mtg.Color {
 	var colors []mtg.Color
 	for color, amount := range p.pool {
 		if amount > 0 {
@@ -82,17 +69,17 @@ func (p *Pool) ColorsAvailable() []mtg.Color {
 }
 
 // Copy creates a copy of the mana pool.
-func (p *Pool) Copy() *Pool {
-	newPool := Pool{
+func (p *manaPool) Copy() *manaPool {
+	copiedPool := manaPool{
 		pool: map[mtg.Color]int{},
 	}
-	maps.Copy(newPool.pool, p.pool)
-	return &newPool
+	maps.Copy(copiedPool.pool, p.pool)
+	return &copiedPool
 }
 
 // Has checks if the mana pool has the specified amount of mana of the
 // specified color.
-func (p *Pool) Has(color mtg.Color, amount int) bool {
+func (p *manaPool) Has(color mtg.Color, amount int) bool {
 	if p.pool[color] < amount {
 		return false
 	}
@@ -100,7 +87,7 @@ func (p *Pool) Has(color mtg.Color, amount int) bool {
 }
 
 // Get returns the amount of mana generic mana available.
-func (p *Pool) HasGeneric(amount int) bool {
+func (p *manaPool) HasGeneric(amount int) bool {
 	total := 0
 	for _, amount := range p.pool {
 		total += amount
@@ -112,7 +99,7 @@ func (p *Pool) HasGeneric(amount int) bool {
 }
 
 // Describe returns a string representation of the mana pool.
-func (p *Pool) Describe() string {
+func (p *manaPool) Describe() string {
 	var mana []string
 	// TODO: Consolidate with Description in ManaCost
 	for _, color := range []mtg.Color{
@@ -135,12 +122,12 @@ func (p *Pool) Describe() string {
 }
 
 // Empty empties the mana pool.
-func (p *Pool) Empty() {
+func (p *manaPool) Empty() {
 	p.pool = map[mtg.Color]int{}
 }
 
 // Use removes the specified amount of mana from the pool.
-func (p *Pool) Use(color mtg.Color, amount int) error {
+func (p *manaPool) Use(color mtg.Color, amount int) error {
 	if p.pool[color] < amount {
 		return fmt.Errorf("insufficient %s mana in pool", color)
 	}
