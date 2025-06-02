@@ -6,6 +6,7 @@ import (
 	"deckronomicon/packages/game/core"
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/object"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/take"
 	"fmt"
@@ -14,13 +15,13 @@ import (
 
 // Library represents the player's library.
 type Library struct {
-	cards []*card.Card
+	cards []*object.Card
 }
 
 // NewLibrary creates a new Library instance.
 func NewLibrary() *Library {
 	library := Library{
-		cards: []*card.Card{},
+		cards: []*object.Card{},
 	}
 	return &library
 }
@@ -56,16 +57,16 @@ func BuildLibrary(
 }
 
 // Add adds a card to the bottom of the library.
-func (l *Library) Add(card *card.Card) {
+func (l *Library) Add(card *object.Card) {
 	l.cards = append(l.cards, card)
 }
 
 // AddTop adds a card to the top of the library.
-func (l *Library) AddTop(c *card.Card) {
-	l.cards = append([]*card.Card{c}, l.cards...)
+func (l *Library) AddTop(c *object.Card) {
+	l.cards = append([]*object.Card{c}, l.cards...)
 }
 
-func (l *Library) Get(id string) (*card.Card, error) {
+func (l *Library) Get(id string) (*object.Card, error) {
 	for _, card := range l.cards {
 		if card.ID() == id {
 			return card, nil
@@ -74,7 +75,7 @@ func (l *Library) Get(id string) (*card.Card, error) {
 	return nil, fmt.Errorf("card with ID %s not found", id)
 }
 
-func (l *Library) GetAll() []*card.Card {
+func (l *Library) GetAll() []*object.Card {
 	return l.cards
 }
 
@@ -83,7 +84,7 @@ func (l *Library) Name() string {
 }
 
 // Peek returns the top N cards without modifying the library.
-func (l *Library) Peek() *card.Card {
+func (l *Library) Peek() *object.Card {
 	if len(l.cards) == 0 {
 		return nil
 	}
@@ -100,7 +101,7 @@ func (l *Library) Remove(id string) error {
 	return fmt.Errorf("card with ID %s not found", id)
 }
 
-func (l *Library) Take(id string) (*card.Card, error) {
+func (l *Library) Take(id string) (*object.Card, error) {
 	for i, card := range l.cards {
 		if card.ID() != id {
 			continue
@@ -111,7 +112,7 @@ func (l *Library) Take(id string) (*card.Card, error) {
 	return nil, fmt.Errorf("card with ID %s not found", id)
 }
 
-func (l *Library) TakeBy(query query.Predicate) (*card.Card, error) {
+func (l *Library) TakeBy(query query.Predicate) (*object.Card, error) {
 	taken, remaining, err := take.By(l.cards, query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to take card by query: %w", err)
@@ -120,7 +121,7 @@ func (l *Library) TakeBy(query query.Predicate) (*card.Card, error) {
 	return taken, nil
 }
 
-func (l *Library) TakeTop() (*card.Card, error) {
+func (l *Library) TakeTop() (*object.Card, error) {
 	if len(l.cards) == 0 {
 		return nil, mtg.ErrLibraryEmpty
 	}

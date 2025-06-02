@@ -1,22 +1,18 @@
-package permanent
+package object
 
 import (
-	"deckronomicon/packages/game/ability/activated"
 	"deckronomicon/packages/game/ability/static"
-	"deckronomicon/packages/game/ability/triggered"
-	"deckronomicon/packages/game/card"
 	"deckronomicon/packages/game/core"
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/has"
-	"fmt"
 )
 
 // Permanent represents a permanent card on the battlefield.
 type Permanent struct {
-	activatedAbilities []*activated.Ability
-	card               *card.Card
+	activatedAbilities []core.Ability
+	card               *Card
 	cardTypes          []mtg.CardType
 	colors             mtg.Colors
 	controller         string
@@ -33,13 +29,13 @@ type Permanent struct {
 	supertypes         []mtg.Supertype
 	tapped             bool
 	toughness          int
-	triggeredAbilities []*triggered.Ability
+	triggeredAbilities []*Ability
 }
 
 // NewPermanent creates a new Permanent instance from a Card.
-func NewPermanent(card *card.Card, state core.State, player core.Player) (*Permanent, error) {
+func NewPermanent(card *Card, state core.State, player core.Player) (*Permanent, error) {
 	permanent := Permanent{
-		activatedAbilities: []*activated.Ability{},
+		activatedAbilities: []core.Ability{},
 		card:               card,
 		cardTypes:          card.CardTypes(),
 		colors:             card.Colors(),
@@ -60,27 +56,30 @@ func NewPermanent(card *card.Card, state core.State, player core.Player) (*Perma
 	if card.Match(has.CardType(mtg.CardTypeCreature)) {
 		permanent.summoningSickness = true
 	}
-	for _, spec := range card.ActivatedAbilitySpecs() {
+	for _, _ = range card.ActivatedAbilitySpecs() {
 		// TODO: use better types
-		if spec.Zone == string(mtg.ZoneHand) || spec.Zone == string(mtg.ZoneGraveyard) {
-			continue
-		}
-		ability, err := activated.BuildActivatedAbility(state, *spec, &permanent)
-		if err != nil {
-			return nil, fmt.Errorf("failed to build activated ability: %w", err)
-		}
-		permanent.activatedAbilities = append(permanent.activatedAbilities, ability)
+		/*
+			if spec.Zone == string(mtg.ZoneHand) || spec.Zone == string(mtg.ZoneGraveyard) {
+				continue
+			}
+			/*
+				ability, err := activated.BuildActivatedAbility(state, *spec, &permanent)
+				if err != nil {
+					return nil, fmt.Errorf("failed to build activated ability: %w", err)
+				}
+		*/
+		// permanent.activatedAbilities = append(permanent.activatedAbilities, ability)
 	}
 	return &permanent, nil
 }
 
 // ActivatedAbilities returns the activated abilities of the permanent.
-func (p *Permanent) ActivatedAbilities() []*activated.Ability {
+func (p *Permanent) ActivatedAbilities() []core.Ability {
 	return p.activatedAbilities
 }
 
 // Card returns the card associated with the permanent.
-func (p *Permanent) Card() *card.Card {
+func (p *Permanent) Card() core.Card {
 	return p.card
 }
 
@@ -202,7 +201,7 @@ func (p *Permanent) Toughness() int {
 }
 
 // TriggeredAbilities returns the triggered abilities of the permanent.
-func (p *Permanent) TriggeredAbilities() []*triggered.Ability {
+func (p *Permanent) TriggeredAbilities() []*Ability {
 	return p.triggeredAbilities
 }
 

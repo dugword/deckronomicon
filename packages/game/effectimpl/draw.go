@@ -1,8 +1,9 @@
-package effect
+package effectimpl
 
 import (
 	"deckronomicon/packages/game/core"
 	"deckronomicon/packages/game/definition"
+	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/query"
 	"fmt"
 	"strconv"
@@ -11,8 +12,8 @@ import (
 // BuildEffectDraw creates a draw effect based on the provided modifiers.
 // Keys: Count, Type
 // Default: Count: 1
-func BuildEffectDraw(source query.Object, spec definition.EffectSpec) (*Effect, error) {
-	effect := Effect{id: spec.ID}
+func BuildEffectDraw(source query.Object, spec definition.EffectSpec) (*effect.Effect, error) {
+
 	count := "1"
 	var drawType string
 	for _, modifier := range spec.Modifiers {
@@ -31,18 +32,22 @@ func BuildEffectDraw(source query.Object, spec definition.EffectSpec) (*Effect, 
 	if drawType != "" {
 		tags = append(tags, core.Tag{Key: "Type", Value: drawType})
 	}
-	effect.description = fmt.Sprintf("draw %d cards", count)
-	effect.tags = tags
-	effect.Apply = func(state core.State, player core.Player) error {
-		p, ok := player.(Player)
-		if !ok {
-			return fmt.Errorf("player does not implement Player interface: %T", player)
-		}
-		_, err := p.DrawCard()
-		if err != nil {
-			return fmt.Errorf("failed to draw card: %w", err)
-		}
-		return nil
-	}
-	return &effect, nil
+	eff := effect.New(
+		spec.ID,
+		fmt.Sprintf("draw %d cards", count),
+		tags,
+
+		func(state core.State, player core.Player) error {
+			p, ok := player.(Player)
+			if !ok {
+				return fmt.Errorf("player does not implement Player interface: %T", player)
+			}
+			_, err := p.DrawCard()
+			if err != nil {
+				return fmt.Errorf("failed to draw card: %w", err)
+			}
+			return nil
+		},
+	)
+	return eff, nil
 }

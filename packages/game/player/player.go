@@ -1,8 +1,8 @@
 package player
 
 import (
-	"deckronomicon/packages/game/card"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/object"
 	"deckronomicon/packages/game/zone"
 	"deckronomicon/packages/query"
 	"errors"
@@ -87,7 +87,7 @@ func (p *Player) BottomCard(cardID string) error {
 	return nil
 }
 
-func (p *Player) CheatAddCard(card *card.Card) {
+func (p *Player) CheatAddCard(card *object.Card) {
 	p.hand.Add(card)
 }
 
@@ -178,7 +178,7 @@ func (p *Player) ManaPool() *manaPool {
 	return p.manaPool.Copy()
 }
 
-func (p *Player) PlaceCard(card *card.Card, zone mtg.Zone) error {
+func (p *Player) PlaceCard(card *object.Card, zone mtg.Zone) error {
 	switch zone {
 	case mtg.ZoneHand:
 		p.hand.Add(card)
@@ -202,7 +202,7 @@ func (p *Player) ShuffleLibrary() {
 	p.library.Shuffle()
 }
 
-func (p *Player) TakeCard(cardID string, zone mtg.Zone) (*card.Card, error) {
+func (p *Player) TakeCard(cardID string, zone mtg.Zone) (*object.Card, error) {
 	switch zone {
 	case mtg.ZoneHand:
 		return p.hand.Take(cardID)
@@ -217,7 +217,7 @@ func (p *Player) TakeCard(cardID string, zone mtg.Zone) (*card.Card, error) {
 	}
 }
 
-func (p *Player) TakeTopCard() (*card.Card, error) {
+func (p *Player) TakeTopCard() (*object.Card, error) {
 	card, err := p.library.TakeTop()
 	if err != nil {
 		return nil, nil

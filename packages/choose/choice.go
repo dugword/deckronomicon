@@ -84,6 +84,24 @@ func CreateGroupedChoices(gourpedObjects map[string][]query.Object) []Choice {
 	return choices
 }
 
+type ChoicePrompt struct {
+	PromptText string
+	Options    []ChoiceOption
+	Min        int
+	Max        int
+	Type       string // e.g. "target", "card", "zone"
+}
+
+type ChoiceOption struct {
+	Label string
+	Value interface{}
+}
+
+type ChoiceResponse struct {
+	PromptID string // To match this response to the original prompt
+	Chosen   []any  // Slice of values chosen by the player
+}
+
 /*
 func GroupedChoicesData(title string, choices []game.Choice) (BoxData, []game.Choice) {
 	grouped := make(map[string][]game.Choice)

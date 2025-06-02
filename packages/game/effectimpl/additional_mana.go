@@ -1,8 +1,9 @@
-package effect
+package effectimpl
 
 import (
 	"deckronomicon/packages/game/core"
 	"deckronomicon/packages/game/definition"
+	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 	"errors"
@@ -15,7 +16,7 @@ import (
 //   - Mana: <ManaString>
 //   - Target: <subtype>
 //   - Duration: <eventType>
-func BuildEffectAdditionalMana(source query.Object, spec definition.EffectSpec) (*Effect, error) {
+func BuildEffectAdditionalMana(source query.Object, spec definition.EffectSpec) (*effect.Effect, error) {
 	var mana string
 	var target string
 	var duration string
@@ -47,7 +48,6 @@ func BuildEffectAdditionalMana(source query.Object, spec definition.EffectSpec) 
 	if err != nil {
 		return nil, fmt.Errorf("invalid target subtype: %s", target)
 	}
-	effect := Effect{id: spec.ID}
 	// id := getNextEventID()
 	/*
 		eventHandler := EventHandler{
@@ -75,16 +75,19 @@ func BuildEffectAdditionalMana(source query.Object, spec definition.EffectSpec) 
 			tags = append(tags, Tag{Key: AbilityTagManaAbility, Value: symbol})
 		}
 	*/
-	effect.tags = tags
-	effect.description = fmt.Sprintf("add additional %s when you tap an %s for mana", mana, target)
-	effect.Apply = func(state core.State, player core.Player) error {
-		/*
-			state.RegisterListenerUntil(
-				eventHandler,
-				EventEndStep,
-			)
-		*/
-		return nil
-	}
-	return &effect, nil
+	eff := effect.New(
+		spec.ID,
+		fmt.Sprintf("add additional %s when you tap an %s for mana", mana, target),
+		tags,
+		func(state core.State, player core.Player) error {
+			/*
+				state.RegisterListenerUntil(
+					eventHandler,
+					EventEndStep,
+				)
+			*/
+			return nil
+		},
+	)
+	return eff, nil
 }

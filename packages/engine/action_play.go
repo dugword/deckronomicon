@@ -3,13 +3,11 @@ package engine
 import (
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/game/action"
-	"deckronomicon/packages/game/card"
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/mtg"
-	"deckronomicon/packages/game/permanent"
+	"deckronomicon/packages/game/object"
 	"deckronomicon/packages/game/player"
-	"deckronomicon/packages/game/spell"
-	"deckronomicon/packages/query"
+=	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/has"
 	"deckronomicon/packages/query/is"
 	"fmt"
@@ -17,9 +15,9 @@ import (
 
 func GetAvailableToPlay(state *GameState, p *player.Player) (map[string][]query.Object, error) {
 	available := map[string][]query.Object{}
-	for _, object := range p.Hand().GetAll() {
+	for _, obj := range p.Hand().GetAll() {
 		const ZoneHand = string(mtg.ZoneHand)
-		c, ok := object.(*card.Card)
+		c, ok := obj.(*object.Card)
 		if !ok {
 			return nil, ErrObjectNotCard
 		}
@@ -111,7 +109,7 @@ func ActionPlayFunc(state *GameState, player *player.Player, target action.Actio
 			return ActionResult{}, fmt.Errorf("failed to find card to play")
 		}
 	}
-	c, ok := targetObj.(*card.Card)
+	c, ok := targetObj.(*object.Card)
 	if !ok {
 		return ActionResult{}, ErrObjectNotCard
 	}
@@ -132,7 +130,7 @@ func ActionPlayFunc(state *GameState, player *player.Player, target action.Actio
 }
 
 // TODO: Should this be a method? Standardize on Logging
-func PlayLand(state *GameState, player *player.Player, card *card.Card) error {
+func PlayLand(state *GameState, player *player.Player, card *object.Card) error {
 	if card.Match(has.CardType(mtg.CardTypeLand)) {
 		if player.LandDrop {
 			return mtg.ErrLandAlreadyPlayed
@@ -147,7 +145,7 @@ func PlayLand(state *GameState, player *player.Player, card *card.Card) error {
 			err,
 		)
 	}
-	perm, err := permanent.NewPermanent(card, state, player)
+	perm, err := object.NewPermanent(card, state, player)
 	if err != nil {
 		return fmt.Errorf(
 			"failed to create permanent from %s: %w",
@@ -161,7 +159,7 @@ func PlayLand(state *GameState, player *player.Player, card *card.Card) error {
 
 // TODO: Maybe this should be a method off of GameState
 // or maybe a method off of Card, e.g. card.Cast() like Ability.Resolve()
-func CastSpell(state *GameState, player *player.Player, c *card.Card, fromZone string) error {
+func CastSpell(state *GameState, player *player.Player, c *object.Card, fromZone string) error {
 	spell, err := spell.New(state, c)
 	if err != nil {
 		return fmt.Errorf("failed to create spell from %s: %w", c.Name(), err)
@@ -221,7 +219,7 @@ func CastSpell(state *GameState, player *player.Player, c *card.Card, fromZone s
 			if !ok {
 				return fmt.Errorf("failed to get splice card from hand: %w", err)
 			}
-			spliceCard, ok := obj.(*card.Card)
+			spliceCard, ok := obj.(*object.Card)
 			if !ok {
 				return ErrObjectNotCard
 			}
@@ -292,7 +290,7 @@ func CastSpell(state *GameState, player *player.Player, c *card.Card, fromZone s
 		return fmt.Errorf("cannot pay spell cost: %w", err)
 	}
 	for _, spliceCard := range toSplice {
-		card, ok := spliceCard.(*card.Card)
+		card, ok := spliceCard.(*object.Card)
 		if !ok {
 			return ErrObjectNotCard
 		}

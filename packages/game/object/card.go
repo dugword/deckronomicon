@@ -1,11 +1,10 @@
-package card
+package object
 
 import (
-	"deckronomicon/packages/game/ability/activated"
 	"deckronomicon/packages/game/ability/static"
+	"deckronomicon/packages/game/core"
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/definition"
-	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 )
@@ -21,7 +20,7 @@ import (
 // a player's library is a unique instance of the Card type, even if the card
 // is a copy of another card.
 type Card struct {
-	activatedAbilities    []*activated.Ability
+	activatedAbilities    []core.Ability
 	activatedAbilitySpecs []*definition.ActivatedAbilitySpec
 	definition            *definition.Card
 	cardTypes             []mtg.CardType
@@ -32,7 +31,7 @@ type Card struct {
 	name                  string
 	power                 int
 	rulesText             string
-	spellAbility          []*effect.Effect
+	spellAbility          []core.Effect
 	// TODO: Maybe this should just be spell spec? sepll effect spec?
 	spellAbilitySpec      *definition.SpellAbilitySpec
 	staticAbilities       []*static.Ability
@@ -47,7 +46,7 @@ type Card struct {
 // NOTE: These are the activated abilities of the card itself, not the
 // activated abilities of the permanent. A card can have activated abilities
 // that are not present on the permanent.
-func (c *Card) ActivatedAbilities() []*activated.Ability {
+func (c *Card) ActivatedAbilities() []core.Ability {
 	return c.activatedAbilities
 }
 
@@ -121,7 +120,7 @@ func (c *Card) RulesText() string {
 	return c.rulesText
 }
 
-func (c *Card) SpellAbility() []*effect.Effect {
+func (c *Card) SpellAbility() []core.Effect {
 	return c.spellAbility
 }
 

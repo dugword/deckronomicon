@@ -1,27 +1,27 @@
 package zone
 
 import (
-	"deckronomicon/packages/game/card"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/object"
 	"fmt"
 )
 
 type Graveyard struct {
-	cards []*card.Card
+	cards []*object.Card
 }
 
 // NewGraveyard creates a new Graveyard instance.
 func NewGraveyard() *Graveyard {
 	return &Graveyard{
-		cards: []*card.Card{},
+		cards: []*object.Card{},
 	}
 }
 
-func (g *Graveyard) Add(card *card.Card) {
+func (g *Graveyard) Add(card *object.Card) {
 	g.cards = append(g.cards, card)
 }
 
-func (g *Graveyard) Get(id string) (*card.Card, error) {
+func (g *Graveyard) Get(id string) (*object.Card, error) {
 	for _, card := range g.cards {
 		if card.ID() == id {
 			return card, nil
@@ -30,7 +30,7 @@ func (g *Graveyard) Get(id string) (*card.Card, error) {
 	return nil, fmt.Errorf("card witg ID %s not found", id)
 }
 
-func (g *Graveyard) GetAll() []*card.Card {
+func (g *Graveyard) GetAll() []*object.Card {
 	return g.cards
 }
 
@@ -48,7 +48,7 @@ func (g *Graveyard) Remove(id string) error {
 	return fmt.Errorf("card witg ID %s not found", id)
 }
 
-func (g *Graveyard) Take(id string) (*card.Card, error) {
+func (g *Graveyard) Take(id string) (*object.Card, error) {
 	for i, card := range g.cards {
 		if card.ID() == id {
 			g.cards = append(g.cards[:i], g.cards[i+1:]...)

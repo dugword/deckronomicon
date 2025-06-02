@@ -1,8 +1,6 @@
 package core
 
-import (
-	"deckronomicon/packages/query"
-)
+import "deckronomicon/packages/query"
 
 type State interface {
 	CanCastSorcery(string) bool
@@ -12,6 +10,12 @@ type State interface {
 
 type Agent interface {
 	ReportState(State)
+}
+
+type Ability interface {
+	ID() string
+	Name() string
+	Resolve(state State, player Player) error
 }
 
 // TODO: Maybe move these into the resolve/spell/effect packages and split out
@@ -29,6 +33,7 @@ type Player interface {
 type Card interface {
 	ID() string
 	Name() string
+	Match(query.Predicate) bool
 }
 
 type Object interface {
@@ -39,6 +44,16 @@ type Object interface {
 type Permanent interface {
 	IsTapped() bool
 	Tap() error
+}
+
+type Effect interface {
+	ID() string
+	Description() string
+	Tags() []Tag
+	// RequiresChoices(State, Player) bool
+	// GetChoices(State, Player) ([]choose.ChoicePrompt, error)
+	// Apply(State, Player, []choose.ChoiceResponse) error
+	Apply(State, Player) error
 }
 
 type Tag struct {

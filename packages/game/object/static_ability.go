@@ -1,4 +1,4 @@
-package static
+package object
 
 import (
 	"deckronomicon/packages/game/core"
@@ -9,7 +9,7 @@ import (
 )
 
 // StaticAbility represents continuous effects.
-type Ability struct {
+type StaticAbility struct {
 	// TODO: Maybe add a typed "Keyword" value here
 	// keyword mtg.keyword
 	id string
@@ -26,12 +26,12 @@ type Ability struct {
 	Modifiers []core.Tag
 }
 
-func (a *Ability) ID() string {
+func (a *StaticAbility) ID() string {
 	return a.id
 }
 
 // Description returns a string representation of the static ability.
-func (a *Ability) Description() string {
+func (a *StaticAbility) Description() string {
 	var descriptions []string
 	for _, modifier := range a.Modifiers {
 		descriptions = append(
@@ -43,8 +43,8 @@ func (a *Ability) Description() string {
 }
 
 // BuildStaticAbility builds a static ability from the given specification.
-func BuildStaticAbility(spec definition.StaticAbilitySpec, source query.Object) (*Ability, error) {
-	ability := Ability{
+func BuildStaticAbility(spec definition.StaticAbilitySpec, source query.Object) (*StaticAbility, error) {
+	ability := StaticAbility{
 		// TODO: Use string types
 		id: string(spec.ID),
 	}

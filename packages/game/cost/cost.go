@@ -3,6 +3,7 @@ package cost
 import (
 	"deckronomicon/packages/game/core"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/has"
 	"errors"
 	"fmt"
@@ -15,6 +16,10 @@ type Cost interface {
 	CanPay(state core.State, player core.Player) bool
 	Description() string
 	Pay(state core.State, player core.Player) error
+}
+
+type Player interface {
+	Hand() query.View
 }
 
 func AddCosts(costs ...Cost) Cost {
@@ -298,7 +303,11 @@ type DiscardCost struct {
 }
 
 func (c *DiscardCost) CanPay(state core.State, player core.Player) bool {
-	if !player.Hand().Contains(has.ID(c.card.ID())) {
+	p, ok := player.(Player)
+	if !ok {
+		return false
+	}
+	if !p.Hand().Contains(has.ID(c.card.ID())) {
 		return false
 	}
 	return true

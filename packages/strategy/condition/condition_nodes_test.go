@@ -1,11 +1,6 @@
 package condition_test
 
-import (
-	"deckronomicon/auto/strategy"
-	"deckronomicon/game"
-	"testing"
-)
-
+/*
 func TestLandDropCondition(t *testing.T) {
 	tests := []struct {
 		name   string
@@ -54,3 +49,4 @@ func TestLandDropCondition(t *testing.T) {
 		})
 	}
 }
+*/

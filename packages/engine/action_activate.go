@@ -2,12 +2,10 @@ package engine
 
 import (
 	"deckronomicon/packages/choose"
-	"deckronomicon/packages/game/ability/activated"
 	"deckronomicon/packages/game/action"
-	"deckronomicon/packages/game/card"
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/mtg"
-	"deckronomicon/packages/game/permanent"
+	"deckronomicon/packages/game/object"
 	"deckronomicon/packages/game/player"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/has"
@@ -16,41 +14,49 @@ import (
 
 func GetAvailableToActivate(state *GameState, p *player.Player) (map[string][]query.Object, error) {
 	available := map[string][]query.Object{}
-	for _, object := range state.Battlefield().GetAll() {
+	for _, obj := range state.Battlefield().GetAll() {
 		const ZoneBattlefield = string(mtg.ZoneBattlefield)
-		perm, ok := object.(*permanent.Permanent)
+		perm, ok := obj.(*object.Permanent)
 		if !ok {
 			return nil, ErrObjectNotPermanent
 		}
 		for _, ability := range perm.ActivatedAbilities() {
-			if !ability.CanActivate(state, p.ID()) {
+			a, ok := ability.(*object.Ability)
+			if !ok {
 				continue
 			}
-			if !ability.Cost.CanPay(state, p) {
+			if !a.CanActivate(state, p.ID()) {
+				continue
+			}
+			if !a.Cost.CanPay(state, p) {
 				continue
 			}
 			available[ZoneBattlefield] = append(
 				available[ZoneBattlefield],
-				ability,
+				a,
 			)
 		}
 	}
-	for _, object := range p.Hand().GetAll() {
+	for _, obj := range p.Hand().GetAll() {
 		const ZoneHand = string(mtg.ZoneHand)
-		card, ok := object.(*card.Card)
+		card, ok := obj.(*object.Card)
 		if !ok {
 			return nil, ErrObjectNotCard
 		}
 		for _, ability := range card.ActivatedAbilities() {
-			if !ability.CanActivate(state, p.ID()) {
+			a, ok := ability.(*object.Ability)
+			if !ok {
+				return nil, fmt.Errorf("this is bad")
+			}
+			if !a.CanActivate(state, p.ID()) {
 				continue
 			}
-			if !ability.Cost.CanPay(state, p) {
+			if !a.Cost.CanPay(state, p) {
 				continue
 			}
 			available[ZoneHand] = append(
 				available[ZoneHand],
-				ability,
+				a,
 			)
 		}
 	}
@@ -91,8 +97,8 @@ func ActionActivateFunc(state *GameState, player *player.Player, target action.A
 	if !ok {
 		return ActionResult{}, query.ErrNotFound
 	}
-	var ability *activated.Ability
-	ability, ok = targetObj.(*activated.Ability)
+	var ability *object.Ability
+	ability, ok = targetObj.(*object.Ability)
 	if !ok {
 		return ActionResult{}, fmt.Errorf("object is not an activated ability: %w", err)
 	}

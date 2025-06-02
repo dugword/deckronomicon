@@ -1,8 +1,9 @@
-package effect
+package effectimpl
 
 import (
 	"deckronomicon/packages/game/core"
 	"deckronomicon/packages/game/definition"
+	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 	"errors"
@@ -13,8 +14,8 @@ import (
 // pool.
 // Supported Modifier Keys (concats multiple modifiers):
 //   - Mana: <ManaString>
-func BuildEffectAddMana(source query.Object, spec definition.EffectSpec) (*Effect, error) {
-	effect := Effect{id: spec.ID}
+func BuildEffectAddMana(source query.Object, spec definition.EffectSpec) (*effect.Effect, error) {
+
 	var mana string
 	for _, modifier := range spec.Modifiers {
 		if modifier.Key == "Mana" {
@@ -29,15 +30,20 @@ func BuildEffectAddMana(source query.Object, spec definition.EffectSpec) (*Effec
 	}
 	var tags []core.Tag
 	for _, symbol := range mtg.ManaStringToManaSymbols(mana) {
-		tags = append(tags, core.Tag{Key: TagManaAbility, Value: symbol})
+		tags = append(tags, core.Tag{Key: effect.TagManaAbility, Value: symbol})
 	}
-	effect.description = fmt.Sprintf("add %s", mana)
-	effect.tags = tags
-	effect.Apply = func(state core.State, player core.Player) error {
-		if err := player.AddMana(mana); err != nil {
-			return fmt.Errorf("failed to add mana: %w", err)
-		}
-		return nil
-	}
-	return &effect, nil
+	eff := effect.New(
+		spec.ID,
+		fmt.Sprintf("add %s", mana),
+		tags,
+
+		func(state core.State, player core.Player) error {
+			if err := player.AddMana(mana); err != nil {
+				return fmt.Errorf("failed to add mana: %w", err)
+			}
+			return nil
+		},
+	)
+
+	return eff, nil
 }

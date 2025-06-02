@@ -1,10 +1,11 @@
-package activated
+package object
 
 import (
 	"deckronomicon/packages/game/core"
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/effect"
+	"deckronomicon/packages/game/effectimpl"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 	"fmt"
@@ -19,7 +20,7 @@ type Source interface {
 type Ability struct {
 	name    string
 	Cost    cost.Cost
-	Effects []*effect.Effect
+	Effects []core.Effect
 	id      string
 	Zone    string
 	source  Source
@@ -43,7 +44,7 @@ func BuildActivatedAbility(state core.State, spec definition.ActivatedAbilitySpe
 	}
 	ability.Cost = cost
 	for _, effectSpec := range spec.EffectSpecs {
-		effect, err := effect.BuildEffect(source, effectSpec)
+		effect, err := effectimpl.BuildEffect(source, effectSpec)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create effect: %w", err)
 		}

@@ -1,13 +1,10 @@
-package spell
+package object
 
 import (
 	"deckronomicon/packages/game/ability/static"
-	"deckronomicon/packages/game/card"
 	"deckronomicon/packages/game/core"
 	"deckronomicon/packages/game/cost"
-	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/mtg"
-	"deckronomicon/packages/game/permanent"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/is"
 	"fmt"
@@ -16,16 +13,16 @@ import (
 
 // TODO make these interfaces private
 type BattlefieldAdder interface {
-	AddToBattlefield(permanent *permanent.Permanent)
+	AddToBattlefield(permanent *Permanent)
 }
 
 type CardPlacer interface {
-	PlaceCard(card *card.Card, zone mtg.Zone) error
+	PlaceCard(card *Card, zone mtg.Zone) error
 }
 
 // Spell represents a spell object on the stack.
 type Spell struct {
-	card            *card.Card
+	card            *Card
 	cardTypes       []mtg.CardType
 	colors          mtg.Colors
 	flashback       bool
@@ -35,7 +32,7 @@ type Spell struct {
 	name            string
 	power           int
 	rulesText       string
-	effects         []*effect.Effect
+	effects         []core.Effect
 	staticAbilities []*static.Ability
 	subtypes        []mtg.Subtype
 	supertypes      []mtg.Supertype
@@ -43,7 +40,7 @@ type Spell struct {
 }
 
 // NewSpell creates a new Spell instance from a Card.
-func New(state core.State, card *card.Card) (*Spell, error) {
+func New(state core.State, card *Card) (*Spell, error) {
 	spell := Spell{
 		card:            card,
 		cardTypes:       card.CardTypes(),
@@ -62,7 +59,7 @@ func New(state core.State, card *card.Card) (*Spell, error) {
 	return &spell, nil
 }
 
-func (s *Spell) Card() *card.Card {
+func (s *Spell) Card() core.Card {
 	return s.card
 }
 
@@ -77,7 +74,7 @@ func (s *Spell) Colors() mtg.Colors {
 }
 
 // Effects returns the effects of the spell.
-func (s *Spell) Effects() []*effect.Effect {
+func (s *Spell) Effects() []core.Effect {
 	return s.effects
 }
 
@@ -130,7 +127,7 @@ func (s *Spell) Power() int {
 func (s *Spell) Resolve(state core.State, player core.Player) error {
 	// TODO: Do I need to check for effects here?
 	if s.Effects == nil && s.card.Match(is.Permanent()) {
-		permanent, err := permanent.NewPermanent(s.card, state, player)
+		permanent, err := NewPermanent(s.card, state, player)
 		if err != nil {
 			return fmt.Errorf("failed to create permanent: %w", err)
 		}
@@ -203,7 +200,7 @@ func (s *Spell) Flashback() {
 	s.flashback = true
 }
 
-func (s *Spell) Splice(state core.State, card *card.Card) error {
+func (s *Spell) Splice(state core.State, card *Card) error {
 	for _, effect := range card.SpellAbility() {
 		s.effects = append(s.effects, effect)
 	}

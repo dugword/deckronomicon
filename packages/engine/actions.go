@@ -416,7 +416,7 @@ func viewHand(state *GameState, player *player.Player) (result ActionResult, err
 			return nil, fmt.Errorf("failed to get card from hand: %w", err)
 		}
 		state.Log("viewed " + card.Name())
-		result = ActionResult{Message: fmt.Sprintf("CARD: %s :: %s :: %s", card.Name(), card.CardTypes(), card.RulesText())}
+		result = ActionResult{Message: fmt.Sprintf("CARD: %s :: %s :: %s", card.Name(), object.CardTypes(), card.RulesText())}
 		return result, nil
 	*/
 	return ActionResult{Message: "No choice made"}, nil
@@ -469,7 +469,7 @@ func viewGraveyard(state *GameState, player *player.Player) (result ActionResult
 		if choice.ID == ChoiceNone {
 			return ActionResult{Message: "No choice made"}, nil
 		}
-		var selectedCard *card.Card
+		var selectedCard *object.Card
 		// TODO remove the .cards access
 		for _, card := range player.Graveyard.cards {
 			if card.ID() == choice.ID {

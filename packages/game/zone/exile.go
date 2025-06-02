@@ -1,26 +1,26 @@
 package zone
 
 import (
-	"deckronomicon/packages/game/card"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/object"
 	"errors"
 )
 
 type Exile struct {
-	cards []*card.Card
+	cards []*object.Card
 }
 
 func NewExile() *Exile {
 	return &Exile{
-		cards: []*card.Card{},
+		cards: []*object.Card{},
 	}
 }
 
-func (e *Exile) Add(card *card.Card) {
+func (e *Exile) Add(card *object.Card) {
 	e.cards = append(e.cards, card)
 }
 
-func (e *Exile) Get(id string) (*card.Card, error) {
+func (e *Exile) Get(id string) (*object.Card, error) {
 	for _, card := range e.cards {
 		if card.ID() == id {
 			return card, nil
@@ -29,8 +29,8 @@ func (e *Exile) Get(id string) (*card.Card, error) {
 	return nil, errors.New("card not found in exile")
 }
 
-func (e *Exile) GetAll() []*card.Card {
-	var cards []*card.Card
+func (e *Exile) GetAll() []*object.Card {
+	var cards []*object.Card
 	for _, card := range e.cards {
 		cards = append(cards, card)
 	}
@@ -50,7 +50,7 @@ func (e *Exile) Remove(id string) error {
 	}
 	return errors.New("card not found in exile")
 }
-func (e *Exile) Take(id string) (*card.Card, error) {
+func (e *Exile) Take(id string) (*object.Card, error) {
 	for i, card := range e.cards {
 		if card.ID() == id {
 			e.cards = append(e.cards[:i], e.cards[i+1:]...)

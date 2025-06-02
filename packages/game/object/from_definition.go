@@ -1,7 +1,6 @@
-package card
+package object
 
 import (
-	"deckronomicon/packages/game/ability/activated"
 	"deckronomicon/packages/game/ability/static"
 	"deckronomicon/packages/game/core"
 	"deckronomicon/packages/game/cost"
@@ -19,7 +18,7 @@ import (
 // players hand or graveyard are built and added to the card.
 func NewCardFromCardDefinition(state core.State, definition definition.Card) (*Card, error) {
 	card := Card{
-		activatedAbilities: []*activated.Ability{},
+		activatedAbilities: []core.Ability{},
 		definition:         &definition,
 		loyalty:            definition.Loyalty,
 		name:               definition.Name,
@@ -72,18 +71,20 @@ func NewCardFromCardDefinition(state core.State, definition definition.Card) (*C
 	}
 	card.supertypes = supertypes
 	card.id = state.GetNextID()
-	for _, spec := range card.activatedAbilitySpecs {
+	for _, _ = range card.activatedAbilitySpecs {
 		// TODO: Do this check here or when I am checking for abilities to
 		// activate?
 		// TODO: Handle the types better, maybe make the spec a type
-		if spec.Zone == string(mtg.ZoneHand) || spec.Zone == string(mtg.ZoneGraveyard) {
-			// TODO: rename to just Build?
-			ability, err := activated.BuildActivatedAbility(state, *spec, &card)
-			if err != nil {
-				return nil, fmt.Errorf("failed to build activated ability: %w", err)
+		/*
+			if spec.Zone == string(mtg.ZoneHand) || spec.Zone == string(mtg.ZoneGraveyard) {
+				// TODO: rename to just Build?
+				ability, err := activated.BuildActivatedAbility(state, *spec, &card)
+				if err != nil {
+					return nil, fmt.Errorf("failed to build activated ability: %w", err)
+				}
+				card.activatedAbilities = append(card.activatedAbilities, ability)
 			}
-			card.activatedAbilities = append(card.activatedAbilities, ability)
-		}
+		*/
 	}
 	for _, spec := range card.staticAbilitySpecs {
 		staticAbility, err := static.BuildStaticAbility(*spec, &card)

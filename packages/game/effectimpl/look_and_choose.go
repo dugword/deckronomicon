@@ -1,8 +1,9 @@
-package effect
+package effectimpl
 
 import (
 	"deckronomicon/packages/game/core"
 	"deckronomicon/packages/game/definition"
+	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 	"fmt"
@@ -17,8 +18,8 @@ import (
 //   - Target<Type>: <target>
 //   - Rest <Zone> Default: Library (Bottom) | Graveyard
 //   - Order <order> Default: Any
-func BuildEffectLookAndChoose(source query.Object, spec definition.EffectSpec) (*Effect, error) {
-	effect := Effect{id: spec.ID}
+func BuildEffectLookAndChoose(source query.Object, spec definition.EffectSpec) (*effect.Effect, error) {
+
 	lookCount := "1"
 	chooseCount := "1"
 	restZone := "Library"
@@ -59,7 +60,7 @@ func BuildEffectLookAndChoose(source query.Object, spec definition.EffectSpec) (
 	if err != nil {
 		return nil, fmt.Errorf("invalid choose count: %s", chooseCount)
 	}
-	effect.Apply = func(state core.State, player core.Player) error {
+	apply := func(state core.State, player core.Player) error {
 		/*
 			var objects []query.Object
 			for range nLook {
@@ -152,12 +153,18 @@ func BuildEffectLookAndChoose(source query.Object, spec definition.EffectSpec) (
 		*/
 		return nil
 	}
-	effect.tags = []core.Tag{
+	tags := []core.Tag{
 		{Key: "Look", Value: lookCount},
 		{Key: "Choose", Value: chooseCount},
 		{Key: "Rest", Value: restZone},
 		{Key: "Order", Value: order},
 	}
-	effect.description = fmt.Sprintf("look at the top %d cards of your library, choose %d to put into your hand, and put the rest on the %s of your library in %s order", nLook, nChoose, restZone, order)
-	return &effect, nil
+	eff := effect.New(
+		spec.ID,
+		fmt.Sprintf("look at the top %d cards of your library, choose %d to put into your hand, and put the rest on the %s of your library in %s order", nLook, nChoose, restZone, order),
+		tags,
+
+		apply,
+	)
+	return eff, nil
 }

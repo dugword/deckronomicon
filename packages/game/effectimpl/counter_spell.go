@@ -1,11 +1,14 @@
-package effect
+package effectimpl
 
 import (
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/game/core"
 	"deckronomicon/packages/game/definition"
+	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/spell"
 	"deckronomicon/packages/query"
+	"deckronomicon/packages/query/has"
 	"fmt"
 	"strings"
 )
@@ -16,8 +19,8 @@ import (
 //
 // Multiple targets can be specified and will be OR'd together.
 // If no target is specified, the effect will counter any spell.
-func BuildEffectCounterSpell(source query.Object, spec definition.EffectSpec) (*Effect, error) {
-	effect := Effect{id: spec.ID}
+func BuildEffectCounterSpell(source query.Object, spec definition.EffectSpec) (*effect.Effect, error) {
+
 	var targetTypes []string
 	for _, modifier := range spec.Modifiers {
 		if modifier.Key == "Target" {
@@ -34,29 +37,29 @@ func BuildEffectCounterSpell(source query.Object, spec definition.EffectSpec) (*
 			cardTypes = append(cardTypes, cardType)
 		}
 	}
-	effect.Apply = func(state core.State, player core.Player) error {
+	apply := func(state core.State, player core.Player) error {
 		s, ok := source.(State)
 		if !ok {
 			return fmt.Errorf("source is not a valid state: %T", source)
 		}
 		resolvables := s.Stack().GetAll()
 		var spells []query.Object
-		for range resolvables {
-			/*
-				spell, ok := resolvable.(*Spell)
-				if !ok {
-					continue
-				}
-				if len(cardTypes) == 0 {
+		for _, resolvable := range resolvables {
+
+			spell, ok := resolvable.(*spell.Spell)
+			if !ok {
+				continue
+			}
+			if len(cardTypes) == 0 {
+				spells = append(spells, spell)
+			}
+			for _, cardType := range cardTypes {
+				if spell.Match(has.CardType(cardType)) {
 					spells = append(spells, spell)
+					break // No need to check other types if one matches
 				}
-				for _, cardType := range cardTypes {
-					if spell.HasCardType(cardType) {
-						spells = append(spells, spell)
-						break // No need to check other types if one matches
-					}
-				}
-			*/
+			}
+
 		}
 		choices := choose.CreateChoices(spells, mtg.ZoneStack)
 		if len(choices) == 0 {
@@ -89,11 +92,17 @@ func BuildEffectCounterSpell(source query.Object, spec definition.EffectSpec) (*
 		*/
 		return nil
 	}
-	effect.description = fmt.Sprintf("counter a spell of type %s", strings.Join(targetTypes, ", "))
 	var tags []core.Tag
 	for _, target := range targetTypes {
 		tags = append(tags, core.Tag{Key: "CounterSpell", Value: target})
 	}
-	effect.tags = tags
-	return &effect, nil
+
+	eff := effect.New(
+		spec.ID,
+		fmt.Sprintf("counter a spell of type %s", strings.Join(targetTypes, ", ")),
+		tags,
+
+		apply,
+	)
+	return eff, nil
 }
