@@ -7,7 +7,7 @@ import (
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/game/object"
 	"deckronomicon/packages/game/player"
-=	"deckronomicon/packages/query"
+	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/has"
 	"deckronomicon/packages/query/is"
 	"fmt"
@@ -160,7 +160,7 @@ func PlayLand(state *GameState, player *player.Player, card *object.Card) error 
 // TODO: Maybe this should be a method off of GameState
 // or maybe a method off of Card, e.g. card.Cast() like Ability.Resolve()
 func CastSpell(state *GameState, player *player.Player, c *object.Card, fromZone string) error {
-	spell, err := spell.New(state, c)
+	spell, err := object.NewSpell(state, c)
 	if err != nil {
 		return fmt.Errorf("failed to create spell from %s: %w", c.Name(), err)
 	}

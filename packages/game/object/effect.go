@@ -1,4 +1,4 @@
-package effect
+package object
 
 import "deckronomicon/packages/game/core"
 

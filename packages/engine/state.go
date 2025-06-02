@@ -5,7 +5,7 @@ import (
 
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/mtg"
-	"deckronomicon/packages/game/permanent"
+	"deckronomicon/packages/game/object"
 	"deckronomicon/packages/game/player"
 	"deckronomicon/packages/game/zone"
 	"deckronomicon/packages/query"
@@ -48,7 +48,7 @@ func NewGameState() *GameState {
 	return &gameState
 }
 
-func (g *GameState) AddToBattlefield(perm *permanent.Permanent) {
+func (g *GameState) AddToBattlefield(perm *object.Permanent) {
 	g.battlefield.Add(perm)
 }
 

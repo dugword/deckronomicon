@@ -4,8 +4,6 @@ import (
 	"deckronomicon/packages/game/core"
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/definition"
-	"deckronomicon/packages/game/effect"
-	"deckronomicon/packages/game/effectimpl"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 	"fmt"
@@ -20,7 +18,7 @@ type Source interface {
 type Ability struct {
 	name    string
 	Cost    cost.Cost
-	Effects []core.Effect
+	Effects []Effect
 	id      string
 	Zone    string
 	source  Source
@@ -43,12 +41,14 @@ func BuildActivatedAbility(state core.State, spec definition.ActivatedAbilitySpe
 		return nil, fmt.Errorf("failed to create cost: %w", err)
 	}
 	ability.Cost = cost
-	for _, effectSpec := range spec.EffectSpecs {
-		effect, err := effectimpl.BuildEffect(source, effectSpec)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create effect: %w", err)
-		}
-		ability.Effects = append(ability.Effects, effect)
+	for _, _ = range spec.EffectSpecs {
+		/*
+			effect, err := effectimpl.BuildEffect(source, effectSpec)
+			if err != nil {
+				return nil, fmt.Errorf("failed to create effect: %w", err)
+			}
+			ability.Effects = append(ability.Effects, effect)
+		*/
 	}
 	return &ability, nil
 }
@@ -80,7 +80,7 @@ func (a *Ability) Description() string {
 // IsManaAbility checks if the activated ability is a mana ability.
 func (a *Ability) IsManaAbility() bool {
 	for _, tag := range a.Tags() {
-		if tag.Key == effect.TagManaAbility {
+		if tag.Key == TagManaAbility {
 			return true
 		}
 	}

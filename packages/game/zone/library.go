@@ -2,7 +2,6 @@ package zone
 
 import (
 	"deckronomicon/packages/configs"
-	"deckronomicon/packages/game/card"
 	"deckronomicon/packages/game/core"
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/mtg"
@@ -42,7 +41,7 @@ func BuildLibrary(
 					entry.Name,
 				)
 			}
-			c, err := card.NewCardFromCardDefinition(state, cardDefinition)
+			c, err := object.NewCardFromCardDefinition(state, cardDefinition)
 			if err != nil {
 				return nil, fmt.Errorf(
 					"failed to create c %s: %w",

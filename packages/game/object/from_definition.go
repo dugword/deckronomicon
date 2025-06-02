@@ -1,7 +1,6 @@
 package object
 
 import (
-	"deckronomicon/packages/game/ability/static"
 	"deckronomicon/packages/game/core"
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/definition"
@@ -24,7 +23,7 @@ func NewCardFromCardDefinition(state core.State, definition definition.Card) (*C
 		name:               definition.Name,
 		power:              definition.Power,
 		rulesText:          definition.RulesText,
-		staticAbilities:    []*static.Ability{},
+		staticAbilities:    []*StaticAbility{},
 		toughness:          definition.Toughness,
 		// TODO: Do I need to copies these over, or should I save the
 		// definition and build them when needed?
@@ -71,23 +70,21 @@ func NewCardFromCardDefinition(state core.State, definition definition.Card) (*C
 	}
 	card.supertypes = supertypes
 	card.id = state.GetNextID()
-	for _, _ = range card.activatedAbilitySpecs {
+	for _, spec := range card.activatedAbilitySpecs {
 		// TODO: Do this check here or when I am checking for abilities to
 		// activate?
 		// TODO: Handle the types better, maybe make the spec a type
-		/*
-			if spec.Zone == string(mtg.ZoneHand) || spec.Zone == string(mtg.ZoneGraveyard) {
-				// TODO: rename to just Build?
-				ability, err := activated.BuildActivatedAbility(state, *spec, &card)
-				if err != nil {
-					return nil, fmt.Errorf("failed to build activated ability: %w", err)
-				}
-				card.activatedAbilities = append(card.activatedAbilities, ability)
+		if spec.Zone == string(mtg.ZoneHand) || spec.Zone == string(mtg.ZoneGraveyard) {
+			// TODO: rename to just Build?
+			ability, err := BuildActivatedAbility(state, *spec, &card)
+			if err != nil {
+				return nil, fmt.Errorf("failed to build activated ability: %w", err)
 			}
-		*/
+			card.activatedAbilities = append(card.activatedAbilities, ability)
+		}
 	}
 	for _, spec := range card.staticAbilitySpecs {
-		staticAbility, err := static.BuildStaticAbility(*spec, &card)
+		staticAbility, err := BuildStaticAbility(*spec, &card)
 		if err != nil {
 			return nil, fmt.Errorf("failed to build static ability: %w", err)
 		}

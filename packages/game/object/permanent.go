@@ -1,12 +1,12 @@
 package object
 
 import (
-	"deckronomicon/packages/game/ability/static"
 	"deckronomicon/packages/game/core"
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/has"
+	"fmt"
 )
 
 // Permanent represents a permanent card on the battlefield.
@@ -23,7 +23,7 @@ type Permanent struct {
 	owner              string
 	power              int
 	rulesText          string
-	staticAbilities    []*static.Ability
+	staticAbilities    []*StaticAbility
 	subtypes           []mtg.Subtype
 	summoningSickness  bool
 	supertypes         []mtg.Supertype
@@ -51,24 +51,21 @@ func NewPermanent(card *Card, state core.State, player core.Player) (*Permanent,
 		subtypes:           card.Subtypes(),
 		supertypes:         card.Supertypes(),
 		toughness:          card.Toughness(),
-		triggeredAbilities: []*triggered.Ability{},
+		triggeredAbilities: []*Ability{},
 	}
 	if card.Match(has.CardType(mtg.CardTypeCreature)) {
 		permanent.summoningSickness = true
 	}
-	for _, _ = range card.ActivatedAbilitySpecs() {
+	for _, spec := range card.ActivatedAbilitySpecs() {
 		// TODO: use better types
-		/*
-			if spec.Zone == string(mtg.ZoneHand) || spec.Zone == string(mtg.ZoneGraveyard) {
-				continue
-			}
-			/*
-				ability, err := activated.BuildActivatedAbility(state, *spec, &permanent)
-				if err != nil {
-					return nil, fmt.Errorf("failed to build activated ability: %w", err)
-				}
-		*/
-		// permanent.activatedAbilities = append(permanent.activatedAbilities, ability)
+		if spec.Zone == string(mtg.ZoneHand) || spec.Zone == string(mtg.ZoneGraveyard) {
+			continue
+		}
+		ability, err := BuildActivatedAbility(state, *spec, &permanent)
+		if err != nil {
+			return nil, fmt.Errorf("failed to build activated ability: %w", err)
+		}
+		permanent.activatedAbilities = append(permanent.activatedAbilities, ability)
 	}
 	return &permanent, nil
 }
@@ -156,7 +153,7 @@ func (p *Permanent) RulesText() string {
 }
 
 // StaticAbilities returns the static abilities of the permanent.
-func (p *Permanent) StaticAbilities() []*static.Ability {
+func (p *Permanent) StaticAbilities() []*StaticAbility {
 	return p.staticAbilities
 }
 

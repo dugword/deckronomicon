@@ -3,7 +3,7 @@ package ui
 import (
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine"
-	"deckronomicon/packages/game/permanent"
+	"deckronomicon/packages/game/object"
 	"deckronomicon/packages/game/player"
 	"fmt"
 	"os"
@@ -174,7 +174,7 @@ func MessageData(state *engine.GameState) BoxData {
 func BattlefieldData(state *engine.GameState) BoxData {
 	var lines []string
 	for _, obj := range state.Battlefield().GetAll() {
-		perm, ok := obj.(*permanent.Permanent)
+		perm, ok := obj.(*object.Permanent)
 		if !ok {
 			continue // Skip if not a permanent
 		}

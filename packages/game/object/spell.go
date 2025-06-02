@@ -1,7 +1,6 @@
 package object
 
 import (
-	"deckronomicon/packages/game/ability/static"
 	"deckronomicon/packages/game/core"
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/mtg"
@@ -33,14 +32,14 @@ type Spell struct {
 	power           int
 	rulesText       string
 	effects         []core.Effect
-	staticAbilities []*static.Ability
+	staticAbilities []*StaticAbility
 	subtypes        []mtg.Subtype
 	supertypes      []mtg.Supertype
 	toughness       int
 }
 
 // NewSpell creates a new Spell instance from a Card.
-func New(state core.State, card *Card) (*Spell, error) {
+func NewSpell(state core.State, card *Card) (*Spell, error) {
 	spell := Spell{
 		card:            card,
 		cardTypes:       card.CardTypes(),
@@ -165,7 +164,7 @@ func (s *Spell) RulesText() string {
 }
 
 // StaticAbilities returns the static abilities of the spell
-func (s *Spell) StaticAbilities() []*static.Ability {
+func (s *Spell) StaticAbilities() []*StaticAbility {
 	return s.staticAbilities
 }
 

@@ -3,9 +3,8 @@ package engine
 import (
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/game/action"
-	"deckronomicon/packages/game/card"
 	"deckronomicon/packages/game/mtg"
-	"deckronomicon/packages/game/permanent"
+	"deckronomicon/packages/game/object"
 	"deckronomicon/packages/game/player"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/has"
@@ -169,7 +168,7 @@ func ActionConjureFunc(state *GameState, player *player.Player, target action.Ac
 			target,
 		)
 	}
-	card, err := card.NewCardFromCardDefinition(state, cardDefinition)
+	card, err := object.NewCardFromCardDefinition(state, cardDefinition)
 	if err != nil {
 		return ActionResult{}, fmt.Errorf(
 			"failed to create card %s: %w",
@@ -287,7 +286,7 @@ func ActionUntapFunc(state *GameState, player *player.Player, target action.Acti
 	permanentName := target.Name
 	if permanentName == UntapAll {
 		for _, obj := range state.Battlefield().GetAll() {
-			perm, ok := obj.(*permanent.Permanent)
+			perm, ok := obj.(*object.Permanent)
 			if !ok {
 				return ActionResult{}, ErrObjectNotPermanent
 			}
@@ -304,7 +303,7 @@ func ActionUntapFunc(state *GameState, player *player.Player, target action.Acti
 		if !ok {
 			return ActionResult{}, fmt.Errorf("failed to find permanent: %w", err)
 		}
-		perm, ok := found.(*permanent.Permanent)
+		perm, ok := found.(*object.Permanent)
 		if !ok {
 			return ActionResult{}, fmt.Errorf("object is not a permanent: %w", err)
 		}
@@ -337,7 +336,7 @@ func ActionUntapFunc(state *GameState, player *player.Player, target action.Acti
 			return ActionResult{}, fmt.Errorf("failed to get permanent from battlefield: %w", err)
 		}
 	}
-	selectedPermanent, ok := selectedObject.(*permanent.Permanent)
+	selectedPermanent, ok := selectedObject.(*object.Permanent)
 	if !ok {
 		return ActionResult{}, fmt.Errorf("object is not a permanent: %w", err)
 	}

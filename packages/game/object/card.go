@@ -1,7 +1,6 @@
 package object
 
 import (
-	"deckronomicon/packages/game/ability/static"
 	"deckronomicon/packages/game/core"
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/definition"
@@ -34,7 +33,7 @@ type Card struct {
 	spellAbility          []core.Effect
 	// TODO: Maybe this should just be spell spec? sepll effect spec?
 	spellAbilitySpec      *definition.SpellAbilitySpec
-	staticAbilities       []*static.Ability
+	staticAbilities       []*StaticAbility
 	staticAbilitySpecs    []*definition.StaticAbilitySpec
 	triggeredAbilitySpecs []*definition.TriggeredAbilitySpec
 	subtypes              []mtg.Subtype
@@ -125,8 +124,8 @@ func (c *Card) SpellAbility() []core.Effect {
 }
 
 // StaticAbilities returns the static abilities of the card.
-func (c *Card) StaticAbilities() []*static.Ability {
-	var abilities []*static.Ability
+func (c *Card) StaticAbilities() []*StaticAbility {
+	var abilities []*StaticAbility
 	for _, ability := range c.staticAbilities {
 		if ability == nil {
 			continue
