@@ -2,9 +2,12 @@ package engine
 
 import (
 	"deckronomicon/packages/configs"
+	"deckronomicon/packages/game/action"
 	"deckronomicon/packages/game/definition"
+	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/game/player"
 	"deckronomicon/packages/game/zone"
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -183,5 +186,72 @@ func (e *Engine) RunStep(step GameStep, player *player.Player) error {
 	}
 	player.EmptyManaPool()
 	e.Log(fmt.Sprintf("Step completed: %s", step.Name))
+	return nil
+}
+
+func (e *Engine) RunPriority(player *player.Player) error {
+	if !player.HasStop(e.GameState.CurrentStep) {
+		player.Agent.ReportState(e.GameState)
+		return nil
+	}
+	for {
+		// player.PotentialMana = GetPotentialMana(g, player)
+		player.Agent.ReportState(e.GameState)
+		// TODO: Better package name so this doesn't conflict
+		act, err := player.Agent.GetNextAction(e.GameState)
+		if err != nil {
+			return fmt.Errorf(
+				"failed to get next action for %s: %w",
+				player.ID,
+				err,
+			)
+		}
+		if !action.PlayerActions[act.Type] {
+			if !e.GameState.CheatsEnabled {
+				e.GameState.Message = fmt.Sprintf("Invalid player action: %s", act.Type)
+				continue
+			}
+		}
+		result, err := e.ResolveAction(act, player)
+		if err != nil {
+			if errors.Is(err, mtg.ErrGameOver) {
+				return err
+			}
+			errString := fmt.Sprintf("ERROR: %s", err)
+			e.Log(errString)
+			e.GameState.Message = errString
+			continue
+		}
+		e.GameState.Message = result.Message
+		if result.Pass {
+			return nil
+		}
+	}
+}
+
+func (e *Engine) HandlePriority(player *player.Player) error {
+	for {
+		if err := e.RunPriority(player); err != nil {
+			return err
+		}
+		if e.GameState.StackIsEmpty() {
+			break
+		}
+		e.Log("Resolving stack...")
+		object, err := e.GameState.PopFromStack()
+		if err != nil {
+			return fmt.Errorf("failed to pop resolvable from stack: %w", err)
+		}
+		// Resolve should live in this pacakge: engine
+		resolvable, ok := object.(zone.Resolvable)
+		if !ok {
+			return fmt.Errorf("object is not resolvable: %T\n", object)
+		}
+		e.Log("Resolving: " + resolvable.Name())
+		if err := resolvable.Resolve(e.GameState, player); err != nil {
+			return fmt.Errorf("failed to resolve: %w", err)
+		}
+		e.Log("Rsolved: " + resolvable.Name())
+	}
 	return nil
 }

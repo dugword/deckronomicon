@@ -3,6 +3,7 @@ package zone
 import (
 	"deckronomicon/packages/game/core"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/query"
 	"errors"
 	"fmt"
 )
@@ -12,6 +13,7 @@ type Resolvable interface {
 	ID() string
 	Name() string
 	Resolve(core.State, core.Player) error
+	Match(p query.Predicate) bool
 }
 
 type Stack struct {

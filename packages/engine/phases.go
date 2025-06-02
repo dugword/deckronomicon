@@ -22,6 +22,18 @@ type GameStep struct {
 	// // EventEvent EventType
 }
 
+func (e *Engine) enablePriority(handler func(*GameState, *player.Player) error) func(*GameState, *player.Player) error {
+	return func(state *GameState, player *player.Player) error {
+		if err := handler(state, player); err != nil {
+			return err
+		}
+		if err := e.HandlePriority(player); err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
 func (e *Engine) beginningPhase() *GamePhase {
 	return &GamePhase{
 		Name: mtg.PhaseBeginning,
@@ -46,7 +58,7 @@ func (e *Engine) beginningPhase() *GamePhase {
 			{
 				Name: mtg.StepUpkeep,
 				// EventEvent: EventUpkeepStep,
-				Handler: e.wrapStep(func(state *GameState, player *player.Player) error {
+				Handler: e.enablePriority(func(state *GameState, player *player.Player) error {
 					// TODO: Check for upkeep costs
 					return nil
 				}),
@@ -54,7 +66,7 @@ func (e *Engine) beginningPhase() *GamePhase {
 			{
 				Name: mtg.StepDraw,
 				// EventEvent: EventDrawStep,
-				Handler: e.wrapStep(func(state *GameState, player *player.Player) error {
+				Handler: e.enablePriority(func(state *GameState, player *player.Player) error {
 					e.Log("Drawing a card")
 					actionResult, err := ActionDrawFunc(
 						state,
@@ -79,7 +91,7 @@ func (e *Engine) precombatMainPhase() *GamePhase {
 			{
 				Name: mtg.StepPrecombatMain,
 				// EventEvent: EventPrecombatMainPhase,
-				Handler: e.wrapStep(func(state *GameState, player *player.Player) error {
+				Handler: e.enablePriority(func(state *GameState, player *player.Player) error {
 					return nil
 				}),
 			},
@@ -95,28 +107,28 @@ func (e *Engine) combatPhase() *GamePhase {
 				Name: mtg.StepBeginningOfCombat,
 				// EventEvent: EventBeginningOfCombatStep,
 
-				Handler: e.wrapStep(func(state *GameState, player *player.Player) error {
+				Handler: e.enablePriority(func(state *GameState, player *player.Player) error {
 					return nil
 				}),
 			},
 			{
 				Name: mtg.StepDeclareAttackers,
 				// EventEvent: EventDeclareAttackersStep,
-				Handler: e.wrapStep(func(state *GameState, player *player.Player) error {
+				Handler: e.enablePriority(func(state *GameState, player *player.Player) error {
 					return nil
 				}),
 			},
 			{
 				Name: mtg.StepDeclareBlockers,
 				// EventEvent: EventDeclareBlockersStep,
-				Handler: e.wrapStep(func(state *GameState, player *player.Player) error {
+				Handler: e.enablePriority(func(state *GameState, player *player.Player) error {
 					return nil
 				}),
 			},
 			{
 				Name: mtg.StepCombatDamage,
 				// EventEvent: EventCombatDamageStep,
-				Handler: e.wrapStep(func(state *GameState, player *player.Player) error {
+				Handler: e.enablePriority(func(state *GameState, player *player.Player) error {
 					return nil
 				}),
 			},
@@ -124,7 +136,7 @@ func (e *Engine) combatPhase() *GamePhase {
 				Name: mtg.StepEndOfCombat,
 
 				// EventEvent: EventEndOfCombatStep,
-				Handler: e.wrapStep(func(state *GameState, player *player.Player) error {
+				Handler: e.enablePriority(func(state *GameState, player *player.Player) error {
 					return nil
 				}),
 			},
@@ -139,7 +151,7 @@ func (e *Engine) postcombatMainPhase() *GamePhase {
 			{
 				Name: mtg.StepPostcombatMain,
 				// EventEvent: EventPostcombatMainPhase,
-				Handler: e.wrapStep(func(state *GameState, player *player.Player) error {
+				Handler: e.enablePriority(func(state *GameState, player *player.Player) error {
 					return nil
 				}),
 			},
@@ -154,7 +166,7 @@ func (e *Engine) endingPhase() *GamePhase {
 			{
 				Name: mtg.StepEnd,
 				// EventEvent: EventEndStep,
-				Handler: e.wrapStep(func(state *GameState, player *player.Player) error {
+				Handler: e.enablePriority(func(state *GameState, player *player.Player) error {
 					return nil
 				}),
 			},

@@ -85,21 +85,6 @@ func CreateGroupedChoices(gourpedObjects map[string][]query.Object) []Choice {
 }
 
 /*
-func By[T query.Object](objects []T, predicate query.Predicate) []T {
-	var result []T
-	for _, object := range objects {
-		if predicate(object) {
-			result = append(result, object)
-		}
-	}
-	return result
-}
-*/
-
-/*
- */
-
-/*
 func GroupedChoicesData(title string, choices []game.Choice) (BoxData, []game.Choice) {
 	grouped := make(map[string][]game.Choice)
 	for _, choice := range choices {

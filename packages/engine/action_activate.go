@@ -55,35 +55,6 @@ func GetAvailableToActivate(state *GameState, p *player.Player) (map[string][]qu
 		}
 	}
 	return available, nil
-	/*
-		available := map[string][]query.Object{}
-		for _, object := range p.Hand().GetAll() {
-			const ZoneHand = string(mtg.ZoneHand)
-			c, ok := object.(*card.Card)
-			if !ok {
-				return nil, ErrObjectNotCard
-			}
-			if state.CanCastSorcery(p.ID()) {
-				if c.Match(is.Land()) {
-					if p.LandDrop == false {
-						available[ZoneHand] = append(
-							available[ZoneHand],
-							c,
-						)
-						continue
-					}
-				} else if c.ManaCost().CanPay(state, p) {
-					available[ZoneHand] = append(available[ZoneHand], c)
-					continue
-				}
-			}
-			if c.ManaCost().CanPay(state, p) && c.Match(has.CardType(mtg.CardTypeInstant)) {
-				available[ZoneHand] = append(available[ZoneHand], c)
-				continue
-			}
-		}
-		return available, nil
-	*/
 }
 
 // ActionActivateFunc handles the activate action. This is performed by the
@@ -144,7 +115,7 @@ func ActionActivateFunc(state *GameState, player *player.Player, target action.A
 		}
 	} else {
 		// TODO: Figure out the interface for this
-		state.Stack.Add(ability)
+		state.AddToStack(ability)
 	}
 	return ActionResult{
 		Message: fmt.Sprintf(

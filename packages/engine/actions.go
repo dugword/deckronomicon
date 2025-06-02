@@ -253,7 +253,7 @@ func ActionFindFunc(state *GameState, player *player.Player, target action.Actio
 			choose.AddOptionalChoice(choices),
 		)
 		if err != nil {
-			return ActionResult{}, fmt.Errorf("failed to choose card: %w", err)
+
 		}
 		if err = player.Tutor(has.ID(choice.ID)); err != nil {
 			return ActionResult{}, fmt.Errorf(

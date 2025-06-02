@@ -84,11 +84,9 @@ func (s *Spell) Effects() []*effect.Effect {
 // Description returns a string representation of the activated ability.
 func (s *Spell) Description() string {
 	var descriptions []string
-	/*
-		for _, effect := range s.spellAbility.Effects {
-			descriptions = append(descriptions, effect.Description())
-		}
-	*/
+	for _, effect := range s.effects {
+		descriptions = append(descriptions, effect.Description())
+	}
 	// TODO: Support additional costs
 	return fmt.Sprintf("%s: %s", s.ManaCost().Description(), strings.Join(descriptions, ", "))
 }

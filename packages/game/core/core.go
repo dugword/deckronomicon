@@ -32,6 +32,7 @@ type Card interface {
 }
 
 type Object interface {
+	ID() string
 	Name() string
 }
 

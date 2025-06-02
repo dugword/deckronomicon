@@ -21,8 +21,7 @@ type GameState struct {
 	CardPool        string
 	CardDefinitions map[string]definition.Card
 	CurrentPhase    mtg.Phase
-	// CurrentPlayer int
-	CurrentStep mtg.Step
+	CurrentStep     mtg.Step
 	// EventListeners     []EventHandler
 	LastActionFailed   bool
 	players            []*player.Player
@@ -30,7 +29,7 @@ type GameState struct {
 	Message            string
 	MessageLog         []string
 	SpellsCastThisTurn []string
-	Stack              *zone.Stack
+	stack              *zone.Stack
 	StormCount         int
 	TurnMessageLog     []string
 	nextID             int
@@ -43,7 +42,7 @@ func NewGameState() *GameState {
 		players:     []*player.Player{},
 		// EventListeners:     []EventHandler{},
 		SpellsCastThisTurn: []string{}, // TODO: Rethink how this is managed
-		Stack:              zone.NewStack(),
+		stack:              zone.NewStack(),
 		TurnMessageLog:     []string{}, // TODO: this sucks, make better
 	}
 	return &gameState
@@ -51,6 +50,10 @@ func NewGameState() *GameState {
 
 func (g *GameState) AddToBattlefield(perm *permanent.Permanent) {
 	g.battlefield.Add(perm)
+}
+
+func (g *GameState) AddToStack(item zone.Resolvable) {
+	g.stack.Add(item)
 }
 
 func (g *GameState) Battlefield() query.View {
@@ -110,26 +113,24 @@ func (g *GameState) Players() []*player.Player {
 	return g.players
 }
 
-func (g *GameState) StackIsEmpty() bool {
-	return g.Stack.Size() == 0
-}
-
-/*
-func (g *GameState) CastSpell(card *Card) error {
-	// Step 1: Pay costs (mana, sacrifice, etc.)
-	// Step 2: Run cast triggers (e.g., storm)
-	for _, trigger := range card.CastTriggers {
-		if err := trigger(card, g); err != nil {
-			return err
-		}
+func (g *GameState) PopFromStack() (zone.Resolvable, error) {
+	if g.StackIsEmpty() {
+		return nil, errors.New("stack is empty")
 	}
-
-	// Step 3: Put spell on stack
-	//g.Stack = append(g.Stack, card)
-	g.Log = append(g.Log, fmt.Sprintf("Cast %s", card.Name))
-	return nil
+	item, err := g.stack.Pop()
+	if err != nil {
+		return nil, fmt.Errorf("failed to pop from stack: %w", err)
+	}
+	return item, nil
 }
-*/
+
+func (g *GameState) StackIsEmpty() bool {
+	return g.stack.Size() == 0
+}
+
+func (g *GameState) Stack() query.View {
+	return query.NewView(g.stack.Name(), g.stack.GetAll())
+}
 
 // TODO: Need to do something smarter here, this doesn't account for
 // additional mana effects like high tide.
@@ -157,29 +158,6 @@ func GetPotentialMana(state *GameState, player *Player) *ManaPool {
 */
 
 /*
-// TODO Revist this
-func PutNBackOnTop(state *GameState, n int, source ChoiceSource, player *Player) error {
-	for range n {
-		choices := CreateChoices(player.Hand.GetAll(), ZoneHand)
-		choice, err := player.Agent.ChooseOne(
-			"Which card to put back on top",
-			source,
-			choices,
-		)
-		if err != nil {
-			return fmt.Errorf("failed to choose card to put back on top: %w", err)
-		}
-		card, err := player.Hand.Take(choice.ID)
-		if err != nil {
-			return fmt.Errorf("failed to take card from hand: %w", err)
-		}
-		player.Library.AddTop(card)
-	}
-	return nil
-}
-*/
-
-/*
 // TODO Rethink this function
 // Calculating mana by activating all abilities seems like a bad idea
 // because I could impact other game state
@@ -196,6 +174,3 @@ func CanPotentiallyPayFor(state *GameState, manaCost *ManaCost) bool {
 		return simulated.HasGeneric(manaCost.Generic)
 }
 */
-
-/*
- */

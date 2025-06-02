@@ -4,10 +4,10 @@ import "deckronomicon/packages/game/core"
 
 // Effect represents an effect that can be applied to a game state.
 type Effect struct {
+	Apply func(core.State, core.Player) error
 	// Should this be named Name since it's not a unique ID?
 	id string
 	// TODO: Should this be named handler?
-	Apply       func(core.State, core.Player) error
 	description string
 	tags        []core.Tag
 }

@@ -312,7 +312,7 @@ func CastSpell(state *GameState, player *player.Player, c *card.Card, fromZone s
 	for _, effect := range spell.Effects() {
 		fmt.Println("Effect ID: ", effect.ID)
 	}
-	state.Stack.Add(spell)
+	state.AddToStack(spell)
 	if replicateCount > 0 {
 		/*
 			replicateAbility := BuildReplicateAbility(card, replicateCount)

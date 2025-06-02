@@ -217,6 +217,14 @@ func (p *Player) TakeCard(cardID string, zone mtg.Zone) (*card.Card, error) {
 	}
 }
 
+func (p *Player) TakeTopCard() (*card.Card, error) {
+	card, err := p.library.TakeTop()
+	if err != nil {
+		return nil, nil
+	}
+	return card, nil
+}
+
 func (p *Player) Tutor(query query.Predicate) error {
 	card, err := p.library.TakeBy(query)
 	if err != nil {
@@ -225,67 +233,3 @@ func (p *Player) Tutor(query query.Predicate) error {
 	p.hand.Add(card)
 	return nil
 }
-
-/*
-	// TODO: Move prompt to engine and have this take a cardID
-	choices := CreateChoices(player.Hand.GetAll(), ZoneHand)
-	choice, err := player.Agent.ChooseOne(
-		"Which card to discard from hand",
-		source,
-		choices,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to choose card to discard: %w", err)
-	}
-	card, err := player.Hand.Get(choice.ID)
-	if err != nil {
-		return fmt.Errorf("failed to get card from hand: %w", err)
-	}
-	player.Hand.Remove(card.ID())
-	player.Graveyard.Add(card)
-	return nil
-*/
-
-/*
-func (p *Player) Zones() []Zone {
-	return []Zone{
-		p.Battlefield,
-		p.Library,
-		p.Hand,
-		p.Graveyard,
-	}
-}
-*/
-
-/*
-func (p *Player) GetAvailableToPlay(state *GameState) map[string][]Object {
-	available := map[string][]Object{}
-	for _, zone := range p.Zones() {
-		available[zone.ZoneType()] = append(available[zone.ZoneType()], zone.AvailableToPlay(state, p)...)
-	}
-	return available
-}
-
-func (p *Player) GetAvailableToActivate(state *GameState) map[string][]Object {
-	available := map[string][]Object{}
-	for _, zone := range p.Zones() {
-		// TODO: Make this reutrn objects
-		for _, ability := range zone.AvailableActivatedAbilities(state, p) {
-			available[zone.ZoneType()] = append(available[zone.ZoneType()], ability)
-		}
-	}
-	return available
-
-}
-*/
-
-/*
-func (p *Player) GetZone(zone string) (Zone, error) {
-	for _, z := range p.Zones() {
-		if z.ZoneType() == zone {
-			return z, nil
-		}
-	}
-	return nil, fmt.Errorf("zone %s not found", zone)
-}
-*/

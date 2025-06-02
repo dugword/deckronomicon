@@ -222,7 +222,7 @@ func HandData(player *player.Player) BoxData {
 // StackData creates the box data for displaying cards in the player's hand.
 func StackData(state *engine.GameState) BoxData {
 	var lines []string
-	for _, spell := range state.Stack.GetAll() {
+	for _, spell := range state.Stack().GetAll() {
 		lines = append(lines, spell.Name())
 	}
 	return BoxData{

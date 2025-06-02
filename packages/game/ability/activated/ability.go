@@ -5,18 +5,10 @@ import (
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/effect"
+	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 	"fmt"
 	"strings"
-)
-
-// These are shared constants, would be good to make them type safe and in a
-// common package.
-const (
-	// SpeedSorcery represents the speed of a sorcery speed ability.
-	SpeedSorcery = "Sorcery"
-	// SpeedInstant represents the speed of an instant speed ability.
-	SpeedInstant = "Instant"
 )
 
 type Source interface {
@@ -38,13 +30,6 @@ type Ability struct {
 // specification.
 // TODO use a better interface
 func BuildActivatedAbility(state core.State, spec definition.ActivatedAbilitySpec, source query.Object) (*Ability, error) {
-	// ZoneBattlefield is the default zone for activated abilities.
-	/*
-		zone := ZoneBattlefield
-		if spec.Zone != "" {
-			zone = spec.Zone
-		}
-	*/
 	ability := Ability{
 		name:   spec.Name,
 		id:     state.GetNextID(),
@@ -76,7 +61,7 @@ func (a *Ability) ID() string {
 }
 
 func (a *Ability) CanActivate(state core.State, playerID string) bool {
-	if a.Speed == SpeedSorcery && !state.CanCastSorcery(playerID) {
+	if a.Speed == mtg.SpeedSorcery && !state.CanCastSorcery(playerID) {
 		return false
 	}
 	return true

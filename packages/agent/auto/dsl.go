@@ -1,11 +1,9 @@
 package auto
 
-/*
-import "fmt"
-
 // These helper functions create strategy condition trees in Go code.
 // Great for testing or writing built-in behaviors without JSON.
 
+/*
 func When(conds ...ConditionNode) ConditionNode {
 	return &AndCondition{Conditions: conds}
 }
