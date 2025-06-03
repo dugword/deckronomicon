@@ -1,257 +1,142 @@
 package engine
 
 import (
-	"deckronomicon/packages/configs"
-	"deckronomicon/packages/game/action"
-	"deckronomicon/packages/game/definition"
-	"deckronomicon/packages/game/mtg"
-	"deckronomicon/packages/game/player"
-	"deckronomicon/packages/game/zone"
-	"errors"
+	"deckronomicon/packages/choose"
+	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/game/gob"
 	"fmt"
-	"strings"
 )
 
+type Stack struct {
+	items []StackItem
+}
+
+type StackItem struct {
+}
+
+func (s *StackItem) Resolve(state *GameState) error {
+	return nil
+}
+
+func (s *Stack) IsEmpty() bool {
+	return len(s.items) == 0
+}
+
+func (s *Stack) Pop() (*StackItem, error) {
+	if len(s.items) == 0 {
+		return nil, fmt.Errorf("stack is empty")
+	}
+	item := s.items[len(s.items)-1]
+	s.items = s.items[:len(s.items)-1]
+	return &item, nil
+}
+
+func (s *Stack) Push(item StackItem) {
+	s.items = append(s.items, item)
+}
+
 type Engine struct {
-	Scenario        *configs.Scenario
-	GameState       *GameState
-	CardDefinitions map[string]definition.Card
+	agents map[string]PlayerAgent
+	state  *GameState
+	record *GameRecord
+	rng    *RNG
 }
 
-// TODO: Consolidate with top level log package.
-// Log logs a message to the game state message log.
-func (e *Engine) Log(message ...string) {
-	// TODO: Something like this so we know which player to which action
-	// outMessage := fmt.Sprintf("%s: %s", g.ActivatePlayer.ID )
-	// TODO: There's probably a more elegant way to do this
-	e.GameState.TurnMessageLog = append(
-		e.GameState.TurnMessageLog,
-		strings.Join(message, " "),
-	)
-	e.GameState.MessageLog = append(
-		e.GameState.MessageLog,
-		strings.Join(message, " "),
-	)
+type EngineConfig struct {
+	Players []*Player
+	Agents  map[string]PlayerAgent
+	Seed    int64
+	// Cards are just strings for now, but will be a Card type later
+	DeckLists map[string][]*gob.Card
 }
 
-// Error logs an error message to the game state message log.
-// TODO: There's probably a more elegant way to do this
-func (e *Engine) Error(err error) {
-	e.GameState.TurnMessageLog = append(
-		e.GameState.TurnMessageLog,
-		"ERROR: "+err.Error(),
-	)
-	e.GameState.MessageLog = append(
-		e.GameState.MessageLog,
-		"ERROR: "+err.Error(),
-	)
+func NewEngine(config EngineConfig) *Engine {
+	agents := map[string]PlayerAgent{}
+	for id, agent := range config.Agents {
+		agents[id] = agent
+	}
+	return &Engine{
+		agents: agents,
+		state: NewGameState(
+			GameStateConfig{
+				Players: config.Players,
+			},
+		),
+		record: NewGameRecord(config.Seed),
+		rng:    NewRNG(config.Seed),
+	}
 }
 
-// TODO: Figure out better naming so I don't have plyr
-// InitializeNewGame initializes a new game with the given configuration.
-func InitializeNewGame(
-	scenario *configs.Scenario,
-	players []*player.Player,
-	cardDefinitions map[string]definition.Card,
-) *Engine {
-	gameState := NewGameState()
-	gameState.players = players
-	for i, plyer := range players {
-		if plyer.ID() == scenario.Setup.OnThePlay {
-			gameState.activePlayer = i
+func (e *Engine) RunGame() error {
+	fmt.Println("Running game...")
+	// shuffle all player decks
+	// draw initial hands for players
+	// resovle mulligans
+	for !e.state.IsGameOver() {
+		fmt.Println("Starting turn for player:", e.state.ActivePlayer())
+		err := e.RunTurn()
+		if err != nil {
+			return err
+		}
+		nextPlayer := e.state.NextPlayer()
+		e.Apply(event.NewChangeActivePlayerEvent(nextPlayer.id))
+	}
+	e.Apply(event.NewGameOverEvent("?"))
+	return nil
+}
+
+func (e *Engine) RunTurn() error {
+	fmt.Println("Running turn for player:", e.state.ActivePlayer())
+	for _, phase := range GamePhases() {
+		if err := e.RunPhase(phase); err != nil {
+			return fmt.Errorf("error running phase %s: %w", phase.name, err)
+		}
+	}
+	// This is a place holder, phases will be a struct later
+	return nil
+}
+
+func (e *Engine) RunPhase(phase GamePhase) error {
+	fmt.Println("Running phase:", phase.name)
+	for _, step := range phase.steps {
+		if err := e.RunStep(step); err != nil {
+			return fmt.Errorf("error running step %s: %w", step.name, err)
+		}
+	}
+	return nil
+}
+
+func (e *Engine) RunStep(step GameStep) error {
+	fmt.Println("Running step:", step.name)
+	for _, action := range step.actions {
+		fmt.Println("Completing action:", action.Name())
+		action.Complete(choose.Choice{})
+	}
+	for _, playerID := range e.state.PlayersInTurnOrder() {
+		fmt.Println("Starting priority for player:", playerID)
+		e.RunPriority(playerID)
+		for {
+			if e.state.stack.IsEmpty() {
+				break
+			}
+			if stackItem, err := e.state.stack.Pop(); err != nil {
+				_ = stackItem.Resolve(e.state)
+			}
+			e.RunPriority(playerID)
+		}
+	}
+	return nil
+}
+
+func (e *Engine) RunPriority(playerID string) {
+	for {
+		fmt.Println("Running priority for player:", playerID)
+		agent := e.agents[playerID]
+		action := agent.GetNextAction()
+		if action == "pass" {
+			fmt.Println("Player", playerID, "passed priority.")
+			e.PassPriority(playerID)
 			break
 		}
 	}
-	gameState.CheatsEnabled = scenario.Setup.CheatsEnabled
-	engine := Engine{
-		CardDefinitions: cardDefinitions,
-		GameState:       gameState,
-		Scenario:        scenario,
-	}
-	return &engine
-}
-
-// TODO: Rename this to something more descriptive, like get players ready to
-// play the game with library and hand, or something more sucient.
-// PlayerSetup sets up the players for the game. It builds their libraries,
-// draws their starting hands, and handles mulligans.
-func (e *Engine) PlayerSetup() error {
-	for _, plyer := range e.GameState.players {
-		// TODO: Should this be a method on Engine?
-		playerLibrary, err := zone.BuildLibrary(
-			e.GameState,
-			e.Scenario.Players[plyer.ID()].DeckList,
-			e.CardDefinitions,
-		)
-		if err != nil {
-			return err
-		}
-		plyer.AssignLibrary(playerLibrary)
-		plyer.ShuffleLibrary()
-		startingHand := e.Scenario.Players[plyer.ID()].StartingHand
-		cardNames, err := DrawStartingHand(
-			plyer,
-			startingHand,
-		)
-		if err != nil {
-			return fmt.Errorf(
-				"%s failed to draw starting hand: %w",
-				plyer.ID(),
-				err,
-			)
-		}
-		e.Log(fmt.Sprintf(
-			"% drew: %s",
-			plyer.ID(),
-			strings.Join(cardNames, ", "),
-		))
-		if err := Mulligan(e.GameState, plyer, startingHand); err != nil {
-			return fmt.Errorf(
-				"player %s failed to mulligan: %w",
-				plyer.ID(),
-				err,
-			)
-		}
-		// TODO: Implement Logf
-		e.Log(fmt.Sprintf(
-			"Player %s mulliganned %d times",
-			plyer.ID(),
-			plyer.Mulligans,
-		))
-	}
-	return nil
-}
-
-// RunGameLoop drives the turn-based game.
-func (e *Engine) RunGameLoop() error {
-	if err := e.PlayerSetup(); err != nil {
-		return fmt.Errorf("failed to setup players: %w", err)
-	}
-	for {
-		if e.GameState.GetActivePlayer().Turn > e.Scenario.MaxTurns {
-			return ErrMaxTurnsExceeded
-		}
-		if err := e.RunTurn(e.GameState.GetActivePlayer()); err != nil {
-			return err
-		}
-		e.GameState.NextPlayerTurn()
-	}
-}
-
-// RunTurn executes a single game turn using the provided player.
-// Maybe split into ResolvePhase and ResolveStep functions
-// RunTurn executes a single game turn using the provided player
-func (e *Engine) RunTurn(player *player.Player) error {
-	player.Turn++
-	player.LandDrop = false // TODO Move this
-	// player.Battlefield.RemoveSummoningSickness()
-	e.GameState.TurnMessageLog = []string{} // TODO: this sucks, make better
-	e.Log(fmt.Sprintf("%s's turn %d", player.ID(), player.Turn))
-	if err := e.RunPhase(e.beginningPhase(), player); err != nil {
-		return fmt.Errorf("failed to run beginning phase: %w", err)
-	}
-	if err := e.RunPhase(e.precombatMainPhase(), player); err != nil {
-		return fmt.Errorf("failed to run precombat main phase: %w", err)
-	}
-	if err := e.RunPhase(e.combatPhase(), player); err != nil {
-		return fmt.Errorf("failed to run combat phase: %w", err)
-	}
-	if err := e.RunPhase(e.postcombatMainPhase(), player); err != nil {
-		return fmt.Errorf("failed to run postcombat main phase: %w", err)
-	}
-	if err := e.RunPhase(e.endingPhase(), player); err != nil {
-		return fmt.Errorf("failed to run ending phase: %w", err)
-	}
-	return nil
-}
-
-func (e *Engine) RunPhase(phase *GamePhase, player *player.Player) error {
-	e.GameState.CurrentPhase = phase.Name
-	e.Log(fmt.Sprintf("Running phase: %s", phase.Name))
-	for _, step := range phase.Steps {
-		if err := e.RunStep(step, player); err != nil {
-			return fmt.Errorf("failed to run phase %s step %s: %w", phase.Name, step.Name, err)
-		}
-	}
-	e.Log(fmt.Sprintf("Phase completed: %s", phase.Name))
-	return nil
-}
-
-func (e *Engine) RunStep(step GameStep, player *player.Player) error {
-	e.GameState.CurrentStep = step.Name
-	e.Log(fmt.Sprintf("Running step: %s", step.Name))
-	// g.EmitEvent(Event{Type: step.EventEvent}, player)
-	if err := step.Handler(e.GameState, player); err != nil {
-		return fmt.Errorf("failed to run step %s: %w", step.Name, err)
-	}
-	player.EmptyManaPool()
-	e.Log(fmt.Sprintf("Step completed: %s", step.Name))
-	return nil
-}
-
-func (e *Engine) RunPriority(player *player.Player) error {
-	if !player.HasStop(e.GameState.CurrentStep) {
-		player.Agent.ReportState(e.GameState)
-		return nil
-	}
-	for {
-		// player.PotentialMana = GetPotentialMana(g, player)
-		player.Agent.ReportState(e.GameState)
-		// TODO: Better package name so this doesn't conflict
-		act, err := player.Agent.GetNextAction(e.GameState)
-		if err != nil {
-			return fmt.Errorf(
-				"failed to get next action for %s: %w",
-				player.ID,
-				err,
-			)
-		}
-		if !action.PlayerActions[act.Type] {
-			if !e.GameState.CheatsEnabled {
-				e.GameState.Message = fmt.Sprintf("Invalid player action: %s", act.Type)
-				continue
-			}
-		}
-		result, err := e.ResolveAction(act, player)
-		if err != nil {
-			if errors.Is(err, mtg.ErrGameOver) {
-				return err
-			}
-			errString := fmt.Sprintf("ERROR: %s", err)
-			e.Log(errString)
-			e.GameState.Message = errString
-			continue
-		}
-		e.GameState.Message = result.Message
-		if result.Pass {
-			return nil
-		}
-	}
-}
-
-func (e *Engine) HandlePriority(player *player.Player) error {
-	for {
-		if err := e.RunPriority(player); err != nil {
-			return err
-		}
-		if e.GameState.StackIsEmpty() {
-			break
-		}
-		e.Log("Resolving stack...")
-		object, err := e.GameState.PopFromStack()
-		if err != nil {
-			return fmt.Errorf("failed to pop resolvable from stack: %w", err)
-		}
-		// Resolve should live in this pacakge: engine
-		resolvable, ok := object.(zone.Resolvable)
-		if !ok {
-			return fmt.Errorf("object is not resolvable: %T\n", object)
-		}
-		e.Log("Resolving: " + resolvable.Name())
-		if err := resolvable.Resolve(e.GameState, player); err != nil {
-			return fmt.Errorf("failed to resolve: %w", err)
-		}
-		e.Log("Rsolved: " + resolvable.Name())
-	}
-	return nil
 }
