@@ -1,8 +1,8 @@
 package event
 
+/*
 func NewPassPriorityEvent(playerID string) GameEvent {
 	return GameEvent{
-		Type:     "PassPriority",
 		PlayerID: playerID,
 	}
 }
@@ -18,3 +18,4 @@ func NewChooseInitialHandEvent(playerID string, cardIDs []string) GameEvent {
 func NewMulliganEvent(playerID string, cardsMulliganed []string) GameEvent {
 	return GameEvent{}
 }
+*/

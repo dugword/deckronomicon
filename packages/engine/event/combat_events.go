@@ -1,5 +1,6 @@
 package event
 
+/*
 func NewDeclareAttackersEvent(playerID string, attackers map[string]string) GameEvent {
 	// attackerID -> defenderID
 	return GameEvent{}
@@ -14,3 +15,4 @@ func NewAssignCombatDamageEvent(playerID string, assignments map[string]int) Gam
 	// attackerID -> damage
 	return GameEvent{}
 }
+*/

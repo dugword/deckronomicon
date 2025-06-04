@@ -4,6 +4,7 @@ import (
 	"deckronomicon/packages/agent"
 	"deckronomicon/packages/engine"
 	"deckronomicon/packages/game/gob"
+	"deckronomicon/packages/state"
 	"fmt"
 )
 
@@ -13,25 +14,25 @@ func main() {
 	fmt.Println("Initializing the engine...")
 	player1ID := "Player1"
 	player2ID := "Player2"
-	deckLists := map[string][]*gob.Card{
+	deckLists := map[string][]gob.Card{
 		player1ID: {
-			&gob.Card{Name: "Plains"},
-			&gob.Card{Name: "Island"},
-			&gob.Card{Name: "Swamp"},
-			&gob.Card{Name: "Mountain"},
-			&gob.Card{Name: "Forest"},
+			gob.NewCard("id", "Plains"),
+			gob.NewCard("id", "Island"),
+			gob.NewCard("id", "Swamp"),
+			gob.NewCard("id", "Mountain"),
+			gob.NewCard("id", "Forest"),
 		},
 		player2ID: {
-			&gob.Card{Name: "Plains"},
-			&gob.Card{Name: "Island"},
-			&gob.Card{Name: "Swamp"},
-			&gob.Card{Name: "Mountain"},
-			&gob.Card{Name: "Forest"},
+			gob.NewCard("id", "Plains"),
+			gob.NewCard("id", "Island"),
+			gob.NewCard("id", "Swamp"),
+			gob.NewCard("id", "Mountain"),
+			gob.NewCard("id", "Forest"),
 		},
 	}
-	players := []*engine.Player{
-		engine.NewPlayer(player1ID, deckLists[player1ID]),
-		engine.NewPlayer(player2ID, deckLists[player2ID]),
+	players := []state.Player{
+		state.NewPlayer(player1ID, deckLists[player1ID]),
+		state.NewPlayer(player2ID, deckLists[player2ID]),
 	}
 	agents := map[string]engine.PlayerAgent{
 		player1ID: agent.NewAgent(player1ID),

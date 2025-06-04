@@ -1,5 +1,6 @@
 package event
 
+/*
 func NewTapPermanentEvent(playerID, permID string) GameEvent {
 	return GameEvent{}
 }
@@ -15,3 +16,4 @@ func NewPermanentDiesEvent(permID string, reason string) GameEvent {
 func NewMoveToZoneEvent(cardID string, from, to string) GameEvent {
 	return GameEvent{}
 }
+*/

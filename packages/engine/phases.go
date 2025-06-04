@@ -1,6 +1,8 @@
 package engine
 
-import "deckronomicon/packages/game/mtg"
+import (
+	"deckronomicon/packages/game/mtg"
+)
 
 /*
 From the Comprehensive Rules (November 8, 2024—Magic: The Gathering Foundations)
@@ -29,29 +31,34 @@ type GamePhase struct {
 
 type GameStep struct {
 	name         mtg.Step
-	actions      []TurnBasedAction
+	actions      []Action
 	skipPriority bool
 }
 
-func GamePhases() []GamePhase {
+func (e *Engine) GamePhases() []GamePhase {
+	playerID := e.game.ActivePlayerID()
 	return []GamePhase{
 		{
 			name: mtg.PhaseBeginning,
 			steps: []GameStep{
 				{
 					name: mtg.StepUntap,
-					actions: []TurnBasedAction{
-						UntapAction{},
+					actions: []Action{
+						UntapAction{
+							PlayerID: playerID,
+						},
 					},
 				},
 				{
 					name:    mtg.StepUpkeep,
-					actions: []TurnBasedAction{},
+					actions: []Action{},
 				},
 				{
 					name: mtg.StepDraw,
-					actions: []TurnBasedAction{
-						DrawAction{},
+					actions: []Action{
+						DrawAction{
+							PlayerID: playerID,
+						},
 					},
 				},
 			},
@@ -72,20 +79,24 @@ func GamePhases() []GamePhase {
 				},
 				{
 					name: mtg.StepDeclareAttackers,
-					actions: []TurnBasedAction{
-						DeclareAttackersAction{},
+					actions: []Action{
+						DeclareAttackersAction{
+							PlayerID: playerID,
+						},
 					},
 				},
 				{
 					name: mtg.StepDeclareBlockers,
-					actions: []TurnBasedAction{
+					actions: []Action{
 						DeclareBlockersAction{},
 					},
 				},
 				{
 					name: mtg.StepCombatDamage,
-					actions: []TurnBasedAction{
-						CombatDamageAction{},
+					actions: []Action{
+						CombatDamageAction{
+							PlayerID: playerID,
+						},
 					},
 				},
 				{
@@ -109,8 +120,10 @@ func GamePhases() []GamePhase {
 				},
 				{
 					name: mtg.StepCleanup,
-					actions: []TurnBasedAction{
-						CleanupAction{},
+					actions: []Action{
+						CleanupAction{
+							PlayerID: playerID,
+						},
 					},
 				},
 			},

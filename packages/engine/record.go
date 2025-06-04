@@ -3,9 +3,9 @@ package engine
 import "deckronomicon/packages/engine/event"
 
 type GameRecord struct {
-	Seed       int64
-	Events     []event.GameEvent
-	FinalState GameStateSnapshot
+	Seed   int64
+	Events []event.GameEvent
+	// FinalState GameStateSnapshot
 }
 
 func NewGameRecord(seed int64) *GameRecord {
@@ -15,6 +15,6 @@ func NewGameRecord(seed int64) *GameRecord {
 	}
 }
 
-func (r *GameRecord) AddEvent(e event.GameEvent) {
+func (r *GameRecord) Add(e event.GameEvent) {
 	r.Events = append(r.Events, e)
 }

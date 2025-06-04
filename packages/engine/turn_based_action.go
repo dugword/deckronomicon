@@ -3,6 +3,7 @@ package engine
 import (
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/state"
 )
 
 /*
@@ -30,12 +31,6 @@ From the Comprehensive Rules (November 8, 2024—Magic: The Gathering Foundation
 703.4q When each step or phase ends, any unused mana left in a player’s mana pool empties. See rule 500.4
 */
 
-type TurnBasedAction interface {
-	Name() string
-	Description() string
-	Complete(choose.Choice) (event.GameEvent, error)
-}
-
 // DrawAction represents the action of drawing a card during a player's turn.
 type DrawAction struct {
 	PlayerID string
@@ -49,7 +44,7 @@ func (a DrawAction) Description() string {
 	return "The active player draws a card."
 }
 
-func (a DrawAction) GetPrompt(state GameState, player Player) choose.ChoicePrompt {
+func (a DrawAction) GetPrompt(state state.Game, player state.Player) choose.ChoicePrompt {
 	// No player choice needed, but we still return an empty prompt for consistency
 	return choose.ChoicePrompt{
 		Message:  "Drawing a card",
@@ -57,8 +52,10 @@ func (a DrawAction) GetPrompt(state GameState, player Player) choose.ChoicePromp
 		Optional: false,
 	}
 }
-func (a DrawAction) Complete(choose.Choice) (event.GameEvent, error) {
-	return event.GameEvent{}, nil
+func (a DrawAction) Complete(state.Game, choose.Choice) (event.GameEvent, error) {
+	return event.DrawCardEvent{
+		PlayerID: a.PlayerID,
+	}, nil
 	// return event.NewDrawCardEvent(a.PlayerID), nil
 }
 
@@ -76,7 +73,7 @@ func (a UntapAction) Description() string {
 	return "The active player untaps all permanents they control."
 }
 
-func (a UntapAction) GetPrompt(state GameState, player Player) choose.ChoicePrompt {
+func (a UntapAction) GetPrompt(state state.Game, player state.Player) choose.ChoicePrompt {
 	// No player choice needed, but we still return an empty prompt for consistency
 	return choose.ChoicePrompt{
 		Message:  "Untapping permanents",
@@ -85,8 +82,10 @@ func (a UntapAction) GetPrompt(state GameState, player Player) choose.ChoiceProm
 	}
 }
 
-func (a UntapAction) Complete(choose.Choice) (event.GameEvent, error) {
-	return event.GameEvent{}, nil
+func (a UntapAction) Complete(state.Game, choose.Choice) (event.GameEvent, error) {
+	return event.UntapAllEvent{
+		PlayerID: a.PlayerID,
+	}, nil
 }
 
 type DeclareAttackersAction struct {
@@ -99,7 +98,7 @@ func (a DeclareAttackersAction) Name() string {
 func (a DeclareAttackersAction) Description() string {
 	return "The active player declares attackers."
 }
-func (a DeclareAttackersAction) GetPrompt(state GameState, player Player) choose.ChoicePrompt {
+func (a DeclareAttackersAction) GetPrompt(state state.Game, player state.Player) choose.ChoicePrompt {
 	// No player choice needed, but we still return an empty prompt for consistency
 	return choose.ChoicePrompt{
 		Message:  "Declaring attackers",
@@ -107,14 +106,13 @@ func (a DeclareAttackersAction) GetPrompt(state GameState, player Player) choose
 		Optional: false,
 	}
 }
-func (a DeclareAttackersAction) Complete(choose.Choice) (event.GameEvent, error) {
+func (a DeclareAttackersAction) Complete(state.Game, choose.Choice) (event.GameEvent, error) {
 	// This action would typically involve the player choosing which creatures to attack with.
 	// For now, we return an empty event as a placeholder.
-	return event.GameEvent{}, nil
+	return event.DeclareAttackersEvent{}, nil
 }
 
 type DeclareBlockersAction struct {
-	PlayerID string
 }
 
 func (a DeclareBlockersAction) Name() string {
@@ -123,7 +121,7 @@ func (a DeclareBlockersAction) Name() string {
 func (a DeclareBlockersAction) Description() string {
 	return "The defending player declares blockers."
 }
-func (a DeclareBlockersAction) GetPrompt(state GameState, player Player) choose.ChoicePrompt {
+func (a DeclareBlockersAction) GetPrompt(state state.Game, player state.Player) choose.ChoicePrompt {
 	// No player choice needed, but we still return an empty prompt for consistency
 	return choose.ChoicePrompt{
 		Message:  "Declaring blockers",
@@ -132,10 +130,10 @@ func (a DeclareBlockersAction) GetPrompt(state GameState, player Player) choose.
 	}
 }
 
-func (a DeclareBlockersAction) Complete(choose.Choice) (event.GameEvent, error) {
+func (a DeclareBlockersAction) Complete(state.Game, choose.Choice) (event.GameEvent, error) {
 	// This action would typically involve the player choosing which creatures to block with.
 	// For now, we return an empty event as a placeholder.
-	return event.GameEvent{}, nil
+	return event.DeclareBlockersEvent{}, nil
 }
 
 // CombatDamageAction represents the action of assigning combat damage during
@@ -150,7 +148,7 @@ func (a CombatDamageAction) Name() string {
 func (a CombatDamageAction) Description() string {
 	return "The active player assigns combat damage for attacking and blocking creatures."
 }
-func (a CombatDamageAction) GetPrompt(state GameState, player Player) choose.ChoicePrompt {
+func (a CombatDamageAction) GetPrompt(state state.Game, player state.Player) choose.ChoicePrompt {
 	// No player choice needed, but we still return an empty prompt for consistency
 	return choose.ChoicePrompt{
 		Message:  "Assigning combat damage",
@@ -158,10 +156,10 @@ func (a CombatDamageAction) GetPrompt(state GameState, player Player) choose.Cho
 		Optional: false,
 	}
 }
-func (a CombatDamageAction) Complete(choose.Choice) (event.GameEvent, error) {
+func (a CombatDamageAction) Complete(state.Game, choose.Choice) (event.GameEvent, error) {
 	// This action would typically involve the player assigning combat damage.
 	// For now, we return an empty event as a placeholder.
-	return event.GameEvent{}, nil
+	return event.CombatDamageEvent{}, nil
 }
 
 // CleanupAction represents the action of cleaning up at the end of a turn.
@@ -175,7 +173,7 @@ func (a CleanupAction) Name() string {
 func (a CleanupAction) Description() string {
 	return "The active player discards down to their maximum hand size and removes all damage from permanents."
 }
-func (a CleanupAction) GetPrompt(state GameState, player Player) choose.ChoicePrompt {
+func (a CleanupAction) GetPrompt(state state.Game, player state.Player) choose.ChoicePrompt {
 	// No player choice needed, but we still return an empty prompt for consistency
 	return choose.ChoicePrompt{
 		Message:  "Cleaning up",
@@ -183,8 +181,8 @@ func (a CleanupAction) GetPrompt(state GameState, player Player) choose.ChoicePr
 		Optional: false,
 	}
 }
-func (a CleanupAction) Complete(choose.Choice) (event.GameEvent, error) {
+func (a CleanupAction) Complete(state.Game, choose.Choice) (event.GameEvent, error) {
 	// This action would typically involve the player discarding cards and removing damage.
 	// For now, we return an empty event as a placeholder.
-	return event.GameEvent{}, nil
+	return event.CleanupStepEvent{}, nil
 }
