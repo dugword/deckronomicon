@@ -57,6 +57,16 @@ func (e SetNextPlayerEvent) EventType() string {
 	return EventTypeSetNextPlayer
 }
 
+type DiscardCardEvent struct {
+	PlayerID string
+	Source   Source
+	CardID   string
+}
+
+func (e DiscardCardEvent) EventType() string {
+	return "DiscardCard"
+}
+
 type DrawCardEvent struct {
 	PlayerID string
 	Source   Source

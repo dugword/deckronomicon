@@ -39,6 +39,47 @@ func NewEngine(config EngineConfig) *Engine {
 	}
 }
 
+func (e *Engine) ApplyAction(action Action) error {
+	choicePrompt, err := action.GetPrompt(e.game)
+	if err != nil {
+		return fmt.Errorf(
+			"error getting choice prompt for action %s: %w",
+			action.Name(),
+			err,
+		)
+	}
+	choices := []choose.Choice{}
+	if choicePrompt.Choices != nil && len(choicePrompt.Choices) != 0 {
+		cs, err := e.agents[action.PlayerID()].Choose(choicePrompt)
+		if err != nil {
+			return fmt.Errorf(
+				"error getting choices for action %s: %w",
+				action.Name(),
+				err,
+			)
+		}
+		choices = cs
+	}
+	evnts, err := action.Complete(e.game, choices)
+	if err != nil {
+		return fmt.Errorf(
+			"error completing action %s: %w",
+			action.Name(),
+			err,
+		)
+	}
+	for _, evnt := range evnts {
+		if err := e.Apply(evnt); err != nil {
+			return fmt.Errorf(
+				"error applying event %s: %w",
+				evnt.EventType(),
+				err,
+			)
+		}
+	}
+	return nil
+}
+
 func (e *Engine) RunGame() error {
 	e.log.IncludeContext = true
 	e.log.ContextFunc = func() any {
@@ -56,7 +97,8 @@ func (e *Engine) RunGame() error {
 	}
 	for _, playerID := range e.game.PlayerIDsInTurnOrder() {
 		e.log.Debug("Drawing starting hand for player:", playerID)
-		if err := e.Apply(event.NewDrawStartingHandEvent(playerID)); err != nil {
+		startingHandAction := DrawStartingHandAction{playerID: playerID}
+		if err := e.ApplyAction(startingHandAction); err != nil {
 			return fmt.Errorf(
 				"error drawing starting hand for player %s: %w",
 				playerID,
@@ -70,11 +112,7 @@ func (e *Engine) RunGame() error {
 		if err != nil {
 			return err
 		}
-		if err := e.Apply(event.SetNextPlayerEvent{}); err != nil {
-			return fmt.Errorf("error completing turn: %w", err)
-		}
 	}
-	// e.Apply(event.NewGameOverEvent())
 	return nil
 }
 
@@ -92,15 +130,24 @@ func (e *Engine) RunTurn() error {
 	if err := e.Apply(event.NewEndTurnEvent()); err != nil {
 		return fmt.Errorf("error ending turn: %w", err)
 	}
+	if err := e.Apply(event.SetNextPlayerEvent{}); err != nil {
+		return fmt.Errorf("error completing turn: %w", err)
+	}
 	return nil
 }
 
 func (e *Engine) RunPhase(phase GamePhase) error {
 	e.log.Debug("Running phase:", phase.name)
+	if err := e.Apply(event.NewBeginPhaseEvent(phase.name)); err != nil {
+		return fmt.Errorf("error starting phase %s: %w", phase.name, err)
+	}
 	for _, step := range phase.steps {
 		if err := e.RunStep(step); err != nil {
 			return fmt.Errorf("error running step %s: %w", step.name, err)
 		}
+	}
+	if err := e.Apply(event.NewEndPhaseEvent(phase.name)); err != nil {
+		return fmt.Errorf("error ending phase %s: %w", phase.name, err)
 	}
 	return nil
 }
@@ -112,16 +159,13 @@ func (e *Engine) RunStep(step GameStep) error {
 	}
 	for _, action := range step.actions {
 		e.log.Debug("Completing action:", action.Name())
-		event, err := action.Complete(e.game, choose.Choice{})
-		if err != nil {
+
+		if err := e.ApplyAction(action); err != nil {
 			return fmt.Errorf(
-				"error completing action %s: %w",
+				"error applying action %s: %w",
 				action.Name(),
 				err,
 			)
-		}
-		if err := e.Apply(event); err != nil {
-			return fmt.Errorf("error applying event: %w", err)
 		}
 	}
 	if err := e.RunPriority(); err != nil {
@@ -144,7 +188,7 @@ func (e *Engine) RunPriority() error {
 		priorityPlayerID = e.game.PriorityPlayerID()
 		e.log.Debug("Player %s received priority", priorityPlayerID)
 		agent := e.agents[priorityPlayerID]
-		action, err := agent.GetNextAction()
+		action, err := agent.GetNextAction(e.game)
 		if err != nil {
 			return fmt.Errorf(
 				"error getting next action for player %s: %w",
@@ -152,12 +196,12 @@ func (e *Engine) RunPriority() error {
 				err,
 			)
 		}
-		evnt, err := action.Complete(e.game, choose.Choice{})
-		if err != nil {
-			e.log.Error("Error completing action:", err)
-		}
-		if err := e.Apply(evnt); err != nil {
-			return fmt.Errorf("error applying event: %w", err)
+		if err := e.ApplyAction(action); err != nil {
+			return fmt.Errorf(
+				"error applying action for player %s: %w",
+				priorityPlayerID,
+				err,
+			)
 		}
 		if !e.game.PlayerPassedPriority(priorityPlayerID) {
 			if err := e.Apply(event.ResetPriorityPassesEvent{}); err != nil {

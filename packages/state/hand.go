@@ -54,14 +54,20 @@ func (h Hand) Remove(id string) error {
 	return fmt.Errorf("card with ID %s not found", id)
 }
 
-func (h Hand) Take(id string) (gob.Card, error) {
-	for i, card := range h.cards {
+func (h Hand) Take(id string) (gob.Card, Hand, error) {
+	remaining := Hand{}
+	taken := gob.Card{}
+	for _, card := range h.cards {
 		if card.ID() == id {
-			h.cards = append(h.cards[:i], h.cards[i+1:]...)
-			return card, nil
+			taken = card
+			continue
 		}
+		remaining.cards = append(remaining.cards, card)
 	}
-	return gob.Card{}, fmt.Errorf("card with ID %s not found", id)
+	if taken.ID() == "" {
+		return gob.Card{}, h, fmt.Errorf("card with ID %s not found in hand", id)
+	}
+	return taken, remaining, nil
 }
 
 func (h Hand) Size() int {

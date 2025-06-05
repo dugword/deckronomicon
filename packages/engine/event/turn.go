@@ -4,22 +4,28 @@ import "deckronomicon/packages/game/mtg"
 
 const (
 	// Beginning Phase
-	EventTypeBeginUntapStep  = "BeginUntapStep"
-	EventTypeEndUntapStep    = "EndUntapStep"
-	EventTypeBeginUpkeepStep = "BeginUpkeepStep"
-	EventTypeEndUpkeepStep   = "EndUpkeepStep"
-	EventTypeBeginDrawStep   = "BeginDrawStep"
-	EventTypeEndDrawStep     = "EndDrawStep"
+	EventTypeBeginBeginningPhase = "BeginBeginningPhase"
+	EventTypeEndBeginningPhase   = "EndBeginningPhase"
+	EventTypeBeginUntapStep      = "BeginUntapStep"
+	EventTypeEndUntapStep        = "EndUntapStep"
+	EventTypeBeginUpkeepStep     = "BeginUpkeepStep"
+	EventTypeEndUpkeepStep       = "EndUpkeepStep"
+	EventTypeBeginDrawStep       = "BeginDrawStep"
+	EventTypeEndDrawStep         = "EndDrawStep"
 )
 
 const (
 	// Precombat Main Phase
-	EventTypeBeginPrecombatMainStep = "BeginPrecombatMainStep"
-	EventTypeEndPrecombatMainStep   = "EndPrecombatMainStep"
+	EventTypeBeginPrecombatMainPhase = "BeginPrecombatMainPhase"
+	EventTypeEndPrecombatMainPhase   = "EndPrecombatMainPhase"
+	EventTypeBeginPrecombatMainStep  = "BeginPrecombatMainStep"
+	EventTypeEndPrecombatMainStep    = "EndPrecombatMainStep"
 )
 
 const (
 	// Combat Phase
+	EventTypeBeginCombatPhase           = "BeginCombatPhase"
+	EventTypeEndCombatPhase             = "EndCombatPhase"
 	EventTypeBeginBeginningOfCombatStep = "BeginBeginningOfCombatStep"
 	EventTypeEndBeginningOfCombatStep   = "EndBeginningOfCombatStep"
 	EventTypeBeginDeclareAttackersStep  = "BeginDeclareAttackersStep"
@@ -34,12 +40,16 @@ const (
 
 const (
 	// Postcombat Main Phase
-	EventTypeBeginPostcombatMainStep = "BeginPostcombatMainStep"
-	EventTypeEndPostcombatMainStep   = "EndPostcombatMainStep"
+	EventTypeBeginPostcombatMainPhase = "BeginPostcombatMainPhase"
+	EventTypeEndPostcombatMainPhase   = "EndPostcombatMainPhase"
+	EventTypeBeginPostcombatMainStep  = "BeginPostcombatMainStep"
+	EventTypeEndPostcombatMainStep    = "EndPostcombatMainStep"
 )
 
 const (
-	// End Phase
+	// Ending Phase
+	EventTypeBeginEndingPhase = "BeginEndingPhase"
+	EventTypeEndEndingPhase   = "EndEndingPhase"
 	EventTypeBeginEndStep     = "BeginEndStep"
 	EventTypeEndEndStep       = "EndEndStep"
 	EventTypeBeginCleanupStep = "BeginCleanupStep"
@@ -48,6 +58,14 @@ const (
 
 type TurnEvent interface {
 	isTurnEvent()
+}
+
+type BeginPhaseEvent interface {
+	isBeginPhaseEvent()
+}
+
+type EndPhaseEvent interface {
+	isEndPhaseEvent()
 }
 
 type BeginStepEvent interface {
@@ -63,6 +81,98 @@ type TurnEventBase struct {
 }
 
 func (e TurnEventBase) isTurnEvent() {}
+
+type BeginPhaseEventBase struct {
+	TurnEventBase
+}
+
+func (e BeginPhaseEventBase) isBeginPhaseEvent() {}
+
+type BeginBeginningPhaseEvent struct {
+	BeginPhaseEventBase
+}
+
+func (e BeginBeginningPhaseEvent) EventType() string {
+	return EventTypeBeginBeginningPhase
+}
+
+type BeginPrecombatMainPhaseEvent struct {
+	BeginPhaseEventBase
+}
+
+func (e BeginPrecombatMainPhaseEvent) EventType() string {
+	return EventTypeBeginPrecombatMainPhase
+}
+
+type BeginCombatPhaseEvent struct {
+	BeginPhaseEventBase
+}
+
+func (e BeginCombatPhaseEvent) EventType() string {
+	return EventTypeBeginCombatPhase
+}
+
+type BeginPostcombatMainPhaseEvent struct {
+	BeginPhaseEventBase
+}
+
+func (e BeginPostcombatMainPhaseEvent) EventType() string {
+	return EventTypeBeginPostcombatMainPhase
+}
+
+type BeginEndingPhaseEvent struct {
+	BeginPhaseEventBase
+}
+
+func (e BeginEndingPhaseEvent) EventType() string {
+	return EventTypeBeginEndingPhase
+}
+
+type EndPhaseEventBase struct {
+	TurnEventBase
+}
+
+func (e EndPhaseEventBase) isEndPhaseEvent() {}
+
+type EndBeginningPhaseEvent struct {
+	EndPhaseEventBase
+}
+
+func (e EndBeginningPhaseEvent) EventType() string {
+	return EventTypeEndBeginningPhase
+}
+
+type EndPrecombatMainPhaseEvent struct {
+	EndPhaseEventBase
+}
+
+func (e EndPrecombatMainPhaseEvent) EventType() string {
+	return EventTypeEndPrecombatMainPhase
+}
+
+type EndCombatPhaseEvent struct {
+	EndPhaseEventBase
+}
+
+func (e EndCombatPhaseEvent) EventType() string {
+	return EventTypeEndCombatPhase
+}
+
+type EndPostcombatMainPhaseEvent struct {
+	EndPhaseEventBase
+}
+
+func (e EndPostcombatMainPhaseEvent) EventType() string {
+	return EventTypeEndPostcombatMainPhase
+}
+
+type EndEndingPhaseEvent struct {
+	EndPhaseEventBase
+}
+
+func (e EndEndingPhaseEvent) EventType() string {
+	return EventTypeEndEndingPhase
+}
 
 type BeginStepEventBase struct {
 	TurnEventBase
@@ -327,5 +437,40 @@ func NewEndStepEvent(step mtg.Step) GameEvent {
 		return EndCleanupStepEvent{}
 	default:
 		panic("unknown step")
+	}
+}
+
+// TODO Should this return a BeginPhaseEvent?
+func NewBeginPhaseEvent(phase mtg.Phase) GameEvent {
+	switch phase {
+	case mtg.PhaseBeginning:
+		return BeginBeginningPhaseEvent{}
+	case mtg.PhasePrecombatMain:
+		return BeginPrecombatMainPhaseEvent{}
+	case mtg.PhaseCombat:
+		return BeginCombatPhaseEvent{}
+	case mtg.PhasePostcombatMain:
+		return BeginPostcombatMainPhaseEvent{}
+	case mtg.PhaseEnding:
+		return BeginEndingPhaseEvent{}
+	default:
+		panic("unknown phase")
+	}
+}
+
+func NewEndPhaseEvent(phase mtg.Phase) GameEvent {
+	switch phase {
+	case mtg.PhaseBeginning:
+		return EndBeginningPhaseEvent{}
+	case mtg.PhasePrecombatMain:
+		return EndPrecombatMainPhaseEvent{}
+	case mtg.PhaseCombat:
+		return EndCombatPhaseEvent{}
+	case mtg.PhasePostcombatMain:
+		return EndPostcombatMainPhaseEvent{}
+	case mtg.PhaseEnding:
+		return EndEndingPhaseEvent{}
+	default:
+		panic("unknown phase")
 	}
 }

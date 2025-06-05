@@ -4,6 +4,7 @@ import (
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
+	"fmt"
 )
 
 type Player struct {
@@ -16,6 +17,14 @@ type Player struct {
 	life        int
 	maxHandSize int // TODO make this configurable
 	turn        int
+}
+
+func (p Player) Life() int {
+	return p.life
+}
+
+func (p Player) Turn() int {
+	return p.turn
 }
 
 func NewPlayer(id string, deckList []gob.Card) Player {
@@ -50,6 +59,16 @@ func (p Player) WithNextTurn() Player {
 	return p
 }
 
+func (p Player) WithDiscardCard(cardID string) (Player, error) {
+	card, newHand, err := p.hand.Take(cardID)
+	if err != nil {
+		return p, fmt.Errorf("card %s not found in hand: %w", cardID, err)
+	}
+	newGraveyard := p.graveyard.Append(card)
+	player := p.WithHand(newHand).WithGraveyard(newGraveyard)
+	return player, nil
+}
+
 func (p Player) WithDrawCard() (Player, gob.Card, error) {
 	card, library, ok := p.library.Shift()
 	if !ok {
@@ -67,6 +86,16 @@ func (p Player) WithLibrary(library Library) Player {
 
 func (p Player) WithHand(hand Hand) Player {
 	p.hand = hand
+	return p
+}
+
+func (p Player) WithExile(exile Exile) Player {
+	p.exile = exile
+	return p
+}
+
+func (p Player) WithGraveyard(graveyard Graveyard) Player {
+	p.graveyard = graveyard
 	return p
 }
 
@@ -88,5 +117,19 @@ func (p Player) Hand() query.View {
 	return query.NewView(
 		string(mtg.ZoneHand),
 		p.hand.GetAll(),
+	)
+}
+
+func (p Player) Exile() query.View {
+	return query.NewView(
+		string(mtg.ZoneExile),
+		p.exile.GetAll(),
+	)
+}
+
+func (p Player) Graveyard() query.View {
+	return query.NewView(
+		string(mtg.ZoneGraveyard),
+		p.graveyard.GetAll(),
 	)
 }

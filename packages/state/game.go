@@ -1,6 +1,7 @@
 package state
 
 import (
+	"deckronomicon/packages/game/mtg"
 	"errors"
 )
 
@@ -9,11 +10,29 @@ type Game struct {
 	playerWithPriority    string
 	playersPassedPriority map[string]bool
 	battlefield           Battlefield
-	phase                 string
+	phase                 mtg.Phase
+	step                  mtg.Step
 	players               []Player
 	stack                 Stack
-	turn                  int
 	winnerID              string
+}
+
+func (g Game) WithPhase(phase mtg.Phase) Game {
+	g.phase = phase
+	return g
+}
+
+func (g Game) WithStep(step mtg.Step) Game {
+	g.step = step
+	return g
+}
+
+func (g Game) Phase() mtg.Phase {
+	return g.phase
+}
+
+func (g Game) Step() mtg.Step {
+	return g.step
 }
 
 func (g Game) IsStackEmtpy() bool {
@@ -89,19 +108,23 @@ func (g Game) Battlefield() Battlefield {
 	return g.battlefield
 }
 
+func (g Game) Stack() Stack {
+	return g.stack
+}
+
 // Returns the players starting with the active player and going in turn order
-func (s Game) PlayerIDsInTurnOrder() []string {
-	var n = s.activePlayerIdx
+func (g Game) PlayerIDsInTurnOrder() []string {
+	var n = g.activePlayerIdx
 	var playersInTurnOrder []string
-	for i := 0; i < len(s.players); i++ {
-		playersInTurnOrder = append(playersInTurnOrder, s.players[n].id)
-		n = (n + 1) % len(s.players)
+	for i := 0; i < len(g.players); i++ {
+		playersInTurnOrder = append(playersInTurnOrder, g.players[n].id)
+		n = (n + 1) % len(g.players)
 	}
 	return playersInTurnOrder
 }
 
-func (s Game) ActivePlayerID() string {
-	return s.players[s.activePlayerIdx].ID()
+func (g Game) ActivePlayerID() string {
+	return g.players[g.activePlayerIdx].ID()
 }
 
 func (g Game) AllPlayersPassedPriority() bool {
@@ -114,8 +137,8 @@ func (g Game) AllPlayersPassedPriority() bool {
 }
 
 // TODO: Think about removing this and using GetPlayerID instead
-func (s Game) GetPlayer(id string) (Player, error) {
-	for _, player := range s.players {
+func (g Game) GetPlayer(id string) (Player, error) {
+	for _, player := range g.players {
 		if player.id == id {
 			return player, nil
 		}
@@ -123,11 +146,25 @@ func (s Game) GetPlayer(id string) (Player, error) {
 	return Player{}, errors.New("player not found")
 }
 
-func (s Game) NextPlayerID(currentPlayerID string) string {
-	for i, player := range s.players {
+// TODO: THIS WILL BREAK WITH MORE THAN 2 PLAYERS
+func (g Game) GetOpponent(id string) (Player, error) {
+	if len(g.players) > 2 {
+		panic("GetOpponent is not implemented for more than 2 players")
+	}
+	opponentID := g.NextPlayerID(id)
+	for _, player := range g.players {
+		if player.id == opponentID {
+			return player, nil
+		}
+	}
+	return Player{}, errors.New("opponent not found")
+}
+
+func (g Game) NextPlayerID(currentPlayerID string) string {
+	for i, player := range g.players {
 		if player.id == currentPlayerID {
-			nextIdx := (i + 1) % len(s.players)
-			return s.players[nextIdx].ID()
+			nextIdx := (i + 1) % len(g.players)
+			return g.players[nextIdx].ID()
 		}
 	}
 	return currentPlayerID

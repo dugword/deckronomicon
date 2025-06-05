@@ -45,13 +45,13 @@ func (e *Engine) GamePhases() []GamePhase {
 					name: mtg.StepUntap,
 					actions: []Action{
 						PhaseInPhaseOutAction{
-							PlayerID: playerID,
+							playerID: playerID,
 						},
 						CheckDayNightAction{
-							PlayerID: playerID,
+							playerID: playerID,
 						},
 						UntapAction{
-							PlayerID: playerID,
+							playerID: playerID,
 						},
 					},
 				},
@@ -59,7 +59,7 @@ func (e *Engine) GamePhases() []GamePhase {
 					name: mtg.StepUpkeep,
 					actions: []Action{
 						UpkeepAction{
-							PlayerID: playerID,
+							playerID: playerID,
 						},
 					},
 				},
@@ -67,7 +67,7 @@ func (e *Engine) GamePhases() []GamePhase {
 					name: mtg.StepDraw,
 					actions: []Action{
 						DrawAction{
-							PlayerID: playerID,
+							playerID: playerID,
 						},
 					},
 				},
@@ -80,7 +80,7 @@ func (e *Engine) GamePhases() []GamePhase {
 					name: mtg.StepPrecombatMain,
 					actions: []Action{
 						ProgressSagaAction{
-							PlayerID: playerID,
+							playerID: playerID,
 						},
 					},
 				},
@@ -96,21 +96,23 @@ func (e *Engine) GamePhases() []GamePhase {
 					name: mtg.StepDeclareAttackers,
 					actions: []Action{
 						DeclareAttackersAction{
-							PlayerID: playerID,
+							playerID: playerID,
 						},
 					},
 				},
 				{
 					name: mtg.StepDeclareBlockers,
 					actions: []Action{
-						DeclareBlockersAction{},
+						DeclareBlockersAction{
+							playerID: playerID,
+						},
 					},
 				},
 				{
 					name: mtg.StepCombatDamage,
 					actions: []Action{
 						CombatDamageAction{
-							PlayerID: playerID,
+							playerID: playerID,
 						},
 					},
 				},
@@ -137,10 +139,10 @@ func (e *Engine) GamePhases() []GamePhase {
 					name: mtg.StepCleanup,
 					actions: []Action{
 						DiscardToHandSizeAction{
-							PlayerID: e.game.ActivePlayerID(),
+							playerID: e.game.ActivePlayerID(),
 						},
 						RemoveDamageAction{
-							PlayerID: e.game.ActivePlayerID(),
+							playerID: e.game.ActivePlayerID(),
 						},
 					},
 				},

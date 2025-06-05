@@ -2,6 +2,7 @@ package engine
 
 import (
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/state"
 	"fmt"
 )
@@ -36,8 +37,6 @@ func (e *Engine) applyEvent(game state.Game, gameEvent event.GameEvent) (state.G
 		return e.applyTurnBasedActionEvent(game, evnt)
 	case event.CombatEvent:
 		return e.applyCombatEvent(game, evnt)
-	case event.DrawCardEvent:
-		return ApplyDrawCardEvent(game, evnt)
 	case event.UntapAllEvent:
 		return ApplyUntapAllEvent(game, evnt)
 	case event.SetNextPlayerEvent:
@@ -71,18 +70,11 @@ func (e *Engine) applyTurnBasedActionEvent(game state.Game, turnBasedActionEvent
 
 func (e *Engine) applyOtherEvents(game state.Game, gameEvent event.GameEvent) (state.Game, error) {
 	switch evnt := gameEvent.(type) {
+	case event.DrawCardEvent:
+		return e.ApplyDrawCardEvent(game, evnt)
+	case event.DiscardCardEvent:
+		return e.ApplyDiscardCardEvent(game, evnt)
 	case event.DrawStartingHandEvent:
-		player, err := game.GetPlayer(evnt.PlayerID)
-		if err != nil {
-			return game, fmt.Errorf("draw starting hand: %w", err)
-		}
-		for range player.MaxHandSize() {
-			newGame, err := e.applyEvent(game, event.NewDrawCardEvent(player.ID()))
-			if err != nil {
-				return game, fmt.Errorf("draw starting hand: %w", err)
-			}
-			game = newGame
-		}
 		return game, nil
 	case event.ShuffleDeckEvent:
 		player, err := game.GetPlayer(evnt.PlayerID)
@@ -139,6 +131,10 @@ func (e *Engine) applyGameLifecycleEvent(game state.Game, gameLifecycleEvent eve
 
 func (e *Engine) applyTurnEvent(game state.Game, turnEvent event.TurnEvent) (state.Game, error) {
 	switch evnt := turnEvent.(type) {
+	case event.BeginPhaseEvent:
+		return e.applyBeginPhaseEvent(game, evnt)
+	case event.EndPhaseEvent:
+		return e.applyEndPhaseEvent(game, evnt)
 	case event.BeginStepEvent:
 		return e.applyBeginStepEvent(game, evnt)
 	case event.EndStepEvent:
@@ -155,15 +151,12 @@ func (e *Engine) applyPriorityEvent(game state.Game, priorityEvent event.Priorit
 		return game, nil
 	case event.PassPriorityEvent:
 		// TODO Get PlayerID from one source - event vs state
-		fmt.Println("Player with priority:", game.PriorityPlayerID())
 		nextPlayerIDWithPriority := game.NextPlayerID(game.PriorityPlayerID())
-		fmt.Println("Next player with priority:", nextPlayerIDWithPriority)
 		newGame := game.WithPlayerPassedPriority(
 			evnt.PlayerID,
 		).WithPlayerWithPriority(
 			nextPlayerIDWithPriority,
 		)
-		fmt.Println("New Player with priority:", newGame.PriorityPlayerID())
 		return newGame, nil
 		return game.WithPlayerPassedPriority(evnt.PlayerID), nil
 	case event.ReceivePriorityEvent:
@@ -219,31 +212,89 @@ func (e *Engine) applyBeginStepEvent(
 ) (state.Game, error) {
 	switch beginStepEvent.(type) {
 	case event.BeginUntapStepEvent:
-		return game, nil
+		newGame := game.WithStep(mtg.StepUntap)
+		return newGame, nil
 	case event.BeginUpkeepStepEvent:
-		return game, nil
+		newGame := game.WithStep(mtg.StepUpkeep)
+		return newGame, nil
 	case event.BeginDrawStepEvent:
-		return game, nil
+		newGame := game.WithStep(mtg.StepDraw)
+		return newGame, nil
 	case event.BeginPrecombatMainStepEvent:
-		return game, nil
+		newGame := game.WithStep(mtg.StepPrecombatMain)
+		return newGame, nil
 	case event.BeginBeginningOfCombatStepEvent:
-		return game, nil
+		newGame := game.WithStep(mtg.StepBeginningOfCombat)
+		return newGame, nil
 	case event.BeginDeclareAttackersStepEvent:
-		return game, nil
+		newGame := game.WithStep(mtg.StepDeclareAttackers)
+		return newGame, nil
 	case event.BeginDeclareBlockersStepEvent:
-		return game, nil
+		newGame := game.WithStep(mtg.StepDeclareBlockers)
+		return newGame, nil
 	case event.BeginCombatDamageStepEvent:
-		return game, nil
+		newGame := game.WithStep(mtg.StepCombatDamage)
+		return newGame, nil
 	case event.BeginEndOfCombatStepEvent:
-		return game, nil
+		newGame := game.WithStep(mtg.StepEndOfCombat)
+		return newGame, nil
 	case event.BeginPostcombatMainStepEvent:
-		return game, nil
+		newGame := game.WithStep(mtg.StepPostcombatMain)
+		return newGame, nil
 	case event.BeginEndStepEvent:
-		return game, nil
+		newGame := game.WithStep(mtg.StepEnd)
+		return newGame, nil
 	case event.BeginCleanupStepEvent:
-		return game, nil
+		newGame := game.WithStep(mtg.StepCleanup)
+		return newGame, nil
 	default:
 		return game, fmt.Errorf("unknown begin step event type: %T", beginStepEvent)
+	}
+	return game, nil
+}
+
+func (e *Engine) applyEndPhaseEvent(
+	game state.Game,
+	endPhaseEvent event.EndPhaseEvent,
+) (state.Game, error) {
+	switch endPhaseEvent.(type) {
+	case event.EndBeginningPhaseEvent:
+		return game, nil
+	case event.EndPrecombatMainPhaseEvent:
+		return game, nil
+	case event.EndCombatPhaseEvent:
+		return game, nil
+	case event.EndPostcombatMainPhaseEvent:
+		return game, nil
+	case event.EndEndingPhaseEvent:
+		return game, nil
+	default:
+		return game, fmt.Errorf("unknown end phase event type: %T", endPhaseEvent)
+	}
+	return game, nil
+}
+func (e *Engine) applyBeginPhaseEvent(
+	game state.Game,
+	beginPhaseEvent event.BeginPhaseEvent,
+) (state.Game, error) {
+	switch beginPhaseEvent.(type) {
+	case event.BeginBeginningPhaseEvent:
+		newGame := game.WithPhase(mtg.PhaseBeginning)
+		return newGame, nil
+	case event.BeginPrecombatMainPhaseEvent:
+		newGame := game.WithPhase(mtg.PhasePrecombatMain)
+		return newGame, nil
+	case event.BeginCombatPhaseEvent:
+		newGame := game.WithPhase(mtg.PhaseCombat)
+		return newGame, nil
+	case event.BeginPostcombatMainPhaseEvent:
+		newGame := game.WithPhase(mtg.PhasePostcombatMain)
+		return newGame, nil
+	case event.BeginEndingPhaseEvent:
+		newGame := game.WithPhase(mtg.PhaseEnding)
+		return newGame, nil
+	default:
+		return game, fmt.Errorf("unknown begin phase event type: %T", beginPhaseEvent)
 	}
 	return game, nil
 }
@@ -274,7 +325,7 @@ func ApplyUntapAllEvent(
 	return newGame, nil
 }
 
-func ApplyDrawCardEvent(
+func (e *Engine) ApplyDrawCardEvent(
 	game state.Game,
 	event event.DrawCardEvent,
 ) (state.Game, error) {
@@ -285,6 +336,23 @@ func ApplyDrawCardEvent(
 	player, _, err = player.WithDrawCard()
 	if err != nil {
 		return game, fmt.Errorf("draw: %w", err)
+	}
+	newGame := game.WithUpdatedPlayer(player)
+	return newGame, nil
+}
+
+func (e *Engine) ApplyDiscardCardEvent(
+	game state.Game,
+	event event.DiscardCardEvent,
+) (state.Game, error) {
+	fmt.Println("DISCARDING THIS CARD =>", event.CardID)
+	player, err := game.GetPlayer(event.PlayerID)
+	if err != nil {
+		return game, fmt.Errorf("discard: %w", err)
+	}
+	player, err = player.WithDiscardCard(event.CardID)
+	if err != nil {
+		return game, fmt.Errorf("discard: %w", err)
 	}
 	newGame := game.WithUpdatedPlayer(player)
 	return newGame, nil

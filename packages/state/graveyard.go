@@ -18,8 +18,11 @@ func NewGraveyard() Graveyard {
 	return graveyard
 }
 
-func (g Graveyard) Add(card gob.Card) {
-	g.cards = append(g.cards, card)
+func (g Graveyard) Append(cards ...gob.Card) Graveyard {
+	newCards := append(g.cards[:], cards...)
+	return Graveyard{
+		cards: newCards,
+	}
 }
 
 func (g Graveyard) Get(id string) (gob.Card, error) {
