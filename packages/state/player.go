@@ -30,6 +30,10 @@ func NewPlayer(id string, deckList []gob.Card) Player {
 	}
 }
 
+func (p Player) MaxHandSize() int {
+	return p.maxHandSize
+}
+
 func (p Player) WithShuffleDeck(
 	deckShuffler func([]gob.Card) []gob.Card,
 ) Player {

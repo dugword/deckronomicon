@@ -4,8 +4,9 @@ package event
 // the properties should be serializable and public.
 
 const (
-	EventTypeDrawCard    = "DrawCard"
-	EventTypeShuffleDeck = "ShuffleDeck"
+	EventTypeDrawCard     = "DrawCard"
+	EventTypeShuffleDeck  = "ShuffleDeck"
+	EventDrawStartingHand = "DrawStartingHand"
 )
 
 // TODO: maybe use typed constants for event types
@@ -19,6 +20,20 @@ type GameEvent interface {
 
 type Source interface {
 	Name() string
+}
+
+type DrawStartingHandEvent struct {
+	PlayerID string
+}
+
+func (e DrawStartingHandEvent) EventType() string {
+	return EventDrawStartingHand
+}
+
+func NewDrawStartingHandEvent(playerID string) DrawStartingHandEvent {
+	return DrawStartingHandEvent{
+		PlayerID: playerID,
+	}
 }
 
 type ShuffleDeckEvent struct {
@@ -49,4 +64,11 @@ type DrawCardEvent struct {
 
 func (e DrawCardEvent) EventType() string {
 	return EventTypeDrawCard
+}
+
+func NewDrawCardEvent(playerID string) DrawCardEvent {
+	return DrawCardEvent{
+		PlayerID: playerID,
+		Source:   nil, // Source can be set later if needed
+	}
 }

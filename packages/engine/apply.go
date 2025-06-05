@@ -8,7 +8,6 @@ import (
 
 func (e *Engine) Apply(event event.GameEvent) error {
 	e.log.Info("Applying event:", event.EventType())
-	e.record.Add(event)
 	newGame, err := e.applyEvent(e.game, event)
 	if err != nil {
 		e.log.Critical("Failed to apply event:", err)
@@ -25,6 +24,7 @@ func (e *Engine) Apply(event event.GameEvent) error {
 }
 
 func (e *Engine) applyEvent(game state.Game, gameEvent event.GameEvent) (state.Game, error) {
+	e.record.Add(gameEvent)
 	switch evnt := gameEvent.(type) {
 	case event.GameLifecycleEvent:
 		return e.applyGameLifecycleEvent(game, evnt)
@@ -71,6 +71,19 @@ func (e *Engine) applyTurnBasedActionEvent(game state.Game, turnBasedActionEvent
 
 func (e *Engine) applyOtherEvents(game state.Game, gameEvent event.GameEvent) (state.Game, error) {
 	switch evnt := gameEvent.(type) {
+	case event.DrawStartingHandEvent:
+		player, err := game.GetPlayer(evnt.PlayerID)
+		if err != nil {
+			return game, fmt.Errorf("draw starting hand: %w", err)
+		}
+		for range player.MaxHandSize() {
+			newGame, err := e.applyEvent(game, event.NewDrawCardEvent(player.ID()))
+			if err != nil {
+				return game, fmt.Errorf("draw starting hand: %w", err)
+			}
+			game = newGame
+		}
+		return game, nil
 	case event.ShuffleDeckEvent:
 		player, err := game.GetPlayer(evnt.PlayerID)
 		if err != nil {
@@ -82,6 +95,7 @@ func (e *Engine) applyOtherEvents(game state.Game, gameEvent event.GameEvent) (s
 	default:
 		return game, fmt.Errorf("unknown event type: %T", evnt)
 	}
+	return game, nil
 }
 
 func (e *Engine) applyCombatEvent(game state.Game, combatEvent event.CombatEvent) (state.Game, error) {
