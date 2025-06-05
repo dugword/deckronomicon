@@ -4,7 +4,8 @@ package event
 // the properties should be serializable and public.
 
 const (
-	EventTypeDrawCard = "DrawCard"
+	EventTypeDrawCard    = "DrawCard"
+	EventTypeShuffleDeck = "ShuffleDeck"
 )
 
 // TODO: maybe use typed constants for event types
@@ -18,6 +19,20 @@ type GameEvent interface {
 
 type Source interface {
 	Name() string
+}
+
+type ShuffleDeckEvent struct {
+	PlayerID string
+}
+
+func (e ShuffleDeckEvent) EventType() string {
+	return EventTypeShuffleDeck
+}
+
+func NewShuffDeckEvent(playerID string) ShuffleDeckEvent {
+	return ShuffleDeckEvent{
+		PlayerID: playerID,
+	}
 }
 
 type SetNextPlayerEvent struct {

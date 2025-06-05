@@ -30,6 +30,16 @@ func NewPlayer(id string, deckList []gob.Card) Player {
 	}
 }
 
+func (p Player) WithShuffleDeck(
+	deckShuffler func([]gob.Card) []gob.Card,
+) Player {
+	// Shuffle the library
+	cards := deckShuffler(p.library.GetAll())
+	newLibrary := NewLibrary(cards)
+	p.library = newLibrary
+	return p
+}
+
 func (p Player) WithNextTurn() Player {
 	p.turn++
 	p.landDrop = false

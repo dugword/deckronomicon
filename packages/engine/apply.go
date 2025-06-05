@@ -7,7 +7,7 @@ import (
 )
 
 func (e *Engine) Apply(event event.GameEvent) error {
-	e.log.Debug("Applying event:", event.EventType())
+	e.log.Info("Applying event:", event.EventType())
 	e.record.Add(event)
 	newGame, err := e.applyEvent(e.game, event)
 	if err != nil {
@@ -71,6 +71,14 @@ func (e *Engine) applyTurnBasedActionEvent(game state.Game, turnBasedActionEvent
 
 func (e *Engine) applyOtherEvents(game state.Game, gameEvent event.GameEvent) (state.Game, error) {
 	switch evnt := gameEvent.(type) {
+	case event.ShuffleDeckEvent:
+		player, err := game.GetPlayer(evnt.PlayerID)
+		if err != nil {
+			return game, fmt.Errorf("shuffle deck: %w", err)
+		}
+		newPlayer := player.WithShuffleDeck(e.rng.DeckShuffler())
+		newGame := game.WithUpdatedPlayer(newPlayer)
+		return newGame, nil
 	default:
 		return game, fmt.Errorf("unknown event type: %T", evnt)
 	}

@@ -48,6 +48,12 @@ func (e *Engine) RunGame() error {
 	if err := e.Apply(event.NewBeginGameEvent()); err != nil {
 		return fmt.Errorf("error starting game: %w", err)
 	}
+	e.log.Debug("Shuffling decks")
+	for _, playerID := range e.game.PlayerIDsInTurnOrder() {
+		if err := e.Apply(event.NewShuffDeckEvent(playerID)); err != nil {
+			return fmt.Errorf("error shuffling decks: %w", err)
+		}
+	}
 	// shuffle all player decks
 	// draw initial hands for players
 	// resovle mulligans
