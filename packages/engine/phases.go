@@ -44,14 +44,24 @@ func (e *Engine) GamePhases() []GamePhase {
 				{
 					name: mtg.StepUntap,
 					actions: []Action{
+						PhaseInPhaseOutAction{
+							PlayerID: playerID,
+						},
+						CheckDayNightAction{
+							PlayerID: playerID,
+						},
 						UntapAction{
 							PlayerID: playerID,
 						},
 					},
 				},
 				{
-					name:    mtg.StepUpkeep,
-					actions: []Action{},
+					name: mtg.StepUpkeep,
+					actions: []Action{
+						UpkeepAction{
+							PlayerID: playerID,
+						},
+					},
 				},
 				{
 					name: mtg.StepDraw,
@@ -68,6 +78,11 @@ func (e *Engine) GamePhases() []GamePhase {
 			steps: []GameStep{
 				{
 					name: mtg.StepPrecombatMain,
+					actions: []Action{
+						ProgressSagaAction{
+							PlayerID: playerID,
+						},
+					},
 				},
 			},
 		},
@@ -121,8 +136,11 @@ func (e *Engine) GamePhases() []GamePhase {
 				{
 					name: mtg.StepCleanup,
 					actions: []Action{
-						CleanupAction{
-							PlayerID: playerID,
+						DiscardToHandSizeAction{
+							PlayerID: e.game.ActivePlayerID(),
+						},
+						RemoveDamageAction{
+							PlayerID: e.game.ActivePlayerID(),
 						},
 					},
 				},

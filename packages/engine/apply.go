@@ -32,6 +32,10 @@ func (e *Engine) applyEvent(game state.Game, gameEvent event.GameEvent) (state.G
 		return e.applyPriorityEvent(game, evnt)
 	case event.TurnEvent:
 		return e.applyTurnEvent(game, evnt)
+	case event.TurnBasedActionEvent:
+		return e.applyTurnBasedActionEvent(game, evnt)
+	case event.CombatEvent:
+		return e.applyCombatEvent(game, evnt)
 	case event.DrawCardEvent:
 		return ApplyDrawCardEvent(game, evnt)
 	case event.UntapAllEvent:
@@ -39,9 +43,50 @@ func (e *Engine) applyEvent(game state.Game, gameEvent event.GameEvent) (state.G
 	case event.SetNextPlayerEvent:
 		return ApplySetNextPlayerEvent(game, evnt)
 	default:
-		return game, fmt.Errorf("unknown event type: %T", gameEvent)
+		return e.applyOtherEvents(game, evnt)
 	}
 	return game, nil
+}
+
+func (e *Engine) applyTurnBasedActionEvent(game state.Game, turnBasedActionEvent event.TurnBasedActionEvent) (state.Game, error) {
+	switch evnt := turnBasedActionEvent.(type) {
+	case event.UntapAllEvent:
+		return ApplyUntapAllEvent(game, evnt)
+	case event.UpkeepEvent:
+		return game, nil
+	case event.ProgressSagaEvent:
+		return game, nil
+	case event.CheckDayNightEvent:
+		return game, nil
+	case event.PhaseInPhaseOutEvent:
+		return game, nil
+	case event.DiscardToHandSizeEvent:
+		return game, nil
+	case event.RemoveDamageEvent:
+		return game, nil
+	default:
+		return game, fmt.Errorf("unknown turn-based action event type: %T", evnt)
+	}
+}
+
+func (e *Engine) applyOtherEvents(game state.Game, gameEvent event.GameEvent) (state.Game, error) {
+	switch evnt := gameEvent.(type) {
+	default:
+		return game, fmt.Errorf("unknown event type: %T", evnt)
+	}
+}
+
+func (e *Engine) applyCombatEvent(game state.Game, combatEvent event.CombatEvent) (state.Game, error) {
+	switch evnt := combatEvent.(type) {
+	case event.DeclareAttackersEvent:
+		return game, nil
+	case event.DeclareBlockersEvent:
+		return game, nil
+	case event.CombatDamageEvent:
+		return game, nil
+	default:
+		return game, fmt.Errorf("unknown combat event type: %T", evnt)
+	}
 }
 
 func (e *Engine) applyGameLifecycleEvent(game state.Game, gameLifecycleEvent event.GameLifecycleEvent) (state.Game, error) {
@@ -57,6 +102,8 @@ func (e *Engine) applyGameLifecycleEvent(game state.Game, gameLifecycleEvent eve
 		newPlayer := player.WithNextTurn()
 		newGame := game.WithUpdatedPlayer(newPlayer)
 		return newGame, nil
+		return game, nil
+	case event.EndTurnEvent:
 		return game, nil
 	case event.GameOverEvent:
 		e.log.Info("Game over, winner:", evnt.WinnerID)
@@ -114,6 +161,7 @@ func (e *Engine) applyEndStepEvent(
 	game state.Game,
 	endStepEvent event.EndStepEvent,
 ) (state.Game, error) {
+	game = game.WithClearedPriority().WithResetPriorityPasses()
 	switch endStepEvent.(type) {
 	case event.EndUntapStepEvent:
 		return game, nil
@@ -140,8 +188,7 @@ func (e *Engine) applyEndStepEvent(
 	case event.EndCleanupStepEvent:
 		return game, nil
 	}
-	newGame := game.WithClearedPriority().WithResetPriorityPasses()
-	return newGame, nil
+	return game, nil
 }
 
 func (e *Engine) applyBeginStepEvent(
@@ -166,6 +213,8 @@ func (e *Engine) applyBeginStepEvent(
 	case event.BeginCombatDamageStepEvent:
 		return game, nil
 	case event.BeginEndOfCombatStepEvent:
+		return game, nil
+	case event.BeginPostcombatMainStepEvent:
 		return game, nil
 	case event.BeginEndStepEvent:
 		return game, nil

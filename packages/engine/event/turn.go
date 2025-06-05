@@ -245,7 +245,7 @@ func (e BeginEndStepEvent) EventType() string {
 }
 
 type EndEndStepEvent struct {
-	EndStepEvent
+	EndStepEventBase
 }
 
 func (e EndEndStepEvent) EventType() string {
@@ -261,7 +261,7 @@ func (e BeginCleanupStepEvent) EventType() string {
 }
 
 type EndCleanupStepEvent struct {
-	EndStepEvent
+	EndStepEventBase
 }
 
 func (e EndCleanupStepEvent) EventType() string {
