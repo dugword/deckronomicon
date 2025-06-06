@@ -3,6 +3,7 @@ package is
 import (
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
+	"fmt"
 )
 
 func Land() query.Predicate {
@@ -45,6 +46,7 @@ func Permanent() query.Predicate {
 		if !ok {
 			return false
 		}
+		fmt.Println("card is not object")
 		for _, cardType := range cardObj.CardTypes() {
 			if cardType.IsPermanent() {
 				return true

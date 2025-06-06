@@ -7,6 +7,7 @@ const (
 	EventTypeDrawCard     = "DrawCard"
 	EventTypeShuffleDeck  = "ShuffleDeck"
 	EventDrawStartingHand = "DrawStartingHand"
+	EVentTypePlayLand     = "PlayLand"
 )
 
 // TODO: maybe use typed constants for event types
@@ -20,6 +21,24 @@ type GameEvent interface {
 
 type Source interface {
 	Name() string
+}
+
+type CastSpellEvent struct {
+	PlayerID string
+	CardID   string
+}
+
+func (e CastSpellEvent) EventType() string {
+	return "CastSpell"
+}
+
+type PlayLandEvent struct {
+	PlayerID string
+	CardID   string
+}
+
+func (e PlayLandEvent) EventType() string {
+	return EVentTypePlayLand
 }
 
 type DrawStartingHandEvent struct {

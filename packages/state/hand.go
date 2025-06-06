@@ -3,6 +3,7 @@ package state
 import (
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/query"
 	"fmt"
 )
 
@@ -25,13 +26,21 @@ func (h Hand) Append(cards ...gob.Card) Hand {
 	}
 }
 
-func (h Hand) Get(id string) (gob.Card, error) {
+func (h Hand) Contains(predicate query.Predicate) bool {
+	return query.Contains(h.cards, predicate)
+}
+
+func (h Hand) Find(predicate query.Predicate) (gob.Card, bool) {
+	return query.Find(h.cards, predicate)
+}
+
+func (h Hand) Get(id string) (gob.Card, bool) {
 	for _, card := range h.cards {
 		if card.ID() == id {
-			return card, nil
+			return card, true
 		}
 	}
-	return gob.Card{}, fmt.Errorf("card with ID %s not found", id)
+	return gob.Card{}, false
 }
 
 func (h Hand) GetAll() []gob.Card {
@@ -54,7 +63,7 @@ func (h Hand) Remove(id string) error {
 	return fmt.Errorf("card with ID %s not found", id)
 }
 
-func (h Hand) Take(id string) (gob.Card, Hand, error) {
+func (h Hand) Take(id string) (gob.Card, Hand, bool) {
 	remaining := Hand{}
 	taken := gob.Card{}
 	for _, card := range h.cards {
@@ -65,9 +74,9 @@ func (h Hand) Take(id string) (gob.Card, Hand, error) {
 		remaining.cards = append(remaining.cards, card)
 	}
 	if taken.ID() == "" {
-		return gob.Card{}, h, fmt.Errorf("card with ID %s not found in hand", id)
+		return gob.Card{}, h, false
 	}
-	return taken, remaining, nil
+	return taken, remaining, true
 }
 
 func (h Hand) Size() int {

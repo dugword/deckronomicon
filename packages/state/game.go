@@ -1,11 +1,26 @@
 package state
 
+// TODO: Document what kind of logic lives where.
+
+// I think the state should really just control the mechanics of movings
+// things around, not checking the game rules. Games rule enforcement should
+// happen in the engine
+
+// stuff like can cast might even need to be moved to the engine package
+
 import (
+	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/query/has"
+	"deckronomicon/packages/query/is"
 	"errors"
+	"fmt"
+	"strconv"
 )
 
 type Game struct {
+	id                    int
+	cheatsEnabled         bool
 	activePlayerIdx       int
 	playerWithPriority    string
 	playersPassedPriority map[string]bool
@@ -15,6 +30,72 @@ type Game struct {
 	players               []Player
 	stack                 Stack
 	winnerID              string
+}
+
+func (g Game) GetCardsAvailableToPlay(playerID string) ([]gob.Card, error) {
+	player, err := g.GetPlayer(playerID)
+	if err != nil {
+		return nil, err
+	}
+	var availableCards []gob.Card
+	for _, card := range player.hand.cards {
+		if g.CanPlayCard(card, playerID, mtg.ZoneHand) {
+			availableCards = append(availableCards, card)
+		}
+	}
+	for _, card := range player.graveyard.cards {
+		if g.CanPlayCard(card, playerID, mtg.ZoneGraveyard) {
+			availableCards = append(availableCards, card)
+		}
+	}
+	return availableCards, nil
+}
+
+// TODO should this live on engine?
+func (g Game) CanCastSorcery(playerID string) bool {
+	if !g.IsStackEmtpy() {
+		return false
+	}
+	if g.ActivePlayerID() != playerID {
+		return false
+	}
+	if !(g.step == mtg.StepPrecombatMain ||
+		g.step == mtg.StepPostcombatMain) {
+		return false
+	}
+	fmt.Println("Can cast sorcery:", g.step, g.ActivePlayerID(), playerID)
+	return true
+}
+
+// TODO: Should this live on engine?
+func (g Game) CanPlayCard(
+	card gob.Card,
+	playerID string,
+	zone mtg.Zone,
+) bool {
+	if zone == mtg.ZoneGraveyard {
+		return false
+	}
+	fmt.Println("aaa")
+	if card.Match(is.Permanent()) {
+		fmt.Println("ccc")
+	}
+	if card.Match(has.CardType(mtg.CardTypeSorcery)) {
+		fmt.Println("bbb")
+		if !g.CanCastSorcery(playerID) {
+			return false
+		}
+	}
+	return true
+}
+
+func (g Game) WithCheatsEnabled(enabled bool) Game {
+	g.cheatsEnabled = enabled
+	return g
+}
+
+func (g Game) CheatsEnabled() bool {
+	return g.cheatsEnabled
 }
 
 func (g Game) WithPhase(phase mtg.Phase) Game {
@@ -198,4 +279,20 @@ func (g Game) IsGameOver() bool {
 
 type GameStateSnapshot struct {
 	Turn int
+}
+
+func (g Game) GetNextID() (id string, game Game) {
+	g.id++
+	return strconv.Itoa(g.id), g
+}
+
+func (g Game) WithPutCardOnBattlefield(card gob.Card, playerID string) (Game, error) {
+	id, newGame := g.GetNextID()
+	permanent, err := gob.NewPermanent(id, card)
+	if err != nil {
+		return newGame, err
+	}
+	newBattlefield := newGame.battlefield.Append(permanent)
+	newerGame := newGame.WithBattlefield(newBattlefield)
+	return newerGame, nil
 }

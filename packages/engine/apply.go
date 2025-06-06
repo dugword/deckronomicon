@@ -1,5 +1,10 @@
 package engine
 
+// TODO: Document what level things should live at. Maybe apply is where the
+// core game engine logic and enforcement lives. it takes the structured
+// imput, verifies per the rules of the game it can happen, and then applies
+// it.
+
 import (
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/game/mtg"
@@ -70,6 +75,10 @@ func (e *Engine) applyTurnBasedActionEvent(game state.Game, turnBasedActionEvent
 
 func (e *Engine) applyOtherEvents(game state.Game, gameEvent event.GameEvent) (state.Game, error) {
 	switch evnt := gameEvent.(type) {
+	case event.PlayLandEvent:
+		return e.ApplyPlayLandEvent(game, evnt)
+	case event.CastSpellEvent:
+		return e.ApplyCastSpellEvent(game, evnt)
 	case event.DrawCardEvent:
 		return e.ApplyDrawCardEvent(game, evnt)
 	case event.DiscardCardEvent:
@@ -354,6 +363,49 @@ func (e *Engine) ApplyDiscardCardEvent(
 	if err != nil {
 		return game, fmt.Errorf("discard: %w", err)
 	}
+	newGame := game.WithUpdatedPlayer(player)
+	return newGame, nil
+}
+
+// TODO: Need to document at what level stuff should happen.
+// maybe something with if cards move from player zone to player zone, vs if a
+// card moves from player to battlefield.... like a method should only operate
+// on it's own fields? But wht about sub fields. Probably no, because
+// otherwise everything would happen on game.
+func (e *Engine) ApplyPlayLandEvent(
+	game state.Game,
+	evnt event.PlayLandEvent,
+) (state.Game, error) {
+	player, err := game.GetPlayer(evnt.PlayerID)
+	if err != nil {
+		return game, fmt.Errorf("play land: %w", err)
+	}
+	card, newPlayer, err := player.TakeCardFromHand(evnt.CardID)
+	if err != nil {
+		return game, fmt.Errorf("play land: %w", err)
+	}
+	newGame, err := game.WithPutCardOnBattlefield(card, evnt.PlayerID)
+	if err != nil {
+		return game, fmt.Errorf("play land: %w", err)
+	}
+	newerGame := newGame.WithUpdatedPlayer(newPlayer)
+	return newerGame, nil
+}
+
+func (e *Engine) ApplyCastSpellEvent(
+	game state.Game,
+	event event.CastSpellEvent,
+) (state.Game, error) {
+	player, err := game.GetPlayer(event.PlayerID)
+	if err != nil {
+		return game, fmt.Errorf("cast spell: %w", err)
+	}
+	/*
+		player, err = player.WithCardOnStack(event.CardID)
+		if err != nil {
+			return game, fmt.Errorf("cast spell: %w", err)
+		}
+	*/
 	newGame := game.WithUpdatedPlayer(player)
 	return newGame, nil
 }

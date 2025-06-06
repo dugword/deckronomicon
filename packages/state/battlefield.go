@@ -19,8 +19,11 @@ func NewBattlefield() Battlefield {
 	return battlefield
 }
 
-func (b Battlefield) Add(permanent gob.Permanent) {
-	b.permanents = append(b.permanents, permanent)
+func (b Battlefield) Append(permanents ...gob.Permanent) Battlefield {
+	newPermanents := append(b.permanents[:], permanents...)
+	return Battlefield{
+		permanents: newPermanents,
+	}
 }
 
 func (b Battlefield) Get(id string) (gob.Permanent, error) {
@@ -70,7 +73,7 @@ func (b Battlefield) UntapAll(playerID string) Battlefield {
 		if p.Controller() == playerID {
 			p.Untap()
 		}
-		battlefield.Add(p)
+		battlefield.Append(p)
 	}
 	return battlefield
 }

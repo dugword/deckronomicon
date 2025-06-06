@@ -40,6 +40,7 @@ func NewEngine(config EngineConfig) *Engine {
 }
 
 func (e *Engine) ApplyAction(action Action) error {
+	fmt.Println("Applying action:", action.Name())
 	choicePrompt, err := action.GetPrompt(e.game)
 	if err != nil {
 		return fmt.Errorf(
@@ -196,6 +197,7 @@ func (e *Engine) RunPriority() error {
 				err,
 			)
 		}
+		fmt.Printf("HERE %+v", action)
 		if err := e.ApplyAction(action); err != nil {
 			return fmt.Errorf(
 				"error applying action for player %s: %w",

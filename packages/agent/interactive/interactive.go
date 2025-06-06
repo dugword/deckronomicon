@@ -6,6 +6,7 @@ package interactive
 
 import (
 	"bufio"
+	"deckronomicon/packages/agent/actionparser"
 	"deckronomicon/packages/engine"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/state"
@@ -69,43 +70,33 @@ func (a *Agent) ReportState(game state.Game) error {
 func (a *Agent) GetNextAction(game state.Game) (engine.Action, error) {
 	for {
 		// TODO Don't call this here, run update or something
-		a.ReportState(game)
 		// PrintCommands(s.CheatsEnabled)
 		// TODO: maybe move the prompt to the read functions?
 		if a.inputError != "" {
 			fmt.Println("Error:", a.inputError)
 			a.inputError = ""
 		}
-		/*
-			if alias, ok := engine.CommandAliases[userInput]; ok {
-				userInput = alias
-			}
-			if userInput == "help" {
-				PrintHelp(s.CheatsEnabled)
-				continue
-			}
-			command, ok := engine.Commands[userInput]
-			if !ok {
-				a.inputError = "Invalid input. Try again."
-				continue
-			}
-			command.Action.Target = game.ActionTarget{Name: arg}
-		*/
-		pass := true
-		for _, step := range a.stops {
-			if game.Step() == step {
-				pass = false
-				break
-			}
-		}
-		if pass {
-			return engine.NewPassAction(a.playerID), nil
-		}
 		if err := a.uiBuffer.Render(); err != nil {
-			return nil, fmt.Errorf("failed to render UI buffer: %v", err)
+			return nil, fmt.Errorf("error rendering UI buffer: %w", err)
 		}
 		a.Prompt("take action")
-		_, _ = a.ReadInput()
-		return engine.NewPassAction(a.playerID), nil
+		commandParser := actionparser.CommandParser{}
+		command, err := commandParser.ParseInput(
+			a.ReadInput,
+			a.Choose,
+			game,
+			a.playerID,
+		)
+		if err != nil {
+			a.inputError = err.Error()
+			continue
+		}
+		fmt.Println("HERE =>", command)
+		action, err := command.Build(game, a.playerID)
+		if err != nil {
+			a.inputError = err.Error()
+			continue
+		}
+		return action, nil
 	}
 }

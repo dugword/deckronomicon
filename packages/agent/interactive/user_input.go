@@ -1,8 +1,10 @@
 package interactive
 
 import (
+	"deckronomicon/packages/engine"
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -54,7 +56,8 @@ func (a *Agent) ReadInputTokens() []string {
 }
 
 // ReadInput from the interactive console. Trim whitespace and return only the first token.
-func (a *Agent) ReadInput() (action, target string) {
+// func (a *Agent) ReadInput() (action, target string) {
+func (a *Agent) ReadInput() string {
 	if !a.scanner.Scan() {
 		if err := a.scanner.Err(); err != nil {
 			fmt.Println("Input error or interrupted:", err)
@@ -64,21 +67,24 @@ func (a *Agent) ReadInput() (action, target string) {
 		}
 		os.Exit(0)
 	}
-	parts := strings.Fields(a.scanner.Text())
-	switch len(parts) {
-	case 0:
-		return "", ""
-	case 1:
-		return parts[0], ""
-	default:
-		return parts[0], strings.Join(parts[1:], " ")
-	}
+	input := strings.TrimSpace(a.scanner.Text())
+	return input
+	/*
+		switch len(parts) {
+		case 0:
+			return "", ""
+		case 1:
+			return parts[0], ""
+		default:
+			return parts[0], strings.Join(parts[1:], " ")
+		}
+	*/
 }
 
 // ReadInputConfirm reads input from the interactive console and returns a
 // boolean.
 func (a *Agent) ReadInputConfirm() (bool, error) {
-	input, _ := a.ReadInput()
+	input := a.ReadInput()
 	accept := strings.ToLower(input)
 	if accept == "y" || accept == "yes" {
 		return true, nil
@@ -90,7 +96,7 @@ func (a *Agent) ReadInputConfirm() (bool, error) {
 }
 
 func (a Agent) ReadInputNumber(max int) (int, error) {
-	input, _ := a.ReadInput()
+	input := a.ReadInput()
 	number, err := strconv.Atoi(input)
 	if err != nil {
 		return -1, fmt.Errorf("invalid number: %w", err)
@@ -108,7 +114,6 @@ func (a Agent) ReadInputNumber(max int) (int, error) {
 	return number, nil
 }
 
-/*
 func PrintCommands(cheatsEnabled bool) {
 	var commands []string
 	var cheats []string
@@ -159,4 +164,3 @@ func PrintHelp(cheatsEnabled bool) {
 		fmt.Printf("%s => %s\n", alias, engine.CommandAliases[alias])
 	}
 }
-*/

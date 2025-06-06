@@ -377,8 +377,8 @@ func (a DiscardToHandSizeAction) GetPrompt(game state.Game) (choose.ChoicePrompt
 		Message:    fmt.Sprintf("%d cards in hand, discard %d", hand.Size(), excess),
 		Choices:    choices,
 		Source:     a,
-		MinChoices: excess + 4,
-		MaxChoices: excess + 4,
+		MinChoices: excess,
+		MaxChoices: excess,
 	}, nil
 }
 

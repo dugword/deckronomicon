@@ -213,7 +213,7 @@ func GraveyardData(player state.Player) BoxData {
 func HandData(player state.Player) BoxData {
 	var lines []string
 	for _, card := range player.Hand().GetAll() {
-		line := card.Name()
+		line := fmt.Sprintf("%s <id:%s>", card.Name(), card.ID())
 		lines = append(lines, line)
 	}
 	return BoxData{

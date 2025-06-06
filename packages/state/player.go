@@ -39,6 +39,17 @@ func NewPlayer(id string, deckList []gob.Card) Player {
 	}
 }
 
+func (p Player) TakeCardFromHand(
+	cardID string,
+) (gob.Card, Player, error) {
+	card, newHand, ok := p.hand.Take(cardID)
+	if !ok {
+		return card, p, fmt.Errorf("card %s not found in hand", cardID)
+	}
+	player := p.WithHand(newHand)
+	return card, player, nil
+}
+
 func (p Player) MaxHandSize() int {
 	return p.maxHandSize
 }
@@ -60,9 +71,9 @@ func (p Player) WithNextTurn() Player {
 }
 
 func (p Player) WithDiscardCard(cardID string) (Player, error) {
-	card, newHand, err := p.hand.Take(cardID)
-	if err != nil {
-		return p, fmt.Errorf("card %s not found in hand: %w", cardID, err)
+	card, newHand, ok := p.hand.Take(cardID)
+	if !ok {
+		return p, fmt.Errorf("card %s not found in hand", cardID)
 	}
 	newGraveyard := p.graveyard.Append(card)
 	player := p.WithHand(newHand).WithGraveyard(newGraveyard)
@@ -113,12 +124,18 @@ func (p Player) Library() query.View {
 	)
 }
 
+func (p Player) Hand() Hand {
+	return p.hand
+}
+
+/*
 func (p Player) Hand() query.View {
 	return query.NewView(
 		string(mtg.ZoneHand),
 		p.hand.GetAll(),
 	)
 }
+*/
 
 func (p Player) Exile() query.View {
 	return query.NewView(
