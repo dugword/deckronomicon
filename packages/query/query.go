@@ -2,6 +2,7 @@ package query
 
 import (
 	"deckronomicon/packages/game/mtg"
+	"slices"
 )
 
 // TODO Maybe break this into more specific interfaces
@@ -106,4 +107,8 @@ func Get[T Object](objects []T, id string) (T, bool) {
 	return Find(objects, func(obj Object) bool {
 		return obj.ID() == id
 	})
+}
+
+func GetAll[T Object](objects []T) []T {
+	return slices.Clone(objects)
 }

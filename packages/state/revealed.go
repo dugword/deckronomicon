@@ -3,7 +3,11 @@ package state
 import (
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
-	"fmt"
+	"deckronomicon/packages/query"
+	"deckronomicon/packages/query/add"
+	"deckronomicon/packages/query/has"
+	"deckronomicon/packages/query/remove"
+	"deckronomicon/packages/query/take"
 )
 
 type Revealed struct {
@@ -18,51 +22,35 @@ func NewRevealed() Revealed {
 }
 
 func (r Revealed) Add(card gob.Card) Revealed {
-	r.cards = append(r.cards, card)
-	return r
+	return Revealed{cards: add.Item(r.cards, card)}
 }
 
-/*
-func (r Revealed) Clear() {
-	r.cards = []gob.Card{}
-}
-*/
-
-func (r Revealed) Get(id string) (gob.Card, error) {
-	for _, card := range r.cards {
-		if card.ID() == id {
-			return card, nil
-		}
-	}
-	return gob.Card{}, fmt.Errorf("card with id %s not found in revealed zone", id)
+func (r Revealed) Get(id string) (gob.Card, bool) {
+	return query.Get(r.cards, id)
 }
 
 func (r Revealed) GetAll() []gob.Card {
-	return r.cards
+	return query.GetAll(r.cards)
 }
 
 func (r Revealed) Name() string {
 	return string(mtg.ZoneRevealed)
 }
 
-func (r Revealed) Remove(id string) error {
-	for i, card := range r.cards {
-		if card.ID() == id {
-			r.cards = append(r.cards[:i], r.cards[i+1:]...)
-			return nil
-		}
+func (r Revealed) Remove(id string) (Revealed, bool) {
+	cards, ok := remove.By(r.cards, has.ID(id))
+	if !ok {
+		return r, false
 	}
-	return fmt.Errorf("card with id %s not found in revealed zone", id)
+	return Revealed{cards: cards}, true
 }
 
-func (r Revealed) Take(id string) (gob.Card, error) {
-	for i, card := range r.cards {
-		if card.ID() == id {
-			r.cards = append(r.cards[:i], r.cards[i+1:]...)
-			return card, nil
-		}
+func (r Revealed) Take(id string) (gob.Card, Revealed, bool) {
+	card, cards, ok := take.By(r.cards, has.ID(id))
+	if !ok {
+		return gob.Card{}, r, false
 	}
-	return gob.Card{}, fmt.Errorf("card with id %s not found in revealed zone", id)
+	return card, Revealed{cards: cards}, true
 }
 
 func (r Revealed) Size() int {

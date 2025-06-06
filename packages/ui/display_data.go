@@ -10,6 +10,8 @@ import (
 	"text/template"
 )
 
+const templateName = "display.tmpl"
+
 type DisplayData struct {
 	BattlefieldData BoxData
 	ChoiceData      BoxData
@@ -282,10 +284,10 @@ func (b *Buffer) Render() error {
 	if err := b.displayTemplate.ExecuteTemplate(
 		// TODO: use passed in stdout from Run
 		os.Stdout,
-		"display.tmpl",
+		templateName,
 		displayBoxes,
 	); err != nil {
-		return fmt.Errorf("error executing template: %w", err)
+		return fmt.Errorf("failed to execute template '%s': %w", templateName, err)
 	}
 	return nil
 }

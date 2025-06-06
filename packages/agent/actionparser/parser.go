@@ -84,7 +84,7 @@ func (p *CommandParser) ParseInput(
 		case "play":
 			return parsePlayCardCommand(command, args, getChoices, game, playerID)
 		default:
-			return nil, fmt.Errorf("unrecognized command: %s", command)
+			return nil, fmt.Errorf("unrecognized command '%s'", command)
 		}
 	}
 }
@@ -117,7 +117,7 @@ func parsePlayCardCommand(
 		}
 		selected, err := getChoices(prompt)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get choices for play command: %w", err)
+			return nil, fmt.Errorf("failed to get choices: %w", err)
 		}
 		return &PlayCardCommand{
 			CardID:   selected[0].ID,
@@ -126,7 +126,7 @@ func parsePlayCardCommand(
 	}
 	player, err := game.GetPlayer(playerID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get player %s: %w", playerID, err)
+		return nil, fmt.Errorf("failed to get player '%s': %w", playerID, err)
 	}
 	if player.Hand().Contains(has.ID(args[0])) {
 		return &PlayCardCommand{

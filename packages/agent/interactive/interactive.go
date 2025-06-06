@@ -50,12 +50,12 @@ func (a *Agent) ReportState(game state.Game) error {
 	// TODO Don't panic
 	player, err := game.GetPlayer(a.playerID)
 	if err != nil {
-		return fmt.Errorf("player %s not found in game state", a.playerID)
+		return fmt.Errorf("failed to get player '%s': %w", a.playerID, err)
 	}
 	// Update the UI buffer with the current game state.
 	opponent, err := game.GetOpponent(a.playerID)
 	if err != nil {
-		return fmt.Errorf("opponent for player %s not found in game state: %v", a.playerID, err)
+		return fmt.Errorf("failed to get opponent for '%s': %w", a.playerID, err)
 	}
 	a.uiBuffer.UpdateFromState(game, player, opponent)
 	return nil
@@ -71,7 +71,7 @@ func (a *Agent) GetNextAction(game state.Game) (engine.Action, error) {
 			a.inputError = ""
 		}
 		if err := a.uiBuffer.Render(); err != nil {
-			return nil, fmt.Errorf("error rendering UI buffer: %w", err)
+			return nil, fmt.Errorf("failed to render UI Buffer: %w", err)
 		}
 		a.Prompt("take action")
 		commandParser := actionparser.CommandParser{}

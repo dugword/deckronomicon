@@ -4,7 +4,10 @@ import (
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
-	"fmt"
+	"deckronomicon/packages/query/add"
+	"deckronomicon/packages/query/has"
+	"deckronomicon/packages/query/remove"
+	"deckronomicon/packages/query/take"
 )
 
 // Hand represents a player's hand of cards.
@@ -19,10 +22,9 @@ func NewHand() Hand {
 	}
 }
 
-func (h Hand) Append(cards ...gob.Card) Hand {
-	newCards := append(h.cards[:], cards...)
+func (h Hand) Add(cards ...gob.Card) Hand {
 	return Hand{
-		cards: newCards,
+		cards: add.Item(h.cards, cards...),
 	}
 }
 
@@ -35,16 +37,11 @@ func (h Hand) Find(predicate query.Predicate) (gob.Card, bool) {
 }
 
 func (h Hand) Get(id string) (gob.Card, bool) {
-	for _, card := range h.cards {
-		if card.ID() == id {
-			return card, true
-		}
-	}
-	return gob.Card{}, false
+	return query.Get(h.cards, id)
 }
 
 func (h Hand) GetAll() []gob.Card {
-	return h.cards
+	return query.GetAll(h.cards)
 }
 
 // TODO: think if I want this to be "%s's Hand" or just "Hand"
@@ -53,34 +50,24 @@ func (h Hand) Name() string {
 	return string(mtg.ZoneHand)
 }
 
-func (h Hand) Remove(id string) (Hand, error) {
-	for i, card := range h.cards {
-		if card.ID() == id {
-			h.cards = append(h.cards[:i], h.cards[i+1:]...)
-			return h, nil
-		}
+func (h Hand) Remove(id string) (Hand, bool) {
+	cards, ok := remove.By(h.cards, has.ID(id))
+	if !ok {
+		return h, false
 	}
-	return h, fmt.Errorf("card with ID %s not found", id)
-}
-
-func (h Hand) Take(id string) (gob.Card, Hand, bool) {
-	remaining := Hand{}
-	taken := gob.Card{}
-	for _, card := range h.cards {
-		if card.ID() == id {
-			taken = card
-			continue
-		}
-		remaining.cards = append(remaining.cards, card)
-	}
-	if taken.ID() == "" {
-		return gob.Card{}, h, false
-	}
-	return taken, remaining, true
+	return Hand{cards: cards}, true
 }
 
 func (h Hand) Size() int {
 	return len(h.cards)
+}
+
+func (h Hand) Take(id string) (gob.Card, Hand, bool) {
+	card, cards, ok := take.By(h.cards, has.ID(id))
+	if !ok {
+		return gob.Card{}, h, false
+	}
+	return card, Hand{cards: cards}, true
 }
 
 func (h Hand) ZoneType() mtg.Zone {

@@ -74,7 +74,7 @@ func StringToCardType(s string) (CardType, error) {
 	}
 	cardType, ok := stringToCardType[s]
 	if !ok {
-		return "", fmt.Errorf("unknown card type: %s", s)
+		return "", fmt.Errorf("unknown CardType '%s'", s)
 	}
 	return cardType, nil
 }

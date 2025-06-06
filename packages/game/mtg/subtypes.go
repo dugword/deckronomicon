@@ -215,5 +215,5 @@ func StringToSubtype(s string) (Subtype, error) {
 	if t, ok := StringToCreatureSubtype[s]; ok {
 		return t, nil
 	}
-	return "", fmt.Errorf("unknown Subtype: %s", s)
+	return "", fmt.Errorf("unknown Subtype '%s'", s)
 }

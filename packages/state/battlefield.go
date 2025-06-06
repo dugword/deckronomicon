@@ -3,7 +3,11 @@ package state
 import (
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
-	"fmt"
+	"deckronomicon/packages/query"
+	"deckronomicon/packages/query/add"
+	"deckronomicon/packages/query/has"
+	"deckronomicon/packages/query/remove"
+	"deckronomicon/packages/query/take"
 )
 
 // Battlefield represents the battlefield during an active game.
@@ -20,51 +24,63 @@ func NewBattlefield() Battlefield {
 }
 
 func (b Battlefield) Add(permanents ...gob.Permanent) Battlefield {
-	newPermanents := append(b.permanents[:], permanents...)
 	return Battlefield{
-		permanents: newPermanents,
+		permanents: add.Item(b.permanents, permanents...),
 	}
 }
 
-func (b Battlefield) Get(id string) (gob.Permanent, error) {
-	for _, permanent := range b.permanents {
-		if permanent.ID() == id {
-			return permanent, nil
-		}
-	}
-	return gob.Permanent{}, fmt.Errorf("permanent with ID %s not found", id)
+func (b Battlefield) Contains(predicate query.Predicate) bool {
+	return query.Contains(b.permanents, predicate)
+}
+
+func (b Battlefield) Get(id string) (gob.Permanent, bool) {
+	return query.Get(b.permanents, id)
 }
 
 func (b Battlefield) GetAll() []gob.Permanent {
-	return b.permanents
+	return query.GetAll(b.permanents)
 }
 
 func (b Battlefield) Name() string {
 	return string(mtg.ZoneBattlefield)
 }
 
-func (b Battlefield) Remove(id string) (Battlefield, error) {
-	for i, permanent := range b.permanents {
-		if permanent.ID() == id {
-			b.permanents = append(b.permanents[:i], b.permanents[i+1:]...)
-			return b, nil
-		}
+func (b Battlefield) Remove(id string) (Battlefield, bool) {
+	permanents, ok := remove.By(b.permanents, has.ID(id))
+	if !ok {
+		return b, false
 	}
-	return b, fmt.Errorf("permanent with ID %s not found", id)
+	return Battlefield{permanents: permanents}, true
+}
+
+func (b Battlefield) RemoveBy(predicate query.Predicate) (Battlefield, bool) {
+	permanents, ok := remove.By(b.permanents, predicate)
+	if !ok {
+		return b, false
+	}
+	return Battlefield{permanents: permanents}, true
 }
 
 func (b Battlefield) Size() int {
 	return len(b.permanents)
 }
 
-func (b Battlefield) Take(id string) (gob.Permanent, Battlefield, error) {
-	for i, permanent := range b.permanents {
-		if permanent.ID() == id {
-			b.permanents = append(b.permanents[:i], b.permanents[i+1:]...)
-			return permanent, b, nil
-		}
+func (b Battlefield) Take(id string) (gob.Permanent, Battlefield, bool) {
+	permanent, permanents, ok := take.By(b.permanents, has.ID(id))
+	if !ok {
+		return gob.Permanent{}, b, false
 	}
-	return gob.Permanent{}, b, fmt.Errorf("permanent with ID %s not found", id)
+	b.permanents = permanents
+	return permanent, b, true
+}
+
+func (b Battlefield) TakeBy(predicate query.Predicate) (gob.Permanent, Battlefield, bool) {
+	permanent, permanents, ok := take.By(b.permanents, predicate)
+	if !ok {
+		return gob.Permanent{}, b, false
+	}
+	b.permanents = permanents
+	return permanent, b, true
 }
 
 func (b Battlefield) UntapAll(playerID string) Battlefield {

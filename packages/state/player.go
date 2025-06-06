@@ -74,17 +74,17 @@ func (p Player) WithDiscardCard(cardID string) (Player, error) {
 	if !ok {
 		return p, fmt.Errorf("card %s not found in hand", cardID)
 	}
-	newGraveyard := p.graveyard.Append(card)
+	newGraveyard := p.graveyard.Add(card)
 	player := p.WithHand(newHand).WithGraveyard(newGraveyard)
 	return player, nil
 }
 
 func (p Player) WithDrawCard() (Player, gob.Card, error) {
-	card, library, ok := p.library.Shift()
+	card, library, ok := p.library.TakeTop()
 	if !ok {
 		return p, gob.Card{}, mtg.ErrLibraryEmpty
 	}
-	hand := p.hand.Append(card)
+	hand := p.hand.Add(card)
 	player := p.WithLibrary(library).WithHand(hand)
 	return player, card, nil
 }

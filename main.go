@@ -16,6 +16,9 @@ import (
 	"os"
 )
 
+// TODO: Remove this seed and make it configurable.
+const seed = 13
+
 func createPlayerAgent(
 	playerScenario configs.Player,
 	config configs.Config,
@@ -52,7 +55,7 @@ func createPlayerAgent(
 		return playerAgent, nil
 	default:
 		return nil, fmt.Errorf(
-			"unknown player agent type: %s",
+			"unknown player agent type '%s'",
 			playerScenario.AgentType,
 		)
 	}
@@ -74,7 +77,7 @@ func main() {
 	}
 }
 
-// Run is an abtraction for the main function to enable testing.
+// Run is an abstraction for the main function to enable testing.
 func Run(
 	ctx context.Context,
 	cancel context.CancelFunc,
@@ -110,16 +113,16 @@ func Run(
 	playerAgents := map[string]engine.PlayerAgent{}
 	for _, playerScenario := range scenario.Players {
 		logger.Info(fmt.Sprintf(
-			"Creating player '%s' with agent type '%s'...\n",
+			"Creating player '%s' with agent type '%s'...",
 			playerScenario.Name,
 			playerScenario.AgentType,
 		))
-		pa, err := createPlayerAgent(playerScenario, config, stdin)
+		playerAgent, err := createPlayerAgent(playerScenario, config, stdin)
 		if err != nil {
-			return fmt.Errorf("failed to create player agent: %s", playerScenario.Name)
+			return fmt.Errorf("failed to create player agent for '%s': %w", playerScenario.Name, err)
 		}
-		playerAgents[playerScenario.Name] = pa
-		logger.Info(fmt.Sprintf("Player Agent '%s' created!", playerScenario.Name))
+		playerAgents[playerScenario.Name] = playerAgent
+		logger.Info(fmt.Sprintf("Player Agent for '%s' created!", playerScenario.Name))
 	}
 	deckLists := map[string]configs.DeckList{}
 	for _, playerScenario := range scenario.Players {
@@ -128,7 +131,7 @@ func Run(
 	var players []state.Player
 	for _, playerScenario := range scenario.Players {
 		logger.Info(fmt.Sprintf(
-			"Creating player '%s' with starting life %d...\n",
+			"Creating player '%s' with starting life %d...",
 			playerScenario.Name,
 			playerScenario.StartingLife,
 		))
@@ -136,16 +139,16 @@ func Run(
 		players = append(players, player)
 		logger.Info(fmt.Sprintf("Player '%s' created!", player.ID()))
 	}
-	engineConifg := engine.EngineConfig{
+	engineConfig := engine.EngineConfig{
 		Agents:      playerAgents,
 		Definitions: cardDefinitions,
 		DeckLists:   deckLists,
 		Players:     players,
-		Seed:        13,
+		Seed:        seed,
 	}
-	engine := engine.NewEngine(engineConifg)
+	engine := engine.NewEngine(engineConfig)
 	if err := engine.RunGame(); err != nil {
-		return fmt.Errorf("error running the game: %w", err)
+		return fmt.Errorf("failed to run the game: %w", err)
 	}
 	logger.Info("Game completed successfully!")
 	return nil

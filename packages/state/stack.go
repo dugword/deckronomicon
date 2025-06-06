@@ -3,8 +3,10 @@ package state
 import (
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
-	"errors"
-	"fmt"
+	"deckronomicon/packages/query/add"
+	"deckronomicon/packages/query/has"
+	"deckronomicon/packages/query/remove"
+	"deckronomicon/packages/query/take"
 )
 
 type Resolvable interface {
@@ -16,71 +18,66 @@ type Resolvable interface {
 }
 
 type Stack struct {
-	stack []Resolvable
+	resolvables []Resolvable
 }
 
 func NewStack() Stack {
 	stack := Stack{
-		stack: []Resolvable{},
+		resolvables: []Resolvable{},
 	}
 	return stack
 }
 
-func (s Stack) Add(resolvable Resolvable) Stack {
-	s.stack = append(s.stack, resolvable)
-	return s
+func (s Stack) Add(resolvable Resolvable) (Stack, bool) {
+	return Stack{resolvables: add.Item(s.resolvables, resolvable)}, true
 }
 
-func (s Stack) Get(id string) (Resolvable, error) {
-	for _, resolvable := range s.stack {
+func (s Stack) Get(id string) (Resolvable, bool) {
+	for _, resolvable := range s.resolvables {
 		if resolvable.ID() == id {
-			return resolvable, nil
+			return resolvable, true
 		}
 	}
-	return nil, fmt.Errorf("object with ID %s not found in stack", id)
+	return nil, false
 }
 
 func (s Stack) GetAll() []Resolvable {
-	return s.stack
+	return s.resolvables
 }
 
 func (s Stack) Name() string {
 	return string(mtg.ZoneStack)
 }
 
-func (s Stack) Remove(id string) error {
-	for i, resolvable := range s.stack {
-		if resolvable.ID() == id {
-			s.stack = append(s.stack[:i], s.stack[i+1:]...)
-			return nil
-		}
+func (s Stack) Remove(id string) (Stack, bool) {
+	resolvables, ok := remove.By(s.resolvables, has.ID(id))
+	if !ok {
+		return s, false
 	}
-	return fmt.Errorf("object with ID %s not found in stack", id)
+	return Stack{resolvables: resolvables}, true
+
 }
 
-func (s Stack) Take(id string) (Resolvable, error) {
-	for i, resolvable := range s.stack {
-		if resolvable.ID() == id {
-			s.stack = append(s.stack[:i], s.stack[i+1:]...)
-			return resolvable, nil
-		}
+func (s Stack) Take(id string) (Resolvable, Stack, bool) {
+	resolvable, resolvables, ok := take.By(s.resolvables, has.ID(id))
+	if !ok {
+		return nil, s, false
 	}
-	return nil, fmt.Errorf("object with ID %s not found in stack", id)
+	return resolvable, Stack{resolvables: resolvables}, true
 }
 
 func (s Stack) Size() int {
-	return len(s.stack)
+	return len(s.resolvables)
 }
 
 func (s Stack) ZoneType() string {
 	return "Stack"
 }
 
-func (s Stack) Pop() (Resolvable, Stack, error) {
-	if len(s.stack) == 0 {
-		return nil, s, errors.New("stack is empty")
+func (s Stack) TakeTop() (Resolvable, Stack, bool) {
+	resolvable, resolvables, ok := take.Top(s.resolvables)
+	if !ok {
+		return nil, s, false
 	}
-	top := s.stack[len(s.stack)-1]
-	s.stack = s.stack[:len(s.stack)-1]
-	return top, s, nil
+	return resolvable, Stack{resolvables: resolvables}, true
 }

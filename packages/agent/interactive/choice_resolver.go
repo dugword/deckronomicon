@@ -34,12 +34,12 @@ func (a *Agent) EnterNumber(prompt string, source choose.Source) (int, error) {
 // ChooseMany prompts the user to choose many of the given choices.
 func (a *Agent) ChooseMany(prompt string, source choose.Source, choices []choose.Choice) ([]choose.Choice, error) {
 	if len(choices) == 0 {
-		return nil, fmt.Errorf("no choices available")
+		return nil, choose.ErrNoChoices
 	}
 	title := fmt.Sprintf("%s requires a choice", source.Name())
 	a.uiBuffer.UpdateChoices(title, choices)
 	if err := a.uiBuffer.Render(); err != nil {
-		return nil, fmt.Errorf("error rendering UI buffer: %w", err)
+		return nil, fmt.Errorf("failed to render UI Buffer: %w", err)
 	}
 	for {
 		a.Prompt(prompt)
@@ -65,12 +65,12 @@ func (a *Agent) ChooseMany(prompt string, source choose.Source, choices []choose
 // TODO: Need to enable a way to cancel
 func (a *Agent) ChooseOne(prompt string, source choose.Source, choices []choose.Choice) (choose.Choice, error) {
 	if len(choices) == 0 {
-		return choose.Choice{}, fmt.Errorf("no choices available")
+		return choose.Choice{}, choose.ErrNoChoices
 	}
 	title := fmt.Sprintf("%s requires a choice", source.Name())
 	a.uiBuffer.UpdateChoices(title, choices)
 	if err := a.uiBuffer.Render(); err != nil {
-		return choose.Choice{}, fmt.Errorf("error rendering UI buffer: %w", err)
+		return choose.Choice{}, fmt.Errorf("failed to render UI Buffer: %w", err)
 	}
 	for {
 		a.Prompt(prompt)
@@ -87,7 +87,7 @@ func (a *Agent) ChooseOne(prompt string, source choose.Source, choices []choose.
 func (a *Agent) Choose(prompt choose.ChoicePrompt) ([]choose.Choice, error) {
 	if len(prompt.Choices) == 0 {
 		// TODO is this an error?
-		return []choose.Choice{}, fmt.Errorf("no choices available")
+		return []choose.Choice{}, choose.ErrNoChoices
 	}
 	title := fmt.Sprintf("%s requires a choice", prompt.Source.Name())
 	if prompt.MinChoices > 1 {
@@ -118,7 +118,7 @@ func (a *Agent) Choose(prompt choose.ChoicePrompt) ([]choose.Choice, error) {
 		a.uiBuffer.UpdateMessage(message)
 		a.uiBuffer.UpdateChoices(title, prompt.Choices)
 		if err := a.uiBuffer.Render(); err != nil {
-			return []choose.Choice{}, fmt.Errorf("error rendering UI buffer: %w", err)
+			return []choose.Choice{}, fmt.Errorf("failed to render UI Buffer: %w", err)
 		}
 		a.Prompt(prompt.Message)
 		max := len(prompt.Choices)

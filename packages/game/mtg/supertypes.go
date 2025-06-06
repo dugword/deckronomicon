@@ -21,7 +21,7 @@ func StringToSupertype(s string) (Supertype, error) {
 	}
 	supertype, ok := stringToSupertype[s]
 	if !ok {
-		return "", fmt.Errorf("unknown supertype: %s", s)
+		return "", fmt.Errorf("unknown Supertype '%s'", s)
 	}
 	return supertype, nil
 }
