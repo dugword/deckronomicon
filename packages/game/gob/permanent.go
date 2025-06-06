@@ -18,8 +18,8 @@ type Permanent struct {
 	id                 string
 	loyalty            int
 	// manaCost           *cost.ManaCost
-	name               string
-	owner              string
+	name string
+	//owner              string
 	power              int
 	rulesText          string
 	staticAbilities    []StaticAbility
@@ -149,9 +149,11 @@ func (p Permanent) Power() int {
 // RemoveSummoningSickness removes summoning sickness from the permanent. It
 // is a valid operation even if the permanent does not have summoning
 // sickness.
+/*
 func (p Permanent) RemoveSummoningSickness() {
 	p.summoningSickness = false
 }
+*/
 
 // RulesText returns the rules text of the permanent. The RulesText does not
 // impact the game logic.
@@ -191,12 +193,12 @@ func (p Permanent) Supertypes() []mtg.Supertype {
 // tapped.
 // TODO: There are some specifics that matter for tapping tapped creatures,
 // but for now we will just disallow it.
-func (p Permanent) Tap() error {
+func (p Permanent) Tap() (Permanent, error) {
 	if p.tapped {
-		return mtg.ErrAlreadyTapped
+		return p, mtg.ErrAlreadyTapped
 	}
 	p.tapped = true
-	return nil
+	return p, nil
 }
 
 // Toughness returns the toughness of the permanent.

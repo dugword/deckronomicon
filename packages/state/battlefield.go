@@ -19,7 +19,7 @@ func NewBattlefield() Battlefield {
 	return battlefield
 }
 
-func (b Battlefield) Append(permanents ...gob.Permanent) Battlefield {
+func (b Battlefield) Add(permanents ...gob.Permanent) Battlefield {
 	newPermanents := append(b.permanents[:], permanents...)
 	return Battlefield{
 		permanents: newPermanents,
@@ -43,28 +43,28 @@ func (b Battlefield) Name() string {
 	return string(mtg.ZoneBattlefield)
 }
 
-func (b Battlefield) Remove(id string) error {
+func (b Battlefield) Remove(id string) (Battlefield, error) {
 	for i, permanent := range b.permanents {
 		if permanent.ID() == id {
 			b.permanents = append(b.permanents[:i], b.permanents[i+1:]...)
-			return nil
+			return b, nil
 		}
 	}
-	return fmt.Errorf("permanent with ID %s not found", id)
+	return b, fmt.Errorf("permanent with ID %s not found", id)
 }
 
 func (b Battlefield) Size() int {
 	return len(b.permanents)
 }
 
-func (b Battlefield) Take(id string) (gob.Permanent, error) {
+func (b Battlefield) Take(id string) (gob.Permanent, Battlefield, error) {
 	for i, permanent := range b.permanents {
 		if permanent.ID() == id {
 			b.permanents = append(b.permanents[:i], b.permanents[i+1:]...)
-			return permanent, nil
+			return permanent, b, nil
 		}
 	}
-	return gob.Permanent{}, fmt.Errorf("permanent with ID %s not found", id)
+	return gob.Permanent{}, b, fmt.Errorf("permanent with ID %s not found", id)
 }
 
 func (b Battlefield) UntapAll(playerID string) Battlefield {
@@ -73,7 +73,7 @@ func (b Battlefield) UntapAll(playerID string) Battlefield {
 		if p.Controller() == playerID {
 			p.Untap()
 		}
-		battlefield.Append(p)
+		battlefield.Add(p)
 	}
 	return battlefield
 }

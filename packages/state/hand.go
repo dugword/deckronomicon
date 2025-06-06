@@ -53,14 +53,14 @@ func (h Hand) Name() string {
 	return string(mtg.ZoneHand)
 }
 
-func (h Hand) Remove(id string) error {
+func (h Hand) Remove(id string) (Hand, error) {
 	for i, card := range h.cards {
 		if card.ID() == id {
 			h.cards = append(h.cards[:i], h.cards[i+1:]...)
-			return nil
+			return h, nil
 		}
 	}
-	return fmt.Errorf("card with ID %s not found", id)
+	return h, fmt.Errorf("card with ID %s not found", id)
 }
 
 func (h Hand) Take(id string) (gob.Card, Hand, bool) {

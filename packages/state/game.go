@@ -274,10 +274,7 @@ type GameConfig struct {
 }
 
 func (g Game) IsGameOver() bool {
-	if g.winnerID != "" {
-		return true
-	}
-	return false
+	return g.winnerID != ""
 }
 
 type GameStateSnapshot struct {
@@ -295,7 +292,7 @@ func (g Game) WithPutCardOnBattlefield(card gob.Card, playerID string) (Game, er
 	if err != nil {
 		return newGame, err
 	}
-	newBattlefield := newGame.battlefield.Append(permanent)
+	newBattlefield := newGame.battlefield.Add(permanent)
 	newerGame := newGame.WithBattlefield(newBattlefield)
 	return newerGame, nil
 }

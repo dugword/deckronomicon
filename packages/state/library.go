@@ -25,13 +25,15 @@ func NewLibrary(cards []gob.Card) Library {
 }
 
 // Add adds a card to the bottom of the library.
-func (l Library) Add(card gob.Card) {
+func (l Library) Add(card gob.Card) Library {
 	l.cards = append(l.cards, card)
+	return l
 }
 
 // AddTop adds a card to the top of the library.
-func (l Library) AddTop(c gob.Card) {
+func (l Library) AddTop(c gob.Card) Library {
 	l.cards = append([]gob.Card{c}, l.cards...)
+	return l
 }
 
 func (l Library) Get(id string) (gob.Card, error) {
@@ -80,13 +82,13 @@ func (l Library) Take(id string) (gob.Card, error) {
 	return gob.Card{}, fmt.Errorf("card with ID %s not found", id)
 }
 
-func (l Library) TakeBy(query query.Predicate) (gob.Card, error) {
+func (l Library) TakeBy(query query.Predicate) (gob.Card, Library, error) {
 	taken, remaining, err := take.By(l.cards, query)
 	if err != nil {
-		return gob.Card{}, fmt.Errorf("failed to take card by query: %w", err)
+		return gob.Card{}, l, fmt.Errorf("failed to take card by query: %w", err)
 	}
 	l.cards = remaining
-	return taken, nil
+	return taken, l, nil
 }
 
 func (l Library) Shift() (gob.Card, Library, bool) {

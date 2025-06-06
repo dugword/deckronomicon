@@ -17,8 +17,9 @@ func NewExile() Exile {
 	return exile
 }
 
-func (e Exile) Add(card gob.Card) {
+func (e Exile) Append(card gob.Card) Exile {
 	e.cards = append(e.cards, card)
+	return e
 }
 
 func (e Exile) Get(id string) (gob.Card, error) {
@@ -31,10 +32,7 @@ func (e Exile) Get(id string) (gob.Card, error) {
 }
 
 func (e Exile) GetAll() []gob.Card {
-	var cards []gob.Card
-	for _, card := range e.cards {
-		cards = append(cards, card)
-	}
+	var cards = append([]gob.Card{}, e.cards...)
 	return cards
 }
 

@@ -136,15 +136,7 @@ func (c Card) SpellAbility() []Effect {
 
 // StaticAbilities returns the static abilities of the card.
 func (c Card) StaticAbilities() []StaticAbility {
-	var abilities []StaticAbility
-	for _, ability := range c.staticAbilities {
-		/*
-			if ability == Ability{} {
-				continue
-			}
-		*/
-		abilities = append(abilities, ability)
-	}
+	var abilities = append([]StaticAbility{}, c.staticAbilities...)
 	return abilities
 }
 

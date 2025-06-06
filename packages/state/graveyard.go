@@ -42,14 +42,14 @@ func (g Graveyard) Name() string {
 	return string(mtg.ZoneGraveyard)
 }
 
-func (g Graveyard) Remove(id string) error {
+func (g Graveyard) Remove(id string) (Graveyard, error) {
 	for i, card := range g.cards {
 		if card.ID() == id {
 			g.cards = append(g.cards[:i], g.cards[i+1:]...)
-			return nil
+			return g, nil
 		}
 	}
-	return fmt.Errorf("card witg ID %s not found", id)
+	return g, fmt.Errorf("card witg ID %s not found", id)
 }
 
 func (g Graveyard) Take(id string) (gob.Card, error) {

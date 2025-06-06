@@ -26,8 +26,9 @@ func NewStack() Stack {
 	return stack
 }
 
-func (s Stack) Add(resolvable Resolvable) {
+func (s Stack) Add(resolvable Resolvable) Stack {
 	s.stack = append(s.stack, resolvable)
+	return s
 }
 
 func (s Stack) Get(id string) (Resolvable, error) {
@@ -75,11 +76,11 @@ func (s Stack) ZoneType() string {
 	return "Stack"
 }
 
-func (s Stack) Pop() (Resolvable, error) {
+func (s Stack) Pop() (Resolvable, Stack, error) {
 	if len(s.stack) == 0 {
-		return nil, errors.New("stack is empty")
+		return nil, s, errors.New("stack is empty")
 	}
 	top := s.stack[len(s.stack)-1]
 	s.stack = s.stack[:len(s.stack)-1]
-	return top, nil
+	return top, s, nil
 }

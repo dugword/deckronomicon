@@ -27,9 +27,9 @@ type Spell struct {
 	card      Card
 	cardTypes []mtg.CardType
 	colors    mtg.Colors
-	flashback bool
-	id        string
-	loyalty   int
+	//flashback bool
+	id      string
+	loyalty int
 	//manaCost        *cost.ManaCost
 	name            string
 	power           int

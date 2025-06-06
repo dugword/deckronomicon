@@ -46,8 +46,6 @@ func NewEngine(config EngineConfig) *Engine {
 }
 
 func (e *Engine) ApplyAction(action Action) error {
-	fmt.Println("#$@$#@$#@$#@$#@$#@")
-	fmt.Println("Applying action:", action.Name())
 	choicePrompt, err := action.GetPrompt(e.game)
 	if err != nil {
 		return fmt.Errorf(
@@ -57,7 +55,7 @@ func (e *Engine) ApplyAction(action Action) error {
 		)
 	}
 	choices := []choose.Choice{}
-	if choicePrompt.Choices != nil && len(choicePrompt.Choices) != 0 {
+	if len(choicePrompt.Choices) != 0 {
 		cs, err := e.agents[action.PlayerID()].Choose(choicePrompt)
 		if err != nil {
 			return fmt.Errorf(

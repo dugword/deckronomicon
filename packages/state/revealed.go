@@ -17,13 +17,16 @@ func NewRevealed() Revealed {
 	return revealed
 }
 
-func (r Revealed) Add(card gob.Card) {
+func (r Revealed) Add(card gob.Card) Revealed {
 	r.cards = append(r.cards, card)
+	return r
 }
 
+/*
 func (r Revealed) Clear() {
 	r.cards = []gob.Card{}
 }
+*/
 
 func (r Revealed) Get(id string) (gob.Card, error) {
 	for _, card := range r.cards {

@@ -17,9 +17,9 @@ type Ability struct {
 	// Cost    cost.Cost
 	effects []Effect
 	id      string
-	zone    string
-	source  Source
-	speed   string
+	//zone    string
+	//source  Source
+	//speed   string
 }
 
 func NewAbility(id string) Ability {

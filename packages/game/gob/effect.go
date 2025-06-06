@@ -10,7 +10,7 @@ type Effect struct {
 	// TODO: Should this be named handler?
 	description string
 	tags        []Tag
-	modifiers   []Tag
+	//modifiers   []Tag
 }
 
 // func NewEffect(id string, description string, tags []Tag) Effect {

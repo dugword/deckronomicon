@@ -50,20 +50,14 @@ func (a *Agent) ReportState(game state.Game) error {
 	// TODO Don't panic
 	player, err := game.GetPlayer(a.playerID)
 	if err != nil {
-		return fmt.Errorf("Player %s not found in game state", a.playerID)
+		return fmt.Errorf("player %s not found in game state", a.playerID)
 	}
 	// Update the UI buffer with the current game state.
 	opponent, err := game.GetOpponent(a.playerID)
 	if err != nil {
-		return fmt.Errorf("Opponent for player %s not found in game state: %v", a.playerID, err)
+		return fmt.Errorf("opponent for player %s not found in game state: %v", a.playerID, err)
 	}
 	a.uiBuffer.UpdateFromState(game, player, opponent)
-	/// TODO: This should return an error instead of panicking
-	/*
-		if err := a.uiBuffer.Render(); err != nil {
-			return fmt.Errorf("failed to render UI buffer: %v", err)
-		}
-	*/
 	return nil
 }
 
@@ -91,13 +85,11 @@ func (a *Agent) GetNextAction(game state.Game) (engine.Action, error) {
 			a.inputError = err.Error()
 			continue
 		}
-		fmt.Println("HERE =>", command)
 		action, err := command.Build(game, a.playerID)
 		if err != nil {
 			a.inputError = err.Error()
 			continue
 		}
-		fmt.Println("Action built successfully %+v\n", action)
 		return action, nil
 	}
 }

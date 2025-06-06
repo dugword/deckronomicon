@@ -5,13 +5,6 @@ import (
 	"fmt"
 )
 
-var choiceBoxTmpl = `{{.TopLine}}
-{{.Title}}
-{{.MiddleLine}}
-{{range .Lines}}{{.}}
-{{end}}{{.BottomLine}}
-`
-
 // Confirm prompts the user to confirm an action.
 func (a *Agent) Confirm(prompt string, source choose.Source) (bool, error) {
 	for {
