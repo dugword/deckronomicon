@@ -2,6 +2,7 @@ package gob
 
 import (
 	// "deckronomicon/packages/game/definition"
+	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 )
@@ -19,11 +20,11 @@ import (
 type Card struct {
 	activatedAbilities []Ability
 	// activatedAbilitySpecs []definition.ActivatedAbilitySpec
-	//definition            definition.Card
-	cardTypes []mtg.CardType
-	colors    mtg.Colors
-	id        string
-	loyalty   int
+	definition definition.Card
+	cardTypes  []mtg.CardType
+	colors     mtg.Colors
+	id         string
+	loyalty    int
 	// manaCost              cost.ManaCost
 	name         string
 	power        int

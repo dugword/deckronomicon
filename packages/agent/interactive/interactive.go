@@ -97,6 +97,7 @@ func (a *Agent) GetNextAction(game state.Game) (engine.Action, error) {
 			a.inputError = err.Error()
 			continue
 		}
+		fmt.Println("Action built successfully %+v\n", action)
 		return action, nil
 	}
 }

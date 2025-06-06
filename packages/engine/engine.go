@@ -2,19 +2,22 @@ package engine
 
 import (
 	"deckronomicon/packages/choose"
+	"deckronomicon/packages/configs"
 	"deckronomicon/packages/engine/event"
-	"deckronomicon/packages/game/gob"
+	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/logger"
 	"deckronomicon/packages/state"
 	"fmt"
 )
 
 type Engine struct {
-	agents map[string]PlayerAgent
-	game   state.Game
-	record *GameRecord
-	rng    *RNG
-	log    *logger.Logger
+	agents      map[string]PlayerAgent
+	definitions map[string]definition.Card
+	deckLists   map[string]configs.DeckList
+	game        state.Game
+	record      *GameRecord
+	rng         *RNG
+	log         *logger.Logger
 }
 
 type EngineConfig struct {
@@ -22,7 +25,8 @@ type EngineConfig struct {
 	Agents  map[string]PlayerAgent
 	Seed    int64
 	// Cards are just strings for now, but will be a Card type later
-	DeckLists map[string][]gob.Card
+	DeckLists   map[string]configs.DeckList
+	Definitions map[string]definition.Card
 }
 
 func NewEngine(config EngineConfig) *Engine {
@@ -31,15 +35,18 @@ func NewEngine(config EngineConfig) *Engine {
 		agents[id] = agent
 	}
 	return &Engine{
-		agents: agents,
-		game:   state.Game{}.WithPlayers(config.Players),
-		log:    &logger.Logger{},
-		record: NewGameRecord(config.Seed),
-		rng:    NewRNG(config.Seed),
+		agents:      agents,
+		definitions: config.Definitions,
+		deckLists:   config.DeckLists,
+		game:        state.Game{}.WithPlayers(config.Players),
+		log:         &logger.Logger{},
+		record:      NewGameRecord(config.Seed),
+		rng:         NewRNG(config.Seed),
 	}
 }
 
 func (e *Engine) ApplyAction(action Action) error {
+	fmt.Println("#$@$#@$#@$#@$#@$#@")
 	fmt.Println("Applying action:", action.Name())
 	choicePrompt, err := action.GetPrompt(e.game)
 	if err != nil {
@@ -86,6 +93,38 @@ func (e *Engine) RunGame() error {
 	e.log.ContextFunc = func() any {
 		return nil
 	}
+	// TODO This shouldn't live here. It should be in the Apply reducers and managed via events.
+	// Or it needs to be created prior to the game starting and passed in.
+	for _, playerID := range e.game.PlayerIDsInTurnOrder() {
+		e.log.Debug("Setting up player deck:", playerID)
+		deckList, ok := e.deckLists[playerID]
+		if !ok {
+			return fmt.Errorf("deck list for player %s not found", playerID)
+		}
+		newGame, deck, err := e.game.WithBuildDeck(
+			deckList,
+			e.definitions,
+		)
+		if err != nil {
+			return fmt.Errorf(
+				"error building deck for player %s: %w",
+				playerID,
+				err,
+			)
+		}
+		e.game = newGame
+		player, err := e.game.GetPlayer(playerID)
+		if err != nil {
+			return fmt.Errorf(
+				"error getting player %s: %w",
+				playerID,
+				err,
+			)
+		}
+		newPlayer := player.WithLibrary(state.NewLibrary(deck))
+		e.game = e.game.WithUpdatedPlayer(newPlayer)
+	}
+
 	e.log.Debug("Running game")
 	if err := e.Apply(event.NewBeginGameEvent()); err != nil {
 		return fmt.Errorf("error starting game: %w", err)
@@ -197,7 +236,7 @@ func (e *Engine) RunPriority() error {
 				err,
 			)
 		}
-		fmt.Printf("HERE %+v", action)
+		fmt.Printf("HERE ???%+v\n", action)
 		if err := e.ApplyAction(action); err != nil {
 			return fmt.Errorf(
 				"error applying action for player %s: %w",

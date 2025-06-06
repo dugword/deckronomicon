@@ -1,25 +1,6 @@
 package main
 
-import (
-	"bufio"
-	"context"
-	"errors"
-	"fmt"
-	"io"
-	"os"
-	"strings"
-
-	"deckronomicon/packages/agent/auto"
-	"deckronomicon/packages/agent/dummy"
-	"deckronomicon/packages/agent/interactive"
-	"deckronomicon/packages/configs"
-	"deckronomicon/packages/engine"
-	"deckronomicon/packages/game/definition"
-	"deckronomicon/packages/game/mtg"
-	"deckronomicon/packages/game/player"
-	"deckronomicon/packages/log"
-)
-
+/*
 // main is the entry point for the application.
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -148,3 +129,4 @@ func createPlayer(
 	)
 	return p, nil
 }
+*/

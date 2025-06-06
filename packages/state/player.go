@@ -27,14 +27,14 @@ func (p Player) Turn() int {
 	return p.turn
 }
 
-func NewPlayer(id string, deckList []gob.Card) Player {
+func NewPlayer(id string, life int) Player {
 	return Player{
 		exile:       NewExile(),
 		graveyard:   NewGraveyard(),
 		hand:        NewHand(),
 		id:          id,
-		library:     NewLibrary(deckList),
-		life:        20, // TODO make this configurable
+		library:     NewLibrary([]gob.Card{}), // Start with an empty library
+		life:        life,
 		maxHandSize: 7,
 	}
 }
@@ -59,8 +59,7 @@ func (p Player) WithShuffleDeck(
 ) Player {
 	// Shuffle the library
 	cards := deckShuffler(p.library.GetAll())
-	newLibrary := NewLibrary(cards)
-	p.library = newLibrary
+	p.library.cards = cards
 	return p
 }
 

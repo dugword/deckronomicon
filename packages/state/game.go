@@ -219,9 +219,12 @@ func (g Game) AllPlayersPassedPriority() bool {
 
 // TODO: Think about removing this and using GetPlayerID instead
 func (g Game) GetPlayer(id string) (Player, error) {
+	fmt.Println("GetPlayer called with ID:", id)
 	for _, player := range g.players {
+		fmt.Println("Checking player ID:", player.id)
 		if player.id == id {
 			return player, nil
+
 		}
 	}
 	return Player{}, errors.New("player not found")

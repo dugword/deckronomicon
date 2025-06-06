@@ -2,15 +2,62 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"deckronomicon/packages/agent/dummy"
 	"deckronomicon/packages/agent/interactive"
+	"deckronomicon/packages/configs"
 	"deckronomicon/packages/engine"
+	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/logger"
 	"deckronomicon/packages/state"
 	"fmt"
+	"io"
 	"os"
 )
+
+func createPlayerAgent(
+	playerScenario configs.Player,
+	config configs.Config,
+	stdin io.Reader,
+) (engine.PlayerAgent, error) {
+	var playerAgent engine.PlayerAgent
+	switch playerScenario.AgentType {
+	case "Interactive":
+		scanner := bufio.NewScanner(stdin)
+		playerAgent = interactive.NewAgent(
+			scanner,
+			playerScenario.Name,
+			[]mtg.Step{mtg.StepPrecombatMain},
+			config.Verbose,
+		)
+		return playerAgent, nil
+	//case "Auto":
+	/*
+		var err error
+		playerAgent, err = auto.NewRuleBasedAgent(
+			playerScenario.StrategyFile,
+			config.Interactive,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create rule based agent: %w", err)
+		}
+	*/
+	case "Dummy":
+		playerAgent = dummy.NewAgent(
+			playerScenario.Name,
+			[]mtg.Step{mtg.StepPrecombatMain},
+			config.Verbose,
+		)
+		return playerAgent, nil
+	default:
+		return nil, fmt.Errorf(
+			"unknown player agent type: %s",
+			playerScenario.AgentType,
+		)
+	}
+}
 
 func generateDeckList(playerID string) []gob.Card {
 	var deckList []gob.Card
@@ -32,10 +79,143 @@ func generateDeckList(playerID string) []gob.Card {
 	return deckList
 }
 
+/*
+func LoadDeck() {
+    state core.State,
+    deckList configs.DeckList,
+    cardDefinitions map[string]definition.Card,
+) (*Library, error) {
+    library := NewLibrary()
+    for _, entry := range deckList.Cards {
+        for range entry.Count {
+            cardDefinition, ok := cardDefinitions[entry.Name]
+            if !ok {
+                return nil, fmt.Errorf(
+                    "card %s not found in card definitions",
+                    entry.Name,
+                )
+            }
+            c, err := object.NewCardFromCardDefinition(state, cardDefinition)
+            if err != nil {
+                return nil, fmt.Errorf(
+                    "failed to create c %s: %w",
+                    entry.Name,
+                    err,
+                )
+            }
+            library.AddTop(c)
+        }
+    }
+    return library, nil
+}
+*/
+
 func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+	if err := Run(
+		ctx,
+		cancel,
+		os.Args,
+		os.Getenv,
+		os.Stdin,
+		os.Stdout,
+		os.Stderr,
+	); err != nil {
+		fmt.Fprintf(os.Stderr, "%s\n", err)
+		os.Exit(1)
+	}
+}
+
+// Run is an abtraction for the main function to enable testing.
+func Run(
+	ctx context.Context,
+	cancel context.CancelFunc,
+	args []string,
+	getenv func(string) string,
+	stdin io.Reader,
+	stdout io.Writer,
+	stderr io.Writer,
+) error {
+	defer cancel()
+	config, err := configs.LoadConfig(args, getenv)
+	if err != nil {
+		return fmt.Errorf("failed to load config: %w", err)
+	}
+	// Logger for application level information.
+	logger := logger.NewLogger()
+	logger.Info("Starting Deckronomicon...")
+	logger.Info("Loading scenario...")
+	scenario, err := configs.LoadScenario(config.ScenariosDir, config.Scenario)
+	if err != nil {
+		return fmt.Errorf("failed to load scenario: %w", err)
+	}
+	if config.Cheat == true {
+		scenario.Setup.CheatsEnabled = true
+	}
+	logger.Info(fmt.Sprintf("Scenario '%s' loaded!", scenario.Name))
+	logger.Info("Loading card definitions...")
+	cardDefinitions, err := definition.LoadCardDefinitions(config.Definitions)
+	if err != nil {
+		return fmt.Errorf("failed to load card definitions: %w", err)
+	}
+	logger.Info("Card definitions loaded!")
+	playerAgents := map[string]engine.PlayerAgent{}
+	for _, playerScenario := range scenario.Players {
+		logger.Info(fmt.Sprintf(
+			"Creating player '%s' with agent type '%s'...\n",
+			playerScenario.Name,
+			playerScenario.AgentType,
+		))
+		pa, err := createPlayerAgent(playerScenario, config, stdin)
+		if err != nil {
+			return fmt.Errorf("failed to create player agent: %s", playerScenario.Name)
+		}
+		playerAgents[playerScenario.Name] = pa
+		logger.Info(fmt.Sprintf("Player Agent '%s' created!", playerScenario.Name))
+	}
+	deckLists := map[string]configs.DeckList{}
+	for _, playerScenario := range scenario.Players {
+		deckLists[playerScenario.Name] = playerScenario.DeckList
+	}
+	var players []state.Player
+	for _, playerScenario := range scenario.Players {
+		logger.Info(fmt.Sprintf(
+			"Creating player '%s' with starting life %d...\n",
+			playerScenario.Name,
+			playerScenario.StartingLife,
+		))
+		player := state.NewPlayer(playerScenario.Name, playerScenario.StartingLife)
+		players = append(players, player)
+		logger.Info(fmt.Sprintf("Player '%s' created!", player.ID()))
+	}
+	engineConifg := engine.EngineConfig{
+		Agents:      playerAgents,
+		Definitions: cardDefinitions,
+		DeckLists:   deckLists,
+		Players:     players,
+		Seed:        13,
+	}
+	engine := engine.NewEngine(engineConifg)
+	if err := engine.RunGame(); err != nil {
+		return fmt.Errorf("error running the game: %w", err)
+	}
+	logger.Info("Game completed successfully!")
+	return nil
+}
+
+/*
+func main2() {
 	stdin := os.Stdin
 	var seed int64 = 0
 	fmt.Println("Starting the application...")
+
+	fmt.Println("Loading the game definitions...")
+	cardDefinitions, err := definition.LoadCardDefinitions(config.Definitions)
+	if err != nil {
+		fmt.Errorf("failed to load card definitions: %w", err)
+		os.Exit(1)
+	}
+
 	fmt.Println("Initializing the engine...")
 	player1ID := "Player1"
 	player2ID := "Player2"
@@ -69,3 +249,4 @@ func main() {
 		return
 	}
 }
+*/

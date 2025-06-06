@@ -17,9 +17,9 @@ type Library struct {
 }
 
 // NewLibrary creates a new Library instance.
-func NewLibrary(deckList []gob.Card) Library {
+func NewLibrary(cards []gob.Card) Library {
 	library := Library{
-		cards: deckList,
+		cards: cards,
 	}
 	return library
 }

@@ -30,6 +30,7 @@ type PlayCardAction struct {
 func NewPlayCardAction(playerID string, cardID string) PlayCardAction {
 	return PlayCardAction{
 		playerID: playerID,
+		cardID:   cardID,
 	}
 }
 
@@ -66,6 +67,7 @@ func (a PlayCardAction) Complete(
 	game state.Game,
 	choices []choose.Choice,
 ) ([]event.GameEvent, error) {
+	fmt.Println("Completing PlayCardAction for player:", a.playerID, "with card ID:", a.cardID)
 	player, err := game.GetPlayer(a.playerID)
 	if err != nil {
 		return nil, err // Player not found
