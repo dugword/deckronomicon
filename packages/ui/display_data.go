@@ -143,6 +143,7 @@ func GameStatusData(game state.Game, player state.Player) BoxData {
 		Title: "Game Status",
 		Content: []string{
 			fmt.Sprintf("Current Player: %s", player.ID()),
+			fmt.Sprintf("Active Player: %s", game.ActivePlayerID()),
 			// fmt.Sprintf("Player Mode: %s", player.Mode),
 			fmt.Sprintf("Player 1 Life: %d", player.Life()),
 			fmt.Sprintf("Turn: %d", player.Turn()),
@@ -279,7 +280,7 @@ func (b *Buffer) BuildDisplayBoxes() DisplayBoxes {
 }
 
 func (b *Buffer) Render() error {
-	// ClearScreen()
+	//ClearScreen()
 	displayBoxes := b.BuildDisplayBoxes()
 	if err := b.displayTemplate.ExecuteTemplate(
 		// TODO: use passed in stdout from Run

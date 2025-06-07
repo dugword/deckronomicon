@@ -17,36 +17,23 @@ const (
 	CardTypeSorcery      CardType = "Sorcery"
 )
 
-// PermanentCardTypes is a set of permanent card types.
-var PermanentCardTypes = map[CardType]struct{}{
-	CardTypeArtifact:     {},
-	CardTypeBattle:       {},
-	CardTypeCreature:     {},
-	CardTypeEnchantment:  {},
-	CardTypePlaneswalker: {},
-}
-
-// SpellCardTypes is a set of spell card types.
-// NOTE: Technical all non-land cards are spells, but common usage
-// is to refer to non-permanent cards as spells.
-// TODO: This may be removed later as we implement an actual stack system
-// and convert all cards to Spells as they are cast.
-var SpellCardTypes = map[CardType]struct{}{
-	CardTypeInstant: {},
-	CardTypeSorcery: {},
-}
-
 // IsLand checks if the CardType is a Land type.
 func (t CardType) IsLand() bool {
-	if t == CardTypeLand {
-		return true
-	}
-	return false
+	return t == CardTypeLand
 }
 
 // IsPermanent checks if the CardType is a permanent type.
 func (t CardType) IsPermanent() bool {
-	if _, ok := PermanentCardTypes[t]; ok {
+	// PermanentCardTypes is a set of permanent card types.
+	permanentCardTypes := map[CardType]struct{}{
+		CardTypeArtifact:     {},
+		CardTypeBattle:       {},
+		CardTypeCreature:     {},
+		CardTypeEnchantment:  {},
+		CardTypePlaneswalker: {},
+		CardTypeLand:         {},
+	}
+	if _, ok := permanentCardTypes[t]; ok {
 		return true
 	}
 	return false
@@ -54,7 +41,16 @@ func (t CardType) IsPermanent() bool {
 
 // IsSpell checks if the CardType is a Spell type.
 func (t CardType) IsSpell() bool {
-	if _, ok := SpellCardTypes[t]; ok {
+	// SpellCardTypes is a set of spell card types.
+	// NOTE: Technical all non-land cards are spells, but common usage
+	// is to refer to non-permanent cards as spells.
+	// TODO: This may be removed later as we implement an actual stack system
+	// and convert all cards to Spells as they are cast.
+	spellCardTypes := map[CardType]struct{}{
+		CardTypeInstant: {},
+		CardTypeSorcery: {},
+	}
+	if _, ok := spellCardTypes[t]; ok {
 		return true
 	}
 	return false

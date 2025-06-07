@@ -7,11 +7,13 @@ package interactive
 import (
 	"bufio"
 	"deckronomicon/packages/agent/actionparser"
+	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/state"
 	"deckronomicon/packages/ui"
 	"fmt"
+	"slices"
 )
 
 // InteractivePlayerAgent implements the PlayerAgent interface for interactive
@@ -63,6 +65,16 @@ func (a *Agent) ReportState(game state.Game) error {
 
 func (a *Agent) GetNextAction(game state.Game) (engine.Action, error) {
 	for {
+
+		pass := true
+		if slices.Contains(a.stops, game.Step()) {
+			if game.ActivePlayerID() == a.playerID {
+				pass = false
+			}
+		}
+		if pass {
+			return engine.NewPassPriorityAction(a.playerID), nil
+		}
 		// TODO Don't call this here, run update or something
 		// PrintCommands(s.CheatsEnabled)
 		// TODO: maybe move the prompt to the read functions?
@@ -74,15 +86,18 @@ func (a *Agent) GetNextAction(game state.Game) (engine.Action, error) {
 			return nil, fmt.Errorf("failed to render UI Buffer: %w", err)
 		}
 		a.Prompt("take action")
+		input := a.ReadInput()
 		commandParser := actionparser.CommandParser{}
 		command, err := commandParser.ParseInput(
-			a.ReadInput,
+			input,
 			a.Choose,
 			game,
 			a.playerID,
 		)
 		if err != nil {
 			a.inputError = err.Error()
+			a.uiBuffer.UpdateChoices("", []choose.Choice{})
+			a.uiBuffer.UpdateMessage([]string{})
 			continue
 		}
 		action, err := command.Build(game, a.playerID)

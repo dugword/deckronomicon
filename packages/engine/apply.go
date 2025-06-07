@@ -9,6 +9,7 @@ import (
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/state"
+	"errors"
 	"fmt"
 )
 
@@ -16,6 +17,10 @@ func (e *Engine) Apply(event event.GameEvent) error {
 	e.log.Info("Applying event:", event.EventType())
 	newGame, err := e.applyEvent(e.game, event)
 	if err != nil {
+		if errors.Is(err, mtg.ErrGameOver) {
+			e.log.Info("Game over detected")
+			return err
+		}
 		e.log.Critical("Failed to apply event:", err)
 		return fmt.Errorf("apply event: %w", err)
 	}
@@ -73,8 +78,10 @@ func (e *Engine) applyTurnBasedActionEvent(game state.Game, turnBasedActionEvent
 
 func (e *Engine) applyOtherEvents(game state.Game, gameEvent event.GameEvent) (state.Game, error) {
 	switch evnt := gameEvent.(type) {
+	case event.ConcedeEvent:
+		return e.ApplyConcedeEvent(game, evnt)
 	case event.PlayLandEvent:
-		return e.ApplyPlayLandEvent(game, evnt)
+		return e.applyPlayLandEvent(game, evnt)
 	case event.CastSpellEvent:
 		return e.ApplyCastSpellEvent(game, evnt)
 	case event.DrawCardEvent:
@@ -341,7 +348,6 @@ func (e *Engine) ApplyDiscardCardEvent(
 	game state.Game,
 	event event.DiscardCardEvent,
 ) (state.Game, error) {
-	fmt.Println("DISCARDING THIS CARD =>", event.CardID)
 	player, err := game.GetPlayer(event.PlayerID)
 	if err != nil {
 		return game, fmt.Errorf("discard: %w", err)
@@ -352,31 +358,6 @@ func (e *Engine) ApplyDiscardCardEvent(
 	}
 	newGame := game.WithUpdatedPlayer(player)
 	return newGame, nil
-}
-
-// TODO: Need to document at what level stuff should happen.
-// maybe something with if cards move from player zone to player zone, vs if a
-// card moves from player to battlefield.... like a method should only operate
-// on it's own fields? But wht about sub fields. Probably no, because
-// otherwise everything would happen on game.
-func (e *Engine) ApplyPlayLandEvent(
-	game state.Game,
-	evnt event.PlayLandEvent,
-) (state.Game, error) {
-	player, err := game.GetPlayer(evnt.PlayerID)
-	if err != nil {
-		return game, fmt.Errorf("play land: %w", err)
-	}
-	card, newPlayer, err := player.TakeCardFromHand(evnt.CardID)
-	if err != nil {
-		return game, fmt.Errorf("play land: %w", err)
-	}
-	newGame, err := game.WithPutCardOnBattlefield(card, evnt.PlayerID)
-	if err != nil {
-		return game, fmt.Errorf("play land: %w", err)
-	}
-	newerGame := newGame.WithUpdatedPlayer(newPlayer)
-	return newerGame, nil
 }
 
 func (e *Engine) ApplyCastSpellEvent(
@@ -395,4 +376,16 @@ func (e *Engine) ApplyCastSpellEvent(
 	*/
 	newGame := game.WithUpdatedPlayer(player)
 	return newGame, nil
+}
+
+func (e *Engine) ApplyConcedeEvent(
+	game state.Game,
+	event event.ConcedeEvent,
+) (state.Game, error) {
+	opponent, err := game.GetOpponent(event.PlayerID)
+	if err != nil {
+		return game, fmt.Errorf("concede: %w", err)
+	}
+	newGame := game.WithGameOver(opponent.ID())
+	return newGame, mtg.ErrGameOver
 }

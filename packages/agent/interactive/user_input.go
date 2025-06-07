@@ -1,7 +1,7 @@
 package interactive
 
 import (
-	"deckronomicon/packages/engine"
+	"deckronomicon/packages/agent/actionparser"
 	"fmt"
 	"os"
 	"sort"
@@ -117,7 +117,7 @@ func (a Agent) ReadInputNumber(max int) (int, error) {
 func PrintCommands(cheatsEnabled bool) {
 	var commands []string
 	var cheats []string
-	for name, command := range engine.Commands {
+	for name, command := range actionparser.Commands {
 		if command.Cheat {
 			cheats = append(cheats, name)
 			continue
@@ -136,15 +136,12 @@ func PrintHelp(cheatsEnabled bool) {
 	var commands []string
 	var cheats []string
 	var aliases []string
-	for name, command := range engine.Commands {
+	for name, command := range actionparser.Commands {
 		if command.Cheat {
 			cheats = append(cheats, fmt.Sprintf("%s :: %s", name, command.Description))
 			continue
 		}
 		commands = append(commands, fmt.Sprintf("%s :: %s", name, command.Description))
-	}
-	for alias := range engine.CommandAliases {
-		aliases = append(aliases, alias)
 	}
 	sort.Strings(aliases)
 	sort.Strings(commands)
@@ -158,9 +155,5 @@ func PrintHelp(cheatsEnabled bool) {
 		for _, cheat := range cheats {
 			fmt.Println(cheat)
 		}
-	}
-	fmt.Println("Command aliases:")
-	for _, alias := range aliases {
-		fmt.Printf("%s => %s\n", alias, engine.CommandAliases[alias])
 	}
 }

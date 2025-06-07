@@ -11,10 +11,10 @@ package state
 import (
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/has"
 	"deckronomicon/packages/query/is"
 	"errors"
-	"fmt"
 	"strconv"
 )
 
@@ -32,6 +32,7 @@ type Game struct {
 	winnerID              string
 }
 
+// TODO: should this be a map
 func (g Game) GetCardsAvailableToPlay(playerID string) ([]gob.Card, error) {
 	player, err := g.GetPlayer(playerID)
 	if err != nil {
@@ -39,12 +40,12 @@ func (g Game) GetCardsAvailableToPlay(playerID string) ([]gob.Card, error) {
 	}
 	var availableCards []gob.Card
 	for _, card := range player.hand.cards {
-		if g.CanPlayCard(card, playerID, mtg.ZoneHand) {
+		if g.CanPlayCard(playerID, mtg.ZoneHand, card) {
 			availableCards = append(availableCards, card)
 		}
 	}
 	for _, card := range player.graveyard.cards {
-		if g.CanPlayCard(card, playerID, mtg.ZoneGraveyard) {
+		if g.CanPlayCard(playerID, mtg.ZoneGraveyard, card) {
 			availableCards = append(availableCards, card)
 		}
 	}
@@ -63,26 +64,27 @@ func (g Game) CanCastSorcery(playerID string) bool {
 		g.step == mtg.StepPostcombatMain) {
 		return false
 	}
-	fmt.Println("Can cast sorcery:", g.step, g.ActivePlayerID(), playerID)
 	return true
 }
 
 // TODO: Should this live on engine?
 func (g Game) CanPlayCard(
-	card gob.Card,
 	playerID string,
 	zone mtg.Zone,
+	card gob.Card,
 ) bool {
+	player, err := g.GetPlayer(playerID)
+	if err != nil {
+		panic(err)
+	}
 	if zone == mtg.ZoneGraveyard {
 		return false
 	}
-	fmt.Println("aaa")
-	if card.Match(is.Permanent()) {
-		fmt.Println("ccc")
-	}
-	if card.Match(has.CardType(mtg.CardTypeSorcery)) {
-		fmt.Println("bbb")
-		if !g.CanCastSorcery(playerID) {
+	if card.Match(query.Or(is.Permanent(), has.CardType(mtg.CardTypeSorcery))) {
+		if !g.CanCastSorcery((playerID)) {
+			return false
+		}
+		if card.Match(is.Land()) && player.LandPlayedThisTurn() {
 			return false
 		}
 	}
@@ -219,9 +221,7 @@ func (g Game) AllPlayersPassedPriority() bool {
 
 // TODO: Think about removing this and using GetPlayerID instead
 func (g Game) GetPlayer(id string) (Player, error) {
-	fmt.Println("GetPlayer called with ID:", id)
 	for _, player := range g.players {
-		fmt.Println("Checking player ID:", player.id)
 		if player.id == id {
 			return player, nil
 

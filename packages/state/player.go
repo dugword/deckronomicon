@@ -8,15 +8,15 @@ import (
 )
 
 type Player struct {
-	exile       Exile
-	graveyard   Graveyard
-	hand        Hand
-	id          string
-	landDrop    bool
-	library     Library
-	life        int
-	maxHandSize int // TODO make this configurable
-	turn        int
+	exile              Exile
+	graveyard          Graveyard
+	hand               Hand
+	id                 string
+	landPlayedThisTurn bool
+	library            Library
+	life               int
+	maxHandSize        int // TODO make this configurable
+	turn               int
 }
 
 func (p Player) Life() int {
@@ -65,7 +65,7 @@ func (p Player) WithShuffleDeck(
 
 func (p Player) WithNextTurn() Player {
 	p.turn++
-	p.landDrop = false
+	p.landPlayedThisTurn = false
 	return p
 }
 
@@ -107,6 +107,15 @@ func (p Player) WithExile(exile Exile) Player {
 func (p Player) WithGraveyard(graveyard Graveyard) Player {
 	p.graveyard = graveyard
 	return p
+}
+
+func (p Player) WithLandPlayedThisTurn() Player {
+	p.landPlayedThisTurn = true
+	return p
+}
+
+func (p Player) LandPlayedThisTurn() bool {
+	return p.landPlayedThisTurn
 }
 
 func (p Player) ID() string {

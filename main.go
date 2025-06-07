@@ -11,6 +11,7 @@ import (
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/logger"
 	"deckronomicon/packages/state"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -31,7 +32,7 @@ func createPlayerAgent(
 		playerAgent = interactive.NewAgent(
 			scanner,
 			playerScenario.Name,
-			[]mtg.Step{mtg.StepPrecombatMain},
+			[]mtg.Step{mtg.StepUpkeep, mtg.StepPrecombatMain},
 			config.Verbose,
 		)
 		return playerAgent, nil
@@ -148,6 +149,10 @@ func Run(
 	}
 	engine := engine.NewEngine(engineConfig)
 	if err := engine.RunGame(); err != nil {
+		if errors.Is(err, mtg.ErrGameOver) {
+			logger.Info("Game over!")
+			return nil
+		}
 		return fmt.Errorf("failed to run the game: %w", err)
 	}
 	logger.Info("Game completed successfully!")

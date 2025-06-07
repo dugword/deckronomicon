@@ -2,10 +2,6 @@ package mtg
 
 import "fmt"
 
-func main() {
-	fmt.Println("vim-go")
-}
-
 // Subtype is a subtype of card in Magic: The Gathering.
 type Subtype string
 

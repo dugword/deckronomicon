@@ -1,5 +1,9 @@
 package event
 
+import (
+	"deckronomicon/packages/game/mtg"
+)
+
 // Events go in the event record log so they can be replayed later. That means
 // the properties should be serializable and public.
 
@@ -7,7 +11,8 @@ const (
 	EventTypeDrawCard     = "DrawCard"
 	EventTypeShuffleDeck  = "ShuffleDeck"
 	EventDrawStartingHand = "DrawStartingHand"
-	EVentTypePlayLand     = "PlayLand"
+	EventTypePlayLand     = "PlayLand"
+	EventTypeNoOp         = "NoOp"
 )
 
 // TODO: maybe use typed constants for event types
@@ -23,9 +28,26 @@ type Source interface {
 	Name() string
 }
 
+type NoOpEvent struct {
+	Message string
+}
+
+func (e NoOpEvent) EventType() string {
+	return "NoOp"
+}
+
+type ConcedeEvent struct {
+	PlayerID string
+}
+
+func (e ConcedeEvent) EventType() string {
+	return "Concede"
+}
+
 type CastSpellEvent struct {
 	PlayerID string
 	CardID   string
+	Zone     mtg.Zone
 }
 
 func (e CastSpellEvent) EventType() string {
@@ -35,10 +57,11 @@ func (e CastSpellEvent) EventType() string {
 type PlayLandEvent struct {
 	PlayerID string
 	CardID   string
+	Zone     mtg.Zone
 }
 
 func (e PlayLandEvent) EventType() string {
-	return EVentTypePlayLand
+	return EventTypePlayLand
 }
 
 type DrawStartingHandEvent struct {

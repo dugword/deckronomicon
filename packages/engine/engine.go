@@ -234,7 +234,6 @@ func (e *Engine) RunPriority() error {
 				err,
 			)
 		}
-		fmt.Printf("HERE ???%+v\n", action)
 		if err := e.ApplyAction(action); err != nil {
 			return fmt.Errorf(
 				"error applying action for player %s: %w",
