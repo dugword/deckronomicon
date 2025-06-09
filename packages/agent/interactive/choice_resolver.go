@@ -63,14 +63,15 @@ func (a *Agent) ChooseMany(prompt string, source choose.Source, choices []choose
 
 // ChoseOne prompts the user to choose one of the given choices.
 // TODO: Need to enable a way to cancel
+// I have cancel in the Choose funciton, but not here, abstract that out and reuse it
 func (a *Agent) ChooseOne(prompt string, source choose.Source, choices []choose.Choice) (choose.Choice, error) {
 	if len(choices) == 0 {
-		return choose.Choice{}, choose.ErrNoChoices
+		return nil, choose.ErrNoChoices
 	}
 	title := fmt.Sprintf("%s requires a choice", source.Name())
 	a.uiBuffer.UpdateChoices(title, choices)
 	if err := a.uiBuffer.Render(); err != nil {
-		return choose.Choice{}, fmt.Errorf("failed to render UI Buffer: %w", err)
+		return nil, fmt.Errorf("failed to render UI Buffer: %w", err)
 	}
 	for {
 		a.Prompt(prompt)
@@ -138,8 +139,8 @@ func (a *Agent) Choose(prompt choose.ChoicePrompt) ([]choose.Choice, error) {
 		selected = append(selected, prompt.Choices[choice])
 		message = append(message, fmt.Sprintf(
 			"Selected: %s <id:%s>",
-			prompt.Choices[choice].Name,
-			prompt.Choices[choice].ID,
+			prompt.Choices[choice].Name(),
+			prompt.Choices[choice].ID(),
 		))
 		// TODO Should this follow the same immutable stuff
 		prompt.Choices = append(prompt.Choices[:choice], prompt.Choices[choice+1:]...)

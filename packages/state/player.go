@@ -3,6 +3,7 @@ package state
 import (
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/mana"
 	"deckronomicon/packages/query"
 	"fmt"
 )
@@ -15,6 +16,7 @@ type Player struct {
 	landPlayedThisTurn bool
 	library            Library
 	life               int
+	manaPool           mana.Pool
 	maxHandSize        int // TODO make this configurable
 	turn               int
 }
@@ -35,6 +37,7 @@ func NewPlayer(id string, life int) Player {
 		id:          id,
 		library:     NewLibrary([]gob.Card{}), // Start with an empty library
 		life:        life,
+		manaPool:    mana.NewManaPool(),
 		maxHandSize: 7,
 	}
 }
@@ -54,6 +57,11 @@ func (p Player) MaxHandSize() int {
 	return p.maxHandSize
 }
 
+func (p Player) WithAddMana(manaType mana.ManaType, amount int) Player {
+	p.manaPool = p.manaPool.WithAddedMana(manaType, amount)
+	return p
+}
+
 func (p Player) WithShuffleDeck(
 	deckShuffler func([]gob.Card) []gob.Card,
 ) Player {
@@ -66,6 +74,11 @@ func (p Player) WithShuffleDeck(
 func (p Player) WithNextTurn() Player {
 	p.turn++
 	p.landPlayedThisTurn = false
+	return p
+}
+
+func (p Player) WithEmptyManaPool() Player {
+	p.manaPool = mana.NewManaPool()
 	return p
 }
 
@@ -136,6 +149,10 @@ func (p Player) Hand() Hand {
 	return p.hand
 }
 
+func (p Player) ManaPool() mana.Pool {
+	return p.manaPool
+}
+
 /*
 func (p Player) Hand() query.View {
 	return query.NewView(
@@ -145,16 +162,10 @@ func (p Player) Hand() query.View {
 }
 */
 
-func (p Player) Exile() query.View {
-	return query.NewView(
-		string(mtg.ZoneExile),
-		p.exile.GetAll(),
-	)
+func (p Player) Exile() Exile {
+	return p.exile
 }
 
-func (p Player) Graveyard() query.View {
-	return query.NewView(
-		string(mtg.ZoneGraveyard),
-		p.graveyard.GetAll(),
-	)
+func (p Player) Graveyard() Graveyard {
+	return p.graveyard
 }

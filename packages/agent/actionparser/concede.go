@@ -6,13 +6,13 @@ import (
 )
 
 type ConcedeCommand struct {
-	PlayerID string
+	Player state.Player
 }
 
 func (p *ConcedeCommand) IsComplete() bool {
-	return p.PlayerID != ""
+	return p.Player.ID() != ""
 }
 
-func (p *ConcedeCommand) Build(game state.Game, playerID string) (engine.Action, error) {
-	return engine.NewConcedeAction(p.PlayerID), nil
+func (p *ConcedeCommand) Build(game state.Game, player state.Player) (engine.Action, error) {
+	return engine.NewConcedeAction(p.Player), nil
 }

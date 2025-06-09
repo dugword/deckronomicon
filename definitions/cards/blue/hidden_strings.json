@@ -10,7 +10,7 @@
   "SpellAbility": {
     "Effects": [
       {
-        "ID": "TapOrUntap",
+        "Name": "TapOrUntap",
         "Optional": true,
         "Modifiers": [
           {
@@ -20,7 +20,7 @@
         ]
       },
       {
-        "ID": "TapOrUntap",
+        "Name": "TapOrUntap",
         "Optional": true,
         "Modifiers": [
           {
@@ -33,7 +33,7 @@
   },
   "StaticAbilities": [
     {
-      "ID": "Cipher"
+      "Name": "Cipher"
     }
   ],
   "RulesText": "You may tap or untap target permanent, then you may tap or untap another target permanent.\nCipher (Then you may exile this spell card encoded on a creature you control. Whenever that creature deals combat damage to a player, its controller may cast a copy of the encoded card without paying its mana cost.)"

@@ -88,6 +88,6 @@ func (p *HelpCommand) IsComplete() bool {
 	return true
 }
 
-func (p *HelpCommand) Build(game state.Game, playerID string) (engine.Action, error) {
+func (p *HelpCommand) Build(game state.Game, player state.Player) (engine.Action, error) {
 	return nil, nil
 }

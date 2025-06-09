@@ -1,14 +1,18 @@
 package choose
 
-import "deckronomicon/packages/state"
+import (
+	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/state"
+)
 
 type Source interface {
 	Name() string
 }
 
-type Choice struct {
-	Name string
-	ID   string
+type Choice interface {
+	Name() string
+	ID() string
+	Zone() mtg.Zone
 }
 
 // TODO: Use an interface for ChoiceResult
@@ -20,11 +24,13 @@ type ChoicePrompt2 interface {
 	Apply(choice string, game state.Game) (ResultStruct, error)
 }
 
+/*
 type ChooseCardPrompt struct {
 	Zone     string
 	PlayerID string
 	Count    int
 }
+*/
 
 type ChooseTargetPrompt struct {
 }

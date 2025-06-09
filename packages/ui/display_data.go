@@ -113,7 +113,7 @@ func (b *Buffer) UpdateChoices(title string, choices []choose.Choice) {
 				line = fmt.Sprintf("(%s) - %s", choice.Source, line)
 			}
 		*/
-		var line = fmt.Sprintf("%s <id:%s>", choice.Name, choice.ID)
+		var line = fmt.Sprintf("%s <id:%s>", choice.Name(), choice.ID())
 		line = fmt.Sprintf("%d: %s", i+1, line)
 		choiceData.Content = append(choiceData.Content, line)
 	}
@@ -154,7 +154,7 @@ func GameStatusData(game state.Game, player state.Player) BoxData {
 			fmt.Sprintf("Exile: %d cards", player.Exile().Size()),
 			fmt.Sprintf("Hand: %d cards", player.Hand().Size()),
 			// fmt.Sprintf("Potential Mana: %s", potentialMana),
-			// fmt.Sprintf("Mana Pool: %s", manaPool),
+			fmt.Sprintf("Mana Pool: %s", player.ManaPool().Describe()),
 		},
 	}
 }

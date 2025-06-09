@@ -7,17 +7,17 @@ import (
 )
 
 type ShuffleCheatAction struct {
-	playerID string
+	player state.Player
 }
 
-func NewShuffleCheatAction(playerID string) ShuffleCheatAction {
+func NewShuffleCheatAction(player state.Player) ShuffleCheatAction {
 	return ShuffleCheatAction{
-		playerID: playerID,
+		player: player,
 	}
 }
 
 func (a ShuffleCheatAction) PlayerID() string {
-	return a.playerID
+	return a.player.ID()
 }
 
 func (a ShuffleCheatAction) Name() string {
@@ -39,6 +39,7 @@ func (a ShuffleCheatAction) GetPrompt(game state.Game) (choose.ChoicePrompt, err
 
 func (a ShuffleCheatAction) Complete(
 	game state.Game,
+	env *ResolutionEnvironment,
 	choices []choose.Choice,
 ) ([]event.GameEvent, error) {
 	return []event.GameEvent{event.NoOpEvent{

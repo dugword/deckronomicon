@@ -7,15 +7,15 @@ import (
 )
 
 type PeekCheatCommand struct {
-	PlayerID string
+	Player state.Player
 }
 
 func (p *PeekCheatCommand) IsComplete() bool {
-	return p.PlayerID != ""
+	return p.Player.ID() != ""
 }
 
-func (p *PeekCheatCommand) Build(game state.Game, playerID string) (engine.Action, error) {
-	return engine.NewPeekCheatAction(p.PlayerID), nil
+func (p *PeekCheatCommand) Build(game state.Game, player state.Player) (engine.Action, error) {
+	return engine.NewPeekCheatAction(player), nil
 }
 
 func parsePeekCheatCommand(
@@ -23,7 +23,7 @@ func parsePeekCheatCommand(
 	args []string,
 	getChoices func(prompt choose.ChoicePrompt) ([]choose.Choice, error),
 	game state.Game,
-	playerID string,
+	player state.Player,
 ) (*PeekCheatCommand, error) {
-	return &PeekCheatCommand{PlayerID: playerID}, nil
+	return &PeekCheatCommand{Player: player}, nil
 }

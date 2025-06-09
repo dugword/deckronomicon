@@ -6,6 +6,9 @@ import (
 	"fmt"
 )
 
+// This reads the definition that comes from JSON files and validates all the types and stuff actuatlly
+// exist, casts them to the correct types, and then builds the card.
+
 // "deckronomicon/packages/game/core"
 
 // NewCardFromCardData creates a new Card instance from the given CardData.
@@ -16,9 +19,13 @@ import (
 // Abilities or Static Abilities that are available while the card is in the
 // players hand or graveyard are built and added to the card.
 
+// TODO: Make this just NewCard
+
 func NewCardFromCardDefinition(id string, definition definition.Card) (Card, error) {
 	card := Card{
 		//activatedAbilities: []core.Ability{},
+		// TODO: Maybe parse this into a cost type?
+		manaCost:   definition.ManaCost,
 		id:         id,
 		definition: definition,
 		loyalty:    definition.Loyalty,
@@ -73,7 +80,60 @@ func NewCardFromCardDefinition(id string, definition definition.Card) (Card, err
 		supertypes = append(supertypes, supertype)
 	}
 	card.supertypes = supertypes
-	//card.id = state.GetNextID()
+	var abilityID int
+	for _, spec := range definition.ActivatedAbilitySpecs {
+		abilityID++
+		speed := mtg.SpeedInstant
+		if spec.Speed != "" {
+			speed, err = mtg.StringToSpeed(spec.Speed)
+			if err != nil {
+				return Card{}, fmt.Errorf("failed to parse speed: %w", err)
+			}
+		}
+		zone := mtg.ZoneBattlefield
+		if spec.Zone != "" {
+			zone, err = mtg.StringToZone(spec.Zone)
+			if err != nil {
+				return Card{}, fmt.Errorf("failed to parse zone: %w", err)
+			}
+		}
+		ability := Ability{
+			cost:   spec.Cost,
+			name:   spec.Name,
+			id:     fmt.Sprintf("%s-%d", id, abilityID),
+			zone:   zone,
+			speed:  speed,
+			source: card,
+		}
+		var effects []Effect
+		for _, effectSpec := range spec.EffectSpecs {
+			var modifiers []Tag
+			for _, modifier := range effectSpec.Modifiers {
+				// TODO: Check if the modifier is valid for the effect
+				modifier := Tag{
+					Key:   modifier.Key,
+					Value: modifier.Value,
+				}
+				if err != nil {
+					return Card{}, fmt.Errorf("failed to create tag: %w", err)
+				}
+				modifiers = append(modifiers, modifier)
+			}
+			// TODO: Check if required modifiers are present
+			var tags []Tag
+			// TODO load the tags from the effect spec
+			effect := Effect{
+				// TODO: Check if the effect exists
+				name:      effectSpec.Name,
+				modifiers: modifiers,
+				optional:  effectSpec.Optional,
+				tags:      tags,
+			}
+			effects = append(effects, effect)
+		}
+		ability.effects = effects
+		card.activatedAbilities = append(card.activatedAbilities, ability)
+	}
 	/*
 		for _, spec := range card.activatedAbilitySpecs {
 			// TODO: Do this check here or when I am checking for abilities to

@@ -7,17 +7,17 @@ import (
 )
 
 type ResetLandDropCheatAction struct {
-	playerID string
+	player state.Player
 }
 
-func NewResetLandDropCheatAction(playerID string) ResetLandDropCheatAction {
+func NewResetLandDropCheatAction(player state.Player) ResetLandDropCheatAction {
 	return ResetLandDropCheatAction{
-		playerID: playerID,
+		player: player,
 	}
 }
 
 func (a ResetLandDropCheatAction) PlayerID() string {
-	return a.playerID
+	return a.player.ID()
 }
 
 func (a ResetLandDropCheatAction) Name() string {
@@ -39,6 +39,7 @@ func (a ResetLandDropCheatAction) GetPrompt(game state.Game) (choose.ChoicePromp
 
 func (a ResetLandDropCheatAction) Complete(
 	game state.Game,
+	env *ResolutionEnvironment,
 	choices []choose.Choice,
 ) ([]event.GameEvent, error) {
 	return []event.GameEvent{event.NoOpEvent{

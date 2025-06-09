@@ -7,17 +7,17 @@ import (
 )
 
 type PassPriorityAction struct {
-	playerID string
+	player state.Player
 }
 
-func NewPassPriorityAction(playerID string) PassPriorityAction {
+func NewPassPriorityAction(player state.Player) PassPriorityAction {
 	return PassPriorityAction{
-		playerID: playerID,
+		player: player,
 	}
 }
 
 func (a PassPriorityAction) PlayerID() string {
-	return a.playerID
+	return a.player.ID()
 }
 
 func (a PassPriorityAction) Name() string {
@@ -39,6 +39,7 @@ func (a PassPriorityAction) GetPrompt(state state.Game) (choose.ChoicePrompt, er
 
 func (a PassPriorityAction) Complete(
 	game state.Game,
+	env *ResolutionEnvironment,
 	choices []choose.Choice,
 ) ([]event.GameEvent, error) {
 	playerID := game.PriorityPlayerID()

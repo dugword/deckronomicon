@@ -10,7 +10,7 @@
   "SpellAbility": {
     "Effects": [
       {
-        "ID": "Scry",
+        "Name": "Scry",
         "Modifiers": [
           {
             "Key": "Count",
@@ -19,7 +19,7 @@
         ]
       },
       {
-        "ID": "Draw"
+        "Name": "Draw"
       }
     ]
   },

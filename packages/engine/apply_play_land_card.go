@@ -2,6 +2,7 @@ package engine
 
 import (
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/game/judge"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/state"
 	"errors"
@@ -17,9 +18,9 @@ func (e *Engine) applyPlayLandEvent(
 	game state.Game,
 	evnt event.PlayLandEvent,
 ) (state.Game, error) {
-	player, err := game.GetPlayer(evnt.PlayerID)
-	if err != nil {
-		return game, fmt.Errorf("failed to get player '%s': %w", evnt.PlayerID, err)
+	player, ok := game.GetPlayer(evnt.PlayerID)
+	if !ok {
+		return game, fmt.Errorf("player '%s' not found", evnt.PlayerID)
 	}
 	if evnt.Zone != mtg.ZoneHand {
 		return game, errors.New("card not played from hand")
@@ -28,10 +29,10 @@ func (e *Engine) applyPlayLandEvent(
 	if err != nil {
 		return game, fmt.Errorf("failed to take card '%s' from hand: %w", evnt.CardID, err)
 	}
-	if !game.CanPlayCard(evnt.PlayerID, mtg.ZoneHand, card) {
+	if !judge.CanPlayCard(game, player, mtg.ZoneHand, card) {
 		return game, errors.New("card cannot be played")
 	}
-	newGame, err := game.WithPutCardOnBattlefield(card, evnt.PlayerID)
+	newGame, err := game.WithPutCardOnBattlefield(card, player.ID())
 	if err != nil {
 		return game, fmt.Errorf("failed to put card '%s' on battlefield: %w", evnt.CardID, err)
 	}

@@ -50,10 +50,11 @@ func NewAgent(
 // TODO maybe get player from state.CurrentPlayer?
 func (a *Agent) ReportState(game state.Game) error {
 	// TODO Don't panic
-	player, err := game.GetPlayer(a.playerID)
-	if err != nil {
-		return fmt.Errorf("failed to get player '%s': %w", a.playerID, err)
+	player, ok := game.GetPlayer(a.playerID)
+	if !ok {
+		return fmt.Errorf("player '%s' not found", a.playerID)
 	}
+
 	// Update the UI buffer with the current game state.
 	opponent, err := game.GetOpponent(a.playerID)
 	if err != nil {
@@ -64,16 +65,19 @@ func (a *Agent) ReportState(game state.Game) error {
 }
 
 func (a *Agent) GetNextAction(game state.Game) (engine.Action, error) {
+	player, ok := game.GetPlayer(a.playerID)
+	if !ok {
+		return nil, fmt.Errorf("player '%s' not found", a.playerID)
+	}
 	for {
-
 		pass := true
 		if slices.Contains(a.stops, game.Step()) {
-			if game.ActivePlayerID() == a.playerID {
+			if game.ActivePlayerID() == player.ID() {
 				pass = false
 			}
 		}
 		if pass {
-			return engine.NewPassPriorityAction(a.playerID), nil
+			return engine.NewPassPriorityAction(player), nil
 		}
 		// TODO Don't call this here, run update or something
 		// PrintCommands(s.CheatsEnabled)
@@ -92,7 +96,7 @@ func (a *Agent) GetNextAction(game state.Game) (engine.Action, error) {
 			input,
 			a.Choose,
 			game,
-			a.playerID,
+			player,
 		)
 		if err != nil {
 			a.inputError = err.Error()
@@ -100,7 +104,7 @@ func (a *Agent) GetNextAction(game state.Game) (engine.Action, error) {
 			a.uiBuffer.UpdateMessage([]string{})
 			continue
 		}
-		action, err := command.Build(game, a.playerID)
+		action, err := command.Build(game, player)
 		if err != nil {
 			a.inputError = err.Error()
 			continue

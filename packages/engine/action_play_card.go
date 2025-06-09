@@ -3,29 +3,25 @@ package engine
 import (
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine/event"
-	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/query/is"
 	"deckronomicon/packages/state"
-	"fmt"
 )
 
 type PlayCardAction struct {
-	playerID string
-	cardID   string
-	zone     mtg.Zone
+	player     state.Player
+	cardInZone gob.CardInZone
 }
 
-func NewPlayCardAction(playerID string, zone mtg.Zone, cardID string) PlayCardAction {
+func NewPlayCardAction(player state.Player, cardInZone gob.CardInZone) PlayCardAction {
 	return PlayCardAction{
-		playerID: playerID,
-		cardID:   cardID,
-		zone:     zone,
+		player:     player,
+		cardInZone: cardInZone,
 	}
-
 }
 
 func (a PlayCardAction) PlayerID() string {
-	return a.playerID
+	return a.player.ID()
 }
 
 func (a PlayCardAction) Name() string {
@@ -44,7 +40,6 @@ func (a PlayCardAction) GetPrompt(state state.Game) (choose.ChoicePrompt, error)
 				Optional: false,
 			}, nil
 		}
-
 		return choose.ChoicePrompt{
 			Message:  "Choose a card to play",
 			Choices:  choices,
@@ -55,26 +50,19 @@ func (a PlayCardAction) GetPrompt(state state.Game) (choose.ChoicePrompt, error)
 }
 func (a PlayCardAction) Complete(
 	game state.Game,
+	env *ResolutionEnvironment,
 	choices []choose.Choice,
 ) ([]event.GameEvent, error) {
-	player, err := game.GetPlayer(a.playerID)
-	if err != nil {
-		return nil, err // Player not found
-	}
-	card, ok := player.Hand().Get(a.cardID)
-	if !ok {
-		return nil, fmt.Errorf("card with ID %s not found in hand", a.cardID)
-	}
-	if card.Match(is.Land()) {
+	if a.cardInZone.Card().Match(is.Land()) {
 		return []event.GameEvent{event.PlayLandEvent{
-			PlayerID: a.playerID,
-			CardID:   card.ID(),
-			Zone:     a.zone,
+			PlayerID: a.player.ID(),
+			CardID:   a.cardInZone.ID(),
+			Zone:     a.cardInZone.Zone(),
 		}}, nil
 	}
 	return []event.GameEvent{event.CastSpellEvent{
-		PlayerID: a.playerID,
-		CardID:   card.ID(),
-		Zone:     a.zone,
+		PlayerID: a.player.ID(),
+		CardID:   a.cardInZone.ID(),
+		Zone:     a.cardInZone.Zone(),
 	}}, nil
 }

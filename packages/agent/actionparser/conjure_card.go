@@ -7,16 +7,16 @@ import (
 )
 
 type ConjureCardCheatCommand struct {
-	PlayerID string
+	Player   state.Player
 	CardName string
 }
 
 func (p *ConjureCardCheatCommand) IsComplete() bool {
-	return p.PlayerID != "" && p.CardName != ""
+	return p.Player.ID() != "" && p.CardName != ""
 }
 
-func (p *ConjureCardCheatCommand) Build(game state.Game, playerID string) (engine.Action, error) {
-	return engine.NewConjureCardCheatAction(p.PlayerID, p.CardName), nil
+func (p *ConjureCardCheatCommand) Build(game state.Game, player state.Player) (engine.Action, error) {
+	return engine.NewConjureCardCheatAction(p.Player, p.CardName), nil
 }
 
 func parseConjureCardCheatCommand(
@@ -24,7 +24,7 @@ func parseConjureCardCheatCommand(
 	args []string,
 	getChoices func(prompt choose.ChoicePrompt) ([]choose.Choice, error),
 	game state.Game,
-	playerID string,
+	player state.Player,
 ) (*ConjureCardCheatCommand, error) {
 	return nil, nil
 }

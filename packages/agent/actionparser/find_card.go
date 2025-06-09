@@ -7,16 +7,16 @@ import (
 )
 
 type FindCardCheatCommand struct {
-	PlayerID string
-	Card     string
+	Player   state.Player
+	CardName string
 }
 
 func (p *FindCardCheatCommand) IsComplete() bool {
-	return p.PlayerID != "" && p.Card != ""
+	return p.Player.ID() != "" && p.CardName != ""
 }
 
-func (p *FindCardCheatCommand) Build(game state.Game, playerID string) (engine.Action, error) {
-	return engine.NewFindCardCheatAction(p.PlayerID, p.Card), nil
+func (p *FindCardCheatCommand) Build(game state.Game, player state.Player) (engine.Action, error) {
+	return engine.NewFindCardCheatAction(p.Player, p.CardName), nil
 }
 
 func parseFindCardCheatCommand(
@@ -24,7 +24,7 @@ func parseFindCardCheatCommand(
 	args []string,
 	getChoices func(prompt choose.ChoicePrompt) ([]choose.Choice, error),
 	game state.Game,
-	playerID string,
+	player state.Player,
 ) (*FindCardCheatCommand, error) {
 	return nil, nil
 }

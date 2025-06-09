@@ -7,17 +7,17 @@ import (
 )
 
 type ConcedeAction struct {
-	playerID string
+	player state.Player
 }
 
-func NewConcedeAction(playerID string) ConcedeAction {
+func NewConcedeAction(player state.Player) ConcedeAction {
 	return ConcedeAction{
-		playerID: playerID,
+		player: player,
 	}
 }
 
 func (a ConcedeAction) PlayerID() string {
-	return a.playerID
+	return a.player.ID()
 }
 
 func (a ConcedeAction) Name() string {
@@ -39,9 +39,10 @@ func (a ConcedeAction) GetPrompt(state state.Game) (choose.ChoicePrompt, error) 
 
 func (a ConcedeAction) Complete(
 	game state.Game,
+	env *ResolutionEnvironment,
 	choices []choose.Choice,
 ) ([]event.GameEvent, error) {
 	return []event.GameEvent{event.ConcedeEvent{
-		PlayerID: a.playerID,
+		PlayerID: a.player.ID(),
 	}}, nil
 }

@@ -28,8 +28,8 @@ func (c CommandSource) Name() string {
 
 type Command interface {
 	IsComplete() bool
-	Build(game state.Game, playerID string) (engine.Action, error)
-	// PromptNext(game state.Game, playerID string) (choose.ChoicePrompt, error)
+	Build(game state.Game, player state.Player) (engine.Action, error)
+	// PromptNext(game state.Game, player state.Player) (choose.ChoicePrompt, error)
 }
 
 type CommandParser struct {
@@ -40,7 +40,7 @@ func (p *CommandParser) ParseInput(
 	input string,
 	getChoices func(prompt choose.ChoicePrompt) ([]choose.Choice, error),
 	game state.Game,
-	playerID string,
+	player state.Player,
 ) (Command, error) {
 	parts := strings.Fields(input)
 	if len(parts) == 0 {
@@ -50,37 +50,37 @@ func (p *CommandParser) ParseInput(
 	command = strings.ToLower(command)
 	switch command {
 	case "addmana":
-		return parseAddManaCheatCommand(command, args, getChoices, game, playerID)
+		return parseAddManaCheatCommand(command, args, getChoices, game, player)
 	case "activate", "tap":
-		return parseActivateAbilityCommand(command, args, getChoices, game, playerID)
+		return parseActivateAbilityCommand(command, args, getChoices, game, player)
 	case "cheat":
-		return &CheatCommand{PlayerID: playerID}, nil
+		return &CheatCommand{Player: player}, nil
 	case "concede", "exit", "quit":
-		return &ConcedeCommand{playerID}, nil
+		return &ConcedeCommand{Player: player}, nil
 	case "conjure":
-		return parseConjureCardCheatCommand(command, args, getChoices, game, playerID)
+		return parseConjureCardCheatCommand(command, args, getChoices, game, player)
 	case "draw":
-		return parseDrawCheatCommand(command, args, getChoices, game, playerID)
+		return parseDrawCheatCommand(command, args, getChoices, game, player)
 	case "discard":
-		return parseDiscardCheatCommand(command, args, getChoices, game, playerID)
+		return parseDiscardCheatCommand(command, args, getChoices, game, player)
 	case "find", "tutor":
-		return parseFindCardCheatCommand(command, args, getChoices, game, playerID)
+		return parseFindCardCheatCommand(command, args, getChoices, game, player)
 	case "help":
 		return &HelpCommand{}, nil
 	case "landdrop":
-		return &ResetLandDropCommand{PlayerID: playerID}, nil
+		return &ResetLandDropCommand{Player: player}, nil
 	case "pass", "next", "done":
-		return &PassPriorityCommand{playerID}, nil
+		return &PassPriorityCommand{Player: player}, nil
 	case "peek":
-		return parsePeekCheatCommand(command, args, getChoices, game, playerID)
+		return parsePeekCheatCommand(command, args, getChoices, game, player)
 	case "play", "cast":
-		return parsePlayCardCommand(command, args, getChoices, game, playerID)
+		return parsePlayCardCommand(command, args, getChoices, game, player)
 	case "shuffle":
-		return &ShuffleCheatCommand{PlayerID: playerID}, nil
+		return &ShuffleCheatCommand{Player: player}, nil
 	case "untap":
-		return parseUntapCheatCommand(command, args, getChoices, game, playerID)
+		return parseUntapCheatCommand(command, args, getChoices, game, player)
 	case "view":
-		return parseViewCommand(command, args, getChoices, game, playerID)
+		return parseViewCommand(command, args, getChoices, game, player)
 	default:
 		return nil, fmt.Errorf("unrecognized command '%s'", command)
 	}

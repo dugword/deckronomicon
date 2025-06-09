@@ -6,13 +6,12 @@ import (
 )
 
 type ResetLandDropCommand struct {
-	PlayerID string
-	Card     string
+	Player state.Player
 }
 
 func (p *ResetLandDropCommand) IsComplete() bool {
-	return p.PlayerID != "" && p.Card != ""
+	return p.Player.ID() != ""
 }
-func (p *ResetLandDropCommand) Build(game state.Game, playerID string) (engine.Action, error) {
-	return engine.NewResetLandDropCheatAction(p.PlayerID), nil
+func (p *ResetLandDropCommand) Build(game state.Game, player state.Player) (engine.Action, error) {
+	return engine.NewResetLandDropCheatAction(player), nil
 }

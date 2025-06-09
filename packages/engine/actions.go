@@ -15,7 +15,9 @@ import (
 type Action interface {
 	Name() string
 	Description() string
+	// TODO: Don't prompt, pass in the choices directly. Need to figure out mulitgans and end of turn of
+	// discard.
 	GetPrompt(state.Game) (choose.ChoicePrompt, error)
-	Complete(state.Game, []choose.Choice) ([]event.GameEvent, error)
+	Complete(state.Game, *ResolutionEnvironment, []choose.Choice) ([]event.GameEvent, error)
 	PlayerID() string
 }

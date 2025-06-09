@@ -3,6 +3,8 @@ package actionparser
 import (
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine"
+	"deckronomicon/packages/game/gob"
+	"deckronomicon/packages/game/judge"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query/has"
 	"deckronomicon/packages/state"
@@ -10,20 +12,19 @@ import (
 )
 
 type PlayCardCommand struct {
-	CardID   string
-	PlayerID string
-	Zone     mtg.Zone
+	CardInZone gob.CardInZone
+	Player     state.Player
 }
 
 func (p *PlayCardCommand) IsComplete() bool {
-	return p.CardID != "" && p.PlayerID != "" && p.Zone == mtg.ZoneHand
+	return p.CardInZone.ID() == "" && p.Player.ID() != ""
 }
 
 func (p *PlayCardCommand) Build(
 	game state.Game,
-	playerID string,
+	player state.Player,
 ) (engine.Action, error) {
-	return engine.NewPlayCardAction(p.PlayerID, p.Zone, p.CardID), nil
+	return engine.NewPlayCardAction(player, p.CardInZone), nil
 }
 
 func parsePlayCardCommand(
@@ -31,19 +32,13 @@ func parsePlayCardCommand(
 	args []string,
 	getChoices func(prompt choose.ChoicePrompt) ([]choose.Choice, error),
 	game state.Game,
-	playerID string,
+	player state.Player,
 ) (*PlayCardCommand, error) {
 	if len(args) == 0 {
 		var choices []choose.Choice
-		cards, err := game.GetCardsAvailableToPlay(playerID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get cards available to play: %w", err)
-		}
+		cards := judge.GetCardsAvailableToPlay(game, player)
 		for _, card := range cards {
-			choices = append(choices, choose.Choice{
-				Name: card.Name(),
-				ID:   card.ID(),
-			})
+			choices = append(choices, card)
 		}
 		prompt := choose.ChoicePrompt{
 			Message:    "Choose a card to play",
@@ -60,21 +55,22 @@ func parsePlayCardCommand(
 		if len(selected) == 0 {
 			return nil, fmt.Errorf("no card selected")
 		}
+		// TODO: Do something where I can select this without having to index an slice with a magic 0.
+		// Maybe that choice type that's an interface or something.
+		card, ok := selected[0].(gob.CardInZone)
+		if !ok {
+			return nil, fmt.Errorf("selected choice is not a card in a zone")
+		}
 		return &PlayCardCommand{
-			CardID:   selected[0].ID,
-			PlayerID: playerID,
-			Zone:     mtg.ZoneHand,
+			CardInZone: card,
+			Player:     player,
 		}, nil
 	}
-	player, err := game.GetPlayer(playerID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get player '%s': %w", playerID, err)
-	}
-	if player.Hand().Contains(has.ID(args[0])) {
+	if card, ok := player.Hand().Get(args[0]); ok {
+		// If the card is found in the hand, we can return it directly
 		return &PlayCardCommand{
-			CardID:   args[0],
-			PlayerID: playerID,
-			Zone:     mtg.ZoneHand,
+			CardInZone: gob.NewCardInZone(card, mtg.ZoneHand),
+			Player:     player,
 		}, nil
 	}
 	card, ok := player.Hand().Find(has.Name(args[0]))
@@ -84,13 +80,11 @@ func parsePlayCardCommand(
 			args,
 			getChoices,
 			game,
-			playerID,
+			player,
 		)
 	}
 	return &PlayCardCommand{
-		CardID:   card.ID(),
-		PlayerID: playerID,
-		// TODO: Determine the zone based on where the card was found
-		Zone: mtg.ZoneHand,
+		CardInZone: gob.NewCardInZone(card, mtg.ZoneHand),
+		Player:     player,
 	}, nil
 }

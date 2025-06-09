@@ -22,6 +22,9 @@ type CardObject interface {
 	Supertypes() []mtg.Supertype
 }
 
+type AbilityObject interface {
+}
+
 type PermanentObject interface {
 	CardObject
 	IsTapped() bool

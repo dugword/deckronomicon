@@ -1,0 +1,8 @@
+{
+    "Name": "AddMana",
+    "RequiredModifiers": [
+        {
+            "Mana": "{U}"
+        }
+    ]
+}

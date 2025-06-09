@@ -10,7 +10,7 @@
   "SpellAbility": {
     "Effects": [
       {
-        "ID": "Mill",
+        "Name": "Mill",
         "Modifiers": [
           {
             "Key": "Target",
@@ -23,7 +23,7 @@
         ]
       },
       {
-        "ID": "ShuffleFromGraveyard",
+        "Name": "ShuffleFromGraveyard",
         "Modifiers": [
           {
             "Key": "Count",
@@ -35,7 +35,7 @@
   },
   "StaticAbilities": [
     {
-      "ID": "Replicate",
+      "Name": "Replicate",
       "Modifiers": [
         {
           "Key": "Cost",

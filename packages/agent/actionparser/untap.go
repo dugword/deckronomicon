@@ -3,20 +3,21 @@ package actionparser
 import (
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine"
+	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/state"
 )
 
 type UntapCheatCommand struct {
-	PlayerID string
-	Card     string
+	Player    state.Player
+	Permanent gob.Permanent
 }
 
 func (p *UntapCheatCommand) IsComplete() bool {
-	return p.PlayerID != "" && p.Card != ""
+	return p.Player.ID() != "" && p.Permanent.ID() != ""
 }
 
-func (p *UntapCheatCommand) Build(game state.Game, playerID string) (engine.Action, error) {
-	return engine.NewUntapCheatAction(p.PlayerID, p.Card), nil
+func (p *UntapCheatCommand) Build(game state.Game, player state.Player) (engine.Action, error) {
+	return engine.NewUntapCheatAction(p.Player, p.Permanent), nil
 }
 
 func parseUntapCheatCommand(
@@ -24,7 +25,7 @@ func parseUntapCheatCommand(
 	args []string,
 	getChoices func(prompt choose.ChoicePrompt) ([]choose.Choice, error),
 	game state.Game,
-	playerID string,
+	player state.Player,
 ) (*UntapCheatCommand, error) {
 	return nil, nil
 }

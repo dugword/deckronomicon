@@ -10,14 +10,21 @@ import (
 	"fmt"
 )
 
+type ResolutionEnvironment struct {
+	EffectRegistry *EffectRegistry
+
+	// definitions maybe should live here too
+}
+
 type Engine struct {
-	agents      map[string]PlayerAgent
-	definitions map[string]definition.Card
-	deckLists   map[string]configs.DeckList
-	game        state.Game
-	record      *GameRecord
-	rng         *RNG
-	log         *logger.Logger
+	agents                map[string]PlayerAgent
+	definitions           map[string]definition.Card
+	deckLists             map[string]configs.DeckList
+	game                  state.Game
+	record                *GameRecord
+	rng                   *RNG
+	log                   *logger.Logger
+	resolutionEnvironment *ResolutionEnvironment
 }
 
 type EngineConfig struct {
@@ -34,14 +41,18 @@ func NewEngine(config EngineConfig) *Engine {
 	for id, agent := range config.Agents {
 		agents[id] = agent
 	}
+	resolutionEnvironment := ResolutionEnvironment{
+		EffectRegistry: NewEffectRegistry(),
+	}
 	return &Engine{
-		agents:      agents,
-		definitions: config.Definitions,
-		deckLists:   config.DeckLists,
-		game:        state.Game{}.WithPlayers(config.Players),
-		log:         &logger.Logger{},
-		record:      NewGameRecord(config.Seed),
-		rng:         NewRNG(config.Seed),
+		agents:                agents,
+		definitions:           config.Definitions,
+		deckLists:             config.DeckLists,
+		game:                  state.Game{}.WithPlayers(config.Players),
+		log:                   &logger.Logger{},
+		record:                NewGameRecord(config.Seed),
+		rng:                   NewRNG(config.Seed),
+		resolutionEnvironment: &resolutionEnvironment,
 	}
 }
 
@@ -66,7 +77,7 @@ func (e *Engine) ApplyAction(action Action) error {
 		}
 		choices = cs
 	}
-	evnts, err := action.Complete(e.game, choices)
+	evnts, err := action.Complete(e.game, e.resolutionEnvironment, choices)
 	if err != nil {
 		return fmt.Errorf(
 			"error completing action %s: %w",
@@ -111,13 +122,9 @@ func (e *Engine) RunGame() error {
 			)
 		}
 		e.game = newGame
-		player, err := e.game.GetPlayer(playerID)
-		if err != nil {
-			return fmt.Errorf(
-				"error getting player %s: %w",
-				playerID,
-				err,
-			)
+		player, ok := e.game.GetPlayer(playerID)
+		if !ok {
+			return fmt.Errorf("player '%s' not found", playerID)
 		}
 		newPlayer := player.WithLibrary(state.NewLibrary(deck))
 		e.game = e.game.WithUpdatedPlayer(newPlayer)
@@ -224,19 +231,19 @@ func (e *Engine) RunPriority() error {
 	}
 	for !e.game.AllPlayersPassedPriority() {
 		priorityPlayerID = e.game.PriorityPlayerID()
-		e.log.Debug("Player %s received priority", priorityPlayerID)
+		e.log.Debugf("Player '%s' received priority", priorityPlayerID)
 		agent := e.agents[priorityPlayerID]
 		action, err := agent.GetNextAction(e.game)
 		if err != nil {
 			return fmt.Errorf(
-				"error getting next action for player %s: %w",
+				"error getting next action for player '%s': %w",
 				priorityPlayerID,
 				err,
 			)
 		}
 		if err := e.ApplyAction(action); err != nil {
 			return fmt.Errorf(
-				"error applying action for player %s: %w",
+				"error applying action for player '%s': %w",
 				priorityPlayerID,
 				err,
 			)

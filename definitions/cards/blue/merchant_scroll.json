@@ -10,7 +10,7 @@
   "SpellAbility": {
     "Effects": [
       {
-        "ID": "Search",
+        "Name": "Search",
         "Modifiers": [
           {
             "Key": "TargetCardType",

@@ -6,13 +6,13 @@ import (
 )
 
 type PassPriorityCommand struct {
-	PlayerID string
+	Player state.Player
 }
 
 func (p *PassPriorityCommand) IsComplete() bool {
-	return p.PlayerID != ""
+	return p.Player.ID() != ""
 }
 
-func (p *PassPriorityCommand) Build(game state.Game, playerID string) (engine.Action, error) {
-	return engine.NewPassPriorityAction(p.PlayerID), nil
+func (p *PassPriorityCommand) Build(game state.Game, player state.Player) (engine.Action, error) {
+	return engine.NewPassPriorityAction(p.Player), nil
 }

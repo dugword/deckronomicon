@@ -10,7 +10,7 @@
   "SpellAbility": {
     "Effects": [
       {
-        "ID": "CounterSpell",
+        "Name": "CounterSpell",
         "Modifiers": [
           {
             "Key": "Target",
@@ -30,7 +30,7 @@
       "Cost": "{1}{U}{U}",
       "Effects": [
         {
-          "ID": "Transmute"
+          "Name": "Transmute"
         }
       ],
       "Speed": "Sorcery",

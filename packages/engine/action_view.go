@@ -7,21 +7,21 @@ import (
 )
 
 type ViewAction struct {
-	playerID string
-	zone     string
-	cardID   string
+	player state.Player
+	zone   string
+	cardID string
 }
 
-func NewViewAction(playerID string, zone string, cardID string) ViewAction {
+func NewViewAction(player state.Player, zone string, cardID string) ViewAction {
 	return ViewAction{
-		playerID: playerID,
-		zone:     zone,
-		cardID:   cardID,
+		player: player,
+		zone:   zone,
+		cardID: cardID,
 	}
 }
 
 func (a ViewAction) PlayerID() string {
-	return a.playerID
+	return a.player.ID()
 }
 
 func (a ViewAction) Name() string {
@@ -43,6 +43,7 @@ func (a ViewAction) GetPrompt(game state.Game) (choose.ChoicePrompt, error) {
 
 func (a ViewAction) Complete(
 	game state.Game,
+	env *ResolutionEnvironment,
 	choices []choose.Choice,
 ) ([]event.GameEvent, error) {
 	return []event.GameEvent{event.NoOpEvent{

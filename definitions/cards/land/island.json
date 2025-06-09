@@ -15,7 +15,7 @@
       "Cost": "{T}",
       "Effects": [
         {
-          "ID": "AddMana",
+          "Name": "AddMana",
           "Modifiers": [
             {
               "Key": "Mana",

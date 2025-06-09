@@ -7,23 +7,23 @@ import (
 )
 
 type FindCardCheatAction struct {
-	playerID string
+	player   state.Player
 	cardName string
 }
 
-func NewFindCardCheatAction(playerID string, cardName string) FindCardCheatAction {
+func NewFindCardCheatAction(player state.Player, cardName string) FindCardCheatAction {
 	return FindCardCheatAction{
-		playerID: playerID,
+		player:   player,
 		cardName: cardName,
 	}
 }
 
-func (a FindCardCheatAction) PlayerID() string {
-	return a.playerID
-}
-
 func (a FindCardCheatAction) Name() string {
 	return "Find Card"
+}
+
+func (a FindCardCheatAction) PlayerID() string {
+	return a.player.ID()
 }
 
 func (a FindCardCheatAction) Description() string {
@@ -41,6 +41,7 @@ func (a FindCardCheatAction) GetPrompt(game state.Game) (choose.ChoicePrompt, er
 
 func (a FindCardCheatAction) Complete(
 	game state.Game,
+	env *ResolutionEnvironment,
 	choices []choose.Choice,
 ) ([]event.GameEvent, error) {
 	return []event.GameEvent{event.NoOpEvent{

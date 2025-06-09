@@ -7,16 +7,16 @@ import (
 )
 
 type AddManaCheatCommand struct {
-	PlayerID string
-	Mana     string
+	Player state.Player
+	Mana   string
 }
 
 func (p *AddManaCheatCommand) IsComplete() bool {
-	return p.PlayerID != "" && p.Mana != ""
+	return p.Player.ID() != "" && p.Mana != ""
 }
 
-func (p *AddManaCheatCommand) Build(game state.Game, playerID string) (engine.Action, error) {
-	return engine.NewAddManaCheatAction(p.PlayerID, p.Mana), nil
+func (p *AddManaCheatCommand) Build(game state.Game, player state.Player) (engine.Action, error) {
+	return engine.NewAddManaCheatAction(p.Player, p.Mana), nil
 }
 
 func parseAddManaCheatCommand(
@@ -24,7 +24,7 @@ func parseAddManaCheatCommand(
 	args []string,
 	getChoices func(prompt choose.ChoicePrompt) ([]choose.Choice, error),
 	game state.Game,
-	playerID string,
+	player state.Player,
 ) (*AddManaCheatCommand, error) {
 	return nil, nil
 }

@@ -9,11 +9,7 @@ package state
 // stuff like can cast might even need to be moved to the engine package
 
 import (
-	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
-	"deckronomicon/packages/query"
-	"deckronomicon/packages/query/has"
-	"deckronomicon/packages/query/is"
 	"errors"
 	"strconv"
 )
@@ -32,82 +28,8 @@ type Game struct {
 	winnerID              string
 }
 
-// TODO: should this be a map
-func (g Game) GetCardsAvailableToPlay(playerID string) ([]gob.Card, error) {
-	player, err := g.GetPlayer(playerID)
-	if err != nil {
-		return nil, err
-	}
-	var availableCards []gob.Card
-	for _, card := range player.hand.cards {
-		if g.CanPlayCard(playerID, mtg.ZoneHand, card) {
-			availableCards = append(availableCards, card)
-		}
-	}
-	for _, card := range player.graveyard.cards {
-		if g.CanPlayCard(playerID, mtg.ZoneGraveyard, card) {
-			availableCards = append(availableCards, card)
-		}
-	}
-	return availableCards, nil
-}
-
-// TODO should this live on engine?
-func (g Game) CanCastSorcery(playerID string) bool {
-	if !g.IsStackEmtpy() {
-		return false
-	}
-	if g.ActivePlayerID() != playerID {
-		return false
-	}
-	if !(g.step == mtg.StepPrecombatMain ||
-		g.step == mtg.StepPostcombatMain) {
-		return false
-	}
-	return true
-}
-
-// TODO: Should this live on engine?
-func (g Game) CanPlayCard(
-	playerID string,
-	zone mtg.Zone,
-	card gob.Card,
-) bool {
-	player, err := g.GetPlayer(playerID)
-	if err != nil {
-		panic(err)
-	}
-	if zone == mtg.ZoneGraveyard {
-		return false
-	}
-	if card.Match(query.Or(is.Permanent(), has.CardType(mtg.CardTypeSorcery))) {
-		if !g.CanCastSorcery((playerID)) {
-			return false
-		}
-		if card.Match(is.Land()) && player.LandPlayedThisTurn() {
-			return false
-		}
-	}
-	return true
-}
-
-func (g Game) WithCheatsEnabled(enabled bool) Game {
-	g.cheatsEnabled = enabled
-	return g
-}
-
 func (g Game) CheatsEnabled() bool {
 	return g.cheatsEnabled
-}
-
-func (g Game) WithPhase(phase mtg.Phase) Game {
-	g.phase = phase
-	return g
-}
-
-func (g Game) WithStep(step mtg.Step) Game {
-	g.step = step
-	return g
 }
 
 func (g Game) Phase() mtg.Phase {
@@ -120,71 +42,6 @@ func (g Game) Step() mtg.Step {
 
 func (g Game) IsStackEmtpy() bool {
 	return g.stack.Size() == 0
-}
-
-func (g Game) WithGameOver(winnerID string) Game {
-	g.winnerID = winnerID
-	return g
-}
-
-func (g Game) WithPlayers(players []Player) Game {
-	g.players = players
-	return g
-}
-
-func (g Game) WithClearedPriority() Game {
-	g.playerWithPriority = ""
-	return g
-}
-
-func (g Game) WithPlayerWithPriority(playerID string) Game {
-	g.playerWithPriority = playerID
-	return g
-}
-
-func (g Game) WithActivePlayer(playerID string) Game {
-	var idx int
-	for i, p := range g.players {
-		if p.id == playerID {
-			idx = i
-			break
-		}
-	}
-	g.activePlayerIdx = idx
-	return g
-}
-
-func (g Game) WithResetPriorityPasses() Game {
-	g.playersPassedPriority = map[string]bool{}
-	return g
-}
-
-func (g Game) WithPlayerPassedPriority(playerID string) Game {
-	newPlayersPassedPriority := map[string]bool{}
-	for pID := range g.playersPassedPriority {
-		newPlayersPassedPriority[pID] = g.playersPassedPriority[pID]
-	}
-	newPlayersPassedPriority[playerID] = true
-	g.playersPassedPriority = newPlayersPassedPriority
-	return g
-}
-
-func (g Game) WithUpdatedPlayer(player Player) Game {
-	var newPlayers []Player
-	for _, p := range g.players {
-		if p.id == player.id {
-			newPlayers = append(newPlayers, player)
-			continue
-		}
-		newPlayers = append(newPlayers, p)
-	}
-	g.players = newPlayers
-	return g
-}
-
-func (g Game) WithBattlefield(battlefield Battlefield) Game {
-	g.battlefield = battlefield
-	return g
 }
 
 func (g Game) Battlefield() Battlefield {
@@ -220,14 +77,13 @@ func (g Game) AllPlayersPassedPriority() bool {
 }
 
 // TODO: Think about removing this and using GetPlayerID instead
-func (g Game) GetPlayer(id string) (Player, error) {
+func (g Game) GetPlayer(id string) (Player, bool) {
 	for _, player := range g.players {
 		if player.id == id {
-			return player, nil
-
+			return player, true
 		}
 	}
-	return Player{}, errors.New("player not found")
+	return Player{}, false
 }
 
 // TODO: THIS WILL BREAK WITH MORE THAN 2 PLAYERS
@@ -284,15 +140,4 @@ type GameStateSnapshot struct {
 func (g Game) GetNextID() (id string, game Game) {
 	g.id++
 	return strconv.Itoa(g.id), g
-}
-
-func (g Game) WithPutCardOnBattlefield(card gob.Card, playerID string) (Game, error) {
-	id, newGame := g.GetNextID()
-	permanent, err := gob.NewPermanent(id, card)
-	if err != nil {
-		return newGame, err
-	}
-	newBattlefield := newGame.battlefield.Add(permanent)
-	newerGame := newGame.WithBattlefield(newBattlefield)
-	return newerGame, nil
 }

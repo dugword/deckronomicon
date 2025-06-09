@@ -7,17 +7,17 @@ import (
 )
 
 type CheatAction struct {
-	playerID string
+	player state.Player
 }
 
-func NewCheatAction(playerID string) CheatAction {
+func NewCheatAction(player state.Player) CheatAction {
 	return CheatAction{
-		playerID: playerID,
+		player: player,
 	}
 }
 
 func (a CheatAction) PlayerID() string {
-	return a.playerID
+	return a.player.ID()
 }
 
 func (a CheatAction) Name() string {
@@ -39,6 +39,7 @@ func (a CheatAction) GetPrompt(game state.Game) (choose.ChoicePrompt, error) {
 
 func (a CheatAction) Complete(
 	game state.Game,
+	env *ResolutionEnvironment,
 	choices []choose.Choice,
 ) ([]event.GameEvent, error) {
 	return []event.GameEvent{event.NoOpEvent{

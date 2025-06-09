@@ -7,17 +7,17 @@ import (
 )
 
 type DrawCheatAction struct {
-	playerID string
+	player state.Player
 }
 
-func NewDrawCheatAction(playerID string) DrawCheatAction {
+func NewDrawCheatAction(player state.Player) DrawCheatAction {
 	return DrawCheatAction{
-		playerID: playerID,
+		player: player,
 	}
 }
 
 func (a DrawCheatAction) PlayerID() string {
-	return a.playerID
+	return a.player.ID()
 }
 
 func (a DrawCheatAction) Name() string {
@@ -39,6 +39,7 @@ func (a DrawCheatAction) GetPrompt(game state.Game) (choose.ChoicePrompt, error)
 
 func (a DrawCheatAction) Complete(
 	game state.Game,
+	env *ResolutionEnvironment,
 	choices []choose.Choice,
 ) ([]event.GameEvent, error) {
 	return []event.GameEvent{event.NoOpEvent{

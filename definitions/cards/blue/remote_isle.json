@@ -9,7 +9,7 @@
       "Cost": "{T}",
       "Effects": [
         {
-          "ID": "AddMana",
+          "Name": "AddMana",
           "Modifiers": [
             {
               "Key": "Mana",
@@ -24,7 +24,7 @@
       "Cost": "{2},Discard this card",
       "Effects": [
         {
-          "ID": "Draw",
+          "Name": "Draw",
           "Modifiers": [
             {
               "Key": "Type",

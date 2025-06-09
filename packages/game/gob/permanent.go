@@ -6,6 +6,7 @@ import (
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/has"
+	"fmt"
 )
 
 // Permanent represents a permanent card on the battlefield.
@@ -17,9 +18,9 @@ type Permanent struct {
 	controller         string
 	id                 string
 	loyalty            int
-	// manaCost           *cost.ManaCost
-	name string
-	//owner              string
+	manaCost           string
+	name               string
+	owner              string
 	power              int
 	rulesText          string
 	staticAbilities    []StaticAbility
@@ -32,18 +33,18 @@ type Permanent struct {
 }
 
 // NewPermanent creates a new Permanent instance from a Card.
-func NewPermanent(id string, card Card) (Permanent, error) {
+func NewPermanent(id string, card Card, playerID string) (Permanent, error) {
 	permanent := Permanent{
-		activatedAbilities: []Ability{},
-		card:               card,
-		cardTypes:          card.CardTypes(),
-		colors:             card.Colors(),
-		// controller:         player.ID(),
-		id:      id,
-		loyalty: card.Loyalty(),
+		// TODO: Do I need to generate new IDs for the abilities?
+		card:       card,
+		cardTypes:  card.CardTypes(),
+		colors:     card.Colors(),
+		controller: playerID,
+		id:         id,
+		loyalty:    card.Loyalty(),
 		//manaCost:           card.ManaCost(),
-		name: card.Name(),
-		// owner:              player.ID(),
+		name:               card.Name(),
+		owner:              playerID,
 		power:              card.Power(),
 		rulesText:          card.RulesText(),
 		staticAbilities:    card.StaticAbilities(),
@@ -54,6 +55,26 @@ func NewPermanent(id string, card Card) (Permanent, error) {
 	}
 	if card.Match(has.CardType(mtg.CardTypeCreature)) {
 		permanent.summoningSickness = true
+	}
+	var abilityID int
+	fmt.Println("Building permanent:", permanent.name, "ID:", id)
+	for _, a := range card.ActivatedAbilities() {
+		fmt.Println("Building activated ability:", a.Name())
+		abilityID++
+		ability := Ability{
+			effects: a.Effects(),
+			name:    a.Name(),
+			cost:    a.Cost(),
+			id:      fmt.Sprintf("%s-%d", id, abilityID),
+			zone:    a.zone,
+			speed:   a.speed,
+			source:  permanent,
+		}
+		for _, effect := range a.Effects() {
+			fmt.Println("Adding effect to ability:", effect.Name())
+		}
+		fmt.Printf("Ability => %+v\n", ability)
+		permanent.activatedAbilities = append(permanent.activatedAbilities, ability)
 	}
 	/*
 		for _, spec := range card.ActivatedAbilitySpecs() {

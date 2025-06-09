@@ -10,7 +10,7 @@
   "SpellAbility": {
     "Effects": [
       {
-        "ID": "AdditionalMana",
+        "Name": "AdditionalMana",
         "Modifiers": [
           {
             "Key": "Target",

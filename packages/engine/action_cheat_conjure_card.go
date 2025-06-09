@@ -7,19 +7,19 @@ import (
 )
 
 type ConjureCardCheatAction struct {
-	playerID string
+	player   state.Player
 	cardName string
 }
 
-func NewConjureCardCheatAction(playerID string, cardName string) ConjureCardCheatAction {
+func NewConjureCardCheatAction(player state.Player, cardName string) ConjureCardCheatAction {
 	return ConjureCardCheatAction{
-		playerID: playerID,
+		player:   player,
 		cardName: cardName,
 	}
 }
 
 func (a ConjureCardCheatAction) PlayerID() string {
-	return a.playerID
+	return a.player.ID()
 }
 
 func (a ConjureCardCheatAction) Name() string {
@@ -41,6 +41,7 @@ func (a ConjureCardCheatAction) GetPrompt(game state.Game) (choose.ChoicePrompt,
 
 func (a ConjureCardCheatAction) Complete(
 	game state.Game,
+	env *ResolutionEnvironment,
 	choices []choose.Choice,
 ) ([]event.GameEvent, error) {
 	return []event.GameEvent{event.NoOpEvent{

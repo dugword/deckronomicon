@@ -10,7 +10,7 @@
   "SpellAbility": {
     "Effects": [
       {
-        "ID": "LookAndChoose",
+        "Name": "LookAndChoose",
         "Modifiers": [
           {
             "Key": "Look",

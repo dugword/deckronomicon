@@ -7,19 +7,19 @@ import (
 )
 
 type DiscardCheatAction struct {
-	playerID string
+	player   state.Player
 	cardName string
 }
 
-func NewDiscardCheatAction(playerID string, cardName string) DiscardCheatAction {
+func NewDiscardCheatAction(player state.Player, cardName string) DiscardCheatAction {
 	return DiscardCheatAction{
-		playerID: playerID,
+		player:   player,
 		cardName: cardName,
 	}
 }
 
 func (a DiscardCheatAction) PlayerID() string {
-	return a.playerID
+	return a.player.ID()
 }
 
 func (a DiscardCheatAction) Name() string {
@@ -41,6 +41,7 @@ func (a DiscardCheatAction) GetPrompt(game state.Game) (choose.ChoicePrompt, err
 
 func (a DiscardCheatAction) Complete(
 	game state.Game,
+	env *ResolutionEnvironment,
 	choices []choose.Choice,
 ) ([]event.GameEvent, error) {
 	return []event.GameEvent{event.NoOpEvent{

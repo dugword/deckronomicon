@@ -20,12 +20,12 @@ import (
 type Card struct {
 	activatedAbilities []Ability
 	// activatedAbilitySpecs []definition.ActivatedAbilitySpec
-	definition definition.Card
-	cardTypes  []mtg.CardType
-	colors     mtg.Colors
-	id         string
-	loyalty    int
-	// manaCost              cost.ManaCost
+	definition   definition.Card
+	cardTypes    []mtg.CardType
+	colors       mtg.Colors
+	id           string
+	loyalty      int
+	manaCost     string
 	name         string
 	power        int
 	rulesText    string
@@ -99,12 +99,12 @@ func (c Card) Loyalty() int {
 	return c.loyalty
 }
 
-/*
 // ManaCost returns the mana cost of the card.
-func (c Card) ManaCost() *cost.ManaCost {
+func (c Card) ManaCost() string {
 	return c.manaCost
 }
 
+/*
 func (c Card) ManaValue() int {
 	return c.ManaCost().ManaValue()
 }

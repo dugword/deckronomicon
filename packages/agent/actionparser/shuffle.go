@@ -6,13 +6,13 @@ import (
 )
 
 type ShuffleCheatCommand struct {
-	PlayerID string
+	Player state.Player
 }
 
 func (p *ShuffleCheatCommand) IsComplete() bool {
-	return p.PlayerID != ""
+	return p.Player.ID() != ""
 }
 
-func (p *ShuffleCheatCommand) Build(game state.Game, playerID string) (engine.Action, error) {
-	return engine.NewShuffleCheatAction(p.PlayerID), nil
+func (p *ShuffleCheatCommand) Build(game state.Game, player state.Player) (engine.Action, error) {
+	return engine.NewShuffleCheatAction(p.Player), nil
 }

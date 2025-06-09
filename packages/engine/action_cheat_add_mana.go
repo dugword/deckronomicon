@@ -7,23 +7,23 @@ import (
 )
 
 type AddManaCheatAction struct {
-	playerID string
-	mana     string
+	Player state.Player
+	mana   string
 }
 
-func NewAddManaCheatAction(playerID string, mana string) AddManaCheatAction {
+func NewAddManaCheatAction(player state.Player, mana string) AddManaCheatAction {
 	return AddManaCheatAction{
-		playerID: playerID,
-		mana:     mana,
+		Player: player,
+		mana:   mana,
 	}
-}
-
-func (a AddManaCheatAction) PlayerID() string {
-	return a.playerID
 }
 
 func (a AddManaCheatAction) Name() string {
 	return "CHEAT: Add Mana"
+}
+
+func (a AddManaCheatAction) PlayerID() string {
+	return a.Player.ID()
 }
 
 func (a AddManaCheatAction) Description() string {
@@ -41,6 +41,7 @@ func (a AddManaCheatAction) GetPrompt(game state.Game) (choose.ChoicePrompt, err
 
 func (a AddManaCheatAction) Complete(
 	game state.Game,
+	env *ResolutionEnvironment,
 	choices []choose.Choice,
 ) ([]event.GameEvent, error) {
 	return []event.GameEvent{event.NoOpEvent{

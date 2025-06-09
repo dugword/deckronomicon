@@ -7,17 +7,17 @@ import (
 )
 
 type PeekCheatAction struct {
-	playerID string
+	player state.Player
 }
 
-func NewPeekCheatAction(playerID string) PeekCheatAction {
+func NewPeekCheatAction(player state.Player) PeekCheatAction {
 	return PeekCheatAction{
-		playerID: playerID,
+		player: player,
 	}
 }
 
 func (a PeekCheatAction) PlayerID() string {
-	return a.playerID
+	return a.player.ID()
 }
 
 func (a PeekCheatAction) Name() string {
@@ -39,6 +39,7 @@ func (a PeekCheatAction) GetPrompt(game state.Game) (choose.ChoicePrompt, error)
 
 func (a PeekCheatAction) Complete(
 	game state.Game,
+	env *ResolutionEnvironment,
 	choices []choose.Choice,
 ) ([]event.GameEvent, error) {
 	return []event.GameEvent{event.NoOpEvent{

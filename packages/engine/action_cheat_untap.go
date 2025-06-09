@@ -3,23 +3,24 @@ package engine
 import (
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/state"
 )
 
 type UntapCheatAction struct {
-	playerID    string
-	permanentID string
+	player    state.Player
+	permanent gob.Permanent
 }
 
-func NewUntapCheatAction(playerID string, permanentID string) UntapCheatAction {
+func NewUntapCheatAction(player state.Player, permanent gob.Permanent) UntapCheatAction {
 	return UntapCheatAction{
-		playerID:    playerID,
-		permanentID: permanentID,
+		player:    player,
+		permanent: permanent,
 	}
 }
 
 func (a UntapCheatAction) PlayerID() string {
-	return a.playerID
+	return a.player.ID()
 }
 
 func (a UntapCheatAction) Name() string {
@@ -41,6 +42,7 @@ func (a UntapCheatAction) GetPrompt(game state.Game) (choose.ChoicePrompt, error
 
 func (a UntapCheatAction) Complete(
 	game state.Game,
+	env *ResolutionEnvironment,
 	choices []choose.Choice,
 ) ([]event.GameEvent, error) {
 	return []event.GameEvent{event.NoOpEvent{

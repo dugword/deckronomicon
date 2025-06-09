@@ -10,7 +10,7 @@
   "SpellAbility": {
     "Effects": [
       {
-        "ID": "TapOrUntap",
+        "Name": "TapOrUntap",
         "Optional": true,
         "Modifiers": [
           {
@@ -23,7 +23,7 @@
   },
   "StaticAbilities": [
     {
-      "ID": "Splice",
+      "Name": "Splice",
       "Modifiers": [
         {
           "Key": "Onto",

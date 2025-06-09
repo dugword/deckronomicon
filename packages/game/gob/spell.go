@@ -84,7 +84,11 @@ func (s Spell) Effects() []Effect {
 func (s Spell) Description() string {
 	var descriptions []string
 	for _, effect := range s.effects {
-		descriptions = append(descriptions, effect.Description())
+
+		// TODO: Come up with a better way to handle descriptions
+		descriptions = append(descriptions, effect.Name())
+		// descriptions = append(descriptions, effect.Description())
+
 	}
 	// TODO: Support additional costs
 	// return fmt.Sprintf("%s: %s", s.ManaCost().Description(), strings.Join(descriptions, ", "))

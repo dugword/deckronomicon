@@ -5,6 +5,10 @@ package engine
 // imput, verifies per the rules of the game it can happen, and then applies
 // it.
 
+// TODO: Events should have small flat string values where possible because they get turned into JSON,
+// we don't want to capture a lot of redundant information in the event.
+// that means a lookkup to player will usually happen here.
+
 import (
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/game/mtg"
@@ -47,7 +51,6 @@ func (e *Engine) applyEvent(game state.Game, gameEvent event.GameEvent) (state.G
 		return e.applyTurnBasedActionEvent(game, evnt)
 	case event.CombatEvent:
 		return e.applyCombatEvent(game, evnt)
-
 	case event.SetNextPlayerEvent:
 		return ApplySetNextPlayerEvent(game, evnt)
 	default:
@@ -78,6 +81,10 @@ func (e *Engine) applyTurnBasedActionEvent(game state.Game, turnBasedActionEvent
 
 func (e *Engine) applyOtherEvents(game state.Game, gameEvent event.GameEvent) (state.Game, error) {
 	switch evnt := gameEvent.(type) {
+	case event.TapPermanentEvent:
+		return e.applyTapPermanentEvent(game, evnt)
+	case event.AddManaEvent:
+		return e.applyAddManaEvent(game, evnt)
 	case event.ConcedeEvent:
 		return e.ApplyConcedeEvent(game, evnt)
 	case event.PlayLandEvent:
@@ -91,9 +98,9 @@ func (e *Engine) applyOtherEvents(game state.Game, gameEvent event.GameEvent) (s
 	case event.DrawStartingHandEvent:
 		return game, nil
 	case event.ShuffleDeckEvent:
-		player, err := game.GetPlayer(evnt.PlayerID)
-		if err != nil {
-			return game, fmt.Errorf("shuffle deck: %w", err)
+		player, ok := game.GetPlayer(evnt.PlayerID)
+		if !ok {
+			return game, fmt.Errorf("player '%s' not found", evnt.PlayerID)
 		}
 		newPlayer := player.WithShuffleDeck(e.rng.DeckShuffler())
 		newGame := game.WithUpdatedPlayer(newPlayer)
@@ -122,9 +129,9 @@ func (e *Engine) applyGameLifecycleEvent(game state.Game, gameLifecycleEvent eve
 		e.log.Info("Game started")
 		return game, nil
 	case event.BeginTurnEvent:
-		player, err := game.GetPlayer(evnt.PlayerID)
-		if err != nil {
-			return game, fmt.Errorf("begin turn: %w", err)
+		player, ok := game.GetPlayer(evnt.PlayerID)
+		if !ok {
+			return game, fmt.Errorf("player '%s' not found", evnt.PlayerID)
 		}
 		newPlayer := player.WithNextTurn()
 		newGame := game.WithUpdatedPlayer(newPlayer)
@@ -185,7 +192,18 @@ func (e *Engine) applyEndStepEvent(
 	game state.Game,
 	endStepEvent event.EndStepEvent,
 ) (state.Game, error) {
+	// TODO: Managed theings like this? Or generate an actual event for each
+	// state change, e.g. ClearPriorityEvent, ResetPriorityPassesEvent,
+	// ClearManaPoolEvent, etc.
 	game = game.WithClearedPriority().WithResetPriorityPasses()
+	for _, playerID := range game.PlayerIDsInTurnOrder() {
+		player, ok := game.GetPlayer(playerID)
+		if !ok {
+			return game, fmt.Errorf("player '%s' not found", playerID)
+		}
+		player = player.WithEmptyManaPool()
+		game = game.WithUpdatedPlayer(player)
+	}
 	switch endStepEvent.(type) {
 	case event.EndUntapStepEvent:
 		return game, nil
@@ -305,6 +323,37 @@ func (e *Engine) applyBeginPhaseEvent(
 	}
 }
 
+func (e *Engine) applyTapPermanentEvent(
+	game state.Game,
+	tapEvent event.TapPermanentEvent,
+) (state.Game, error) {
+	permanent, ok := game.Battlefield().Get(tapEvent.PermanentID)
+	if !ok {
+		return game, fmt.Errorf("permanent '%s' not found", tapEvent.PermanentID)
+	}
+	permanent, err := permanent.Tap()
+	if err != nil {
+		return game, fmt.Errorf("failed to tap permanent '%s': %w", tapEvent.PermanentID, err)
+	}
+	battlefield := game.Battlefield().WithUpdatedPermanent(permanent)
+	game = game.WithBattlefield(battlefield)
+	return game, nil
+}
+
+func (e *Engine) applyAddManaEvent(
+	game state.Game,
+	addManaEvent event.AddManaEvent,
+) (state.Game, error) {
+	player, ok := game.GetPlayer(addManaEvent.PlayerID)
+	if !ok {
+		return game, fmt.Errorf("player '%s' not found", addManaEvent.PlayerID)
+	}
+	fmt.Println("Adding mana:", addManaEvent.ManaType, "Amount:", addManaEvent.Amount)
+	player = player.WithAddMana(addManaEvent.ManaType, addManaEvent.Amount)
+	game = game.WithUpdatedPlayer(player)
+	return game, nil
+}
+
 func ApplySetNextPlayerEvent(
 	game state.Game,
 	event event.SetNextPlayerEvent,
@@ -318,25 +367,24 @@ func ApplyUntapAllEvent(
 	game state.Game,
 	event event.UntapAllEvent,
 ) (state.Game, error) {
-	player, err := game.GetPlayer(event.PlayerID)
-	if err != nil {
-		return game, fmt.Errorf("untap: %w", err)
+	player, ok := game.GetPlayer(event.PlayerID)
+	if !ok {
+		return game, fmt.Errorf("player '%s' not found", event.PlayerID)
 	}
-	newBattlefield := game.Battlefield()
-	newBattlefield.UntapAll(player.ID())
-	newGame := game.WithBattlefield(newBattlefield)
-	return newGame, nil
+	battlefield := game.Battlefield().UntapAll(player.ID())
+	game = game.WithBattlefield(battlefield)
+	return game, nil
 }
 
 func (e *Engine) ApplyDrawCardEvent(
 	game state.Game,
 	event event.DrawCardEvent,
 ) (state.Game, error) {
-	player, err := game.GetPlayer(event.PlayerID)
-	if err != nil {
-		return game, fmt.Errorf("draw: %w", err)
+	player, ok := game.GetPlayer(event.PlayerID)
+	if !ok {
+		return game, fmt.Errorf("player '%s' not found", event.PlayerID)
 	}
-	player, _, err = player.WithDrawCard()
+	player, _, err := player.WithDrawCard()
 	if err != nil {
 		return game, fmt.Errorf("draw: %w", err)
 	}
@@ -348,11 +396,11 @@ func (e *Engine) ApplyDiscardCardEvent(
 	game state.Game,
 	event event.DiscardCardEvent,
 ) (state.Game, error) {
-	player, err := game.GetPlayer(event.PlayerID)
-	if err != nil {
-		return game, fmt.Errorf("discard: %w", err)
+	player, ok := game.GetPlayer(event.PlayerID)
+	if !ok {
+		return game, fmt.Errorf("player '%s' not found", event.PlayerID)
 	}
-	player, err = player.WithDiscardCard(event.CardID)
+	player, err := player.WithDiscardCard(event.CardID)
 	if err != nil {
 		return game, fmt.Errorf("discard: %w", err)
 	}
@@ -364,9 +412,9 @@ func (e *Engine) ApplyCastSpellEvent(
 	game state.Game,
 	event event.CastSpellEvent,
 ) (state.Game, error) {
-	player, err := game.GetPlayer(event.PlayerID)
-	if err != nil {
-		return game, fmt.Errorf("cast spell: %w", err)
+	player, ok := game.GetPlayer(event.PlayerID)
+	if !ok {
+		return game, fmt.Errorf("player '%s' not found", event.PlayerID)
 	}
 	/*
 		player, err = player.WithCardOnStack(event.CardID)

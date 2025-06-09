@@ -7,15 +7,15 @@ import (
 )
 
 type DrawCheatCommand struct {
-	PlayerID string
+	Player state.Player
 }
 
 func (p *DrawCheatCommand) IsComplete() bool {
-	return p.PlayerID != ""
+	return p.Player.ID() != ""
 }
 
-func (p *DrawCheatCommand) Build(game state.Game, playerID string) (engine.Action, error) {
-	return engine.NewDrawCheatAction(p.PlayerID), nil
+func (p *DrawCheatCommand) Build(game state.Game, player state.Player) (engine.Action, error) {
+	return engine.NewDrawCheatAction(p.Player), nil
 }
 
 func parseDrawCheatCommand(
@@ -23,7 +23,7 @@ func parseDrawCheatCommand(
 	args []string,
 	getChoices func(prompt choose.ChoicePrompt) ([]choose.Choice, error),
 	game state.Game,
-	playerID string,
+	player state.Player,
 ) (*DrawCheatCommand, error) {
 	return nil, nil
 }

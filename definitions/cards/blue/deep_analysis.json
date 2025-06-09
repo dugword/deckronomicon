@@ -10,7 +10,7 @@
   "SpellAbility": {
     "Effects": [
       {
-        "ID": "Draw",
+        "Name": "Draw",
         "Modifiers": [
           {
             "Key": "Target",
@@ -26,7 +26,7 @@
   },
   "StaticAbilities": [
     {
-      "ID": "Flashback",
+      "Name": "Flashback",
       "Modifiers": [
         {
           "Key": "Cost",

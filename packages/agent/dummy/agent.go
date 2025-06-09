@@ -5,6 +5,7 @@ import (
 	"deckronomicon/packages/engine"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/state"
+	"fmt"
 )
 
 type Agent struct {
@@ -23,7 +24,11 @@ func NewAgent(id string, stops []mtg.Step, verbose bool) *Agent {
 }
 
 func (a *Agent) GetNextAction(game state.Game) (engine.Action, error) {
-	return engine.NewPassPriorityAction(a.id), nil
+	player, ok := game.GetPlayer(a.id)
+	if !ok {
+		return nil, fmt.Errorf("player '%s' not found", a.id)
+	}
+	return engine.NewPassPriorityAction(player), nil
 }
 
 func (a *Agent) Choose(prompt choose.ChoicePrompt) ([]choose.Choice, error) {

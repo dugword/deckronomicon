@@ -2,24 +2,22 @@ package gob
 
 import (
 	//	"deckronomicon/packages/game/cost"
+	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 	"fmt"
 	"strings"
 )
 
-type Source interface {
-	Name() string
-}
-
 // Ability represents abilities that require activation costs.
 type Ability struct {
 	name string
-	// Cost    cost.Cost
+	// TODO Maybe parse this into a cost type?
+	cost    string
 	effects []Effect
 	id      string
-	//zone    string
-	//source  Source
-	//speed   string
+	zone    mtg.Zone
+	source  query.Object
+	speed   mtg.Speed
 }
 
 func NewAbility(id string) Ability {
@@ -27,6 +25,18 @@ func NewAbility(id string) Ability {
 		id: id,
 	}
 	return ability
+}
+
+func (a Ability) Cost() string {
+	return a.cost
+}
+
+func (a Ability) Effects() []Effect {
+	return a.effects
+}
+
+func (a Ability) Source() query.Object {
+	return a.source
 }
 
 // BuildActivatedAbility builds an activated ability from the given
@@ -79,7 +89,9 @@ func (a Ability) CanActivate(state core.State, playerID string) bool {
 func (a Ability) Description() string {
 	var descriptions []string
 	for _, effect := range a.effects {
-		descriptions = append(descriptions, effect.Description())
+		// TODO: Come up with a better way to handle descriptions
+		descriptions = append(descriptions, effect.Name())
+		//descriptions = append(descriptions, effect.Description())
 	}
 	// return fmt.Sprintf("%s: %s", a.Cost.Description(), strings.Join(descriptions, ", "))
 	return fmt.Sprintf("%s: %s", "<cost>", strings.Join(descriptions, ", "))

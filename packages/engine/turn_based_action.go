@@ -3,6 +3,8 @@ package engine
 import (
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/game/gob"
+	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/state"
 	"fmt"
 )
@@ -63,13 +65,14 @@ func (a DrawStartingHandAction) GetPrompt(
 
 func (a DrawStartingHandAction) Complete(
 	game state.Game,
+	env *ResolutionEnvironment,
 	choices []choose.Choice,
 ) ([]event.GameEvent, error) {
 	// This action would typically involve the player drawing their starting hand.
 	// For now, we return an empty event as a placeholder.
-	player, err := game.GetPlayer(a.PlayerID())
-	if err != nil {
-		return nil, err
+	player, ok := game.GetPlayer(a.PlayerID())
+	if !ok {
+		return nil, fmt.Errorf("player '%s' not found", a.PlayerID())
 	}
 	// Draw the starting hand, which is typically 7 cards, but can be
 	// different.
@@ -108,7 +111,7 @@ func (a PhaseInPhaseOutAction) GetPrompt(game state.Game) (choose.ChoicePrompt, 
 	}, nil
 }
 
-func (a PhaseInPhaseOutAction) Complete(game state.Game, choices []choose.Choice) ([]event.GameEvent, error) {
+func (a PhaseInPhaseOutAction) Complete(game state.Game, env *ResolutionEnvironment, choices []choose.Choice) ([]event.GameEvent, error) {
 	return []event.GameEvent{
 		event.NewPhaseInPhaseOutEvent(a.PlayerID()),
 	}, nil
@@ -139,7 +142,7 @@ func (a CheckDayNightAction) GetPrompt(game state.Game) (choose.ChoicePrompt, er
 	}, nil
 }
 
-func (a CheckDayNightAction) Complete(game state.Game, choices []choose.Choice) ([]event.GameEvent, error) {
+func (a CheckDayNightAction) Complete(game state.Game, env *ResolutionEnvironment, choices []choose.Choice) ([]event.GameEvent, error) {
 	// This action would typically involve checking the game state to see if the day/night designation should change.
 	// For now, we return an empty event as a placeholder.
 	return []event.GameEvent{
@@ -174,7 +177,7 @@ func (a UntapAction) GetPrompt(game state.Game) (choose.ChoicePrompt, error) {
 	}, nil
 }
 
-func (a UntapAction) Complete(state.Game, []choose.Choice) ([]event.GameEvent, error) {
+func (a UntapAction) Complete(state.Game, *ResolutionEnvironment, []choose.Choice) ([]event.GameEvent, error) {
 	return []event.GameEvent{
 		event.NewUntapAllEvent(a.PlayerID()),
 	}, nil
@@ -205,7 +208,7 @@ func (a UpkeepAction) GetPrompt(game state.Game) (choose.ChoicePrompt, error) {
 	}, nil
 }
 
-func (a UpkeepAction) Complete(game state.Game, choices []choose.Choice) ([]event.GameEvent, error) {
+func (a UpkeepAction) Complete(game state.Game, env *ResolutionEnvironment, choices []choose.Choice) ([]event.GameEvent, error) {
 	// This action would typically involve the player performing any upkeep actions.
 	// For now, we return an empty event as a placeholder.
 	return []event.GameEvent{
@@ -238,7 +241,7 @@ func (a DrawAction) GetPrompt(game state.Game) (choose.ChoicePrompt, error) {
 		Optional: false,
 	}, nil
 }
-func (a DrawAction) Complete(state.Game, []choose.Choice) ([]event.GameEvent, error) {
+func (a DrawAction) Complete(state.Game, *ResolutionEnvironment, []choose.Choice) ([]event.GameEvent, error) {
 	return []event.GameEvent{
 		event.DrawCardEvent{
 			PlayerID: a.PlayerID(),
@@ -269,7 +272,7 @@ func (a DeclareAttackersAction) GetPrompt(game state.Game) (choose.ChoicePrompt,
 		Optional: false,
 	}, nil
 }
-func (a DeclareAttackersAction) Complete(state.Game, []choose.Choice) ([]event.GameEvent, error) {
+func (a DeclareAttackersAction) Complete(state.Game, *ResolutionEnvironment, []choose.Choice) ([]event.GameEvent, error) {
 	// This action would typically involve the player choosing which creatures to attack with.
 	// For now, we return an empty event as a placeholder.
 	return []event.GameEvent{
@@ -300,7 +303,7 @@ func (a DeclareBlockersAction) GetPrompt(game state.Game) (choose.ChoicePrompt, 
 	}, nil
 }
 
-func (a DeclareBlockersAction) Complete(state.Game, []choose.Choice) ([]event.GameEvent, error) {
+func (a DeclareBlockersAction) Complete(state.Game, *ResolutionEnvironment, []choose.Choice) ([]event.GameEvent, error) {
 	// This action would typically involve the player choosing which creatures to block with.
 	// For now, we return an empty event as a placeholder.
 	return []event.GameEvent{
@@ -332,7 +335,7 @@ func (a CombatDamageAction) GetPrompt(game state.Game) (choose.ChoicePrompt, err
 		Optional: false,
 	}, nil
 }
-func (a CombatDamageAction) Complete(state.Game, []choose.Choice) ([]event.GameEvent, error) {
+func (a CombatDamageAction) Complete(state.Game, *ResolutionEnvironment, []choose.Choice) ([]event.GameEvent, error) {
 	// This action would typically involve the player assigning combat damage.
 	// For now, we return an empty event as a placeholder.
 	return []event.GameEvent{
@@ -357,9 +360,9 @@ func (a DiscardToHandSizeAction) Description() string {
 }
 
 func (a DiscardToHandSizeAction) GetPrompt(game state.Game) (choose.ChoicePrompt, error) {
-	player, err := game.GetPlayer(a.PlayerID())
-	if err != nil {
-		return choose.ChoicePrompt{}, fmt.Errorf("error getting player: %w", err)
+	player, ok := game.GetPlayer(a.PlayerID())
+	if !ok {
+		return choose.ChoicePrompt{}, fmt.Errorf("player '%s' not found", a.PlayerID())
 	}
 	hand := player.Hand()
 	excess := hand.Size() - player.MaxHandSize()
@@ -368,10 +371,7 @@ func (a DiscardToHandSizeAction) GetPrompt(game state.Game) (choose.ChoicePrompt
 	}
 	choices := []choose.Choice{}
 	for _, card := range hand.GetAll() {
-		choices = append(choices, choose.Choice{
-			ID:   card.ID(),
-			Name: card.Name(),
-		})
+		choices = append(choices, gob.NewCardInZone(card, mtg.ZoneHand))
 	}
 	return choose.ChoicePrompt{
 		Message:    fmt.Sprintf("%d cards in hand, discard %d", hand.Size(), excess),
@@ -384,17 +384,18 @@ func (a DiscardToHandSizeAction) GetPrompt(game state.Game) (choose.ChoicePrompt
 
 func (a DiscardToHandSizeAction) Complete(
 	game state.Game,
+	env *ResolutionEnvironment,
 	choices []choose.Choice,
 ) ([]event.GameEvent, error) {
 	var discardEvents []event.GameEvent
 	for _, choice := range choices {
-		if choice.ID == "" {
+		if choice.ID() == "" {
 			continue // Skip empty choices
 		}
 		discardEvents = append(discardEvents, event.DiscardCardEvent{
 			PlayerID: a.PlayerID(),
 			Source:   a,
-			CardID:   choice.ID,
+			CardID:   choice.ID(),
 		})
 	}
 	return discardEvents, nil
@@ -425,7 +426,7 @@ func (a RemoveDamageAction) GetPrompt(game state.Game) (choose.ChoicePrompt, err
 	}, nil
 }
 
-func (a RemoveDamageAction) Complete(game state.Game, choices []choose.Choice) ([]event.GameEvent, error) {
+func (a RemoveDamageAction) Complete(game state.Game, env *ResolutionEnvironment, choices []choose.Choice) ([]event.GameEvent, error) {
 	// This action would typically involve removing all damage from permanents and ending all "until end of turn" effects.
 	// For now, we return an empty event as a placeholder.
 	return []event.GameEvent{
@@ -458,7 +459,7 @@ func (a ProgressSagaAction) GetPrompt(game state.Game) (choose.ChoicePrompt, err
 	}, nil
 }
 
-func (a ProgressSagaAction) Complete(state.Game, []choose.Choice) ([]event.GameEvent, error) {
+func (a ProgressSagaAction) Complete(state.Game, *ResolutionEnvironment, []choose.Choice) ([]event.GameEvent, error) {
 	return []event.GameEvent{
 		event.NewProgressSagaEvent(a.PlayerID()),
 	}, nil

@@ -10,7 +10,7 @@
   "SpellAbility": {
     "Effects": [
       {
-        "ID": "Tap",
+        "Name": "Tap",
         "Modifiers": [
           {
             "Key": "Target",
@@ -22,7 +22,7 @@
   },
   "StaticAbilities": [
     {
-      "ID": "Replicate",
+      "Name": "Replicate",
       "Modifiers": [
         {
           "Key": "Cost",
