@@ -11,6 +11,7 @@ import (
 func (g Game) WithBuildDeck(
 	deckList configs.DeckList,
 	cardDefinitions map[string]definition.Card,
+	playerID string,
 ) (Game, []gob.Card, error) {
 	var deck []gob.Card
 	for _, entry := range deckList.Cards {
@@ -24,7 +25,7 @@ func (g Game) WithBuildDeck(
 			}
 			var id string
 			id, g = g.GetNextID()
-			c, err := gob.NewCardFromCardDefinition(id, cardDefinition)
+			c, err := gob.NewCardFromCardDefinition(id, playerID, cardDefinition)
 			if err != nil {
 				return Game{}, nil, fmt.Errorf(
 					"failed to create card %q: %w",

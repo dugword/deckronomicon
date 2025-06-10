@@ -1,29 +1,34 @@
 package cost
 
 import (
-	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/mana"
 	"deckronomicon/packages/query"
 	"fmt"
+	"regexp"
 	"strings"
 )
+
+// ManaPattern is a regex pattern that matches valid mana costs.
+// TODO: Support X costs and other special cases.
+var manaPattern = regexp.MustCompile(`^(?:\{[0-9WUBRGC]+\})*$`)
+
+// isManaCost checks if the input string is a valid mana cost.
+// THIS IS ISMANACOST!
+// TODO
+func IsManaCost(input string) bool {
+	return manaPattern.MatchString(input)
+}
 
 type Cost interface {
 	isCost()
 	Description() string
 }
 
-type TapCost struct {
-	permanent gob.Permanent
-}
+type TapCost struct{}
 
 // Description returns a string representation of the tap cost.
 func (c TapCost) Description() string {
 	return "{T}"
-}
-
-func (c TapCost) Permanent() gob.Permanent {
-	return c.permanent
 }
 
 // GetChoices returns the choices available for this cost.
@@ -79,6 +84,12 @@ type ManaCost struct {
 	amount mana.Amount
 }
 
+func NewManaCost(amount mana.Amount) ManaCost {
+	return ManaCost{
+		amount: amount,
+	}
+}
+
 func (c ManaCost) isCost() {}
 
 // Maybe instead of returning a cost we return a "CostSpec" or "CostTemplate" or "CostBuilding"
@@ -91,8 +102,14 @@ func ParseCost(costString string, source query.Object) (Cost, error) {
 	for _, part := range parts {
 		trimmed := strings.TrimSpace(part)
 		switch {
+		case IsManaCost(trimmed):
+			manaCost, err := ParseManaCost(trimmed)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse mana cost %q: %w", trimmed, err)
+			}
+			costs = append(costs, manaCost)
 		case isTapCost(trimmed):
-			costs = append(costs, TapCost{permanent: source.(gob.Permanent)})
+			costs = append(costs, TapCost{})
 		default:
 			return nil, fmt.Errorf("unknown cost %q", trimmed)
 		}
@@ -101,6 +118,15 @@ func ParseCost(costString string, source query.Object) (Cost, error) {
 		return costs[0], nil
 	}
 	return CompositeCost{costs: costs}, nil
+}
+
+// ParseManaCost parses a mana cost string and returns a ManaCost.
+func ParseManaCost(costStr string) (ManaCost, error) {
+	amount, err := mana.ParseManaString(costStr)
+	if err != nil {
+		return ManaCost{}, fmt.Errorf("failed to parse mana cost %q: %w", costStr, err)
+	}
+	return NewManaCost(amount), nil
 }
 
 // isTapCost checks if the input string is a tap cost.

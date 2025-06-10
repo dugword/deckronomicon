@@ -46,7 +46,7 @@ func CanActivateAbility(
 		panic("failed to parse ability cost: " + err.Error())
 		can = false // Skip abilities with invalid costs
 	}
-	if !CanPayCost(c, game, player) {
+	if !CanPayCost(c, permanent, game, player) {
 		if ruling != nil && ruling.Explain {
 			ruling.Reasons = append(ruling.Reasons, "cannot pay cost for ability: "+c.Description())
 		}

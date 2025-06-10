@@ -27,6 +27,10 @@ func NewAbility(id string) Ability {
 	return ability
 }
 
+func (a Ability) Controller() string {
+	return a.source.Controller()
+}
+
 func (a Ability) Cost() string {
 	return a.cost
 }

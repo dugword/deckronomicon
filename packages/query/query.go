@@ -7,6 +7,7 @@ import (
 
 // TODO Maybe break this into more specific interfaces
 type Object interface {
+	Controller() string
 	Description() string
 	ID() string
 	Match(Predicate) bool

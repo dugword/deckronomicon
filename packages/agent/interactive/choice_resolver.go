@@ -31,36 +31,6 @@ func (a *Agent) EnterNumber(prompt string, source choose.Source) (int, error) {
 	}
 }
 
-// ChooseMany prompts the user to choose many of the given choices.
-func (a *Agent) ChooseMany(prompt string, source choose.Source, choices []choose.Choice) ([]choose.Choice, error) {
-	if len(choices) == 0 {
-		return nil, choose.ErrNoChoices
-	}
-	title := fmt.Sprintf("%s requires a choice", source.Name())
-	a.uiBuffer.UpdateChoices(title, choices)
-	if err := a.uiBuffer.Render(); err != nil {
-		return nil, fmt.Errorf("failed to render UI Buffer: %w", err)
-	}
-	for {
-		a.Prompt(prompt)
-		max := len(choices) - 1 // 0 based
-		selected, err := a.ReadNumberMany(max)
-		if err != nil {
-			fmt.Printf("Invalid choice. Please enter numbers: %d - %d\n", 0, max)
-			continue
-		}
-		if len(selected) == 0 {
-			fmt.Println("You must choose at least one option.")
-			continue
-		}
-		var selectedChoices []choose.Choice
-		for _, choice := range selected {
-			selectedChoices = append(selectedChoices, choices[choice])
-		}
-		return selectedChoices, nil
-	}
-}
-
 func (a *Agent) ChooseOne(prompt choose.ChoicePrompt) (choose.Choice, error) {
 	prompt.MinChoices = 1
 	prompt.MaxChoices = 1

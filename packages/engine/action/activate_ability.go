@@ -49,15 +49,14 @@ func (a ActivateAbilityAction) Complete(
 	choices []choose.Choice,
 ) ([]event.GameEvent, error) {
 	ability := a.abilityOnObjectInZone.Ability()
-
 	cost, err := cost.ParseCost(ability.Cost(), a.abilityOnObjectInZone.Ability().Source())
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse cost %q: %w", ability.Cost(), err)
 	}
-	if !judge.CanPayCost(cost, game, a.player) {
+	if !judge.CanPayCost(cost, ability.Source(), game, a.player) {
 		return nil, fmt.Errorf("player %q cannot pay cost %q", a.player.ID(), cost.Description())
 	}
-	costEvents, err := PayCost(cost, game, a.player)
+	costEvents, err := PayCost(cost, ability.Source(), a.player)
 	if err != nil {
 		return nil, fmt.Errorf("failed to pay cost %q: %w", cost.Description(), err)
 	}

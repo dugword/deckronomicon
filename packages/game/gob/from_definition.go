@@ -1,6 +1,7 @@
 package gob
 
 import (
+	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/mtg"
 	"fmt"
@@ -21,12 +22,13 @@ import (
 
 // TODO: Make this just NewCard
 
-func NewCardFromCardDefinition(id string, definition definition.Card) (Card, error) {
+func NewCardFromCardDefinition(id, playerID string, definition definition.Card) (Card, error) {
 	card := Card{
 		//activatedAbilities: []core.Ability{},
 		// TODO: Maybe parse this into a cost type?
-		manaCost:   definition.ManaCost,
+
 		id:         id,
+		controller: playerID,
 		definition: definition,
 		loyalty:    definition.Loyalty,
 		name:       definition.Name,
@@ -41,6 +43,11 @@ func NewCardFromCardDefinition(id string, definition definition.Card) (Card, err
 		//staticAbilitySpecs:    definition.StaticAbilitySpecs,
 		//triggeredAbilitySpecs: definition.TriggeredAbilitySpecs,
 	}
+	manaCost, err := cost.ParseManaCost(definition.ManaCost)
+	if err != nil {
+		return Card{}, fmt.Errorf("failed to parse mana cost %q: %w", definition.ManaCost, err)
+	}
+	card.manaCost = manaCost
 	cardColors, err := mtg.StringsToColors(definition.Colors)
 	if err != nil {
 		return Card{}, fmt.Errorf("failed to parse colors %s: %w", definition.Colors, err)

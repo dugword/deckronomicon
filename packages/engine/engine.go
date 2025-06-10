@@ -69,6 +69,7 @@ func (e *Engine) RunGame() error {
 		newGame, deck, err := e.game.WithBuildDeck(
 			deckList,
 			e.definitions,
+			playerID,
 		)
 		if err != nil {
 			return fmt.Errorf(

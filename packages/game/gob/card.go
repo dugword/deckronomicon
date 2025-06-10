@@ -2,6 +2,7 @@ package gob
 
 import (
 	// "deckronomicon/packages/game/definition"
+	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
@@ -22,10 +23,11 @@ type Card struct {
 	// activatedAbilitySpecs []definition.ActivatedAbilitySpec
 	definition   definition.Card
 	cardTypes    []mtg.CardType
+	controller   string
 	colors       mtg.Colors
 	id           string
 	loyalty      int
-	manaCost     string
+	manaCost     cost.ManaCost
 	name         string
 	power        int
 	rulesText    string
@@ -75,6 +77,10 @@ func (c Card) Colors() mtg.Colors {
 	return c.colors
 }
 
+func (c Card) Controller() string {
+	return c.controller
+}
+
 // TODO: Is this the best way to do this?
 func (c Card) Description() string {
 	return c.rulesText
@@ -100,7 +106,7 @@ func (c Card) Loyalty() int {
 }
 
 // ManaCost returns the mana cost of the card.
-func (c Card) ManaCost() string {
+func (c Card) ManaCost() cost.ManaCost {
 	return c.manaCost
 }
 

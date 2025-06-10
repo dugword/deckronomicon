@@ -46,6 +46,10 @@ func (a AbilityInZone) Ability() Ability {
 	return a.ability
 }
 
+func (a AbilityInZone) Controller() string {
+	return a.ability.Controller()
+}
+
 func (a AbilityInZone) Source() query.Object {
 	return a.ability.Source()
 }
@@ -55,6 +59,10 @@ func NewCardInZone(card Card, zone mtg.Zone) CardInZone {
 		card: card,
 		zone: zone,
 	}
+}
+
+func (c CardInZone) Controller() string {
+	return c.card.Controller()
 }
 
 func (c CardInZone) Description() string {

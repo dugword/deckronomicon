@@ -16,6 +16,7 @@ type Resolvable interface {
 	Name() string
 	Effects() []gob.Effect
 	Match(p query.Predicate) bool
+	Controller() string
 }
 
 type Stack struct {

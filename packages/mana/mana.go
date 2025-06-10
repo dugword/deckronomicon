@@ -162,10 +162,13 @@ func NewAmount() Amount {
 	return amount
 }
 
-var manaStringRegexp = regexp.MustCompile(`^\{(\d+|[WUBRGC])\}$`)
+var manaStringRegexp = regexp.MustCompile(`\{(\d+|[WUBRGC])\}`)
 
 func ParseManaString(manaString string) (Amount, error) {
 	amount := NewAmount()
+	if manaString == "" {
+		return amount, nil
+	}
 	matches := manaStringRegexp.FindAllStringSubmatch(manaString, -1)
 	if matches == nil {
 		return amount, fmt.Errorf("invalid mana string: %s", manaString)
