@@ -4,13 +4,19 @@ import (
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/game/gob"
+	"deckronomicon/packages/mana"
+	"deckronomicon/packages/query/has"
 	"deckronomicon/packages/query/is"
 	"deckronomicon/packages/state"
+	"fmt"
 )
 
 type PlayCardAction struct {
-	player     state.Player
-	cardInZone gob.CardInZone
+	player          state.Player
+	cardInZone      gob.CardInZone
+	ManaPayment     mana.Pool
+	AdditionalCosts []string
+	Targets         []string
 }
 
 func NewPlayCardAction(player state.Player, cardInZone gob.CardInZone) PlayCardAction {
@@ -48,17 +54,36 @@ func (a PlayCardAction) GetPrompt(state state.Game) (choose.ChoicePrompt, error)
 	*/
 	return choose.ChoicePrompt{}, nil
 }
+
 func (a PlayCardAction) Complete(
 	game state.Game,
 	env *ResolutionEnvironment,
 	choices []choose.Choice,
 ) ([]event.GameEvent, error) {
+	zone, ok := a.player.GetZone(a.cardInZone.Zone())
+	if !ok {
+		return nil, fmt.Errorf("zone %q not valid", a.cardInZone.Zone())
+	}
+	if !zone.Contains(has.ID(a.cardInZone.ID())) {
+		return nil, fmt.Errorf(
+			"card %q not found in zone %q",
+			a.cardInZone.ID(),
+			a.cardInZone.Zone(),
+		)
+	}
 	if a.cardInZone.Card().Match(is.Land()) {
-		return []event.GameEvent{event.PlayLandEvent{
-			PlayerID: a.player.ID(),
-			CardID:   a.cardInZone.ID(),
-			Zone:     a.cardInZone.Zone(),
-		}}, nil
+		return []event.GameEvent{
+			event.PlayLandEvent{
+				PlayerID: a.player.ID(),
+				CardID:   a.cardInZone.ID(),
+				Zone:     a.cardInZone.Zone(),
+			},
+			event.PutCardOnBattlefieldEvent{
+				PlayerID: a.player.ID(),
+				CardID:   a.cardInZone.ID(),
+				FromZone: a.cardInZone.Zone(),
+			},
+		}, nil
 	}
 	return []event.GameEvent{event.CastSpellEvent{
 		PlayerID: a.player.ID(),

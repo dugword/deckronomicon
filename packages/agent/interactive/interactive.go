@@ -12,6 +12,7 @@ import (
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/state"
 	"deckronomicon/packages/ui"
+	"deckronomicon/packages/view"
 	"fmt"
 	"slices"
 )
@@ -33,6 +34,7 @@ func NewAgent(
 	scanner *bufio.Scanner,
 	playerID string,
 	stops []mtg.Step,
+	displayFile string,
 	verbose bool,
 ) *Agent {
 	agent := Agent{
@@ -40,34 +42,37 @@ func NewAgent(
 		prompt:   ">> ",
 		scanner:  scanner,
 		stops:    stops,
-		uiBuffer: ui.NewBuffer(),
+		uiBuffer: ui.NewBuffer(displayFile),
 		verbose:  verbose,
 	}
 	return &agent
 }
 
-// ReportState displays the current game state in a terminal UI.
-// TODO maybe get player from state.CurrentPlayer?
+func (a *Agent) PlayerID() string {
+	return a.playerID
+}
+
 func (a *Agent) ReportState(game state.Game) error {
-	// TODO Don't panic
 	player, ok := game.GetPlayer(a.playerID)
 	if !ok {
-		return fmt.Errorf("player '%s' not found", a.playerID)
+		return fmt.Errorf("player %q not found", a.playerID)
 	}
-
-	// Update the UI buffer with the current game state.
-	opponent, err := game.GetOpponent(a.playerID)
-	if err != nil {
-		return fmt.Errorf("failed to get opponent for '%s': %w", a.playerID, err)
+	opponent, ok := game.GetOpponent(a.playerID)
+	if !ok {
+		return fmt.Errorf("opponent for player %q not found", a.playerID)
 	}
-	a.uiBuffer.UpdateFromState(game, player, opponent)
+	a.uiBuffer.Update(
+		view.NewGameViewFromState(game),
+		view.NewPlayerViewFromState(player),
+		view.NewPlayerViewFromState(opponent),
+	)
 	return nil
 }
 
 func (a *Agent) GetNextAction(game state.Game) (engine.Action, error) {
 	player, ok := game.GetPlayer(a.playerID)
 	if !ok {
-		return nil, fmt.Errorf("player '%s' not found", a.playerID)
+		return nil, fmt.Errorf("player %q not found", a.playerID)
 	}
 	for {
 		pass := true
@@ -83,7 +88,7 @@ func (a *Agent) GetNextAction(game state.Game) (engine.Action, error) {
 		// PrintCommands(s.CheatsEnabled)
 		// TODO: maybe move the prompt to the read functions?
 		if a.inputError != "" {
-			fmt.Println("Error:", a.inputError)
+			a.uiBuffer.UpdateMessage([]string{a.inputError})
 			a.inputError = ""
 		}
 		if err := a.uiBuffer.Render(); err != nil {

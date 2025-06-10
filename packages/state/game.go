@@ -10,7 +10,6 @@ package state
 
 import (
 	"deckronomicon/packages/game/mtg"
-	"errors"
 	"strconv"
 )
 
@@ -87,17 +86,17 @@ func (g Game) GetPlayer(id string) (Player, bool) {
 }
 
 // TODO: THIS WILL BREAK WITH MORE THAN 2 PLAYERS
-func (g Game) GetOpponent(id string) (Player, error) {
+func (g Game) GetOpponent(id string) (Player, bool) {
 	if len(g.players) > 2 {
 		panic("GetOpponent is not implemented for more than 2 players")
 	}
 	opponentID := g.NextPlayerID(id)
 	for _, player := range g.players {
 		if player.id == opponentID {
-			return player, nil
+			return player, true
 		}
 	}
-	return Player{}, errors.New("opponent not found")
+	return Player{}, false
 }
 
 func (g Game) NextPlayerID(currentPlayerID string) string {

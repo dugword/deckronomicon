@@ -42,9 +42,7 @@ func (a PassPriorityAction) Complete(
 	env *ResolutionEnvironment,
 	choices []choose.Choice,
 ) ([]event.GameEvent, error) {
-	playerID := game.PriorityPlayerID()
 	return []event.GameEvent{event.PassPriorityEvent{
-		// TODO: Need to think about how this is managed
-		PlayerID: playerID,
+		PlayerID: a.player.ID(),
 	}}, nil
 }

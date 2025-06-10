@@ -1,7 +1,8 @@
 package engine
 
+// Engine manages the control flow of the game, including running turns, phases, and steps.
+
 import (
-	"deckronomicon/packages/choose"
 	"deckronomicon/packages/configs"
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/game/definition"
@@ -56,47 +57,6 @@ func NewEngine(config EngineConfig) *Engine {
 	}
 }
 
-func (e *Engine) ApplyAction(action Action) error {
-	choicePrompt, err := action.GetPrompt(e.game)
-	if err != nil {
-		return fmt.Errorf(
-			"error getting choice prompt for action %s: %w",
-			action.Name(),
-			err,
-		)
-	}
-	choices := []choose.Choice{}
-	if len(choicePrompt.Choices) != 0 {
-		cs, err := e.agents[action.PlayerID()].Choose(choicePrompt)
-		if err != nil {
-			return fmt.Errorf(
-				"error getting choices for action %s: %w",
-				action.Name(),
-				err,
-			)
-		}
-		choices = cs
-	}
-	evnts, err := action.Complete(e.game, e.resolutionEnvironment, choices)
-	if err != nil {
-		return fmt.Errorf(
-			"error completing action %s: %w",
-			action.Name(),
-			err,
-		)
-	}
-	for _, evnt := range evnts {
-		if err := e.Apply(evnt); err != nil {
-			return fmt.Errorf(
-				"error applying event %s: %w",
-				evnt.EventType(),
-				err,
-			)
-		}
-	}
-	return nil
-}
-
 func (e *Engine) RunGame() error {
 	e.log.IncludeContext = true
 	e.log.ContextFunc = func() any {
@@ -108,7 +68,7 @@ func (e *Engine) RunGame() error {
 		e.log.Debug("Setting up player deck:", playerID)
 		deckList, ok := e.deckLists[playerID]
 		if !ok {
-			return fmt.Errorf("deck list for player %s not found", playerID)
+			return fmt.Errorf("deck list for player %q not found", playerID)
 		}
 		newGame, deck, err := e.game.WithBuildDeck(
 			deckList,
@@ -116,7 +76,7 @@ func (e *Engine) RunGame() error {
 		)
 		if err != nil {
 			return fmt.Errorf(
-				"error building deck for player %s: %w",
+				"failed to build deck for player %q: %w",
 				playerID,
 				err,
 			)
@@ -124,34 +84,34 @@ func (e *Engine) RunGame() error {
 		e.game = newGame
 		player, ok := e.game.GetPlayer(playerID)
 		if !ok {
-			return fmt.Errorf("player '%s' not found", playerID)
+			return fmt.Errorf("player %q not found", playerID)
 		}
 		newPlayer := player.WithLibrary(state.NewLibrary(deck))
 		e.game = e.game.WithUpdatedPlayer(newPlayer)
 	}
 
 	e.log.Debug("Running game")
-	if err := e.Apply(event.NewBeginGameEvent()); err != nil {
-		return fmt.Errorf("error starting game: %w", err)
+	if err := e.Apply(event.BeginGameEvent{}); err != nil {
+		return fmt.Errorf("failed to start game: %w", err)
 	}
 	e.log.Debug("Shuffling decks")
 	for _, playerID := range e.game.PlayerIDsInTurnOrder() {
-		if err := e.Apply(event.NewShuffDeckEvent(playerID)); err != nil {
-			return fmt.Errorf("error shuffling decks: %w", err)
+		if err := e.Apply(event.ShuffleDeckEvent{PlayerID: playerID}); err != nil {
+			return fmt.Errorf("failed to shuffle decks for player %q: %w", playerID, err)
 		}
 	}
 	for _, playerID := range e.game.PlayerIDsInTurnOrder() {
 		e.log.Debug("Drawing starting hand for player:", playerID)
 		startingHandAction := DrawStartingHandAction{playerID: playerID}
-		if err := e.ApplyAction(startingHandAction); err != nil {
+		if err := e.CompleteAction(startingHandAction); err != nil {
 			return fmt.Errorf(
-				"error drawing starting hand for player %s: %w",
+				"failed to draw starting hand for player %q: %w",
 				playerID,
 				err,
 			)
 		}
 	}
-	// resovle mulligans
+	// resolve mulligans
 	for !e.game.IsGameOver() {
 		err := e.RunTurn()
 		if err != nil {
@@ -164,60 +124,63 @@ func (e *Engine) RunGame() error {
 func (e *Engine) RunTurn() error {
 	activePlayerID := e.game.ActivePlayerID()
 	e.log.Debug("Running turn for player: ", activePlayerID)
-	if err := e.Apply(event.NewBeginTurnEvent(activePlayerID)); err != nil {
-		return fmt.Errorf("error starting turn: %w", err)
+	if err := e.Apply(event.BeginTurnEvent{PlayerID: activePlayerID}); err != nil {
+		return fmt.Errorf("failed to start turn: %w", err)
 	}
 	for _, phase := range e.GamePhases() {
 		if err := e.RunPhase(phase); err != nil {
-			return fmt.Errorf("error running phase %s: %w", phase.name, err)
+			return fmt.Errorf("failed to run phase %s: %w", phase.name, err)
 		}
 	}
-	if err := e.Apply(event.NewEndTurnEvent()); err != nil {
-		return fmt.Errorf("error ending turn: %w", err)
+	if err := e.Apply(event.EndTurnEvent{PlayerID: activePlayerID}); err != nil {
+		return fmt.Errorf("failed to end turn: %w", err)
 	}
-	if err := e.Apply(event.SetNextPlayerEvent{}); err != nil {
-		return fmt.Errorf("error completing turn: %w", err)
+	// TODO: Not sure if I like this here
+	activePlayerID = e.game.NextPlayerID(activePlayerID)
+	// TODO: Move this to the start of the turn
+	if err := e.Apply(event.SetActivePlayerEvent{PlayerID: activePlayerID}); err != nil {
+		return fmt.Errorf("failed to complete turn: %w", err)
 	}
 	return nil
 }
 
 func (e *Engine) RunPhase(phase GamePhase) error {
 	e.log.Debug("Running phase:", phase.name)
-	if err := e.Apply(event.NewBeginPhaseEvent(phase.name)); err != nil {
-		return fmt.Errorf("error starting phase %s: %w", phase.name, err)
+	if err := e.Apply(event.NewBeginPhaseEvent(phase.name, e.game.ActivePlayerID())); err != nil {
+		return fmt.Errorf("failed to start phase %s: %w", phase.name, err)
 	}
 	for _, step := range phase.steps {
 		if err := e.RunStep(step); err != nil {
-			return fmt.Errorf("error running step %s: %w", step.name, err)
+			return fmt.Errorf("failed to run step %s: %w", step.name, err)
 		}
 	}
-	if err := e.Apply(event.NewEndPhaseEvent(phase.name)); err != nil {
-		return fmt.Errorf("error ending phase %s: %w", phase.name, err)
+	if err := e.Apply(event.NewEndPhaseEvent(phase.name, e.game.ActivePlayerID())); err != nil {
+		return fmt.Errorf("failed to end phase %s: %w", phase.name, err)
 	}
 	return nil
 }
 
 func (e *Engine) RunStep(step GameStep) error {
 	e.log.Debug("Running step:", step.name)
-	if err := e.Apply(event.NewBeginStepEvent(step.name)); err != nil {
-		return fmt.Errorf("error starting step %s: %w", step.name, err)
+	if err := e.Apply(event.NewBeginStepEvent(step.name, e.game.ActivePlayerID())); err != nil {
+		return fmt.Errorf("failed to start step %s: %w", step.name, err)
 	}
 	for _, action := range step.actions {
 		e.log.Debug("Completing action:", action.Name())
 
-		if err := e.ApplyAction(action); err != nil {
+		if err := e.CompleteAction(action); err != nil {
 			return fmt.Errorf(
-				"error applying action %s: %w",
+				"failed to apply action %s: %w",
 				action.Name(),
 				err,
 			)
 		}
 	}
 	if err := e.RunPriority(); err != nil {
-		return fmt.Errorf("error running priority: %w", err)
+		return fmt.Errorf("failed to run priority: %w", err)
 	}
-	if err := e.Apply(event.NewEndStepEvent(step.name)); err != nil {
-		return fmt.Errorf("error ending step %s: %w", step.name, err)
+	if err := e.Apply(event.NewEndStepEvent(step.name, e.game.ActivePlayerID())); err != nil {
+		return fmt.Errorf("failed to end step %s: %w", step.name, err)
 	}
 	return nil
 }
@@ -227,35 +190,42 @@ func (e *Engine) RunPriority() error {
 	if err := e.Apply(
 		event.ReceivePriorityEvent{PlayerID: priorityPlayerID},
 	); err != nil {
-		return fmt.Errorf("error applying receive priority event: %w", err)
+		return fmt.Errorf("failed to apply receive priority event: %w", err)
 	}
 	for !e.game.AllPlayersPassedPriority() {
 		priorityPlayerID = e.game.PriorityPlayerID()
-		e.log.Debugf("Player '%s' received priority", priorityPlayerID)
+		e.log.Debugf("Player %q received priority", priorityPlayerID)
 		agent := e.agents[priorityPlayerID]
 		action, err := agent.GetNextAction(e.game)
 		if err != nil {
 			return fmt.Errorf(
-				"error getting next action for player '%s': %w",
+				"failed to get next action for player %q: %w",
 				priorityPlayerID,
 				err,
 			)
 		}
-		if err := e.ApplyAction(action); err != nil {
+		if err := e.CompleteAction(action); err != nil {
 			return fmt.Errorf(
-				"error applying action for player '%s': %w",
+				"failed to apply action for player %q: %w",
 				priorityPlayerID,
 				err,
 			)
 		}
-		if !e.game.PlayerPassedPriority(priorityPlayerID) {
+		if e.game.PlayerPassedPriority(priorityPlayerID) {
+			nextPlayerIDWithPriority := e.game.NextPlayerID(priorityPlayerID)
+			if err := e.Apply(event.ReceivePriorityEvent{
+				PlayerID: nextPlayerIDWithPriority,
+			}); err != nil {
+				return fmt.Errorf("failed to apply receive priority event: %w", err)
+			}
+		} else {
 			if err := e.Apply(event.ResetPriorityPassesEvent{}); err != nil {
-				return fmt.Errorf("error resetting priority passes: %w", err)
+				return fmt.Errorf("failed to reset priority passes: %w", err)
 			}
 		}
 		if e.game.AllPlayersPassedPriority() {
 			if err := e.Apply(event.AllPlayersPassedPriorityEvent{}); err != nil {
-				return fmt.Errorf("error applying all players passed priority event: %w", err)
+				return fmt.Errorf("failed to apply all players passed priority event: %w", err)
 			}
 		}
 	}

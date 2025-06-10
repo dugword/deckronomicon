@@ -56,8 +56,10 @@ func payManaCost(c cost.ManaCost, game state.Game, player state.Player) ([]event
 
 func payTapCost(c cost.TapCost, game state.Game, player state.Player) ([]event.GameEvent, error) {
 	// Create an event to tap the permanent
-	fmt.Println("Tapping permanent:", c.Permanent().ID())
 	return []event.GameEvent{
-		event.NewTapPermanentEvent(c.Permanent().ID()),
+		event.TapPermanentEvent{
+			PlayerID:    player.ID(),
+			PermanentID: c.Permanent().ID(),
+		},
 	}, nil
 }

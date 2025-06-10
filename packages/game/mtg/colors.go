@@ -46,9 +46,9 @@ type Colors struct {
 func StringsToColors(ss []string) (Colors, error) {
 	colors := Colors{}
 	for _, s := range ss {
-		color, err := StringToColor(string(s))
+		color, err := StringToColor(s)
 		if err != nil {
-			return Colors{}, fmt.Errorf("failed to parse color: %w", err)
+			return Colors{}, fmt.Errorf("failed to parse color %q: %w", s, err)
 		}
 		switch color {
 		case ColorBlack:

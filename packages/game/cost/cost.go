@@ -92,14 +92,12 @@ func ParseCost(costString string, source query.Object) (Cost, error) {
 		trimmed := strings.TrimSpace(part)
 		switch {
 		case isTapCost(trimmed):
-			fmt.Println("Found tap cost:", trimmed)
 			costs = append(costs, TapCost{permanent: source.(gob.Permanent)})
 		default:
-			return nil, fmt.Errorf("unknown cost '%s'", trimmed)
+			return nil, fmt.Errorf("unknown cost %q", trimmed)
 		}
 	}
 	if len(costs) == 1 {
-		fmt.Println("Returning single cost:", costs[0])
 		return costs[0], nil
 	}
 	return CompositeCost{costs: costs}, nil

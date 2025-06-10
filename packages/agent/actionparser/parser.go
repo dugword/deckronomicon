@@ -82,6 +82,6 @@ func (p *CommandParser) ParseInput(
 	case "view":
 		return parseViewCommand(command, args, getChoices, game, player)
 	default:
-		return nil, fmt.Errorf("unrecognized command '%s'", command)
+		return nil, fmt.Errorf("unrecognized command %q", command)
 	}
 }

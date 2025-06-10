@@ -72,16 +72,16 @@ func (a DrawStartingHandAction) Complete(
 	// For now, we return an empty event as a placeholder.
 	player, ok := game.GetPlayer(a.PlayerID())
 	if !ok {
-		return nil, fmt.Errorf("player '%s' not found", a.PlayerID())
+		return nil, fmt.Errorf("player %q not found", a.PlayerID())
 	}
 	// Draw the starting hand, which is typically 7 cards, but can be
 	// different.
 	var drawEvents []event.GameEvent
 	for range player.MaxHandSize() {
-		drawEvents = append(drawEvents, event.NewDrawCardEvent(a.PlayerID()))
+		drawEvents = append(drawEvents, event.DrawCardEvent{PlayerID: a.PlayerID()})
 	}
 	return append([]event.GameEvent{
-			event.NewDrawStartingHandEvent(a.PlayerID()),
+			event.DrawStartingHandEvent{PlayerID: a.PlayerID()},
 		}, drawEvents...),
 		nil
 }
@@ -113,7 +113,7 @@ func (a PhaseInPhaseOutAction) GetPrompt(game state.Game) (choose.ChoicePrompt, 
 
 func (a PhaseInPhaseOutAction) Complete(game state.Game, env *ResolutionEnvironment, choices []choose.Choice) ([]event.GameEvent, error) {
 	return []event.GameEvent{
-		event.NewPhaseInPhaseOutEvent(a.PlayerID()),
+		event.PhaseInPhaseOutEvent{PlayerID: a.PlayerID()},
 	}, nil
 }
 
@@ -146,7 +146,7 @@ func (a CheckDayNightAction) Complete(game state.Game, env *ResolutionEnvironmen
 	// This action would typically involve checking the game state to see if the day/night designation should change.
 	// For now, we return an empty event as a placeholder.
 	return []event.GameEvent{
-		event.NewCheckDayNightEvent(a.PlayerID()),
+		event.CheckDayNightEvent{PlayerID: a.PlayerID()},
 	}, nil
 }
 
@@ -179,7 +179,7 @@ func (a UntapAction) GetPrompt(game state.Game) (choose.ChoicePrompt, error) {
 
 func (a UntapAction) Complete(state.Game, *ResolutionEnvironment, []choose.Choice) ([]event.GameEvent, error) {
 	return []event.GameEvent{
-		event.NewUntapAllEvent(a.PlayerID()),
+		event.UntapAllEvent{PlayerID: a.PlayerID()},
 	}, nil
 }
 
@@ -212,7 +212,7 @@ func (a UpkeepAction) Complete(game state.Game, env *ResolutionEnvironment, choi
 	// This action would typically involve the player performing any upkeep actions.
 	// For now, we return an empty event as a placeholder.
 	return []event.GameEvent{
-		event.NewUpkeepEvent(a.PlayerID()),
+		event.UpkeepEvent{PlayerID: a.PlayerID()},
 	}, nil
 }
 
@@ -339,7 +339,7 @@ func (a CombatDamageAction) Complete(state.Game, *ResolutionEnvironment, []choos
 	// This action would typically involve the player assigning combat damage.
 	// For now, we return an empty event as a placeholder.
 	return []event.GameEvent{
-		event.CombatDamageEvent{},
+		event.AssignCombatDamageEvent{PlayerID: a.PlayerID()},
 	}, nil
 }
 
@@ -359,10 +359,11 @@ func (a DiscardToHandSizeAction) Description() string {
 	return "The active player discards down to their maximum hand size."
 }
 
+// TODO This should move to the player agent
 func (a DiscardToHandSizeAction) GetPrompt(game state.Game) (choose.ChoicePrompt, error) {
 	player, ok := game.GetPlayer(a.PlayerID())
 	if !ok {
-		return choose.ChoicePrompt{}, fmt.Errorf("player '%s' not found", a.PlayerID())
+		return choose.ChoicePrompt{}, fmt.Errorf("player %q not found", a.PlayerID())
 	}
 	hand := player.Hand()
 	excess := hand.Size() - player.MaxHandSize()
@@ -394,7 +395,6 @@ func (a DiscardToHandSizeAction) Complete(
 		}
 		discardEvents = append(discardEvents, event.DiscardCardEvent{
 			PlayerID: a.PlayerID(),
-			Source:   a,
 			CardID:   choice.ID(),
 		})
 	}
@@ -430,7 +430,7 @@ func (a RemoveDamageAction) Complete(game state.Game, env *ResolutionEnvironment
 	// This action would typically involve removing all damage from permanents and ending all "until end of turn" effects.
 	// For now, we return an empty event as a placeholder.
 	return []event.GameEvent{
-		event.NewRemoveDamageEvent(a.PlayerID()),
+		event.RemoveDamageEvent{PlayerID: a.PlayerID()},
 	}, nil
 }
 
@@ -461,6 +461,6 @@ func (a ProgressSagaAction) GetPrompt(game state.Game) (choose.ChoicePrompt, err
 
 func (a ProgressSagaAction) Complete(state.Game, *ResolutionEnvironment, []choose.Choice) ([]event.GameEvent, error) {
 	return []event.GameEvent{
-		event.NewProgressSagaEvent(a.PlayerID()),
+		event.ProgressSagaEvent{PlayerID: a.PlayerID()},
 	}, nil
 }

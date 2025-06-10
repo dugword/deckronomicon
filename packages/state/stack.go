@@ -1,6 +1,7 @@
 package state
 
 import (
+	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/add"
@@ -13,7 +14,7 @@ type Resolvable interface {
 	Description() string
 	ID() string
 	Name() string
-	Resolve(game Game, player Player) error
+	Effects() []gob.Effect
 	Match(p query.Predicate) bool
 }
 
@@ -28,8 +29,8 @@ func NewStack() Stack {
 	return stack
 }
 
-func (s Stack) Add(resolvable Resolvable) (Stack, bool) {
-	return Stack{resolvables: add.Item(s.resolvables, resolvable)}, true
+func (s Stack) Add(resolvable Resolvable) Stack {
+	return Stack{resolvables: add.Item(s.resolvables, resolvable)}
 }
 
 func (s Stack) Get(id string) (Resolvable, bool) {

@@ -24,9 +24,10 @@ type CardPlacer interface {
 
 // Spell represents a spell object on the stack.
 type Spell struct {
-	card      Card
-	cardTypes []mtg.CardType
-	colors    mtg.Colors
+	card       Card
+	cardTypes  []mtg.CardType
+	colors     mtg.Colors
+	controller string
 	//flashback bool
 	id      string
 	loyalty int
@@ -42,13 +43,14 @@ type Spell struct {
 }
 
 // NewSpell creates a new Spell instance from a Card.
-func NewSpell(id string, card Card) (Spell, error) {
+func NewSpell(id string, card Card, playerID string) (Spell, error) {
 	spell := Spell{
-		card:      card,
-		cardTypes: card.CardTypes(),
-		colors:    card.Colors(),
-		id:        id,
-		loyalty:   card.Loyalty(),
+		card:       card,
+		cardTypes:  card.CardTypes(),
+		colors:     card.Colors(),
+		controller: playerID,
+		id:         id,
+		loyalty:    card.Loyalty(),
 		//manaCost:        card.ManaCost(),
 		name:            card.Name(),
 		power:           card.Power(),
@@ -73,6 +75,10 @@ func (s Spell) CardTypes() []mtg.CardType {
 // Colors returns the colors of the spell.
 func (s Spell) Colors() mtg.Colors {
 	return s.colors
+}
+
+func (s Spell) Controller() string {
+	return s.controller
 }
 
 // Effects returns the effects of the spell.
@@ -119,8 +125,8 @@ func (s *Spell) ManaValue() int {
 }
 */
 
-func (s Spell) Match(p query.Predicate) bool {
-	return p(s)
+func (s Spell) Match(predicate query.Predicate) bool {
+	return predicate(s)
 }
 
 // Name returns the name of the spell.
@@ -133,8 +139,7 @@ func (s Spell) Power() int {
 	return s.power
 }
 
-/*
-func (s *Spell) Resolve(state ore.State, player core.Player) error {
+/* // func Resolve
 	// TODO: Do I need to check for effects here?
 	if s.Effects == nil && s.card.Match(is.Permanent()) {
 		permanent, err := NewPermanent(s.card, state, player)

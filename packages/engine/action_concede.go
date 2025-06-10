@@ -4,6 +4,7 @@ import (
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/state"
+	"fmt"
 )
 
 type ConcedeAction struct {
@@ -42,7 +43,12 @@ func (a ConcedeAction) Complete(
 	env *ResolutionEnvironment,
 	choices []choose.Choice,
 ) ([]event.GameEvent, error) {
-	return []event.GameEvent{event.ConcedeEvent{
-		PlayerID: a.player.ID(),
-	}}, nil
+	opponent, ok := game.GetOpponent(a.player.ID())
+	if !ok {
+		return nil, fmt.Errorf("opponent for player %q not found", a.player.ID())
+	}
+	return []event.GameEvent{
+		event.ConcedeEvent{PlayerID: a.player.ID()},
+		event.EndGameEvent{WinnerID: opponent.ID()},
+	}, nil
 }

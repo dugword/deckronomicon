@@ -58,25 +58,25 @@ func (g Game) WithResetPriorityPasses() Game {
 }
 
 func (g Game) WithPlayerPassedPriority(playerID string) Game {
-	newPlayersPassedPriority := map[string]bool{}
+	playersPassedPriority := map[string]bool{}
 	for pID := range g.playersPassedPriority {
-		newPlayersPassedPriority[pID] = g.playersPassedPriority[pID]
+		playersPassedPriority[pID] = g.playersPassedPriority[pID]
 	}
-	newPlayersPassedPriority[playerID] = true
-	g.playersPassedPriority = newPlayersPassedPriority
+	playersPassedPriority[playerID] = true
+	g.playersPassedPriority = playersPassedPriority
 	return g
 }
 
 func (g Game) WithUpdatedPlayer(player Player) Game {
-	var newPlayers []Player
+	var players []Player
 	for _, p := range g.players {
 		if p.id == player.id {
-			newPlayers = append(newPlayers, player)
+			players = append(players, player)
 			continue
 		}
-		newPlayers = append(newPlayers, p)
+		players = append(players, p)
 	}
-	g.players = newPlayers
+	g.players = players
 	return g
 }
 
@@ -86,12 +86,33 @@ func (g Game) WithBattlefield(battlefield Battlefield) Game {
 }
 
 func (g Game) WithPutCardOnBattlefield(card gob.Card, playerID string) (Game, error) {
-	id, newGame := g.GetNextID()
+	id, game := g.GetNextID()
 	permanent, err := gob.NewPermanent(id, card, playerID)
 	if err != nil {
-		return newGame, err
+		return game, err
 	}
-	newBattlefield := newGame.battlefield.Add(permanent)
-	newerGame := newGame.WithBattlefield(newBattlefield)
-	return newerGame, nil
+	battlefield := game.battlefield.Add(permanent)
+	game = game.WithBattlefield(battlefield)
+	return game, nil
+}
+
+func (g Game) WithStack(stack Stack) Game {
+	g.stack = stack
+	return g
+}
+
+func (g Game) WithPutCardOnStack(card gob.Card, playerID string) (Game, error) {
+	id, game := g.GetNextID()
+	spell, err := gob.NewSpell(
+		id,
+		card,
+		playerID,
+	)
+	if err != nil {
+		return game, err
+	}
+
+	stack := game.stack.Add(spell)
+	game = game.WithStack(stack)
+	return game, nil
 }

@@ -3,6 +3,16 @@ package event
 import "deckronomicon/packages/game/mtg"
 
 const (
+	EventTypeBeginGame = "BeginGame"
+	EventTypeEndGame   = "EndGame"
+)
+
+const (
+	EventTypeBeginTurn = "BeginTurn"
+	EventTypeEndTurn   = "EndTurn"
+)
+
+const (
 	// Beginning Phase
 	EventTypeBeginBeginningPhase = "BeginBeginningPhase"
 	EventTypeEndBeginningPhase   = "EndBeginningPhase"
@@ -56,40 +66,82 @@ const (
 	EventTypeEndCleanupStep   = "EndCleanupStep"
 )
 
-type TurnEvent interface {
-	isTurnEvent()
+type GameLifecycleEvent interface{ isGameLifecycleEvent() }
+
+type GameLifecycleBaseEvent struct{}
+
+func (GameLifecycleBaseEvent) isGameLifecycleEvent() {}
+
+type TurnEvent interface{ isTurnEvent() }
+
+type TurnBaseEvent struct {
+	GameLifecycleBaseEvent
 }
 
-type BeginPhaseEvent interface {
-	isBeginPhaseEvent()
+func (e TurnBaseEvent) isTurnEvent() {}
+
+type BeginPhaseEvent interface{ isBeginPhaseEvent() }
+
+type BeginPhaseBaseEvent struct{ TurnBaseEvent }
+
+func (e BeginPhaseBaseEvent) isBeginPhaseEvent() {}
+
+type EndPhaseEvent interface{ isEndPhaseEvent() }
+
+type EndPhaseBaseEvent struct{ TurnBaseEvent }
+
+func (e EndPhaseBaseEvent) isEndPhaseEvent() {}
+
+type BeginStepEvent interface{ isBeginStepEvent() }
+
+type BeginStepBaseEvent struct{ TurnBaseEvent }
+
+func (e BeginStepBaseEvent) isBeginStepEvent() {}
+
+type EndStepEvent interface{ isEndStepEvent() }
+
+type EndStepBaseEvent struct{ TurnBaseEvent }
+
+func (e EndStepBaseEvent) isEndStepEvent() {}
+
+type BeginGameEvent struct {
+	GameLifecycleBaseEvent
 }
 
-type EndPhaseEvent interface {
-	isEndPhaseEvent()
+func (e BeginGameEvent) EventType() string {
+	return EventTypeBeginGame
 }
 
-type BeginStepEvent interface {
-	isBeginStepEvent()
+type EndGameEvent struct {
+	GameLifecycleBaseEvent
+	WinnerID string
 }
 
-type EndStepEvent interface {
-	isEndStepEvent()
+func (e EndGameEvent) EventType() string {
+	return EventTypeEndGame
 }
 
-type TurnEventBase struct {
+type BeginTurnEvent struct {
+	TurnBaseEvent
 	PlayerID string
 }
 
-func (e TurnEventBase) isTurnEvent() {}
-
-type BeginPhaseEventBase struct {
-	TurnEventBase
+func (e BeginTurnEvent) EventType() string {
+	return EventTypeBeginTurn
 }
 
-func (e BeginPhaseEventBase) isBeginPhaseEvent() {}
+type EndTurnEvent struct {
+	TurnBaseEvent
+	PlayerID string
+}
+
+func (e EndTurnEvent) EventType() string {
+	return EventTypeEndTurn
+}
 
 type BeginBeginningPhaseEvent struct {
-	BeginPhaseEventBase
+	BeginPhaseBaseEvent
+	PlayerID string
 }
 
 func (e BeginBeginningPhaseEvent) EventType() string {
@@ -97,7 +149,8 @@ func (e BeginBeginningPhaseEvent) EventType() string {
 }
 
 type BeginPrecombatMainPhaseEvent struct {
-	BeginPhaseEventBase
+	BeginPhaseBaseEvent
+	PlayerID string
 }
 
 func (e BeginPrecombatMainPhaseEvent) EventType() string {
@@ -105,7 +158,8 @@ func (e BeginPrecombatMainPhaseEvent) EventType() string {
 }
 
 type BeginCombatPhaseEvent struct {
-	BeginPhaseEventBase
+	BeginPhaseBaseEvent
+	PlayerID string
 }
 
 func (e BeginCombatPhaseEvent) EventType() string {
@@ -113,7 +167,8 @@ func (e BeginCombatPhaseEvent) EventType() string {
 }
 
 type BeginPostcombatMainPhaseEvent struct {
-	BeginPhaseEventBase
+	BeginPhaseBaseEvent
+	PlayerID string
 }
 
 func (e BeginPostcombatMainPhaseEvent) EventType() string {
@@ -121,21 +176,17 @@ func (e BeginPostcombatMainPhaseEvent) EventType() string {
 }
 
 type BeginEndingPhaseEvent struct {
-	BeginPhaseEventBase
+	BeginPhaseBaseEvent
+	PlayerID string
 }
 
 func (e BeginEndingPhaseEvent) EventType() string {
 	return EventTypeBeginEndingPhase
 }
 
-type EndPhaseEventBase struct {
-	TurnEventBase
-}
-
-func (e EndPhaseEventBase) isEndPhaseEvent() {}
-
 type EndBeginningPhaseEvent struct {
-	EndPhaseEventBase
+	EndPhaseBaseEvent
+	PlayerID string
 }
 
 func (e EndBeginningPhaseEvent) EventType() string {
@@ -143,7 +194,8 @@ func (e EndBeginningPhaseEvent) EventType() string {
 }
 
 type EndPrecombatMainPhaseEvent struct {
-	EndPhaseEventBase
+	EndPhaseBaseEvent
+	PlayerID string
 }
 
 func (e EndPrecombatMainPhaseEvent) EventType() string {
@@ -151,7 +203,8 @@ func (e EndPrecombatMainPhaseEvent) EventType() string {
 }
 
 type EndCombatPhaseEvent struct {
-	EndPhaseEventBase
+	EndPhaseBaseEvent
+	PlayerID string
 }
 
 func (e EndCombatPhaseEvent) EventType() string {
@@ -159,7 +212,8 @@ func (e EndCombatPhaseEvent) EventType() string {
 }
 
 type EndPostcombatMainPhaseEvent struct {
-	EndPhaseEventBase
+	EndPhaseBaseEvent
+	PlayerID string
 }
 
 func (e EndPostcombatMainPhaseEvent) EventType() string {
@@ -167,27 +221,17 @@ func (e EndPostcombatMainPhaseEvent) EventType() string {
 }
 
 type EndEndingPhaseEvent struct {
-	EndPhaseEventBase
+	EndPhaseBaseEvent
+	PlayerID string
 }
 
 func (e EndEndingPhaseEvent) EventType() string {
 	return EventTypeEndEndingPhase
 }
 
-type BeginStepEventBase struct {
-	TurnEventBase
-}
-
-func (e BeginStepEventBase) isBeginStepEvent() {}
-
-type EndStepEventBase struct {
-	TurnEventBase
-}
-
-func (e EndStepEventBase) isEndStepEvent() {}
-
 type BeginUntapStepEvent struct {
-	BeginStepEventBase
+	BeginStepBaseEvent
+	PlayerID string
 }
 
 func (e BeginUntapStepEvent) EventType() string {
@@ -195,7 +239,8 @@ func (e BeginUntapStepEvent) EventType() string {
 }
 
 type EndUntapStepEvent struct {
-	EndStepEventBase
+	EndStepBaseEvent
+	PlayerID string
 }
 
 func (e EndUntapStepEvent) EventType() string {
@@ -203,7 +248,8 @@ func (e EndUntapStepEvent) EventType() string {
 }
 
 type BeginUpkeepStepEvent struct {
-	BeginStepEventBase
+	BeginStepBaseEvent
+	PlayerID string
 }
 
 func (e BeginUpkeepStepEvent) EventType() string {
@@ -211,7 +257,8 @@ func (e BeginUpkeepStepEvent) EventType() string {
 }
 
 type EndUpkeepStepEvent struct {
-	EndStepEventBase
+	EndStepBaseEvent
+	PlayerID string
 }
 
 func (e EndUpkeepStepEvent) EventType() string {
@@ -219,7 +266,8 @@ func (e EndUpkeepStepEvent) EventType() string {
 }
 
 type BeginDrawStepEvent struct {
-	BeginStepEventBase
+	BeginStepBaseEvent
+	PlayerID string
 }
 
 func (e BeginDrawStepEvent) EventType() string {
@@ -227,7 +275,8 @@ func (e BeginDrawStepEvent) EventType() string {
 }
 
 type EndDrawStepEvent struct {
-	EndStepEventBase
+	EndStepBaseEvent
+	PlayerID string
 }
 
 func (e EndDrawStepEvent) EventType() string {
@@ -235,7 +284,8 @@ func (e EndDrawStepEvent) EventType() string {
 }
 
 type BeginPrecombatMainStepEvent struct {
-	BeginStepEventBase
+	BeginStepBaseEvent
+	PlayerID string
 }
 
 func (e BeginPrecombatMainStepEvent) EventType() string {
@@ -243,7 +293,8 @@ func (e BeginPrecombatMainStepEvent) EventType() string {
 }
 
 type EndPrecombatMainStepEvent struct {
-	EndStepEventBase
+	EndStepBaseEvent
+	PlayerID string
 }
 
 func (e EndPrecombatMainStepEvent) EventType() string {
@@ -251,7 +302,8 @@ func (e EndPrecombatMainStepEvent) EventType() string {
 }
 
 type BeginBeginningOfCombatStepEvent struct {
-	BeginStepEventBase
+	BeginStepBaseEvent
+	PlayerID string
 }
 
 func (e BeginBeginningOfCombatStepEvent) EventType() string {
@@ -259,7 +311,8 @@ func (e BeginBeginningOfCombatStepEvent) EventType() string {
 }
 
 type EndBeginningOfCombatStepEvent struct {
-	EndStepEventBase
+	EndStepBaseEvent
+	PlayerID string
 }
 
 func (e EndBeginningOfCombatStepEvent) EventType() string {
@@ -267,7 +320,8 @@ func (e EndBeginningOfCombatStepEvent) EventType() string {
 }
 
 type BeginDeclareAttackersStepEvent struct {
-	BeginStepEventBase
+	BeginStepBaseEvent
+	PlayerID string
 }
 
 func (e BeginDeclareAttackersStepEvent) EventType() string {
@@ -275,7 +329,8 @@ func (e BeginDeclareAttackersStepEvent) EventType() string {
 }
 
 type EndDeclareAttackersStepEvent struct {
-	EndStepEventBase
+	EndStepBaseEvent
+	PlayerID string
 }
 
 func (e EndDeclareAttackersStepEvent) EventType() string {
@@ -283,7 +338,8 @@ func (e EndDeclareAttackersStepEvent) EventType() string {
 }
 
 type BeginDeclareBlockersStepEvent struct {
-	BeginStepEventBase
+	BeginStepBaseEvent
+	PlayerID string
 }
 
 func (e BeginDeclareBlockersStepEvent) EventType() string {
@@ -291,7 +347,8 @@ func (e BeginDeclareBlockersStepEvent) EventType() string {
 }
 
 type EndDeclareBlockersStepEvent struct {
-	EndStepEventBase
+	EndStepBaseEvent
+	PlayerID string
 }
 
 func (e EndDeclareBlockersStepEvent) EventType() string {
@@ -299,7 +356,8 @@ func (e EndDeclareBlockersStepEvent) EventType() string {
 }
 
 type BeginCombatDamageStepEvent struct {
-	BeginStepEventBase
+	BeginStepBaseEvent
+	PlayerID string
 }
 
 func (e BeginCombatDamageStepEvent) EventType() string {
@@ -307,7 +365,8 @@ func (e BeginCombatDamageStepEvent) EventType() string {
 }
 
 type EndCombatDamageStepEvent struct {
-	EndStepEventBase
+	EndStepBaseEvent
+	PlayerID string
 }
 
 func (e EndCombatDamageStepEvent) EventType() string {
@@ -315,7 +374,8 @@ func (e EndCombatDamageStepEvent) EventType() string {
 }
 
 type BeginEndOfCombatStepEvent struct {
-	BeginStepEventBase
+	BeginStepBaseEvent
+	PlayerID string
 }
 
 func (e BeginEndOfCombatStepEvent) EventType() string {
@@ -323,7 +383,8 @@ func (e BeginEndOfCombatStepEvent) EventType() string {
 }
 
 type EndEndOfCombatStepEvent struct {
-	EndStepEventBase
+	EndStepBaseEvent
+	PlayerID string
 }
 
 func (e EndEndOfCombatStepEvent) EventType() string {
@@ -331,7 +392,8 @@ func (e EndEndOfCombatStepEvent) EventType() string {
 }
 
 type BeginPostcombatMainStepEvent struct {
-	BeginStepEventBase
+	BeginStepBaseEvent
+	PlayerID string
 }
 
 func (e BeginPostcombatMainStepEvent) EventType() string {
@@ -339,7 +401,8 @@ func (e BeginPostcombatMainStepEvent) EventType() string {
 }
 
 type EndPostcombatMainStepEvent struct {
-	EndStepEventBase
+	EndStepBaseEvent
+	PlayerID string
 }
 
 func (e EndPostcombatMainStepEvent) EventType() string {
@@ -347,7 +410,8 @@ func (e EndPostcombatMainStepEvent) EventType() string {
 }
 
 type BeginEndStepEvent struct {
-	BeginStepEventBase
+	BeginStepBaseEvent
+	PlayerID string
 }
 
 func (e BeginEndStepEvent) EventType() string {
@@ -355,7 +419,8 @@ func (e BeginEndStepEvent) EventType() string {
 }
 
 type EndEndStepEvent struct {
-	EndStepEventBase
+	EndStepBaseEvent
+	PlayerID string
 }
 
 func (e EndEndStepEvent) EventType() string {
@@ -363,7 +428,8 @@ func (e EndEndStepEvent) EventType() string {
 }
 
 type BeginCleanupStepEvent struct {
-	BeginStepEventBase
+	BeginStepBaseEvent
+	PlayerID string
 }
 
 func (e BeginCleanupStepEvent) EventType() string {
@@ -371,105 +437,106 @@ func (e BeginCleanupStepEvent) EventType() string {
 }
 
 type EndCleanupStepEvent struct {
-	EndStepEventBase
+	EndStepBaseEvent
+	PlayerID string
 }
 
 func (e EndCleanupStepEvent) EventType() string {
 	return EventTypeEndCleanupStep
 }
 
-func NewBeginStepEvent(step mtg.Step) GameEvent {
+func NewBeginStepEvent(step mtg.Step, playerID string) GameEvent {
 	switch step {
 	case mtg.StepUntap:
-		return BeginUntapStepEvent{}
+		return BeginUntapStepEvent{PlayerID: playerID}
 	case mtg.StepUpkeep:
-		return BeginUpkeepStepEvent{}
+		return BeginUpkeepStepEvent{PlayerID: playerID}
 	case mtg.StepDraw:
-		return BeginDrawStepEvent{}
+		return BeginDrawStepEvent{PlayerID: playerID}
 	case mtg.StepPrecombatMain:
-		return BeginPrecombatMainStepEvent{}
+		return BeginPrecombatMainStepEvent{PlayerID: playerID}
 	case mtg.StepBeginningOfCombat:
-		return BeginBeginningOfCombatStepEvent{}
+		return BeginBeginningOfCombatStepEvent{PlayerID: playerID}
 	case mtg.StepDeclareAttackers:
-		return BeginDeclareAttackersStepEvent{}
+		return BeginDeclareAttackersStepEvent{PlayerID: playerID}
 	case mtg.StepDeclareBlockers:
-		return BeginDeclareBlockersStepEvent{}
+		return BeginDeclareBlockersStepEvent{PlayerID: playerID}
 	case mtg.StepCombatDamage:
-		return BeginCombatDamageStepEvent{}
+		return BeginCombatDamageStepEvent{PlayerID: playerID}
 	case mtg.StepEndOfCombat:
-		return BeginEndOfCombatStepEvent{}
+		return BeginEndOfCombatStepEvent{PlayerID: playerID}
 	case mtg.StepPostcombatMain:
-		return BeginPostcombatMainStepEvent{}
+		return BeginPostcombatMainStepEvent{PlayerID: playerID}
 	case mtg.StepEnd:
-		return BeginEndStepEvent{}
+		return BeginEndStepEvent{PlayerID: playerID}
 	case mtg.StepCleanup:
-		return BeginCleanupStepEvent{}
+		return BeginCleanupStepEvent{PlayerID: playerID}
 	default:
 		panic("unknown step")
 	}
 }
 
-func NewEndStepEvent(step mtg.Step) GameEvent {
+func NewEndStepEvent(step mtg.Step, playerID string) GameEvent {
 	switch step {
 	case mtg.StepUntap:
-		return EndUntapStepEvent{}
+		return EndUntapStepEvent{PlayerID: playerID}
 	case mtg.StepUpkeep:
-		return EndUpkeepStepEvent{}
+		return EndUpkeepStepEvent{PlayerID: playerID}
 	case mtg.StepDraw:
-		return EndDrawStepEvent{}
+		return EndDrawStepEvent{PlayerID: playerID}
 	case mtg.StepPrecombatMain:
-		return EndPrecombatMainStepEvent{}
+		return EndPrecombatMainStepEvent{PlayerID: playerID}
 	case mtg.StepBeginningOfCombat:
-		return EndBeginningOfCombatStepEvent{}
+		return EndBeginningOfCombatStepEvent{PlayerID: playerID}
 	case mtg.StepDeclareAttackers:
-		return EndDeclareAttackersStepEvent{}
+		return EndDeclareAttackersStepEvent{PlayerID: playerID}
 	case mtg.StepDeclareBlockers:
-		return EndDeclareBlockersStepEvent{}
+		return EndDeclareBlockersStepEvent{PlayerID: playerID}
 	case mtg.StepCombatDamage:
-		return EndCombatDamageStepEvent{}
+		return EndCombatDamageStepEvent{PlayerID: playerID}
 	case mtg.StepEndOfCombat:
-		return EndEndOfCombatStepEvent{}
+		return EndEndOfCombatStepEvent{PlayerID: playerID}
 	case mtg.StepPostcombatMain:
-		return EndPostcombatMainStepEvent{}
+		return EndPostcombatMainStepEvent{PlayerID: playerID}
 	case mtg.StepEnd:
-		return EndEndStepEvent{}
+		return EndEndStepEvent{PlayerID: playerID}
 	case mtg.StepCleanup:
-		return EndCleanupStepEvent{}
+		return EndCleanupStepEvent{PlayerID: playerID}
 	default:
 		panic("unknown step")
 	}
 }
 
 // TODO Should this return a BeginPhaseEvent?
-func NewBeginPhaseEvent(phase mtg.Phase) GameEvent {
+func NewBeginPhaseEvent(phase mtg.Phase, playerID string) GameEvent {
 	switch phase {
 	case mtg.PhaseBeginning:
-		return BeginBeginningPhaseEvent{}
+		return BeginBeginningPhaseEvent{PlayerID: playerID}
 	case mtg.PhasePrecombatMain:
-		return BeginPrecombatMainPhaseEvent{}
+		return BeginPrecombatMainPhaseEvent{PlayerID: playerID}
 	case mtg.PhaseCombat:
-		return BeginCombatPhaseEvent{}
+		return BeginCombatPhaseEvent{PlayerID: playerID}
 	case mtg.PhasePostcombatMain:
-		return BeginPostcombatMainPhaseEvent{}
+		return BeginPostcombatMainPhaseEvent{PlayerID: playerID}
 	case mtg.PhaseEnding:
-		return BeginEndingPhaseEvent{}
+		return BeginEndingPhaseEvent{PlayerID: playerID}
 	default:
 		panic("unknown phase")
 	}
 }
 
-func NewEndPhaseEvent(phase mtg.Phase) GameEvent {
+func NewEndPhaseEvent(phase mtg.Phase, playerID string) GameEvent {
 	switch phase {
 	case mtg.PhaseBeginning:
-		return EndBeginningPhaseEvent{}
+		return EndBeginningPhaseEvent{PlayerID: playerID}
 	case mtg.PhasePrecombatMain:
-		return EndPrecombatMainPhaseEvent{}
+		return EndPrecombatMainPhaseEvent{PlayerID: playerID}
 	case mtg.PhaseCombat:
-		return EndCombatPhaseEvent{}
+		return EndCombatPhaseEvent{PlayerID: playerID}
 	case mtg.PhasePostcombatMain:
-		return EndPostcombatMainPhaseEvent{}
+		return EndPostcombatMainPhaseEvent{PlayerID: playerID}
 	case mtg.PhaseEnding:
-		return EndEndingPhaseEvent{}
+		return EndEndingPhaseEvent{PlayerID: playerID}
 	default:
 		panic("unknown phase")
 	}

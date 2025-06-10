@@ -2,38 +2,26 @@ package event
 
 const (
 	EventTypeAllPlayersPassedPriority = "AllPlayersPassedPriority"
-	EventTypePassPriority             = "PassPriority"
 	EventTypeReceivePriorityEvent     = "ReceivePriorityEvent"
 	EventTypeResetPriorityPasses      = "ResetPriorityPasses"
 )
 
-type PriorityEvent interface {
-	isPriorityEvent()
-}
+type PriorityEvent interface{ isPriorityEvent() }
 
-type priorityEvent struct{}
+type PriorityBaseEvent struct{}
 
-func (e priorityEvent) isPriorityEvent() {}
+func (e PriorityBaseEvent) isPriorityEvent() {}
 
 type AllPlayersPassedPriorityEvent struct {
-	priorityEvent
+	PriorityBaseEvent
 }
 
 func (e AllPlayersPassedPriorityEvent) EventType() string {
 	return EventTypeAllPlayersPassedPriority
 }
 
-type PassPriorityEvent struct {
-	priorityEvent
-	PlayerID string
-}
-
-func (e PassPriorityEvent) EventType() string {
-	return EventTypePassPriority
-}
-
 type ReceivePriorityEvent struct {
-	priorityEvent
+	PriorityBaseEvent
 	PlayerID string
 }
 
@@ -42,7 +30,7 @@ func (e ReceivePriorityEvent) EventType() string {
 }
 
 type ResetPriorityPassesEvent struct {
-	priorityEvent
+	PriorityBaseEvent
 }
 
 func (e ResetPriorityPassesEvent) EventType() string {

@@ -81,20 +81,20 @@ func LoadCardDefinitions(path string) (map[string]Card, error) {
 		}
 		data, err := os.ReadFile(path)
 		if err != nil {
-			return fmt.Errorf("failed to read card file at '%s': %w", path, err)
+			return fmt.Errorf("failed to read card file at %q: %w", path, err)
 		}
 		var card Card
 		if err := json.Unmarshal(data, &card); err != nil {
-			return fmt.Errorf("failed to unmarshal card data in '%s': %w", path, err)
+			return fmt.Errorf("failed to unmarshal card data in %q: %w", path, err)
 		}
 		if _, ok := definitions[card.Name]; ok {
-			return fmt.Errorf("duplicate card name detected in '%s': %s", path, card.Name)
+			return fmt.Errorf("duplicate card name detected in %q: %s", path, card.Name)
 		}
 		definitions[card.Name] = card
 		return nil
 	}
 	if err := filepath.Walk(path, walkFunc); err != nil {
-		return nil, fmt.Errorf("failed to load card definitions in '%s': %w", path, err)
+		return nil, fmt.Errorf("failed to load card definitions in %q: %w", path, err)
 	}
 	return definitions, nil
 }

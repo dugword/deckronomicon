@@ -188,7 +188,7 @@ func ParseManaString(manaString string) (Amount, error) {
 		default:
 			n, err := strconv.Atoi(symbol)
 			if err != nil {
-				return amount, fmt.Errorf("invalid mana symbol '%s'", symbol)
+				return amount, fmt.Errorf("invalid mana symbol %q", symbol)
 			}
 			amount.generic += n
 		}

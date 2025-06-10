@@ -8,7 +8,6 @@ import (
 	"deckronomicon/packages/query/has"
 	"deckronomicon/packages/query/remove"
 	"deckronomicon/packages/query/take"
-	"fmt"
 )
 
 // Battlefield represents the battlefield during an active game.
@@ -89,14 +88,10 @@ func (b Battlefield) TakeBy(predicate query.Predicate) (gob.Permanent, Battlefie
 }
 
 func (b Battlefield) UntapAll(playerID string) Battlefield {
-	fmt.Println("Untapping all permanents for player:", playerID)
 	var battlefield Battlefield
 	for _, p := range b.permanents {
-		fmt.Println("Checking permanent:", p.Name(), "Controller:", p.Controller())
 		if p.Controller() == playerID {
-			fmt.Println("Untapping permanent:", p.Name())
 			p = p.Untap()
-			fmt.Println("Permanent after untap:", p.Name(), "Tapped:", p.IsTapped())
 		}
 		battlefield = battlefield.Add(p)
 	}

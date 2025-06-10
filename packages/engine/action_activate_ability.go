@@ -52,29 +52,28 @@ func (a ActivateAbilityAction) Complete(
 
 	cost, err := cost.ParseCost(ability.Cost(), a.abilityOnObjectInZone.Ability().Source())
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse cost: %w", err)
+		return nil, fmt.Errorf("failed to parse cost %q: %w", ability.Cost(), err)
 	}
 	if !judge.CanPayCost(cost, game, a.player) {
-		return nil, fmt.Errorf("player '%s' cannot pay cost '%s'", a.player.ID(), cost.Description())
+		return nil, fmt.Errorf("player %q cannot pay cost %q", a.player.ID(), cost.Description())
 	}
 	costEvents, err := PayCost(cost, game, a.player)
 	if err != nil {
-		return nil, fmt.Errorf("failed to pay cost: %w", err)
+		return nil, fmt.Errorf("failed to pay cost %q: %w", cost.Description(), err)
 	}
 	var effectsEvents []event.GameEvent
-	fmt.Printf("Generating %d effects for ability '%s'\n", len(ability.Effects()), ability.Name())
 	for _, effect := range ability.Effects() {
 		handler, ok := env.EffectRegistry.Get(effect.Name())
 		if !ok {
-			return nil, fmt.Errorf("effect '%s' not found in registry", effect.Name())
+			return nil, fmt.Errorf("effect %q not found", effect.Name())
 		}
 		effectEvents, err := handler(game, a.player, ability.Source(), effect.Modifiers())
 		if err != nil {
-			return nil, fmt.Errorf("failed to apply effect '%s': %w", effect.Name(), err)
+			return nil, fmt.Errorf("failed to apply effect %q: %w", effect.Name(), err)
 		}
-		fmt.Println("Effect events generated:", len(effectEvents))
 		effectsEvents = append(effectsEvents, effectEvents...)
 	}
 
+	// activateAbilityEvent := event.ActivateAbilityEvent{
 	return append(costEvents, effectsEvents...), nil
 }

@@ -1,6 +1,7 @@
 package event
 
 const (
+	EventDrawStartingHand      = "DrawStartingHand"
 	EventTypePhaseInPhaseOut   = "PhaseInPhaseOut"
 	EventTypeCheckDayNight     = "CheckDayNight"
 	EventTypeUntapAll          = "UntapAll"
@@ -10,124 +11,80 @@ const (
 	EventTypeRemoveDamage      = "RemoveDamage"
 )
 
-type TurnBasedActionEvent interface {
-	isTurnBasedActionEvent()
-}
+type TurnBasedActionEvent interface{ isTurnBasedActionEvent() }
 
-type TurnBasedActionEventBase struct {
-	PlayerID string
-}
+type TurnBasedActionEventBase struct{}
 
 func (e TurnBasedActionEventBase) isTurnBasedActionEvent() {}
 
+type DrawStartingHandEvent struct {
+	TurnBasedActionEventBase
+	PlayerID string
+}
+
+func (e DrawStartingHandEvent) EventType() string {
+	return EventDrawStartingHand
+}
+
 type PhaseInPhaseOutEvent struct {
 	TurnBasedActionEventBase
+	PlayerID string
 }
 
 func (e PhaseInPhaseOutEvent) EventType() string {
 	return EventTypePhaseInPhaseOut
 }
 
-func NewPhaseInPhaseOutEvent(playerID string) PhaseInPhaseOutEvent {
-	return PhaseInPhaseOutEvent{
-		TurnBasedActionEventBase: TurnBasedActionEventBase{
-			PlayerID: playerID,
-		},
-	}
-}
-
 type CheckDayNightEvent struct {
 	TurnBasedActionEventBase
+	PlayerID string
 }
 
 func (e CheckDayNightEvent) EventType() string {
 	return EventTypeCheckDayNight
 }
 
-func NewCheckDayNightEvent(playerID string) CheckDayNightEvent {
-	return CheckDayNightEvent{
-		TurnBasedActionEventBase: TurnBasedActionEventBase{
-			PlayerID: playerID,
-		},
-	}
-}
-
 type UntapAllEvent struct {
 	TurnBasedActionEventBase
+	PlayerID string
 }
 
 func (e UntapAllEvent) EventType() string {
 	return EventTypeUntapAll
 }
 
-func NewUntapAllEvent(playerID string) UntapAllEvent {
-	return UntapAllEvent{
-		TurnBasedActionEventBase: TurnBasedActionEventBase{
-			PlayerID: playerID,
-		},
-	}
-}
-
 type UpkeepEvent struct {
 	TurnBasedActionEventBase
+	PlayerID string
 }
 
 func (e UpkeepEvent) EventType() string {
 	return EventTypeUpkeep
 }
 
-func NewUpkeepEvent(playerID string) UpkeepEvent {
-	return UpkeepEvent{
-		TurnBasedActionEventBase: TurnBasedActionEventBase{
-			PlayerID: playerID,
-		},
-	}
-}
-
 type ProgressSagaEvent struct {
 	TurnBasedActionEventBase
+	PlayerID string
 }
 
 func (e ProgressSagaEvent) EventType() string {
 	return EventTypeProgressSaga
 }
 
-func NewProgressSagaEvent(playerID string) ProgressSagaEvent {
-	return ProgressSagaEvent{
-		TurnBasedActionEventBase: TurnBasedActionEventBase{
-			PlayerID: playerID,
-		},
-	}
-}
-
 type DiscardToHandSizeEvent struct {
 	TurnBasedActionEventBase
+	PlayerID string
 }
 
 func (e DiscardToHandSizeEvent) EventType() string {
 	return EventTypeDiscardToHandSize
 }
 
-func NewDiscardToHandSizeEvent(playerID string) DiscardToHandSizeEvent {
-	return DiscardToHandSizeEvent{
-		TurnBasedActionEventBase: TurnBasedActionEventBase{
-			PlayerID: playerID,
-		},
-	}
-}
-
 type RemoveDamageEvent struct {
 	TurnBasedActionEventBase
+	PlayerID string
 }
 
 func (e RemoveDamageEvent) EventType() string {
 	return EventTypeRemoveDamage
-}
-
-func NewRemoveDamageEvent(playerID string) RemoveDamageEvent {
-	return RemoveDamageEvent{
-		TurnBasedActionEventBase: TurnBasedActionEventBase{
-			PlayerID: playerID,
-		},
-	}
 }

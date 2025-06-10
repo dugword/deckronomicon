@@ -107,8 +107,8 @@ func (a Ability) IsManaAbility() bool {
 	return false
 }
 
-func (a Ability) Match(p query.Predicate) bool {
-	return p(a)
+func (a Ability) Match(predicate query.Predicate) bool {
+	return predicate(a)
 }
 
 // Resolve resolves the activated ability. Any costs must be paid before

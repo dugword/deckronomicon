@@ -4,11 +4,9 @@ import (
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/query/has"
 	"deckronomicon/packages/state"
-	"fmt"
 )
 
 func CanPayCost(someCost cost.Cost, game state.Game, player state.Player) bool {
-	fmt.Printf("Checking if player can pay cost '%s' :: '%T'\n", someCost.Description(), someCost)
 	switch c := someCost.(type) {
 	case cost.CompositeCost:
 		return canPayCompositeCost(c, game, player)
@@ -45,7 +43,6 @@ func canPayManaCost(c cost.ManaCost, game state.Game, player state.Player) bool 
 }
 
 func canPayTapCost(c cost.TapCost, game state.Game, player state.Player) bool {
-	fmt.Println("Checking if player can pay tap cost for permanent:", c.Permanent().ID())
 	if !game.Battlefield().Contains(has.ID(c.Permanent().ID())) || c.Permanent().Controller() != player.ID() || c.Permanent().IsTapped() {
 		return false
 	}

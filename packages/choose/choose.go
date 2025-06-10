@@ -12,7 +12,7 @@ type Source interface {
 type Choice interface {
 	Name() string
 	ID() string
-	Zone() mtg.Zone
+	Zone() mtg.Zone // TODO: Is Zone right? Maybe something more generic?
 }
 
 // TODO: Use an interface for ChoiceResult
@@ -32,7 +32,30 @@ type ChooseCardPrompt struct {
 }
 */
 
-type ChooseTargetPrompt struct {
+type GenericChoice struct {
+	name string
+	id   string
+	zone mtg.Zone
+}
+
+func NewGenericChoice(name, id string, zone mtg.Zone) GenericChoice {
+	return GenericChoice{
+		name: name,
+		id:   id,
+		zone: zone,
+	}
+}
+
+func (c GenericChoice) Name() string {
+	return c.name
+}
+
+func (c GenericChoice) ID() string {
+	return c.id
+}
+
+func (c GenericChoice) Zone() mtg.Zone {
+	return c.zone
 }
 
 type ResultStruct struct {

@@ -29,7 +29,7 @@ func AddManaEffectHandler(
 	}
 	amount, err := mana.ParseManaString(manaString)
 	if err != nil {
-		return nil, fmt.Errorf("invalid mana amount '%s': %w", manaString, err)
+		return nil, fmt.Errorf("failed to parse mana string %q: %w", manaString, err)
 	}
 
 	// Think through how to best handle this and how the events will be represented in JSON.
@@ -40,12 +40,11 @@ func AddManaEffectHandler(
 		if amount <= 0 {
 			continue // Skip colors with no mana
 		}
-		events = append(events, event.NewAddManaEvent(
-			player.ID(),
-			color,
-			amount,
-		),
-		)
+		events = append(events, event.AddManaEvent{
+			PlayerID: player.ID(),
+			Amount:   amount,
+			ManaType: color,
+		})
 	}
 	return events, nil
 }

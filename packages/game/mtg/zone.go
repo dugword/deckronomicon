@@ -1,7 +1,5 @@
 package mtg
 
-import "fmt"
-
 type Zone string
 
 const (
@@ -20,7 +18,7 @@ func (z Zone) Name() string {
 	return string(z)
 }
 
-func StringToZone(s string) (Zone, error) {
+func StringToZone(s string) (Zone, bool) {
 	stringToZone := map[string]Zone{
 		"Battlefield": ZoneBattlefield,
 		"Command":     ZoneCommand,
@@ -32,12 +30,6 @@ func StringToZone(s string) (Zone, error) {
 		"Sideboard":   ZoneSideboard,
 		"Stack":       ZoneStack,
 	}
-	if zone, ok := stringToZone[s]; ok {
-		return zone, nil
-	}
-	return "", fmt.Errorf(
-		"failed to convert string %q to Zone: %w",
-		s,
-		ErrInvalidZone,
-	)
+	zone, ok := stringToZone[s]
+	return zone, ok
 }

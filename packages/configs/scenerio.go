@@ -54,13 +54,14 @@ type Setup struct {
 
 func LoadScenario(scenariosDir, scenario string) (*Scenario, error) {
 	scenarioPath := path.Join(scenariosDir, scenario)
-	setupData, err := os.ReadFile(path.Join(scenarioPath, "setup.json"))
+	setupFile := path.Join(scenarioPath, "setup.json")
+	setupData, err := os.ReadFile(setupFile)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read setup file: %w", err)
+		return nil, fmt.Errorf("failed to read setup file %q: %w", setupFile, err)
 	}
 	var setup Setup
 	if err := json.Unmarshal(setupData, &setup); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal setup data: %w", err)
+		return nil, fmt.Errorf("failed to unmarshal setup data %q: %w", setupFile, err)
 	}
 	if len(setup.Players) == 0 {
 		return nil, fmt.Errorf("scenario requires at least one player")
@@ -127,14 +128,15 @@ func LoadScenario(scenariosDir, scenario string) (*Scenario, error) {
 		deckList, err := LoadDeckList(scenarioPath, playerSetup.DeckList)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"failed to load decklist for player %s: %w",
-				playerSetup.Name, err,
+				"failed to load decklist for player %q: %w",
+				playerSetup.Name,
+				err,
 			)
 		}
 		player.DeckList = *deckList
 		if _, ok := s.Players[player.Name]; ok {
 			return nil, fmt.Errorf(
-				"player name %s is not unique in scenario %s",
+				"player name %q is not unique in scenario %q",
 				player.Name,
 				scenario,
 			)
@@ -157,14 +159,14 @@ func LoadDeckList(scenarioPath, deckListFile string) (*DeckList, error) {
 	deckListData, err := os.ReadFile(deckListPath)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to read decklist %s: %w",
+			"failed to read decklist %q: %w",
 			deckListPath,
 			err,
 		)
 	}
 	if err := json.Unmarshal(deckListData, &deckList); err != nil {
 		return nil, fmt.Errorf(
-			"failed to unmarshal decklist %s: %w",
+			"failed to unmarshal decklist %q: %w",
 			deckListPath,
 			err,
 		)

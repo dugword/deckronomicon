@@ -27,7 +27,7 @@ func (g Game) WithBuildDeck(
 			c, err := gob.NewCardFromCardDefinition(id, cardDefinition)
 			if err != nil {
 				return Game{}, nil, fmt.Errorf(
-					"failed to create c %s: %w",
+					"failed to create card %q: %w",
 					entry.Name,
 					err,
 				)

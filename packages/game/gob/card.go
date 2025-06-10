@@ -88,8 +88,8 @@ func (c Card) ID() string {
 	return c.id
 }
 
-func (c Card) Match(p query.Predicate) bool {
-	return p(c)
+func (c Card) Match(predicate query.Predicate) bool {
+	return predicate(c)
 }
 
 // Loyalty returns the loyalty of the card. This is used for planeswalker

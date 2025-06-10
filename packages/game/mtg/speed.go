@@ -16,6 +16,6 @@ func StringToSpeed(s string) (Speed, error) {
 	case "Sorcery":
 		return SpeedSorcery, nil
 	default:
-		return "", fmt.Errorf("unknown Speed '%s'", s)
+		return "", fmt.Errorf("unknown Speed %q", s)
 	}
 }

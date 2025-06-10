@@ -23,10 +23,14 @@ func NewAgent(id string, stops []mtg.Step, verbose bool) *Agent {
 	return &agent
 }
 
+func (a *Agent) PlayerID() string {
+	return a.id
+}
+
 func (a *Agent) GetNextAction(game state.Game) (engine.Action, error) {
 	player, ok := game.GetPlayer(a.id)
 	if !ok {
-		return nil, fmt.Errorf("player '%s' not found", a.id)
+		return nil, fmt.Errorf("player %q not found", a.id)
 	}
 	return engine.NewPassPriorityAction(player), nil
 }

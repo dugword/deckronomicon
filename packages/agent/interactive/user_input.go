@@ -21,7 +21,7 @@ func (a *Agent) ReadNumberMany(max int) ([]int, error) {
 	for _, part := range tokens {
 		number, err := strconv.Atoi(part)
 		if err != nil {
-			return nil, fmt.Errorf("invalid number: %w", err)
+			return nil, fmt.Errorf("failed to parse number: %w", err)
 		}
 		if number < 0 {
 			return nil, fmt.Errorf("number less than zero")
@@ -99,7 +99,7 @@ func (a Agent) ReadInputNumber(max int) (int, error) {
 	input := a.ReadInput()
 	number, err := strconv.Atoi(input)
 	if err != nil {
-		return -1, fmt.Errorf("invalid number: %w", err)
+		return -1, fmt.Errorf("failed to parse number: %w", err)
 	}
 	if number < 0 {
 		return -1, fmt.Errorf("number less than zero")

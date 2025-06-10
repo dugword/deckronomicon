@@ -33,6 +33,7 @@ func createPlayerAgent(
 			scanner,
 			playerScenario.Name,
 			[]mtg.Step{mtg.StepUpkeep, mtg.StepPrecombatMain},
+			"./ui/term/display.tmpl", // TODO: Make this configurable.g
 			config.Verbose,
 		)
 		return playerAgent, nil
@@ -56,7 +57,7 @@ func createPlayerAgent(
 		return playerAgent, nil
 	default:
 		return nil, fmt.Errorf(
-			"unknown player agent type '%s'",
+			"unknown player agent type %q",
 			playerScenario.AgentType,
 		)
 	}
@@ -104,7 +105,7 @@ func Run(
 	if config.Cheat {
 		scenario.Setup.CheatsEnabled = true
 	}
-	logger.Info(fmt.Sprintf("Scenario '%s' loaded!", scenario.Name))
+	logger.Info(fmt.Sprintf("Scenario %q loaded!", scenario.Name))
 	logger.Info("Loading card definitions...")
 	cardDefinitions, err := definition.LoadCardDefinitions(config.Definitions)
 	if err != nil {
@@ -114,16 +115,16 @@ func Run(
 	playerAgents := map[string]engine.PlayerAgent{}
 	for _, playerScenario := range scenario.Players {
 		logger.Info(fmt.Sprintf(
-			"Creating player '%s' with agent type '%s'...",
+			"Creating player %q with agent type %q...",
 			playerScenario.Name,
 			playerScenario.AgentType,
 		))
 		playerAgent, err := createPlayerAgent(playerScenario, config, stdin)
 		if err != nil {
-			return fmt.Errorf("failed to create player agent for '%s': %w", playerScenario.Name, err)
+			return fmt.Errorf("failed to create player agent for %q: %w", playerScenario.Name, err)
 		}
 		playerAgents[playerScenario.Name] = playerAgent
-		logger.Info(fmt.Sprintf("Player Agent for '%s' created!", playerScenario.Name))
+		logger.Info(fmt.Sprintf("Player Agent for %q created!", playerScenario.Name))
 	}
 	deckLists := map[string]configs.DeckList{}
 	for _, playerScenario := range scenario.Players {
@@ -132,13 +133,13 @@ func Run(
 	var players []state.Player
 	for _, playerScenario := range scenario.Players {
 		logger.Info(fmt.Sprintf(
-			"Creating player '%s' with starting life %d...",
+			"Creating player %q with starting life %d...",
 			playerScenario.Name,
 			playerScenario.StartingLife,
 		))
 		player := state.NewPlayer(playerScenario.Name, playerScenario.StartingLife)
 		players = append(players, player)
-		logger.Info(fmt.Sprintf("Player '%s' created!", player.ID()))
+		logger.Info(fmt.Sprintf("Player %q created!", player.ID()))
 	}
 	engineConfig := engine.EngineConfig{
 		Agents:      playerAgents,

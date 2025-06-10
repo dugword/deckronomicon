@@ -57,9 +57,7 @@ func NewPermanent(id string, card Card, playerID string) (Permanent, error) {
 		permanent.summoningSickness = true
 	}
 	var abilityID int
-	fmt.Println("Building permanent:", permanent.name, "ID:", id)
 	for _, a := range card.ActivatedAbilities() {
-		fmt.Println("Building activated ability:", a.Name())
 		abilityID++
 		ability := Ability{
 			effects: a.Effects(),
@@ -70,10 +68,6 @@ func NewPermanent(id string, card Card, playerID string) (Permanent, error) {
 			speed:   a.speed,
 			source:  permanent,
 		}
-		for _, effect := range a.Effects() {
-			fmt.Println("Adding effect to ability:", effect.Name())
-		}
-		fmt.Printf("Ability => %+v\n", ability)
 		permanent.activatedAbilities = append(permanent.activatedAbilities, ability)
 	}
 	/*
@@ -153,8 +147,8 @@ func (p *Permanent) ManaValue() int {
 }
 */
 
-func (per Permanent) Match(p query.Predicate) bool {
-	return p(per)
+func (per Permanent) Match(predicate query.Predicate) bool {
+	return predicate(per)
 }
 
 // Name returns the name of the permanent.

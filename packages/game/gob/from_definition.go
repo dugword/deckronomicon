@@ -43,7 +43,7 @@ func NewCardFromCardDefinition(id string, definition definition.Card) (Card, err
 	}
 	cardColors, err := mtg.StringsToColors(definition.Colors)
 	if err != nil {
-		return Card{}, fmt.Errorf("failed to create colors: %w", err)
+		return Card{}, fmt.Errorf("failed to parse colors %s: %w", definition.Colors, err)
 	}
 	card.colors = cardColors
 	/*
@@ -57,7 +57,7 @@ func NewCardFromCardDefinition(id string, definition definition.Card) (Card, err
 	for _, cardType := range definition.CardTypes {
 		cardType, err := mtg.StringToCardType(cardType)
 		if err != nil {
-			return Card{}, fmt.Errorf("failed to parse card types: %w", err)
+			return Card{}, fmt.Errorf("failed to parse card type %q: %w", cardType, err)
 		}
 		cardTypes = append(cardTypes, cardType)
 	}
@@ -66,7 +66,7 @@ func NewCardFromCardDefinition(id string, definition definition.Card) (Card, err
 	for _, subtype := range definition.Subtypes {
 		subtype, err := mtg.StringToSubtype(subtype)
 		if err != nil {
-			return Card{}, fmt.Errorf("failed to parse subtypes: %w", err)
+			return Card{}, fmt.Errorf("failed to parse subtype %q: %w", subtype, err)
 		}
 		subtypes = append(subtypes, subtype)
 	}
@@ -75,11 +75,12 @@ func NewCardFromCardDefinition(id string, definition definition.Card) (Card, err
 	for _, supertype := range definition.Supertypes {
 		supertype, err := mtg.StringToSupertype(supertype)
 		if err != nil {
-			return Card{}, fmt.Errorf("failed to parse supertypes: %w", err)
+			return Card{}, fmt.Errorf("failed to parse supertype %q: %w", supertype, err)
 		}
 		supertypes = append(supertypes, supertype)
 	}
 	card.supertypes = supertypes
+	var ok bool
 	var abilityID int
 	for _, spec := range definition.ActivatedAbilitySpecs {
 		abilityID++
@@ -87,14 +88,14 @@ func NewCardFromCardDefinition(id string, definition definition.Card) (Card, err
 		if spec.Speed != "" {
 			speed, err = mtg.StringToSpeed(spec.Speed)
 			if err != nil {
-				return Card{}, fmt.Errorf("failed to parse speed: %w", err)
+				return Card{}, fmt.Errorf("failed to parse speed %q: %w", spec.Speed, err)
 			}
 		}
 		zone := mtg.ZoneBattlefield
 		if spec.Zone != "" {
-			zone, err = mtg.StringToZone(spec.Zone)
-			if err != nil {
-				return Card{}, fmt.Errorf("failed to parse zone: %w", err)
+			zone, ok = mtg.StringToZone(spec.Zone)
+			if !ok {
+				return Card{}, fmt.Errorf("invalid zone%q", spec.Zone)
 			}
 		}
 		ability := Ability{
@@ -113,9 +114,6 @@ func NewCardFromCardDefinition(id string, definition definition.Card) (Card, err
 				modifier := Tag{
 					Key:   modifier.Key,
 					Value: modifier.Value,
-				}
-				if err != nil {
-					return Card{}, fmt.Errorf("failed to create tag: %w", err)
 				}
 				modifiers = append(modifiers, modifier)
 			}
