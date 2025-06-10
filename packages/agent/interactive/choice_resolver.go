@@ -61,28 +61,18 @@ func (a *Agent) ChooseMany(prompt string, source choose.Source, choices []choose
 	}
 }
 
-// ChoseOne prompts the user to choose one of the given choices.
-// TODO: Need to enable a way to cancel
-// I have cancel in the Choose funciton, but not here, abstract that out and reuse it
-func (a *Agent) ChooseOne(prompt string, source choose.Source, choices []choose.Choice) (choose.Choice, error) {
+func (a *Agent) ChooseOne(prompt choose.ChoicePrompt) (choose.Choice, error) {
+	prompt.MinChoices = 1
+	prompt.MaxChoices = 1
+	choices, err := a.Choose(prompt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to choose one: %w", err)
+	}
 	if len(choices) == 0 {
-		return nil, choose.ErrNoChoices
+		// TODO is this an error?
+		return nil, nil
 	}
-	title := fmt.Sprintf("%s requires a choice", source.Name())
-	a.uiBuffer.UpdateChoices(title, choices)
-	if err := a.uiBuffer.Render(); err != nil {
-		return nil, fmt.Errorf("failed to render UI Buffer: %w", err)
-	}
-	for {
-		a.Prompt(prompt)
-		max := len(choices) - 1 // 0 based
-		choice, err := a.ReadInputNumber(max)
-		if err != nil {
-			fmt.Printf("Invalid choice. Please enter a number: %d - %d\n", 0, max)
-			continue
-		}
-		return choices[choice], nil
-	}
+	return choices[0], nil
 }
 
 func (a *Agent) Choose(prompt choose.ChoicePrompt) ([]choose.Choice, error) {

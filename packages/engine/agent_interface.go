@@ -10,5 +10,6 @@ type PlayerAgent interface {
 	GetNextAction(state.Game) (Action, error)
 	ReportState(state.Game) error
 	Choose(choose.ChoicePrompt) ([]choose.Choice, error)
+	ChooseOne(choose.ChoicePrompt) (choose.Choice, error)
 	PlayerID() string
 }

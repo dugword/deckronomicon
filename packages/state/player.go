@@ -5,7 +5,6 @@ import (
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/mana"
 	"deckronomicon/packages/query"
-	"fmt"
 )
 
 type Player struct {
@@ -42,17 +41,6 @@ func NewPlayer(id string, life int) Player {
 		manaPool:    mana.NewManaPool(),
 		maxHandSize: 7,
 	}
-}
-
-func (p Player) TakeCardFromHand(
-	cardID string,
-) (gob.Card, Player, error) {
-	card, newHand, ok := p.hand.Take(cardID)
-	if !ok {
-		return card, p, fmt.Errorf("card %s not found in hand", cardID)
-	}
-	player := p.WithHand(newHand)
-	return card, player, nil
 }
 
 func (p Player) TakeCardFromZone(
@@ -126,15 +114,6 @@ func (p Player) ManaPool() mana.Pool {
 	return p.manaPool
 }
 
-/*
-func (p Player) Hand() query.View {
-	return query.NewView(
-		string(mtg.ZoneHand),
-		p.hand.GetAll(),
-	)
-}
-*/
-
 func (p Player) Exile() Exile {
 	return p.exile
 }
@@ -147,17 +126,35 @@ func (p Player) Revealed() Revealed {
 	return p.revealed
 }
 
-func (p Player) GetZone(zone mtg.Zone) (query.View, bool) {
+func (p Player) GetCardsInZone(zone mtg.Zone) ([]gob.Card, bool) {
 	switch zone {
 	case mtg.ZoneExile:
-		return query.NewView(string(mtg.ZoneExile), p.exile.GetAll()), true
+		return p.exile.GetAll(), true
 	case mtg.ZoneGraveyard:
-		return query.NewView(string(mtg.ZoneGraveyard), p.graveyard.GetAll()), true
+		return p.graveyard.GetAll(), true
 	case mtg.ZoneHand:
-		return query.NewView(string(mtg.ZoneHand), p.hand.GetAll()), true
+		return p.hand.GetAll(), true
 	case mtg.ZoneLibrary:
-		return query.NewView(string(mtg.ZoneLibrary), p.library.GetAll()), true
+		return p.library.GetAll(), true
 	default:
 		return nil, false
+	}
+}
+
+func (p Player) ZoneContains(
+	zone mtg.Zone,
+	predicate query.Predicate,
+) bool {
+	switch zone {
+	case mtg.ZoneExile:
+		return p.exile.Contains(predicate)
+	case mtg.ZoneGraveyard:
+		return p.graveyard.Contains(predicate)
+	case mtg.ZoneHand:
+		return p.hand.Contains(predicate)
+	case mtg.ZoneLibrary:
+		return p.library.Contains(predicate)
+	default:
+		return false
 	}
 }

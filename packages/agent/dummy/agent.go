@@ -44,6 +44,13 @@ func (a *Agent) Choose(prompt choose.ChoicePrompt) ([]choose.Choice, error) {
 	return selected, nil
 }
 
+func (a *Agent) ChooseOne(prompt choose.ChoicePrompt) (choose.Choice, error) {
+	if len(prompt.Choices) == 0 {
+		return nil, fmt.Errorf("no choices available")
+	}
+	return prompt.Choices[0], nil
+}
+
 func (a *Agent) ReportState(game state.Game) error {
 	return nil
 }

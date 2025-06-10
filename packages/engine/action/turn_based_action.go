@@ -452,6 +452,8 @@ func (a DiscardToHandSizeAction) Complete(
 	choices []choose.Choice,
 ) ([]event.GameEvent, error) {
 	var discardEvents []event.GameEvent
+
+	// TODO: Verify that the choices are valid cards in the player's hand
 	for _, choice := range choices {
 		if choice.ID() == "" {
 			continue // Skip empty choices

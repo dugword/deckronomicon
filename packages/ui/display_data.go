@@ -188,9 +188,15 @@ func CardListData(title string, cards []view.Card) BoxData {
 }
 
 func MessageData(lines []string) BoxData {
+	var lns []string
+	for _, line := range lines {
+		// TODO: These var names suck
+		x := splitLines(line, 22)
+		lns = append(lns, x...)
+	}
 	return BoxData{
 		Title:   "Message",
-		Content: lines,
+		Content: lns,
 	}
 }
 

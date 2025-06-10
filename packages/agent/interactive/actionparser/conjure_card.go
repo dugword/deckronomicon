@@ -1,7 +1,6 @@
 package actionparser
 
 import (
-	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine"
 	"deckronomicon/packages/engine/action"
 	"deckronomicon/packages/state"
@@ -21,9 +20,7 @@ func (p *ConjureCardCheatCommand) Build(game state.Game, player state.Player) (e
 }
 
 func parseConjureCardCheatCommand(
-	command string,
-	args []string,
-	getChoices func(prompt choose.ChoicePrompt) ([]choose.Choice, error),
+	arg string,
 	game state.Game,
 	player state.Player,
 ) (*ConjureCardCheatCommand, error) {

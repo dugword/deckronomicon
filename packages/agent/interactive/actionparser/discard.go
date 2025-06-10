@@ -21,9 +21,8 @@ func (p *DiscardCheatCommand) Build(game state.Game, player state.Player) (engin
 }
 
 func parseDiscardCheatCommand(
-	command string,
-	args []string,
-	getChoices func(prompt choose.ChoicePrompt) ([]choose.Choice, error),
+	arg string,
+	chooseOne func(prompt choose.ChoicePrompt) (choose.Choice, error),
 	game state.Game,
 	player state.Player,
 ) (*DiscardCheatCommand, error) {

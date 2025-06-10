@@ -6,6 +6,8 @@ import (
 	"deckronomicon/packages/engine/action"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/judge"
+	"deckronomicon/packages/query"
+	"deckronomicon/packages/query/has"
 	"deckronomicon/packages/state"
 	"fmt"
 )
@@ -25,72 +27,61 @@ func (p *ActivateAbilityCommand) Build(game state.Game, player state.Player) (en
 }
 
 func parseActivateAbilityCommand(
-	command string,
-	args []string,
-	getChoices func(prompt choose.ChoicePrompt) ([]choose.Choice, error),
+	idOrName string,
+	chooseOne func(prompt choose.ChoicePrompt) (choose.Choice, error),
 	game state.Game,
 	player state.Player,
 ) (*ActivateAbilityCommand, error) {
-	if len(args) == 0 {
-		var choices []choose.Choice
-		abilities := judge.GetAbilitiesAvailableToActivate(game, player)
-		for _, ability := range abilities {
-			choices = append(choices, ability)
-		}
-		prompt := choose.ChoicePrompt{
-			Message:    "Choose an ability to activate",
-			Choices:    choices,
-			Source:     CommandSource{"Activate an ability"},
-			MinChoices: 1,
-			MaxChoices: 1,
-			Optional:   true,
-		}
-		selected, err := getChoices(prompt)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get choices: %w", err)
-		}
-		if len(selected) == 0 {
-			return nil, fmt.Errorf("no ability selected")
-		}
-		// TODO: Do something where I can select this without having to index an slice with a magic 0.
-		// Maybe that choice type that's an interface or something.
-		ability, ok := selected[0].(gob.AbilityInZone)
-		if !ok {
-			return nil, fmt.Errorf("selected choice is not an ability on an object in a zone")
-		}
+	ruling := judge.Ruling{Explain: true}
+	abilities := judge.GetAbilitiesAvailableToActivate(game, player, &ruling)
+	fmt.Println("Ruling reasons:", ruling.Reasons)
+	if idOrName == "" {
+		return buildActivateAbilityCommandByChoice(abilities, chooseOne, player)
+	}
+	return buildActivateAbilityCommandByIDOrName(abilities, idOrName, player)
+}
+
+func buildActivateAbilityCommandByChoice(
+	abilities []gob.AbilityInZone,
+	chooseOne func(prompt choose.ChoicePrompt) (choose.Choice, error),
+	player state.Player,
+) (*ActivateAbilityCommand, error) {
+	var choices []choose.Choice
+	for _, ability := range abilities {
+		choices = append(choices, ability)
+	}
+	prompt := choose.ChoicePrompt{
+		Message:  "Choose an ability to activate",
+		Choices:  choices,
+		Source:   CommandSource{"Activate an ability"},
+		Optional: true,
+	}
+	selected, err := chooseOne(prompt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get choices: %w", err)
+	}
+	// TODO: Do something where I can select this without having to index an slice with a magic 0.
+	// Maybe that choice type that's an interface or something.
+	ability, ok := selected.(gob.AbilityInZone)
+	if !ok {
+		return nil, fmt.Errorf("selected choice is not an ability on an object in a zone")
+	}
+	return &ActivateAbilityCommand{
+		Player:                player,
+		AbilityOnObjectInZone: ability,
+	}, nil
+}
+
+func buildActivateAbilityCommandByIDOrName(
+	abilities []gob.AbilityInZone,
+	idOrName string,
+	player state.Player,
+) (*ActivateAbilityCommand, error) {
+	if ability, ok := query.Find(abilities, query.Or(has.ID(idOrName), has.Name(idOrName))); ok {
 		return &ActivateAbilityCommand{
 			Player:                player,
 			AbilityOnObjectInZone: ability,
 		}, nil
 	}
-	return parseActivateAbilityCommand(
-		command,
-		args,
-		getChoices,
-		game,
-		player,
-	)
-	/* // TODO: This doesn't work, need to get abilities not permanents
-	if game.Battlefield().Contains(has.ID(args[0])) {
-		return &ActivateAbilityCommand{
-			Player: player,
-			AbilityOnObjectInZone:
-		}, nil
-	}
-
-	ability, ok := game.Battlefield().Find(has.Name(args[0]))
-	if !ok {
-		return parseActivateAbilityCommand(
-			command,
-			args,
-			getChoices,
-			game,
-			player,
-		)
-	}
-	return &ActivateAbilityCommand{
-		Player:  player,
-		AbilityID: ability.ID(),
-	}, nil
-	*/
+	return nil, fmt.Errorf("no ability found with ID or name %q", idOrName)
 }

@@ -39,6 +39,10 @@ func (l Library) AddTop(c gob.Card) Library {
 	}
 }
 
+func (l Library) Contains(predicate query.Predicate) bool {
+	return query.Contains(l.cards, predicate)
+}
+
 func (l Library) Get(id string) (gob.Card, bool) {
 	return query.Get(l.cards, id)
 }

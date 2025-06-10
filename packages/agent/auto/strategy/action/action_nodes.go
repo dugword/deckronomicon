@@ -85,5 +85,5 @@ func (n *PlayCardActionNode) Resolve(ctx *evalstate.EvalState) (engine.Action, e
 			Target: engine.ActionTarget{ID: object.ID()},
 		}, nil
 	*/
-	return action.NewPlayCardAction(n.Player, n.CardInZone), nil
+	return action.NewPlayLandAction(n.Player, n.CardInZone), nil
 }

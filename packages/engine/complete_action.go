@@ -16,9 +16,10 @@ import (
 
 type Action interface {
 	Name() string
-	Description() string
+	//Description() string
 	// TODO: Don't prompt, pass in the choices directly. Need to figure out mulitgans and end of turn of
-	// discard.
+	// discard. I guess also declare attackers, declare blockers, and assign combat damage.
+	// Maybe I need to split out Turn Based Actions from Player Actions.
 	GetPrompt(state.Game) (choose.ChoicePrompt, error)
 	Complete(state.Game, *action.ResolutionEnvironment, []choose.Choice) ([]event.GameEvent, error)
 	PlayerID() string

@@ -98,7 +98,7 @@ func (e *Engine) RunGame() error {
 	}
 	for _, playerID := range e.game.PlayerIDsInTurnOrder() {
 		e.log.Debug("Drawing starting hand for player:", playerID)
-		startingHandAction := action.DrawStartingHandAction{playerID: playerID}
+		startingHandAction := action.NewDrawStartingHandAction(playerID)
 		if err := e.CompleteAction(startingHandAction); err != nil {
 			return fmt.Errorf(
 				"failed to draw starting hand for player %q: %w",

@@ -22,6 +22,14 @@ func NewAbilityInZone(ability Ability, object query.Object, zone mtg.Zone) Abili
 	}
 }
 
+func (a AbilityInZone) Match(predicate query.Predicate) bool {
+	return predicate(a.ability)
+}
+
+func (a AbilityInZone) Description() string {
+	return a.ability.Description()
+}
+
 func (a AbilityInZone) Name() string {
 	return a.ability.Name()
 }
@@ -49,12 +57,20 @@ func NewCardInZone(card Card, zone mtg.Zone) CardInZone {
 	}
 }
 
-func (c CardInZone) Name() string {
-	return c.card.Name()
+func (c CardInZone) Description() string {
+	return c.card.Description()
 }
 
 func (c CardInZone) ID() string {
 	return c.card.ID()
+}
+
+func (c CardInZone) Match(predicate query.Predicate) bool {
+	return predicate(c.card)
+}
+
+func (c CardInZone) Name() string {
+	return c.card.Name()
 }
 
 func (c CardInZone) Zone() mtg.Zone {

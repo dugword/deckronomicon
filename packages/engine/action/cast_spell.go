@@ -6,12 +6,11 @@ import (
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/mana"
 	"deckronomicon/packages/query/has"
-	"deckronomicon/packages/query/is"
 	"deckronomicon/packages/state"
 	"fmt"
 )
 
-type PlayCardAction struct {
+type CastSpellAction struct {
 	player          state.Player
 	cardInZone      gob.CardInZone
 	ManaPayment     mana.Pool
@@ -19,24 +18,24 @@ type PlayCardAction struct {
 	Targets         []string
 }
 
-func NewPlayCardAction(player state.Player, cardInZone gob.CardInZone) PlayCardAction {
-	return PlayCardAction{
+func NewCastSpellAction(player state.Player, cardInZone gob.CardInZone) CastSpellAction {
+	return CastSpellAction{
 		player:     player,
 		cardInZone: cardInZone,
 	}
 }
 
-func (a PlayCardAction) PlayerID() string {
+func (a CastSpellAction) PlayerID() string {
 	return a.player.ID()
 }
 
-func (a PlayCardAction) Name() string {
-	return "Play Card"
+func (a CastSpellAction) Name() string {
+	return "Cast Spell"
 }
-func (a PlayCardAction) Description() string {
-	return "The active player plays a card from their hand."
+func (a CastSpellAction) Description() string {
+	return "The active player casts a spell from their hand."
 }
-func (a PlayCardAction) GetPrompt(state state.Game) (choose.ChoicePrompt, error) {
+func (a CastSpellAction) GetPrompt(state state.Game) (choose.ChoicePrompt, error) {
 	/*
 		choices := state.GetPlayableCards(a.playerID)
 		if len(choices) == 0 {
@@ -55,35 +54,18 @@ func (a PlayCardAction) GetPrompt(state state.Game) (choose.ChoicePrompt, error)
 	return choose.ChoicePrompt{}, nil
 }
 
-func (a PlayCardAction) Complete(
+func (a CastSpellAction) Complete(
 	game state.Game,
 	env *ResolutionEnvironment,
 	choices []choose.Choice,
 ) ([]event.GameEvent, error) {
-	zone, ok := a.player.GetZone(a.cardInZone.Zone())
-	if !ok {
-		return nil, fmt.Errorf("zone %q not valid", a.cardInZone.Zone())
-	}
-	if !zone.Contains(has.ID(a.cardInZone.ID())) {
+	if !a.player.ZoneContains(a.cardInZone.Zone(), has.ID(a.cardInZone.ID())) {
 		return nil, fmt.Errorf(
-			"card %q not found in zone %q",
+			"player %q does not have card %q in zone %q",
+			a.player.ID(),
 			a.cardInZone.ID(),
 			a.cardInZone.Zone(),
 		)
-	}
-	if a.cardInZone.Card().Match(is.Land()) {
-		return []event.GameEvent{
-			event.PlayLandEvent{
-				PlayerID: a.player.ID(),
-				CardID:   a.cardInZone.ID(),
-				Zone:     a.cardInZone.Zone(),
-			},
-			event.PutCardOnBattlefieldEvent{
-				PlayerID: a.player.ID(),
-				CardID:   a.cardInZone.ID(),
-				FromZone: a.cardInZone.Zone(),
-			},
-		}, nil
 	}
 	return []event.GameEvent{event.CastSpellEvent{
 		PlayerID: a.player.ID(),
