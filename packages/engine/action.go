@@ -8,6 +8,7 @@ package engine
 
 import (
 	"deckronomicon/packages/choose"
+	"deckronomicon/packages/engine/action"
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/state"
 	"fmt"
@@ -19,7 +20,7 @@ type Action interface {
 	// TODO: Don't prompt, pass in the choices directly. Need to figure out mulitgans and end of turn of
 	// discard.
 	GetPrompt(state.Game) (choose.ChoicePrompt, error)
-	Complete(state.Game, *ResolutionEnvironment, []choose.Choice) ([]event.GameEvent, error)
+	Complete(state.Game, *action.ResolutionEnvironment, []choose.Choice) ([]event.GameEvent, error)
 	PlayerID() string
 }
 

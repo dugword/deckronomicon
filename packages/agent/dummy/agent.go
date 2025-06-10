@@ -3,6 +3,7 @@ package dummy
 import (
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine"
+	"deckronomicon/packages/engine/action"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/state"
 	"fmt"
@@ -32,7 +33,7 @@ func (a *Agent) GetNextAction(game state.Game) (engine.Action, error) {
 	if !ok {
 		return nil, fmt.Errorf("player %q not found", a.id)
 	}
-	return engine.NewPassPriorityAction(player), nil
+	return action.NewPassPriorityAction(player), nil
 }
 
 func (a *Agent) Choose(prompt choose.ChoicePrompt) ([]choose.Choice, error) {

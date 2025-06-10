@@ -4,18 +4,14 @@ package engine
 
 import (
 	"deckronomicon/packages/configs"
+	"deckronomicon/packages/engine/action"
+	"deckronomicon/packages/engine/effect"
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/logger"
 	"deckronomicon/packages/state"
 	"fmt"
 )
-
-type ResolutionEnvironment struct {
-	EffectRegistry *EffectRegistry
-
-	// definitions maybe should live here too
-}
 
 type Engine struct {
 	agents                map[string]PlayerAgent
@@ -25,7 +21,7 @@ type Engine struct {
 	record                *GameRecord
 	rng                   *RNG
 	log                   *logger.Logger
-	resolutionEnvironment *ResolutionEnvironment
+	resolutionEnvironment *action.ResolutionEnvironment
 }
 
 type EngineConfig struct {
@@ -42,8 +38,8 @@ func NewEngine(config EngineConfig) *Engine {
 	for id, agent := range config.Agents {
 		agents[id] = agent
 	}
-	resolutionEnvironment := ResolutionEnvironment{
-		EffectRegistry: NewEffectRegistry(),
+	resolutionEnvironment := action.ResolutionEnvironment{
+		EffectRegistry: effect.NewEffectRegistry(),
 	}
 	return &Engine{
 		agents:                agents,
@@ -102,7 +98,7 @@ func (e *Engine) RunGame() error {
 	}
 	for _, playerID := range e.game.PlayerIDsInTurnOrder() {
 		e.log.Debug("Drawing starting hand for player:", playerID)
-		startingHandAction := DrawStartingHandAction{playerID: playerID}
+		startingHandAction := action.DrawStartingHandAction{playerID: playerID}
 		if err := e.CompleteAction(startingHandAction); err != nil {
 			return fmt.Errorf(
 				"failed to draw starting hand for player %q: %w",

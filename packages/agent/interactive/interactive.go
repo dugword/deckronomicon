@@ -6,9 +6,10 @@ package interactive
 
 import (
 	"bufio"
-	"deckronomicon/packages/agent/actionparser"
+	"deckronomicon/packages/agent/interactive/actionparser"
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine"
+	"deckronomicon/packages/engine/action"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/state"
 	"deckronomicon/packages/ui"
@@ -82,7 +83,7 @@ func (a *Agent) GetNextAction(game state.Game) (engine.Action, error) {
 			}
 		}
 		if pass {
-			return engine.NewPassPriorityAction(player), nil
+			return action.NewPassPriorityAction(player), nil
 		}
 		// TODO Don't call this here, run update or something
 		// PrintCommands(s.CheatsEnabled)

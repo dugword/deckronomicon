@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"deckronomicon/packages/engine/action"
 	"deckronomicon/packages/game/mtg"
 )
 
@@ -44,31 +45,21 @@ func (e *Engine) GamePhases() []GamePhase {
 				{
 					name: mtg.StepUntap,
 					actions: []Action{
-						PhaseInPhaseOutAction{
-							playerID: playerID,
-						},
-						CheckDayNightAction{
-							playerID: playerID,
-						},
-						UntapAction{
-							playerID: playerID,
-						},
+						action.NewPhaseInPhaseOutAction(playerID),
+						action.NewCheckDayNightAction(playerID),
+						action.NewUntapAction(playerID),
 					},
 				},
 				{
 					name: mtg.StepUpkeep,
 					actions: []Action{
-						UpkeepAction{
-							playerID: playerID,
-						},
+						action.NewUpkeepAction(playerID),
 					},
 				},
 				{
 					name: mtg.StepDraw,
 					actions: []Action{
-						DrawAction{
-							playerID: playerID,
-						},
+						action.NewDrawAction(playerID),
 					},
 				},
 			},
@@ -79,9 +70,7 @@ func (e *Engine) GamePhases() []GamePhase {
 				{
 					name: mtg.StepPrecombatMain,
 					actions: []Action{
-						ProgressSagaAction{
-							playerID: playerID,
-						},
+						action.NewProgressSagaAction(playerID),
 					},
 				},
 			},
@@ -95,25 +84,19 @@ func (e *Engine) GamePhases() []GamePhase {
 				{
 					name: mtg.StepDeclareAttackers,
 					actions: []Action{
-						DeclareAttackersAction{
-							playerID: playerID,
-						},
+						action.NewDeclareAttackersAction(playerID),
 					},
 				},
 				{
 					name: mtg.StepDeclareBlockers,
 					actions: []Action{
-						DeclareBlockersAction{
-							playerID: playerID,
-						},
+						action.NewDeclareBlockersAction(playerID),
 					},
 				},
 				{
 					name: mtg.StepCombatDamage,
 					actions: []Action{
-						CombatDamageAction{
-							playerID: playerID,
-						},
+						action.NewCombatDamageAction(playerID),
 					},
 				},
 				{
@@ -138,12 +121,8 @@ func (e *Engine) GamePhases() []GamePhase {
 				{
 					name: mtg.StepCleanup,
 					actions: []Action{
-						DiscardToHandSizeAction{
-							playerID: e.game.ActivePlayerID(),
-						},
-						RemoveDamageAction{
-							playerID: e.game.ActivePlayerID(),
-						},
+						action.NewDiscardToHandSizeAction(e.game.ActivePlayerID()),
+						action.NewRemoveDamageAction(e.game.ActivePlayerID()),
 					},
 				},
 			},

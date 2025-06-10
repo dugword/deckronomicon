@@ -1,10 +1,8 @@
 package interactive
 
 import (
-	"deckronomicon/packages/agent/actionparser"
 	"fmt"
 	"os"
-	"sort"
 	"strconv"
 	"strings"
 )
@@ -115,45 +113,54 @@ func (a Agent) ReadInputNumber(max int) (int, error) {
 }
 
 func PrintCommands(cheatsEnabled bool) {
-	var commands []string
-	var cheats []string
-	for name, command := range actionparser.Commands {
-		if command.Cheat {
-			cheats = append(cheats, name)
-			continue
-		}
-		commands = append(commands, name)
-	}
-	sort.Strings(commands)
-	sort.Strings(cheats)
-	fmt.Println("Available commands:", strings.Join(commands, ", "))
-	if cheatsEnabled {
-		fmt.Println("Available cheats:", strings.Join(cheats, ", "))
-	}
+	// TODO: Implement help command
+	fmt.Println("Sorry, help is not implemented yet.")
+	/*
+		var commands []string
+		var cheats []string
+			=for name, command := range actionparser.Commands {
+				if command.Cheat {
+					cheats = append(cheats, name)
+					continue
+				}
+				commands = append(commands, name)
+			}
+
+			sort.Strings(commands)
+			sort.Strings(cheats)
+			fmt.Println("Available commands:", strings.Join(commands, ", "))
+			if cheatsEnabled {
+				fmt.Println("Available cheats:", strings.Join(cheats, ", "))
+			}
+	*/
 }
 
 func PrintHelp(cheatsEnabled bool) {
-	var commands []string
-	var cheats []string
-	var aliases []string
-	for name, command := range actionparser.Commands {
-		if command.Cheat {
-			cheats = append(cheats, fmt.Sprintf("%s :: %s", name, command.Description))
-			continue
+	// TODO: Implement help command
+	fmt.Println("Sorry, help is not implemented yet.")
+	/*
+		var commands []string
+		var cheats []string
+		var aliases []string
+		for name, command := range actionparser.Commands {
+			if command.Cheat {
+				cheats = append(cheats, fmt.Sprintf("%s :: %s", name, command.Description))
+				continue
+			}
+			commands = append(commands, fmt.Sprintf("%s :: %s", name, command.Description))
 		}
-		commands = append(commands, fmt.Sprintf("%s :: %s", name, command.Description))
-	}
-	sort.Strings(aliases)
-	sort.Strings(commands)
-	sort.Strings(cheats)
-	fmt.Println("Available actions:")
-	for _, command := range commands {
-		fmt.Println(command)
-	}
-	if cheatsEnabled {
-		fmt.Println("Available cheats:")
-		for _, cheat := range cheats {
-			fmt.Println(cheat)
+		sort.Strings(aliases)
+		sort.Strings(commands)
+		sort.Strings(cheats)
+		fmt.Println("Available actions:")
+		for _, command := range commands {
+			fmt.Println(command)
 		}
-	}
+		if cheatsEnabled {
+			fmt.Println("Available cheats:")
+			for _, cheat := range cheats {
+				fmt.Println(cheat)
+			}
+		}
+	*/
 }
