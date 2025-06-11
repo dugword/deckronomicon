@@ -15,6 +15,7 @@ const (
 	EventTypeSetActivePlayer      = "SetActivePlayer"
 	EventTypeShuffleDeck          = "ShuffleDeck"
 	EventTypeTapPermanent         = "TapPermanent"
+	EventTypeUntapPermanent       = "UntapPermanent"
 )
 
 type GameStateChangeEvent interface{ isGameStateChangeEvent() }
@@ -51,6 +52,15 @@ type DrawCardEvent struct {
 
 func (e DrawCardEvent) EventType() string {
 	return EventTypeDrawCard
+}
+
+type CheatEnabledEvent struct {
+	GameStateChangeBaseEvent
+	Player string // Player ID who enabled cheats
+}
+
+func (e CheatEnabledEvent) EventType() string {
+	return EventTypeCheatEnabled
 }
 
 type MoveCardEvent struct {
@@ -113,4 +123,14 @@ type TapPermanentEvent struct {
 
 func (e TapPermanentEvent) EventType() string {
 	return EventTypeTapPermanent
+}
+
+type UntapPermanentEvent struct {
+	GameStateChangeBaseEvent
+	PlayerID    string
+	PermanentID string
+}
+
+func (e UntapPermanentEvent) EventType() string {
+	return EventTypeUntapPermanent
 }

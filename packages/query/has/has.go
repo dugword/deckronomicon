@@ -74,6 +74,12 @@ func Color(color mtg.Color) query.Predicate {
 	}
 }
 
+func Controller(controllerID string) query.Predicate {
+	return func(obj query.Object) bool {
+		return obj.Controller() == controllerID
+	}
+}
+
 func ID(id string) query.Predicate {
 	return func(obj query.Object) bool {
 		return obj.ID() == id

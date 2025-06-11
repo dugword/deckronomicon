@@ -14,7 +14,6 @@ import (
 	"deckronomicon/packages/engine"
 	"deckronomicon/packages/state"
 	"errors"
-	"fmt"
 	"strings"
 )
 
@@ -49,41 +48,59 @@ func (p *CommandParser) ParseInput(
 	command, arg := parts[0], strings.Join(parts[1:], " ")
 	command = strings.ToLower(command)
 	switch command {
-	case "addmana":
-		return parseAddManaCheatCommand(arg, chooseOne, game, player)
 	case "activate", "tap":
 		return parseActivateAbilityCommand(arg, chooseOne, game, player)
 	case "cheat":
 		return &CheatCommand{Player: player}, nil
+	case "clear":
+		return &ClearCommand{Player: player}, nil
 	case "concede", "exit", "quit":
 		return &ConcedeCommand{Player: player}, nil
+	case "help":
+		return &HelpCommand{}, nil
+	case "pass", "next", "done":
+		return &PassPriorityCommand{Player: player}, nil
+	case "play":
+		return parsePlayLandCommand(arg, chooseOne, game, player)
+	case "cast":
+		return parseCastSpellCommand(arg, chooseOne, game, player)
+	case "view":
+		return parseViewCommand(arg, chooseOne, game, player)
+	default:
+		if game.CheatsEnabled() {
+			return p.ParseCheatCommand(command, arg, chooseOne, game, player)
+		}
+		return nil, errors.New("unknown command %q" + command)
+	}
+}
+
+func (p *CommandParser) ParseCheatCommand(
+	command string,
+	arg string,
+	chooseOne func(prompt choose.ChoicePrompt) (choose.Choice, error),
+	game state.Game,
+	player state.Player,
+) (Command, error) {
+	switch command {
+	case "addmana":
+		return parseAddManaCheatCommand(arg, player)
 	case "conjure":
-		return parseConjureCardCheatCommand(arg, game, player)
+		return parseConjureCardCheatCommand(arg, player)
 	case "draw":
 		return &DrawCheatCommand{Player: player}, nil
 	case "discard":
 		return parseDiscardCheatCommand(arg, chooseOne, game, player)
 	case "find", "tutor":
-		return parseFindCardCheatCommand(arg, chooseOne, game, player)
-	case "help":
-		return &HelpCommand{}, nil
+		return parseFindCardCheatCommand(arg, player)
 	case "landdrop":
 		return &ResetLandDropCommand{Player: player}, nil
-	case "pass", "next", "done":
-		return &PassPriorityCommand{Player: player}, nil
 	case "peek":
 		return &PeekCheatCommand{Player: player}, nil
-	case "play":
-		return parsePlayLandCommand(arg, chooseOne, game, player)
-	case "cast":
-		return parseCastSpellCommand(arg, chooseOne, game, player)
 	case "shuffle":
 		return &ShuffleCheatCommand{Player: player}, nil
 	case "untap":
 		return parseUntapCheatCommand(arg, chooseOne, game, player)
-	case "view":
-		return parseViewCommand(arg, chooseOne, game, player)
 	default:
-		return nil, fmt.Errorf("unrecognized command %q", command)
+		return nil, errors.New("unknown cheat command %q" + command)
 	}
 }

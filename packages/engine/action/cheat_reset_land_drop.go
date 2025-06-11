@@ -4,6 +4,7 @@ import (
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/state"
+	"fmt"
 )
 
 type ResetLandDropCheatAction struct {
@@ -42,7 +43,10 @@ func (a ResetLandDropCheatAction) Complete(
 	env *ResolutionEnvironment,
 	choices []choose.Choice,
 ) ([]event.GameEvent, error) {
-	return []event.GameEvent{event.NoOpEvent{
-		Message: "Reset the land drop for the turn",
+	if !game.CheatsEnabled() {
+		return nil, fmt.Errorf("no cheating you cheater")
+	}
+	return []event.GameEvent{event.CheatResetLandDropEvent{
+		PlayerID: a.PlayerID(),
 	}}, nil
 }

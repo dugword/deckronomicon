@@ -23,7 +23,6 @@ func (p Player) WithShuffleDeck(
 
 func (p Player) WithNextTurn() Player {
 	p.turn++
-	p.landPlayedThisTurn = false
 	return p
 }
 
@@ -95,6 +94,21 @@ func (p Player) WithGraveyard(graveyard Graveyard) Player {
 
 func (p Player) WithLandPlayedThisTurn() Player {
 	p.landPlayedThisTurn = true
+	return p
+}
+
+func (p Player) WithClearLandPlayedThisTurn() Player {
+	p.landPlayedThisTurn = false
+	return p
+}
+
+func (p Player) WithRevealed(revealed Revealed) Player {
+	p.revealed = revealed
+	return p
+}
+
+func (p Player) WithClearRevealed() Player {
+	p.revealed = NewRevealed()
 	return p
 }
 

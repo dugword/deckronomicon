@@ -4,6 +4,7 @@ import (
 	"deckronomicon/packages/engine"
 	"deckronomicon/packages/engine/action"
 	"deckronomicon/packages/state"
+	"errors"
 )
 
 type ConjureCardCheatCommand struct {
@@ -20,9 +21,14 @@ func (p *ConjureCardCheatCommand) Build(game state.Game, player state.Player) (e
 }
 
 func parseConjureCardCheatCommand(
-	arg string,
-	game state.Game,
+	cardName string,
 	player state.Player,
 ) (*ConjureCardCheatCommand, error) {
-	return nil, nil
+	if cardName == "" {
+		return nil, errors.New("conjure card command requires a card name")
+	}
+	return &ConjureCardCheatCommand{
+		Player:   player,
+		CardName: cardName,
+	}, nil
 }

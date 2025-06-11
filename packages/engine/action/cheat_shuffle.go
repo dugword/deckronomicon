@@ -4,6 +4,7 @@ import (
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/state"
+	"fmt"
 )
 
 type ShuffleCheatAction struct {
@@ -42,7 +43,15 @@ func (a ShuffleCheatAction) Complete(
 	env *ResolutionEnvironment,
 	choices []choose.Choice,
 ) ([]event.GameEvent, error) {
-	return []event.GameEvent{event.NoOpEvent{
-		Message: "Shuffle the player's deck",
-	}}, nil
+	if !game.CheatsEnabled() {
+		return nil, fmt.Errorf("no cheating you cheater")
+	}
+	return []event.GameEvent{
+		event.CheatShuffleDeckEvent{
+			PlayerID: a.PlayerID(),
+		},
+		event.ShuffleDeckEvent{
+			PlayerID: a.PlayerID(),
+		},
+	}, nil
 }

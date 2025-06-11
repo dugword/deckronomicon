@@ -207,8 +207,11 @@ func (b *Buffer) BuildDisplayBoxes() DisplayBoxes {
 			CreateBox(b.displayData.OpponentData),
 		),
 		GameStatusBox: CombineBoxesSideBySide(
-			CreateBox(b.displayData.GameStatusData),
-			CreateBox(b.displayData.BattlefieldData),
+			CombineBoxesSideBySide(
+				CreateBox(b.displayData.GameStatusData),
+				CreateBox(b.displayData.BattlefieldData),
+			),
+			CreateBox(b.displayData.RevealedData),
 		),
 		PlaySpaceBox: CombineBoxesSideBySide(
 			CombineBoxesSideBySide(

@@ -5,6 +5,7 @@ import (
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/state"
+	"fmt"
 )
 
 type UntapCheatAction struct {
@@ -45,7 +46,16 @@ func (a UntapCheatAction) Complete(
 	env *ResolutionEnvironment,
 	choices []choose.Choice,
 ) ([]event.GameEvent, error) {
-	return []event.GameEvent{event.NoOpEvent{
-		Message: "Untap target permanent",
-	}}, nil
+	if !game.CheatsEnabled() {
+		return nil, fmt.Errorf("no cheating you cheater")
+	}
+	return []event.GameEvent{
+		event.CheatUntapEvent{
+			PlayerID: a.player.ID(),
+		},
+		event.UntapPermanentEvent{
+			PlayerID:    a.player.ID(),
+			PermanentID: a.permanent.ID(),
+		},
+	}, nil
 }

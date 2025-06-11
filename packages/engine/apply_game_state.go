@@ -13,6 +13,10 @@ func (e *Engine) applyGameStateChangeEvent(game state.Game, gameStateChangeEvent
 	switch evnt := gameStateChangeEvent.(type) {
 	case event.AddManaEvent:
 		return e.applyAddManaEvent(game, evnt)
+	case event.CheatEnabledEvent:
+		game = game.WithCheatsEnabled(true)
+		e.log.Info("Cheats enabled")
+		return game, nil
 	case event.DiscardCardEvent:
 		return e.applyDiscardCardEvent(game, evnt)
 	case event.DrawCardEvent:
@@ -36,6 +40,8 @@ func (e *Engine) applyGameStateChangeEvent(game state.Game, gameStateChangeEvent
 		return game, nil
 	case event.TapPermanentEvent:
 		return e.applyTapPermanentEvent(game, evnt)
+	case event.UntapPermanentEvent:
+		return e.applyUntapPermanentEvent(game, evnt)
 	default:
 		return game, fmt.Errorf("unknown game state change event type '%T'", evnt)
 	}
@@ -159,6 +165,20 @@ func (e *Engine) applyTapPermanentEvent(
 	if err != nil {
 		return game, fmt.Errorf("failed to tap permanent %q: %w", evnt.PermanentID, err)
 	}
+	battlefield := game.Battlefield().WithUpdatedPermanent(permanent)
+	game = game.WithBattlefield(battlefield)
+	return game, nil
+}
+
+func (e *Engine) applyUntapPermanentEvent(
+	game state.Game,
+	evnt event.UntapPermanentEvent,
+) (state.Game, error) {
+	permanent, ok := game.Battlefield().Get(evnt.PermanentID)
+	if !ok {
+		return game, fmt.Errorf("permanent %q not found", evnt.PermanentID)
+	}
+	permanent = permanent.Untap()
 	battlefield := game.Battlefield().WithUpdatedPermanent(permanent)
 	game = game.WithBattlefield(battlefield)
 	return game, nil

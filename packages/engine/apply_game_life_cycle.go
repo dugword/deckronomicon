@@ -158,6 +158,7 @@ func (e *Engine) applyEndStepEvent(
 			return game, fmt.Errorf("player %q not found", playerID)
 		}
 		player = player.WithEmptyManaPool()
+
 		game = game.WithUpdatedPlayer(player)
 	}
 	switch endStepEvent.(type) {
@@ -206,6 +207,7 @@ func (e *Engine) applyEndTurnEvent(game state.Game, evnt event.EndTurnEvent) (st
 		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
 	}
 	player = player.WithClearSpellsCastsThisTurn()
+	player = player.WithClearLandPlayedThisTurn()
 	game = game.WithUpdatedPlayer(player)
 	return game, nil
 }

@@ -3,18 +3,20 @@ package action
 import (
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/state"
+	"fmt"
 )
 
 type DiscardCheatAction struct {
-	player   state.Player
-	cardName string
+	player state.Player
+	card   gob.Card
 }
 
-func NewDiscardCheatAction(player state.Player, cardName string) DiscardCheatAction {
+func NewDiscardCheatAction(player state.Player, card gob.Card) DiscardCheatAction {
 	return DiscardCheatAction{
-		player:   player,
-		cardName: cardName,
+		player: player,
+		card:   card,
 	}
 }
 
@@ -44,7 +46,16 @@ func (a DiscardCheatAction) Complete(
 	env *ResolutionEnvironment,
 	choices []choose.Choice,
 ) ([]event.GameEvent, error) {
-	return []event.GameEvent{event.NoOpEvent{
-		Message: "Discarded a card from your hand",
-	}}, nil
+	if !game.CheatsEnabled() {
+		return nil, fmt.Errorf("no cheating you cheater")
+	}
+	return []event.GameEvent{
+		event.CheatDiscardEvent{
+			PlayerID: a.player.ID(),
+		},
+		event.DiscardCardEvent{
+			PlayerID: a.player.ID(),
+			CardID:   a.card.ID(),
+		},
+	}, nil
 }

@@ -12,7 +12,7 @@ type Source interface {
 type Choice interface {
 	Name() string
 	ID() string
-	Zone() mtg.Zone // TODO: Is Zone right? Maybe something more generic?
+	//Zone() mtg.Zone // TODO: Is Zone right? Maybe something more generic?
 }
 
 // TODO: Use an interface for ChoiceResult

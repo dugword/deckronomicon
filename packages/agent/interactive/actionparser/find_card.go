@@ -1,10 +1,10 @@
 package actionparser
 
 import (
-	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine"
 	"deckronomicon/packages/engine/action"
 	"deckronomicon/packages/state"
+	"errors"
 )
 
 type FindCardCheatCommand struct {
@@ -21,10 +21,14 @@ func (p *FindCardCheatCommand) Build(game state.Game, player state.Player) (engi
 }
 
 func parseFindCardCheatCommand(
-	arg string,
-	chooseOne func(prompt choose.ChoicePrompt) (choose.Choice, error),
-	game state.Game,
+	cardName string,
 	player state.Player,
 ) (*FindCardCheatCommand, error) {
-	return nil, nil
+	if cardName == "" {
+		return nil, errors.New("find card command requires a card name")
+	}
+	return &FindCardCheatCommand{
+		Player:   player,
+		CardName: cardName,
+	}, nil
 }

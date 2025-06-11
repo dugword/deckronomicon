@@ -4,6 +4,7 @@ import (
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/state"
+	"fmt"
 )
 
 type ConjureCardCheatAction struct {
@@ -44,7 +45,11 @@ func (a ConjureCardCheatAction) Complete(
 	env *ResolutionEnvironment,
 	choices []choose.Choice,
 ) ([]event.GameEvent, error) {
-	return []event.GameEvent{event.NoOpEvent{
-		Message: "Conjured a card into your hand",
+	if !game.CheatsEnabled() {
+		return nil, fmt.Errorf("no cheating you cheater")
+	}
+	return []event.GameEvent{event.CheatConjureCardEvent{
+		PlayerID: a.player.ID(),
+		CardName: a.cardName,
 	}}, nil
 }

@@ -7,38 +7,38 @@ import (
 	"fmt"
 )
 
-type PeekCheatAction struct {
+type ClearRevealedAction struct {
 	player state.Player
 }
 
-func NewPeekCheatAction(player state.Player) PeekCheatAction {
-	return PeekCheatAction{
+func NewClearRevealedAction(player state.Player) ClearRevealedAction {
+	return ClearRevealedAction{
 		player: player,
 	}
 }
 
-func (a PeekCheatAction) PlayerID() string {
+func (a ClearRevealedAction) PlayerID() string {
 	return a.player.ID()
 }
 
-func (a PeekCheatAction) Name() string {
-	return "Peek at the top card of your deck"
+func (a ClearRevealedAction) Name() string {
+	return "Clear revealed cards"
 }
 
-func (a PeekCheatAction) Description() string {
-	return "Look at the top card of your deck."
+func (a ClearRevealedAction) Description() string {
+	return "Clear all revealed cards from your view."
 }
 
-func (a PeekCheatAction) GetPrompt(game state.Game) (choose.ChoicePrompt, error) {
+func (a ClearRevealedAction) GetPrompt(game state.Game) (choose.ChoicePrompt, error) {
 	// No player choice needed, but we still return an empty prompt for consistency
 	return choose.ChoicePrompt{
-		Message:  "Peek at the top card of your deck",
+		Message:  "Clear all revealed cards from your view",
 		Choices:  nil,
 		Optional: false,
 	}, nil
 }
 
-func (a PeekCheatAction) Complete(
+func (a ClearRevealedAction) Complete(
 	game state.Game,
 	env *ResolutionEnvironment,
 	choices []choose.Choice,
@@ -46,7 +46,7 @@ func (a PeekCheatAction) Complete(
 	if !game.CheatsEnabled() {
 		return nil, fmt.Errorf("no cheating you cheater")
 	}
-	return []event.GameEvent{event.CheatPeekEvent{
+	return []event.GameEvent{event.ClearRevealedEvent{
 		PlayerID: a.player.ID(),
 	}}, nil
 }

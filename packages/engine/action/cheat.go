@@ -42,7 +42,7 @@ func (a CheatAction) Complete(
 	env *ResolutionEnvironment,
 	choices []choose.Choice,
 ) ([]event.GameEvent, error) {
-	return []event.GameEvent{event.NoOpEvent{
-		Message: "Cheats enabled... you cheater",
+	return []event.GameEvent{event.CheatEnabledEvent{
+		Player: a.player.ID(),
 	}}, nil
 }

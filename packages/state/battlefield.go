@@ -37,6 +37,10 @@ func (b Battlefield) Find(predicate query.Predicate) (gob.Permanent, bool) {
 	return query.Find(b.permanents, predicate)
 }
 
+func (b Battlefield) FindAll(predicate query.Predicate) []gob.Permanent {
+	return query.FindAll(b.permanents, predicate)
+}
+
 func (b Battlefield) Get(id string) (gob.Permanent, bool) {
 	return query.Get(b.permanents, id)
 }

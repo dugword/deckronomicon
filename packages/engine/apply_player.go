@@ -28,6 +28,8 @@ func (e *Engine) applyPlayerEvent(game state.Game, playerEvent event.PlayerEvent
 		return e.applyPassPriorityEvent(game, evnt)
 	case event.PlayLandEvent:
 		return e.applyPlayLandEvent(game, evnt)
+	case event.ClearRevealedEvent:
+		return e.applyClearRevealedEvent(game, evnt)
 	default:
 		return game, fmt.Errorf("unknown player event type '%T'", evnt)
 	}
@@ -70,5 +72,17 @@ func (e *Engine) applyPlayLandEvent(
 		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
 	}
 	game = game.WithUpdatedPlayer(player.WithLandPlayedThisTurn())
+	return game, nil
+}
+
+func (e *Engine) applyClearRevealedEvent(
+	game state.Game,
+	evnt event.ClearRevealedEvent,
+) (state.Game, error) {
+	player, ok := game.GetPlayer(evnt.PlayerID)
+	if !ok {
+		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
+	}
+	game = game.WithUpdatedPlayer(player.WithClearRevealed())
 	return game, nil
 }

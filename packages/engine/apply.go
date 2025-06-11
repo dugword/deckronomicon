@@ -51,6 +51,14 @@ func (e *Engine) applyEvent(game state.Game, gameEvent event.GameEvent) (state.G
 		return e.applyPriorityEvent(game, evnt)
 	case event.TurnBasedActionEvent:
 		return e.applyTurnBasedActionEvent(game, evnt)
+	case event.MilestoneEvent:
+		return game, nil
+	case event.CheatEnabledEvent:
+		game = game.WithCheatsEnabled(true)
+		e.log.Info("Cheats enabled")
+		return game, nil
+	case event.CheatEvent:
+		return e.applyCheatEvent(game, evnt)
 	default:
 		return game, fmt.Errorf("unknown event type: %T", evnt)
 	}

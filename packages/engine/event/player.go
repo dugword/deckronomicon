@@ -11,6 +11,7 @@ const (
 	EventTypeActivateAbility    = "ActivateAbility"
 	EventTypeAssignCombatDamage = "AssignCombatDamage"
 	EventTypeCastSpell          = "CastSpell"
+	EventTypeClearRevealed      = "Clear"
 	EventTypeConcede            = "Concede"
 	EventTypeDeclareAttackers   = "DeclareAttackers"
 	EventTypeDeclareBlockers    = "DeclareBlockers"
@@ -55,6 +56,15 @@ type CastSpellEvent struct {
 
 func (e CastSpellEvent) EventType() string {
 	return EventTypeCastSpell
+}
+
+type ClearRevealedEvent struct {
+	PlayerBaseEvent
+	PlayerID string
+}
+
+func (e ClearRevealedEvent) EventType() string {
+	return EventTypeClearRevealed
 }
 
 type ConcedeEvent struct {
