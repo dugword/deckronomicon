@@ -26,6 +26,11 @@ func (p Player) WithNextTurn() Player {
 	return p
 }
 
+func (p Player) WithManaPool(manaPool mana.Pool) Player {
+	p.manaPool = manaPool
+	return p
+}
+
 func (p Player) WithEmptyManaPool() Player {
 	p.manaPool = mana.NewManaPool()
 	return p

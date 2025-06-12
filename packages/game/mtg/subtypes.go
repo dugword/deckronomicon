@@ -1,7 +1,5 @@
 package mtg
 
-import "fmt"
-
 // Subtype is a subtype of card in Magic: The Gathering.
 type Subtype string
 
@@ -189,27 +187,27 @@ func (t Subtype) IsInstantSorcerySubtype() bool {
 	return false
 }
 
-func StringToSubtype(s string) (Subtype, error) {
+func StringToSubtype(s string) (Subtype, bool) {
 	if t, ok := StringToArtifactSubtype[s]; ok {
-		return t, nil
+		return t, true
 	}
 	if t, ok := StringToBattleSubtype[s]; ok {
-		return t, nil
+		return t, true
 	}
 	if t, ok := StringToEnchantmentSubtype[s]; ok {
-		return t, nil
+		return t, true
 	}
 	if t, ok := StringToBasicLandSubtype[s]; ok {
-		return t, nil
+		return t, true
 	}
 	if t, ok := StringToNonbasicLandSubtype[s]; ok {
-		return t, nil
+		return t, true
 	}
 	if t, ok := StringToInstantSorcerySubtype[s]; ok {
-		return t, nil
+		return t, true
 	}
 	if t, ok := StringToCreatureSubtype[s]; ok {
-		return t, nil
+		return t, true
 	}
-	return "", fmt.Errorf("unknown Subtype %q", s)
+	return "", false
 }

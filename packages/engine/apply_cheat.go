@@ -37,7 +37,7 @@ func (e *Engine) applyCheatEvent(game state.Game, cheatEvent event.CheatEvent) (
 }
 
 func (e *Engine) applyConjureCardCheatEvent(game state.Game, evnt event.CheatConjureCardEvent) (state.Game, error) {
-	cardDef, ok := e.definitions[evnt.CardName]
+	cardDef, ok := e.resolutionEnvironment.Definitions[evnt.CardName]
 	if !ok {
 		return game, fmt.Errorf("card definition for %q not found", evnt.CardName)
 	}
@@ -64,7 +64,6 @@ func (e *Engine) applyCheatPeekEvent(game state.Game, evnt event.CheatPeekEvent)
 		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
 	}
 	card := player.Library().Peek()
-	fmt.Println("Cheat Peeked Card:", card.Name())
 	revealed := player.Revealed().Add(card)
 	game = game.WithUpdatedPlayer(player.WithRevealed(revealed))
 	return game, nil

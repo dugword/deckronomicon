@@ -112,6 +112,8 @@ func GameStatusData(game view.Game) BoxData {
 			fmt.Sprintf("Active Player: %s", game.ActivePlayerID),
 			fmt.Sprintf("Phase: %s", game.Phase),
 			fmt.Sprintf("Step: %s", game.Step),
+			fmt.Sprintf("Stack: %d", len(game.Stack)),
+			fmt.Sprintf("Battlefield: %d", len(game.Battlefield)),
 		},
 	}
 }
@@ -203,15 +205,15 @@ func MessageData(lines []string) BoxData {
 func (b *Buffer) BuildDisplayBoxes() DisplayBoxes {
 	return DisplayBoxes{
 		PlayersStatusBox: CombineBoxesSideBySide(
-			CreateBox(b.displayData.PlayerData),
-			CreateBox(b.displayData.OpponentData),
-		),
-		GameStatusBox: CombineBoxesSideBySide(
 			CombineBoxesSideBySide(
-				CreateBox(b.displayData.GameStatusData),
-				CreateBox(b.displayData.BattlefieldData),
+				CreateBox(b.displayData.PlayerData),
+				CreateBox(b.displayData.OpponentData),
 			),
 			CreateBox(b.displayData.RevealedData),
+		),
+		GameStatusBox: CombineBoxesSideBySide(
+			CreateBox(b.displayData.GameStatusData),
+			CreateBox(b.displayData.BattlefieldData),
 		),
 		PlaySpaceBox: CombineBoxesSideBySide(
 			CombineBoxesSideBySide(

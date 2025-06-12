@@ -17,6 +17,7 @@ const (
 	EventTypeDeclareBlockers    = "DeclareBlockers"
 	EventTypePassPriority       = "PassPriority"
 	EventTypePlayLand           = "PlayLand"
+	EventTypeCycleCard          = "CycleCard"
 )
 
 type PlayerEvent interface{ isPlayerEvent() }
@@ -29,7 +30,7 @@ type ActivateAbilityEvent struct {
 	PlayerBaseEvent
 	PlayerID  string
 	AbilityID string
-	ObjectID  string
+	SourceID  string
 	Zone      mtg.Zone
 }
 
@@ -114,4 +115,13 @@ type PlayLandEvent struct {
 
 func (e PlayLandEvent) EventType() string {
 	return EventTypePlayLand
+}
+
+type CycleCardEvent struct {
+	PlayerBaseEvent
+	PlayerID string
+}
+
+func (e CycleCardEvent) EventType() string {
+	return EventTypeCycleCard
 }

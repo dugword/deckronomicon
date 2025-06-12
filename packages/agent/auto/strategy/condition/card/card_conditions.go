@@ -2,6 +2,7 @@ package card
 
 import (
 	"deckronomicon/packages/game/mtg"
+	"fmt"
 	"slices"
 	"strings"
 )
@@ -57,9 +58,9 @@ type CardSubtypeCondition struct {
 }
 
 func (c *CardSubtypeCondition) Matches(objs []GameObject, defs map[string][]string) bool {
-	subtype, err := mtg.StringToSubtype(c.Subtype)
-	if err != nil {
-		panic(err) // or handle error appropriately
+	subtype, ok := mtg.StringToSubtype(c.Subtype)
+	if !ok {
+		panic(fmt.Errorf("invalid subtype %q for CardSubtypeCondition", c.Subtype))
 	}
 	for _, obj := range objs {
 		if obj.HasSubtype(subtype) {

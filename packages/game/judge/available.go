@@ -56,5 +56,21 @@ func GetAbilitiesAvailableToActivate(game state.Game, player state.Player, rulin
 			}
 		}
 	}
+	for _, card := range player.Hand().GetAll() {
+		for _, ability := range card.ActivatedAbilities() {
+			if ruling != nil && ruling.Explain {
+				ruling.Reasons = append(ruling.Reasons, fmt.Sprintf("[ability %q]: ", ability.Name()))
+			}
+			if ability.Zone() != mtg.ZoneHand {
+				if ruling != nil && ruling.Explain {
+					ruling.Reasons = append(ruling.Reasons, "ability not available in hand")
+				}
+				continue
+			}
+			if CanActivateAbility(game, player, card, ability, ruling) {
+				availableAbilities = append(availableAbilities, gob.NewAbilityInZone(ability, card, mtg.ZoneHand))
+			}
+		}
+	}
 	return availableAbilities
 }

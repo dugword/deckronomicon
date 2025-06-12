@@ -50,6 +50,10 @@ func (a AbilityInZone) Controller() string {
 	return a.ability.Controller()
 }
 
+func (a AbilityInZone) Owner() string {
+	return a.ability.Owner()
+}
+
 func (a AbilityInZone) Source() query.Object {
 	return a.ability.Source()
 }
@@ -79,6 +83,10 @@ func (c CardInZone) Match(predicate query.Predicate) bool {
 
 func (c CardInZone) Name() string {
 	return c.card.Name()
+}
+
+func (c CardInZone) Owner() string {
+	return c.card.Owner()
 }
 
 func (c CardInZone) Zone() mtg.Zone {

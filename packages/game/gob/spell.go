@@ -28,6 +28,7 @@ type Spell struct {
 	cardTypes  []mtg.CardType
 	colors     mtg.Colors
 	controller string
+	owner      string
 	//flashback bool
 	id      string
 	loyalty int
@@ -49,6 +50,8 @@ func NewSpell(id string, card Card, playerID string) (Spell, error) {
 		cardTypes:  card.CardTypes(),
 		colors:     card.Colors(),
 		controller: playerID,
+		effects:    card.SpellAbility(),
+		owner:      card.Owner(),
 		id:         id,
 		loyalty:    card.Loyalty(),
 		//manaCost:        card.ManaCost(),
@@ -132,6 +135,10 @@ func (s Spell) Match(predicate query.Predicate) bool {
 // Name returns the name of the spell.
 func (s Spell) Name() string {
 	return s.name
+}
+
+func (s Spell) Owner() string {
+	return s.owner
 }
 
 // Power returns the power of the spell.

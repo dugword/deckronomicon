@@ -3,21 +3,21 @@ package action
 import (
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
-	"deckronomicon/packages/query/has"
 	"deckronomicon/packages/state"
 	"fmt"
 )
 
 type FindCardCheatAction struct {
-	player   state.Player
-	cardName string
+	player state.Player
+	card   gob.Card
 }
 
-func NewFindCardCheatAction(player state.Player, cardName string) FindCardCheatAction {
+func NewFindCardCheatAction(player state.Player, cardInZone gob.Card) FindCardCheatAction {
 	return FindCardCheatAction{
-		player:   player,
-		cardName: cardName,
+		player: player,
+		card:   cardInZone,
 	}
 }
 
@@ -50,18 +50,14 @@ func (a FindCardCheatAction) Complete(
 	if !game.CheatsEnabled() {
 		return nil, fmt.Errorf("no cheating you cheater")
 	}
-	if a.cardName == "" {
-		return nil, fmt.Errorf("find card action requires a card name")
-	}
-	card, ok := a.player.Library().Find(has.Name(a.cardName))
+	card, ok := a.player.Library().Get(a.card.ID())
 	if !ok {
-		return nil, fmt.Errorf("card %q not found in library", a.cardName)
+		return nil, fmt.Errorf("card %q not found in library", a.card.ID())
 	}
-
 	return []event.GameEvent{
 		event.CheatFindCardEvent{
 			PlayerID: a.player.ID(),
-			CardName: a.cardName,
+			CardID:   a.card.ID(),
 		},
 		event.MoveCardEvent{
 			CardID:   card.ID(),

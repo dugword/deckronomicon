@@ -111,7 +111,7 @@ func (p Player) Hand() Hand {
 }
 
 func (p Player) ManaPool() mana.Pool {
-	return p.manaPool
+	return p.manaPool.Copy()
 }
 
 func (p Player) Exile() Exile {

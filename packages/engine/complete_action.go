@@ -11,6 +11,7 @@ import (
 	"deckronomicon/packages/engine/action"
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/state"
+	"errors"
 	"fmt"
 )
 
@@ -24,6 +25,8 @@ type Action interface {
 	Complete(state.Game, *action.ResolutionEnvironment, []choose.Choice) ([]event.GameEvent, error)
 	PlayerID() string
 }
+
+var ErrInvalidUserAction = errors.New("invalid user action")
 
 func (e *Engine) CompleteAction(action Action) error {
 	choicePrompt, err := action.GetPrompt(e.game)
@@ -51,7 +54,7 @@ func (e *Engine) CompleteAction(action Action) error {
 		return fmt.Errorf(
 			"failed to complete action %q: %w",
 			action.Name(),
-			err,
+			errors.Join(err, ErrInvalidUserAction),
 		)
 	}
 	for _, evnt := range evnts {

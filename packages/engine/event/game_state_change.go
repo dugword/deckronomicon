@@ -1,21 +1,26 @@
 package event
 
 import (
+	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/mana"
 )
 
 const (
-	EventTypeAddMana              = "AddMana"
-	EventTypeDiscardCard          = "DiscardCard"
-	EventTypeDrawCard             = "DrawCard"
-	EventTypeMoveCardToZone       = "MoveCard"
-	EventTypePutCardOnBattlefield = "PutCardOnBattlefield"
-	EventTypePutCardOnStack       = "PutCardOnStack"
-	EventTypeSetActivePlayer      = "SetActivePlayer"
-	EventTypeShuffleDeck          = "ShuffleDeck"
-	EventTypeTapPermanent         = "TapPermanent"
-	EventTypeUntapPermanent       = "UntapPermanent"
+	EventTypeAddMana                   = "AddMana"
+	EventTypeDiscardCard               = "DiscardCard"
+	EventTypeDrawCard                  = "DrawCard"
+	EventTypeMoveCard                  = "MoveCard"
+	EventTypePutPermanentOnBattlefield = "PutPermanentOnBattlefield"
+	EventTypePutSpellOnStack           = "PutSpellOnStack"
+	EventTypePutSpellInGraveyard       = "PutSpellInGraveyard"
+	EventTypePutAbilityOnStack         = "PutAbilityOnStack"
+	EventTypeRemoveAbilityFromStack    = "RemoveAbilityFromStack"
+	EventTypeSetActivePlayer           = "SetActivePlayer"
+	EventTypeSpendMana                 = "SpendMana"
+	EventTypeShuffleDeck               = "ShuffleDeck"
+	EventTypeTapPermanent              = "TapPermanent"
+	EventTypeUntapPermanent            = "UntapPermanent"
 )
 
 type GameStateChangeEvent interface{ isGameStateChangeEvent() }
@@ -72,29 +77,63 @@ type MoveCardEvent struct {
 }
 
 func (e MoveCardEvent) EventType() string {
-	return EventTypeMoveCardToZone
+	return EventTypeMoveCard
 }
 
-type PutCardOnBattlefieldEvent struct {
+type PutPermanentOnBattlefieldEvent struct {
 	GameStateChangeBaseEvent
 	PlayerID string
 	CardID   string
 	FromZone mtg.Zone
 }
 
-func (e PutCardOnBattlefieldEvent) EventType() string {
-	return EventTypePutCardOnBattlefield
+func (e PutPermanentOnBattlefieldEvent) EventType() string {
+	return EventTypePutPermanentOnBattlefield
 }
 
-type PutCardOnStackEvent struct {
+type PutSpellInGraveyardEvent struct {
+	GameStateChangeBaseEvent
+	PlayerID string
+	SpellID  string
+}
+
+func (e PutSpellInGraveyardEvent) EventType() string {
+	return EventTypePutSpellInGraveyard
+}
+
+type PutSpellOnStackEvent struct {
 	GameStateChangeBaseEvent
 	PlayerID string
 	CardID   string
 	FromZone mtg.Zone
 }
 
-func (e PutCardOnStackEvent) EventType() string {
-	return EventTypePutCardOnStack
+func (e PutSpellOnStackEvent) EventType() string {
+	return EventTypePutSpellOnStack
+}
+
+type PutAbilityOnStackEvent struct {
+	GameStateChangeBaseEvent
+	PlayerID    string
+	SourceID    string
+	AbilityID   string
+	FromZone    mtg.Zone
+	AbilityName string
+	Effects     []definition.EffectSpec
+}
+
+func (e PutAbilityOnStackEvent) EventType() string {
+	return EventTypePutAbilityOnStack
+}
+
+type RemoveAbilityFromStackEvent struct {
+	GameStateChangeBaseEvent
+	PlayerID  string
+	AbilityID string
+}
+
+func (e RemoveAbilityFromStackEvent) EventType() string {
+	return EventTypeRemoveAbilityFromStack
 }
 
 type SetActivePlayerEvent struct {
@@ -113,6 +152,16 @@ type ShuffleDeckEvent struct {
 
 func (e ShuffleDeckEvent) EventType() string {
 	return EventTypeShuffleDeck
+}
+
+type SpendManaEvent struct {
+	GameStateChangeBaseEvent
+	ManaString string
+	PlayerID   string
+}
+
+func (e SpendManaEvent) EventType() string {
+	return EventTypeSpendMana
 }
 
 type TapPermanentEvent struct {

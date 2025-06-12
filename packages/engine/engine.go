@@ -8,14 +8,15 @@ import (
 	"deckronomicon/packages/engine/effect"
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/game/definition"
+	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/logger"
 	"deckronomicon/packages/state"
+	"errors"
 	"fmt"
 )
 
 type Engine struct {
 	agents                map[string]PlayerAgent
-	definitions           map[string]definition.Card
 	deckLists             map[string]configs.DeckList
 	game                  state.Game
 	record                *GameRecord
@@ -39,11 +40,11 @@ func NewEngine(config EngineConfig) *Engine {
 		agents[id] = agent
 	}
 	resolutionEnvironment := action.ResolutionEnvironment{
+		Definitions:    config.Definitions,
 		EffectRegistry: effect.NewEffectRegistry(),
 	}
 	return &Engine{
 		agents:                agents,
-		definitions:           config.Definitions,
 		deckLists:             config.DeckLists,
 		game:                  state.Game{}.WithPlayers(config.Players),
 		log:                   &logger.Logger{},
@@ -68,7 +69,7 @@ func (e *Engine) RunGame() error {
 		}
 		newGame, deck, err := e.game.WithBuildDeck(
 			deckList,
-			e.definitions,
+			e.resolutionEnvironment.Definitions,
 			playerID,
 		)
 		if err != nil {
@@ -100,6 +101,7 @@ func (e *Engine) RunGame() error {
 	for _, playerID := range e.game.PlayerIDsInTurnOrder() {
 		e.log.Debug("Drawing starting hand for player:", playerID)
 		startingHandAction := action.NewDrawStartingHandAction(playerID)
+		// TODO: This could probably just be an event, or maybe a separate type than "action"
 		if err := e.CompleteAction(startingHandAction); err != nil {
 			return fmt.Errorf(
 				"failed to draw starting hand for player %q: %w",
@@ -164,7 +166,7 @@ func (e *Engine) RunStep(step GameStep) error {
 	}
 	for _, action := range step.actions {
 		e.log.Debug("Completing action:", action.Name())
-
+		// TODO: This should be a separate event, not an action.
 		if err := e.CompleteAction(action); err != nil {
 			return fmt.Errorf(
 				"failed to apply action %s: %w",
@@ -191,7 +193,6 @@ func (e *Engine) RunPriority() error {
 	}
 	for !e.game.AllPlayersPassedPriority() {
 		priorityPlayerID = e.game.PriorityPlayerID()
-		e.log.Debugf("Player %q received priority", priorityPlayerID)
 		agent := e.agents[priorityPlayerID]
 		action, err := agent.GetNextAction(e.game)
 		if err != nil {
@@ -202,6 +203,10 @@ func (e *Engine) RunPriority() error {
 			)
 		}
 		if err := e.CompleteAction(action); err != nil {
+			if errors.Is(err, ErrInvalidUserAction) {
+				e.log.Debugf("Error completing action for player %q: %s", priorityPlayerID, err)
+				continue
+			}
 			return fmt.Errorf(
 				"failed to apply action for player %q: %w",
 				priorityPlayerID,
@@ -224,6 +229,84 @@ func (e *Engine) RunPriority() error {
 			if err := e.Apply(event.AllPlayersPassedPriorityEvent{}); err != nil {
 				return fmt.Errorf("failed to apply all players passed priority event: %w", err)
 			}
+			if e.game.Stack().Size() == 0 {
+				continue
+			}
+			// GetNextStackItem?
+			resolvable, _, ok := e.game.Stack().TakeTop()
+			if !ok {
+				return fmt.Errorf("failed to take top from stack: %w", err)
+			}
+			if err := e.ResolveResolvable(resolvable); err != nil {
+				return fmt.Errorf("failed to resolve resolvable: %w", err)
+			}
+			if err := e.Apply(event.ResetPriorityPassesEvent{}); err != nil {
+				return fmt.Errorf("failed to reset priority passes: %w", err)
+			}
+		}
+	}
+	return nil
+}
+
+func (e *Engine) ResolveResolvable(resolvable state.Resolvable) error {
+	player, ok := e.game.GetPlayer(resolvable.Controller())
+	if !ok {
+		return fmt.Errorf("player %q not found", resolvable.Controller())
+	}
+	events := []event.GameEvent{
+		event.ResolveTopObjectOnStackEvent{
+			Name: resolvable.Name(),
+			ID:   resolvable.ID(),
+		},
+	}
+	// TODO: This could probably be more elegent, instead of having the top level effect array be different than the chain it starts,
+	// maybe it could all be one thing.
+	for _, effect := range resolvable.Effects() {
+		e.log.Debug("Resolving effect:", effect)
+		handler, ok := e.resolutionEnvironment.EffectRegistry.Get(effect.Name())
+		if !ok {
+			return fmt.Errorf("effect %q not found", effect.Name())
+		}
+		effectResult, err := handler(e.game, player, resolvable, effect.Modifiers())
+		if err != nil {
+			return fmt.Errorf("failed to apply effect %q: %w", effect.Name(), err)
+		}
+		events = append(events, effectResult.Events...)
+		// TODO: This needs to be a loop, right now we only handle a depth of 1
+		if len(effectResult.ChoicePrompt.Choices) != 0 {
+			agent := e.agents[player.ID()]
+			choices, err := agent.Choose(effectResult.ChoicePrompt)
+			if err != nil {
+				return fmt.Errorf("failed to choose action for player %q: %w", player.ID(), err)
+			}
+			if effectResult.ResumeFunc == nil {
+				return fmt.Errorf("effect %q requires choices but has no resume function", effect.Name())
+			}
+			effectResult, err = effectResult.ResumeFunc(choices)
+			if err != nil {
+				return fmt.Errorf("failed to resume function for effect %s: %w", effect.Name(), err)
+			}
+			if len(effectResult.ChoicePrompt.Choices) != 0 {
+				panic("only one level of recursion supported")
+			}
+			events = append(events, effectResult.Events...)
+		}
+	}
+	if spell, ok := resolvable.(gob.Spell); ok {
+		events = append(events, event.PutSpellInGraveyardEvent{
+			PlayerID: spell.Owner(),
+			SpellID:  resolvable.ID(),
+		})
+	}
+	if ability, ok := resolvable.(gob.AbilityOnStack); ok {
+		events = append(events, event.RemoveAbilityFromStackEvent{
+			PlayerID:  ability.Owner(),
+			AbilityID: ability.ID(),
+		})
+	}
+	for _, evnt := range events {
+		if err := e.Apply(evnt); err != nil {
+			return fmt.Errorf("failed to apply event %T: %w", evnt, err)
 		}
 	}
 	return nil

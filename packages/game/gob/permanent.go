@@ -156,6 +156,10 @@ func (p Permanent) Name() string {
 	return p.name
 }
 
+func (p Permanent) Owner() string {
+	return p.owner
+}
+
 // Power returns the power of the permanent.
 func (p Permanent) Power() int {
 	return p.power

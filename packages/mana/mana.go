@@ -60,6 +60,13 @@ func NewManaPool() Pool {
 	return m
 }
 
+// TODO: Is this the best way to manage mana pools?
+func (p Pool) Copy() Pool {
+	newPool := NewManaPool()
+	maps.Copy(newPool.mana, p.mana)
+	return newPool
+}
+
 func (p Pool) Total() int {
 	total := 0
 	for _, amount := range p.mana {
@@ -152,6 +159,22 @@ func (a Amount) Colors() map[ManaType]int {
 	newColors := map[ManaType]int{}
 	maps.Copy(newColors, a.colors)
 	return newColors
+}
+
+func (a Amount) ManaString() string {
+	// TODO: colors might not be the right name, costs? Symbols?
+	var manaSymbols []string
+	if a.Generic() > 0 {
+		manaSymbols = append(manaSymbols, fmt.Sprintf("{%d}", a.Generic()))
+	}
+	for _, color := range AllManaTypes {
+		if a.Colors()[color] > 0 {
+			for range a.Colors()[color] {
+				manaSymbols = append(manaSymbols, fmt.Sprintf("{%s}", color))
+			}
+		}
+	}
+	return strings.Join(manaSymbols, "")
 }
 
 func NewAmount() Amount {

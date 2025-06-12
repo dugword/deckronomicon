@@ -44,13 +44,9 @@ func parsePlayLandCommand(
 func buildPlayLandCommandByChoice(
 	cards []gob.CardInZone,
 	chooseOne func(prompt choose.ChoicePrompt) (choose.Choice, error), player state.Player) (*PlayLandCommand, error) {
-	var choices []choose.Choice
-	for _, card := range cards {
-		choices = append(choices, card)
-	}
 	prompt := choose.ChoicePrompt{
 		Message:  "Choose a land to play",
-		Choices:  choices,
+		Choices:  choose.NewChoices(cards),
 		Source:   CommandSource{"Play a land"},
 		Optional: true,
 	}

@@ -67,8 +67,8 @@ func (e CheatPeekEvent) EventType() string {
 
 type CheatFindCardEvent struct {
 	CheatEventBase
-	PlayerID string // Player ID who found the card
-	CardName string // Name of the card found
+	PlayerID string
+	CardID   string
 }
 
 func (e CheatFindCardEvent) EventType() string {
@@ -77,7 +77,7 @@ func (e CheatFindCardEvent) EventType() string {
 
 type CheatResetLandDropEvent struct {
 	CheatEventBase
-	PlayerID string // Player ID who reset the land drop
+	PlayerID string
 }
 
 func (e CheatResetLandDropEvent) EventType() string {

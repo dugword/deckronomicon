@@ -14,8 +14,10 @@ func PayCost(someCost cost.Cost, object query.Object, player state.Player) ([]ev
 		return payCompositeCost(c, object, player)
 	case cost.ManaCost:
 		return payManaCost(c, object, player)
-	case cost.TapCost:
+	case cost.TapThisCost:
 		return payTapCost(object, player)
+	case cost.DiscardThisCost:
+		return payDiscardCost(object, player)
 	default:
 		return nil, fmt.Errorf("unsupported cost type: %T", c)
 	}
@@ -35,24 +37,14 @@ func payCompositeCost(c cost.CompositeCost, object query.Object, player state.Pl
 }
 
 func payManaCost(c cost.ManaCost, object query.Object, player state.Player) ([]event.GameEvent, error) {
-	/*
-		// Check if the player has enough mana to pay the cost
-		availableMana := player.ManaAvailable()
-		for _, mana := range c.Mana() {
-			if availableMana[mana.Color] < mana.Amount {
-				return nil, fmt.Errorf("not enough mana to pay cost: %s", c)
-			}
-		}
-
-		// Create an event to deduct the mana
-		return []event.GameEvent{
-			event.DeductManaEvent{
-				PlayerID:   player.ID(),
-				ManaAmount: c.Mana(),
-			},
-		}, nil
-	*/
-	return nil, nil
+	// Check if the player has enough mana to pay the cost
+	if _, err := player.ManaPool().WithSpentFromManaAmount(c.Amount()); err != nil {
+		return nil, fmt.Errorf("failed to deduct mana from pool: %w", err)
+	}
+	return []event.GameEvent{event.SpendManaEvent{
+		PlayerID:   player.ID(),
+		ManaString: c.Amount().ManaString(),
+	}}, nil
 }
 
 func payTapCost(object query.Object, player state.Player) ([]event.GameEvent, error) {
@@ -61,6 +53,16 @@ func payTapCost(object query.Object, player state.Player) ([]event.GameEvent, er
 		event.TapPermanentEvent{
 			PlayerID:    player.ID(),
 			PermanentID: object.ID(),
+		},
+	}, nil
+}
+
+func payDiscardCost(object query.Object, player state.Player) ([]event.GameEvent, error) {
+	// Create an event to discard the specified object
+	return []event.GameEvent{
+		event.DiscardCardEvent{
+			PlayerID: player.ID(),
+			CardID:   object.ID(),
 		},
 	}, nil
 }

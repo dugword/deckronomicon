@@ -17,6 +17,7 @@ type Resolvable interface {
 	Effects() []gob.Effect
 	Match(p query.Predicate) bool
 	Controller() string
+	Owner() string
 }
 
 type Stack struct {
@@ -60,6 +61,10 @@ func (s Stack) Remove(id string) (Stack, bool) {
 
 }
 
+func (s Stack) Size() int {
+	return len(s.resolvables)
+}
+
 func (s Stack) Take(id string) (Resolvable, Stack, bool) {
 	resolvable, resolvables, ok := take.By(s.resolvables, has.ID(id))
 	if !ok {
@@ -68,18 +73,14 @@ func (s Stack) Take(id string) (Resolvable, Stack, bool) {
 	return resolvable, Stack{resolvables: resolvables}, true
 }
 
-func (s Stack) Size() int {
-	return len(s.resolvables)
-}
-
-func (s Stack) ZoneType() string {
-	return "Stack"
-}
-
 func (s Stack) TakeTop() (Resolvable, Stack, bool) {
 	resolvable, resolvables, ok := take.Top(s.resolvables)
 	if !ok {
 		return nil, s, false
 	}
 	return resolvable, Stack{resolvables: resolvables}, true
+}
+
+func (s Stack) ZoneType() string {
+	return "Stack"
 }

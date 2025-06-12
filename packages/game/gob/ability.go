@@ -2,6 +2,7 @@ package gob
 
 import (
 	//	"deckronomicon/packages/game/cost"
+	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 	"fmt"
@@ -12,12 +13,13 @@ import (
 type Ability struct {
 	name string
 	// TODO Maybe parse this into a cost type?
-	cost    string
-	effects []Effect
-	id      string
-	zone    mtg.Zone
-	source  query.Object
-	speed   mtg.Speed
+	cost        string
+	effects     []Effect
+	effectSpecs []definition.EffectSpec
+	id          string
+	zone        mtg.Zone
+	source      query.Object
+	speed       mtg.Speed
 }
 
 func NewAbility(id string) Ability {
@@ -31,6 +33,10 @@ func (a Ability) Controller() string {
 	return a.source.Controller()
 }
 
+func (a Ability) Owner() string {
+	return a.source.Owner()
+}
+
 func (a Ability) Cost() string {
 	return a.cost
 }
@@ -39,8 +45,16 @@ func (a Ability) Effects() []Effect {
 	return a.effects
 }
 
+func (a Ability) EffectSpecs() []definition.EffectSpec {
+	return a.effectSpecs
+}
+
 func (a Ability) Source() query.Object {
 	return a.source
+}
+
+func (a Ability) Zone() mtg.Zone {
+	return a.zone
 }
 
 // BuildActivatedAbility builds an activated ability from the given

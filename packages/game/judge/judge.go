@@ -29,24 +29,24 @@ func (r *Ruling) Why() string {
 func CanActivateAbility(
 	game state.Game,
 	player state.Player,
-	permanent gob.Permanent,
+	object query.Object,
 	ability gob.Ability,
 	ruling *Ruling,
 ) bool {
 	can := true
-	if permanent.Controller() != player.ID() {
+	if object.Controller() != player.ID() {
 		if ruling != nil && ruling.Explain {
 			ruling.Reasons = append(ruling.Reasons, "permanent is not controlled by player")
 		}
 		can = false
 	}
 	// TODO: I don't like having to parse the cost here:
-	c, err := cost.ParseCost(ability.Cost(), permanent)
+	c, err := cost.ParseCost(ability.Cost(), object)
 	if err != nil {
 		panic("failed to parse ability cost: " + err.Error())
 		can = false // Skip abilities with invalid costs
 	}
-	if !CanPayCost(c, permanent, game, player) {
+	if !CanPayCost(c, object, game, player) {
 		if ruling != nil && ruling.Explain {
 			ruling.Reasons = append(ruling.Reasons, "cannot pay cost for ability: "+c.Description())
 		}

@@ -60,7 +60,6 @@ func (a AddManaCheatAction) Complete(
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse mana string %q: %w", a.ManaString, err)
 	}
-	fmt.Println("Adding mana:", a.ManaString, "for player", a.Player.ID())
 	events := []event.GameEvent{
 		event.CheatAddManaEvent{
 			Player: a.Player.ID(),

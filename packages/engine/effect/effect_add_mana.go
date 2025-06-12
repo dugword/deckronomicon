@@ -16,7 +16,7 @@ func AddManaEffectHandler(
 	player state.Player,
 	source query.Object,
 	modifiers []gob.Tag,
-) ([]event.GameEvent, error) {
+) (EffectResult, error) {
 	var manaString string
 	for _, modifier := range modifiers {
 		if modifier.Key == "Mana" {
@@ -25,11 +25,11 @@ func AddManaEffectHandler(
 		}
 	}
 	if manaString == "" {
-		return nil, errors.New("effect 'AddMana' requires 'Mana' modifier")
+		return EffectResult{}, errors.New("effect 'AddMana' requires 'Mana' modifier")
 	}
 	amount, err := mana.ParseManaString(manaString)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse mana string %q: %w", manaString, err)
+		return EffectResult{}, fmt.Errorf("failed to parse mana string %q: %w", manaString, err)
 	}
 
 	// Think through how to best handle this and how the events will be represented in JSON.
@@ -46,5 +46,7 @@ func AddManaEffectHandler(
 			ManaType: color,
 		})
 	}
-	return events, nil
+	return EffectResult{
+		Events: events,
+	}, nil
 }

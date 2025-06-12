@@ -2,7 +2,6 @@ package take
 
 import (
 	"deckronomicon/packages/query"
-	"slices"
 )
 
 func AllBy[T query.Object](objects []T, predicate query.Predicate) (taken []T, remaining []T) {
@@ -17,14 +16,17 @@ func AllBy[T query.Object](objects []T, predicate query.Predicate) (taken []T, r
 }
 
 func By[T query.Object](objects []T, predicate query.Predicate) (taken T, remaining []T, ok bool) {
-	for i, object := range objects {
-		if !predicate(object) {
+	for _, object := range objects {
+		if predicate(object) {
+			taken = object
 			continue
 		}
-		remaining = slices.Delete(objects, i, i+1)
-		return object, remaining, true
+		remaining = append(remaining, object)
 	}
-	return taken, objects, false
+	if len(remaining) == len(objects) {
+		return taken, objects, false
+	}
+	return taken, remaining, true
 }
 
 func Top[T query.Object](objects []T) (taken T, remaining []T, ok bool) {

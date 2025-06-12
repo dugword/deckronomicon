@@ -49,6 +49,8 @@ func (e *Engine) applyEvent(game state.Game, gameEvent event.GameEvent) (state.G
 		return e.applyPlayerEvent(game, evnt)
 	case event.PriorityEvent:
 		return e.applyPriorityEvent(game, evnt)
+	case event.StackEvent:
+		return e.applyStackEvent(game, evnt)
 	case event.TurnBasedActionEvent:
 		return e.applyTurnBasedActionEvent(game, evnt)
 	case event.MilestoneEvent:

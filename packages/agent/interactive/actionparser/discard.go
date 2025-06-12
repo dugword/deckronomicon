@@ -42,13 +42,9 @@ func buildDiscardCommandByChoice(
 	chooseOne func(prompt choose.ChoicePrompt) (choose.Choice, error),
 	player state.Player,
 ) (*DiscardCheatCommand, error) {
-	var choices []choose.Choice
-	for _, card := range cards {
-		choices = append(choices, card)
-	}
 	prompt := choose.ChoicePrompt{
 		Message:  "Choose a card to discard",
-		Choices:  choices,
+		Choices:  choose.NewChoices(cards),
 		Source:   CommandSource{"Discard a card"},
 		Optional: true,
 	}

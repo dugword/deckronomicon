@@ -50,13 +50,9 @@ func buildCastSpellCommandByChoice(
 	chooseOne func(prompt choose.ChoicePrompt) (choose.Choice, error),
 	player state.Player,
 ) (*CastSpellCommand, error) {
-	var choices []choose.Choice
-	for _, card := range cards {
-		choices = append(choices, card)
-	}
 	prompt := choose.ChoicePrompt{
 		Message:  "Choose a card to play",
-		Choices:  choices,
+		Choices:  choose.NewChoices(cards),
 		Source:   CommandSource{"Play a card"},
 		Optional: true,
 	}

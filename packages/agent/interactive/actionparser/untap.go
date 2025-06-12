@@ -45,13 +45,9 @@ func buildUntapCommandByChoice(
 	chooseOne func(prompt choose.ChoicePrompt) (choose.Choice, error),
 	player state.Player,
 ) (*UntapCheatCommand, error) {
-	var choices []choose.Choice
-	for _, permanent := range permanents {
-		choices = append(choices, permanent)
-	}
 	prompt := choose.ChoicePrompt{
 		Message:  "Choose a permanent to untap",
-		Choices:  choices,
+		Choices:  choose.NewChoices(permanents),
 		Source:   CommandSource{"Untap a permanent"},
 		Optional: true,
 	}

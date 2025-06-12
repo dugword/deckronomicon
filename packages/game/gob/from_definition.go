@@ -29,6 +29,7 @@ func NewCardFromCardDefinition(id, playerID string, definition definition.Card) 
 
 		id:         id,
 		controller: playerID,
+		owner:      playerID,
 		definition: definition,
 		loyalty:    definition.Loyalty,
 		name:       definition.Name,
@@ -71,9 +72,9 @@ func NewCardFromCardDefinition(id, playerID string, definition definition.Card) 
 	card.cardTypes = cardTypes
 	var subtypes []mtg.Subtype
 	for _, subtype := range definition.Subtypes {
-		subtype, err := mtg.StringToSubtype(subtype)
-		if err != nil {
-			return Card{}, fmt.Errorf("failed to parse subtype %q: %w", subtype, err)
+		subtype, ok := mtg.StringToSubtype(subtype)
+		if !ok {
+			return Card{}, fmt.Errorf("invalid subtype %q", subtype)
 		}
 		subtypes = append(subtypes, subtype)
 	}
@@ -106,14 +107,16 @@ func NewCardFromCardDefinition(id, playerID string, definition definition.Card) 
 			}
 		}
 		ability := Ability{
-			cost:   spec.Cost,
-			name:   spec.Name,
-			id:     fmt.Sprintf("%s-%d", id, abilityID),
-			zone:   zone,
-			speed:  speed,
-			source: card,
+			cost:        spec.Cost,
+			name:        spec.Name,
+			effectSpecs: spec.EffectSpecs,
+			id:          fmt.Sprintf("%s-%d", id, abilityID),
+			zone:        zone,
+			speed:       speed,
+			source:      card,
 		}
 		var effects []Effect
+		// TODO: I think this should happen in the reducer not on load
 		for _, effectSpec := range spec.EffectSpecs {
 			var modifiers []Tag
 			for _, modifier := range effectSpec.Modifiers {
@@ -139,6 +142,21 @@ func NewCardFromCardDefinition(id, playerID string, definition definition.Card) 
 		ability.effects = effects
 		card.activatedAbilities = append(card.activatedAbilities, ability)
 	}
+	for _, spec := range definition.SpellAbilitySpec.EffectSpecs {
+		var modifiers []Tag
+		for _, modifier := range spec.Modifiers {
+			modifier := Tag{
+				Key:   modifier.Key,
+				Value: modifier.Value,
+			}
+			modifiers = append(modifiers, modifier)
+		}
+		card.spellAbility = append(card.spellAbility, Effect{
+			name:      spec.Name,
+			modifiers: modifiers,
+		})
+	}
+
 	/*
 		for _, spec := range card.activatedAbilitySpecs {
 			// TODO: Do this check here or when I am checking for abilities to

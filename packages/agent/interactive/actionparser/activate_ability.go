@@ -34,7 +34,6 @@ func parseActivateAbilityCommand(
 ) (*ActivateAbilityCommand, error) {
 	ruling := judge.Ruling{Explain: true}
 	abilities := judge.GetAbilitiesAvailableToActivate(game, player, &ruling)
-	fmt.Println("Ruling reasons:", ruling.Reasons)
 	if idOrName == "" {
 		return buildActivateAbilityCommandByChoice(abilities, chooseOne, player)
 	}
@@ -46,13 +45,9 @@ func buildActivateAbilityCommandByChoice(
 	chooseOne func(prompt choose.ChoicePrompt) (choose.Choice, error),
 	player state.Player,
 ) (*ActivateAbilityCommand, error) {
-	var choices []choose.Choice
-	for _, ability := range abilities {
-		choices = append(choices, ability)
-	}
 	prompt := choose.ChoicePrompt{
 		Message:  "Choose an ability to activate",
-		Choices:  choices,
+		Choices:  choose.NewChoices(abilities),
 		Source:   CommandSource{"Activate an ability"},
 		Optional: true,
 	}

@@ -1,6 +1,7 @@
 package state
 
 import (
+	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
 )
@@ -85,7 +86,8 @@ func (g Game) WithBattlefield(battlefield Battlefield) Game {
 	return g
 }
 
-func (g Game) WithPutCardOnBattlefield(card gob.Card, playerID string) (Game, error) {
+// TODO: Should the permanent be created here or in the apply reducer...
+func (g Game) WithPutPermanentOnBattlefield(card gob.Card, playerID string) (Game, error) {
 	id, game := g.GetNextID()
 	permanent, err := gob.NewPermanent(id, card, playerID)
 	if err != nil {
@@ -101,18 +103,34 @@ func (g Game) WithStack(stack Stack) Game {
 	return g
 }
 
-func (g Game) WithPutCardOnStack(card gob.Card, playerID string) (Game, error) {
+func (g Game) WithPutSpellOnStack(card gob.Card, playerID string) (Game, error) {
 	id, game := g.GetNextID()
-	spell, err := gob.NewSpell(
-		id,
-		card,
-		playerID,
-	)
+	spell, err := gob.NewSpell(id, card, playerID)
 	if err != nil {
 		return game, err
 	}
-
 	stack := game.stack.Add(spell)
+	game = game.WithStack(stack)
+	return game, nil
+}
+
+func (g Game) WithPutAbilityOnStack(
+	playerID,
+	sourceID,
+	abilityID,
+	abilityName string,
+	effectSpecs []definition.EffectSpec,
+) (Game, error) {
+	id, game := g.GetNextID()
+	abilityOnStack := gob.NewAbilityOnStack(
+		id,
+		playerID,
+		sourceID,
+		abilityID,
+		abilityName,
+		effectSpecs,
+	)
+	stack := game.stack.Add(abilityOnStack)
 	game = game.WithStack(stack)
 	return game, nil
 }

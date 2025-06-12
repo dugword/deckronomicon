@@ -14,6 +14,7 @@ import (
 	"deckronomicon/packages/engine"
 	"deckronomicon/packages/state"
 	"errors"
+	"fmt"
 	"strings"
 )
 
@@ -70,7 +71,7 @@ func (p *CommandParser) ParseInput(
 		if game.CheatsEnabled() {
 			return p.ParseCheatCommand(command, arg, chooseOne, game, player)
 		}
-		return nil, errors.New("unknown command %q" + command)
+		return nil, fmt.Errorf("unknown command %q", command)
 	}
 }
 
@@ -91,7 +92,7 @@ func (p *CommandParser) ParseCheatCommand(
 	case "discard":
 		return parseDiscardCheatCommand(arg, chooseOne, game, player)
 	case "find", "tutor":
-		return parseFindCardCheatCommand(arg, player)
+		return parseFindCardCheatCommand(arg, chooseOne, player)
 	case "landdrop":
 		return &ResetLandDropCommand{Player: player}, nil
 	case "peek":
@@ -101,6 +102,6 @@ func (p *CommandParser) ParseCheatCommand(
 	case "untap":
 		return parseUntapCheatCommand(arg, chooseOne, game, player)
 	default:
-		return nil, errors.New("unknown cheat command %q" + command)
+		return nil, fmt.Errorf("unknown cheat command %q", command)
 	}
 }

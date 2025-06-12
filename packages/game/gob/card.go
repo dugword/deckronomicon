@@ -24,6 +24,7 @@ type Card struct {
 	definition   definition.Card
 	cardTypes    []mtg.CardType
 	controller   string
+	owner        string
 	colors       mtg.Colors
 	id           string
 	loyalty      int
@@ -119,6 +120,10 @@ func (c Card) ManaValue() int {
 // Name returns the name of the card.
 func (c Card) Name() string {
 	return c.name
+}
+
+func (c Card) Owner() string {
+	return c.owner
 }
 
 // Power returns the power of the card. This is used for creature and vehicle

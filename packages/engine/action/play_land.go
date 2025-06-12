@@ -58,7 +58,6 @@ func (a PlayLandAction) Complete(
 		)
 	}
 	ruling := judge.Ruling{Explain: true}
-	// TODO: Think through structured errors or "reason" structs for responses from the judge.
 	if !judge.CanPlayLand(game, a.player, a.cardInZone.Zone(), a.cardInZone.Card(), &ruling) {
 		return nil, fmt.Errorf(
 			"player %q cannot play card %q, %s",
@@ -74,7 +73,7 @@ func (a PlayLandAction) Complete(
 				CardID:   a.cardInZone.ID(),
 				Zone:     a.cardInZone.Zone(),
 			},
-			event.PutCardOnBattlefieldEvent{
+			event.PutPermanentOnBattlefieldEvent{
 				PlayerID: a.player.ID(),
 				CardID:   a.cardInZone.ID(),
 				FromZone: a.cardInZone.Zone(),

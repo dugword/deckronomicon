@@ -56,23 +56,40 @@ func (a ActivateAbilityAction) Complete(
 	if !judge.CanPayCost(cost, ability.Source(), game, a.player) {
 		return nil, fmt.Errorf("player %q cannot pay cost %q", a.player.ID(), cost.Description())
 	}
+	events := []event.GameEvent{
+		event.ActivateAbilityEvent{
+			PlayerID:  a.player.ID(),
+			SourceID:  ability.Source().ID(),
+			AbilityID: ability.Name(),
+			Zone:      a.abilityOnObjectInZone.Zone(),
+		},
+	}
 	costEvents, err := PayCost(cost, ability.Source(), a.player)
 	if err != nil {
 		return nil, fmt.Errorf("failed to pay cost %q: %w", cost.Description(), err)
 	}
-	var effectsEvents []event.GameEvent
-	for _, effect := range ability.Effects() {
-		handler, ok := env.EffectRegistry.Get(effect.Name())
-		if !ok {
-			return nil, fmt.Errorf("effect %q not found", effect.Name())
+	events = append(events, costEvents...)
+	if ability.IsManaAbility() {
+		for _, effect := range ability.Effects() {
+			handler, ok := env.EffectRegistry.Get(effect.Name())
+			if !ok {
+				return nil, fmt.Errorf("effect %q not found", effect.Name())
+			}
+			effectResults, err := handler(game, a.player, ability.Source(), effect.Modifiers())
+			if err != nil {
+				return nil, fmt.Errorf("failed to apply effect %q: %w", effect.Name(), err)
+			}
+			events = append(events, effectResults.Events...)
 		}
-		effectEvents, err := handler(game, a.player, ability.Source(), effect.Modifiers())
-		if err != nil {
-			return nil, fmt.Errorf("failed to apply effect %q: %w", effect.Name(), err)
-		}
-		effectsEvents = append(effectsEvents, effectEvents...)
+		return events, nil
 	}
-
-	// activateAbilityEvent := event.ActivateAbilityEvent{
-	return append(costEvents, effectsEvents...), nil
+	events = append(events, event.PutAbilityOnStackEvent{
+		PlayerID:    a.player.ID(),
+		SourceID:    ability.Source().ID(),
+		AbilityID:   ability.ID(),
+		FromZone:    a.abilityOnObjectInZone.Zone(),
+		AbilityName: ability.Name(),
+		Effects:     ability.EffectSpecs(),
+	})
+	return events, nil
 }

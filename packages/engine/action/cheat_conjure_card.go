@@ -48,6 +48,9 @@ func (a ConjureCardCheatAction) Complete(
 	if !game.CheatsEnabled() {
 		return nil, fmt.Errorf("no cheating you cheater")
 	}
+	if _, ok := env.Definitions[a.cardName]; !ok {
+		return nil, fmt.Errorf("card %q not found in definitions", a.cardName)
+	}
 	return []event.GameEvent{event.CheatConjureCardEvent{
 		PlayerID: a.player.ID(),
 		CardName: a.cardName,

@@ -14,8 +14,10 @@ func CanPayCost(someCost cost.Cost, object query.Object, game state.Game, player
 		return canPayCompositeCost(c, object, game, player)
 	case cost.ManaCost:
 		return canPayManaCost(c, object, game, player)
-	case cost.TapCost:
+	case cost.TapThisCost:
 		return canPayTapCost(object, player, game)
+	case cost.DiscardThisCost:
+		return canPayDiscardCost(object, player, game)
 	default:
 		return false // Unsupported cost type
 	}
@@ -30,17 +32,15 @@ func canPayCompositeCost(c cost.CompositeCost, object query.Object, game state.G
 	return true
 }
 
+func canPayDiscardCost(object query.Object, player state.Player, game state.Game) bool {
+	return player.Hand().Contains(has.ID(object.ID()))
+}
+
 func canPayManaCost(c cost.ManaCost, object query.Object, game state.Game, player state.Player) bool {
-	/*
-		// Check if the player has enough mana to pay the cost
-		availableMana := player.ManaAvailable()
-		for _, mana := range cost.Mana() {
-			if availableMana[mana.Color] < mana.Amount {
-				return false
-			}
-		}
-		return true
-	*/
+	manaPool := player.ManaPool()
+	if _, err := manaPool.WithSpentFromManaAmount(c.Amount()); err != nil {
+		return false // Not enough mana in the pool
+	}
 	return true
 }
 

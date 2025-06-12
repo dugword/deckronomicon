@@ -2,6 +2,9 @@ package engine
 
 import (
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/game/gob"
+	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/mana"
 	"deckronomicon/packages/state"
 	"fmt"
 )
@@ -23,13 +26,19 @@ func (e *Engine) applyGameStateChangeEvent(game state.Game, gameStateChangeEvent
 		return e.applyDrawCardEvent(game, evnt)
 	case event.MoveCardEvent:
 		return e.applyMoveCardEvent(game, evnt)
-	case event.PutCardOnBattlefieldEvent:
-		return e.applyPutCardOnBattlefieldEvent(game, evnt)
-	case event.PutCardOnStackEvent:
-		return e.applyPutCardOnStackEvent(game, evnt)
+	case event.PutAbilityOnStackEvent:
+		return e.applyPutAbilityOnStackEvent(game, evnt)
+	case event.PutPermanentOnBattlefieldEvent:
+		return e.applyPutPermanentOnBattlefieldEvent(game, evnt)
+	case event.PutSpellInGraveyardEvent:
+		return e.applyPutSpellInGraveyardEvent(game, evnt)
+	case event.PutSpellOnStackEvent:
+		return e.applyPutSpellOnStackEvent(game, evnt)
 	case event.SetActivePlayerEvent:
 		game = game.WithActivePlayer(evnt.PlayerID)
 		return game, nil
+	case event.RemoveAbilityFromStackEvent:
+		return e.applyRemoveAbilityFromStackEvent(game, evnt)
 	case event.ShuffleDeckEvent:
 		player, ok := game.GetPlayer(evnt.PlayerID)
 		if !ok {
@@ -38,6 +47,23 @@ func (e *Engine) applyGameStateChangeEvent(game state.Game, gameStateChangeEvent
 		player = player.WithShuffleDeck(e.rng.DeckShuffler())
 		game := game.WithUpdatedPlayer(player)
 		return game, nil
+	case event.SpendManaEvent:
+		player, ok := game.GetPlayer(evnt.PlayerID)
+		if !ok {
+			return game, fmt.Errorf("player %q not found", evnt.PlayerID)
+		}
+		amount, err := mana.ParseManaString(evnt.ManaString)
+		if err != nil {
+			return game, fmt.Errorf("failed to parse mana string %q: %w", evnt.ManaString, err)
+		}
+		manaPool, err := player.ManaPool().WithSpentFromManaAmount(amount)
+		if err != nil {
+			return game, fmt.Errorf("failed to update mana pool for player %q: %w", player.ID(), err)
+		}
+		player = player.WithManaPool(manaPool)
+		game = game.WithUpdatedPlayer(player)
+		return game, nil
+
 	case event.TapPermanentEvent:
 		return e.applyTapPermanentEvent(game, evnt)
 	case event.UntapPermanentEvent:
@@ -112,9 +138,9 @@ func (e *Engine) applyMoveCardEvent(
 	return game, nil
 }
 
-func (e *Engine) applyPutCardOnBattlefieldEvent(
+func (e *Engine) applyPutPermanentOnBattlefieldEvent(
 	game state.Game,
-	evnt event.PutCardOnBattlefieldEvent,
+	evnt event.PutPermanentOnBattlefieldEvent,
 ) (state.Game, error) {
 	player, ok := game.GetPlayer(evnt.PlayerID)
 	if !ok {
@@ -125,16 +151,41 @@ func (e *Engine) applyPutCardOnBattlefieldEvent(
 		return game, fmt.Errorf("card %q not in zone %q", evnt.CardID, evnt.FromZone)
 	}
 	game = game.WithUpdatedPlayer(player)
-	game, err := game.WithPutCardOnBattlefield(card, evnt.PlayerID)
+	game, err := game.WithPutPermanentOnBattlefield(card, evnt.PlayerID)
 	if err != nil {
 		return game, fmt.Errorf("failed to put card %q on battlefield: %w", card.ID(), err)
 	}
 	return game, nil
 }
 
-func (e *Engine) applyPutCardOnStackEvent(
+func (e *Engine) applyPutSpellInGraveyardEvent(
 	game state.Game,
-	evnt event.PutCardOnStackEvent,
+	evnt event.PutSpellInGraveyardEvent,
+) (state.Game, error) {
+	player, ok := game.GetPlayer(evnt.PlayerID)
+	if !ok {
+		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
+	}
+	object, stack, ok := game.Stack().Take(evnt.SpellID)
+	if !ok {
+		return game, fmt.Errorf("object %q not found on stack", evnt.SpellID)
+	}
+	game = game.WithStack(stack)
+	spell, ok := object.(gob.Spell)
+	if !ok {
+		return game, fmt.Errorf("object %q is not a spell", object.ID())
+	}
+	player, ok = player.WithAddCardToZone(spell.Card(), mtg.ZoneGraveyard)
+	if !ok {
+		return game, fmt.Errorf("failed to move card %q to graveyard", spell.Card().ID())
+	}
+	game = game.WithUpdatedPlayer(player)
+	return game, nil
+}
+
+func (e *Engine) applyPutSpellOnStackEvent(
+	game state.Game,
+	evnt event.PutSpellOnStackEvent,
 ) (state.Game, error) {
 	player, ok := game.GetPlayer(evnt.PlayerID)
 	if !ok {
@@ -145,11 +196,39 @@ func (e *Engine) applyPutCardOnStackEvent(
 		return game, fmt.Errorf("card %q not in zone %q", evnt.CardID, evnt.FromZone)
 	}
 	game = game.WithUpdatedPlayer(player)
-	game, err := game.WithPutCardOnStack(card, evnt.PlayerID)
+	game, err := game.WithPutSpellOnStack(card, evnt.PlayerID)
 	if err != nil {
 		return game, fmt.Errorf("failed to put card %q on stack: %w", evnt.CardID, err)
 	}
-	game = game.WithUpdatedPlayer(player)
+	return game, nil
+}
+
+func (e *Engine) applyPutAbilityOnStackEvent(
+	game state.Game,
+	evnt event.PutAbilityOnStackEvent,
+) (state.Game, error) {
+	game, err := game.WithPutAbilityOnStack(
+		evnt.PlayerID,
+		evnt.SourceID,
+		evnt.AbilityID,
+		evnt.AbilityName,
+		evnt.Effects,
+	)
+	if err != nil {
+		return game, fmt.Errorf("failed to put ability %q on stack: %w", evnt.AbilityID, err)
+	}
+	return game, nil
+}
+
+func (e *Engine) applyRemoveAbilityFromStackEvent(
+	game state.Game,
+	evnt event.RemoveAbilityFromStackEvent,
+) (state.Game, error) {
+	_, stack, ok := game.Stack().Take(evnt.AbilityID)
+	if !ok {
+		return game, fmt.Errorf("ability %q not found on stack", evnt.AbilityID)
+	}
+	game = game.WithStack(stack)
 	return game, nil
 }
 

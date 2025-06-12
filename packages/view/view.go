@@ -51,23 +51,25 @@ type Card struct {
 }
 
 func NewGameViewFromState(game state.Game) Game {
-	battlefield := make([]Permanent, 0, game.Battlefield().Size())
-	for _, perm := range game.Battlefield().GetAll() {
-		battlefield = append(battlefield, Permanent{
-			Name:          perm.Name(),
-			Controller:    perm.Controller(),
-			ID:            perm.ID(),
-			Tapped:        perm.IsTapped(),
-			SummoningSick: perm.HasSummoningSickness(),
-		})
-	}
-
 	return Game{
 		ActivePlayerID: game.ActivePlayerID(),
 		Phase:          game.Phase(),
 		Step:           game.Step(),
-		Battlefield:    battlefield,
+		Battlefield:    permanentsToViewPermanents(game.Battlefield().GetAll()),
+		Stack:          resolvablesToViewResolvables(game.Stack().GetAll()),
 	}
+}
+
+func resolvablesToViewResolvables(resolvables []state.Resolvable) []Resolvable {
+	var viewResolvables []Resolvable
+	for _, resolvable := range resolvables {
+		viewResolvables = append(viewResolvables, Resolvable{
+			Name:       resolvable.Name(),
+			ID:         resolvable.ID(),
+			Controller: resolvable.Controller(),
+		})
+	}
+	return viewResolvables
 }
 
 func cardsToViewCards(cards []gob.Card) []Card {

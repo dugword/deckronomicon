@@ -14,11 +14,15 @@ import (
 
 func (e *Engine) applyPlayerEvent(game state.Game, playerEvent event.PlayerEvent) (state.Game, error) {
 	switch evnt := playerEvent.(type) {
+	case event.ActivateAbilityEvent:
+		return game, nil
 	case event.AssignCombatDamageEvent:
 		return game, nil
 	case event.CastSpellEvent:
 		return e.applyCastSpellEvent(game, evnt)
 	case event.ConcedeEvent:
+		return game, nil
+	case event.CycleCardEvent:
 		return game, nil
 	case event.DeclareAttackersEvent:
 		return game, nil

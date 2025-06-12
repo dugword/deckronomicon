@@ -51,20 +51,20 @@ type TriggeredAbilitySpec struct {
 
 // Card represents the underlying data structure for a card in the game.
 type Card struct {
-	ActivatedAbilitySpecs []*ActivatedAbilitySpec `json:"ActivatedAbilities,omitempty"`
-	CardTypes             []string                `json:"CardTypes,omitempty"`
-	Colors                []string                `json:"Color,omitempty"`
-	Loyalty               int                     `json:"Loyalty,omitempty"`
-	ManaCost              string                  `json:"ManaCost,omitempty"`
-	Name                  string                  `json:"Name,omitempty"`
-	Power                 int                     `json:"Power,omitempty"`
-	RulesText             string                  `json:"RulesText,omitempty"`
-	SpellAbilitySpec      *SpellAbilitySpec       `json:"SpellAbility,omitempty"`
-	StaticAbilitySpecs    []*StaticAbilitySpec    `json:"StaticAbilities,omitempty"`
-	TriggeredAbilitySpecs []*TriggeredAbilitySpec `json:"TriggeredAbilities,omitempty"`
-	Subtypes              []string                `json:"Subtypes,omitempty"`
-	Supertypes            []string                `json:"Supertypes,omitempty"`
-	Toughness             int                     `json:"Toughness,omitempty"`
+	ActivatedAbilitySpecs []ActivatedAbilitySpec `json:"ActivatedAbilities,omitempty"`
+	CardTypes             []string               `json:"CardTypes,omitempty"`
+	Colors                []string               `json:"Color,omitempty"`
+	Loyalty               int                    `json:"Loyalty,omitempty"`
+	ManaCost              string                 `json:"ManaCost,omitempty"`
+	Name                  string                 `json:"Name,omitempty"`
+	Power                 int                    `json:"Power,omitempty"`
+	RulesText             string                 `json:"RulesText,omitempty"`
+	SpellAbilitySpec      SpellAbilitySpec       `json:"SpellAbility,omitempty"`
+	StaticAbilitySpecs    []StaticAbilitySpec    `json:"StaticAbilities,omitempty"`
+	TriggeredAbilitySpecs []TriggeredAbilitySpec `json:"TriggeredAbilities,omitempty"`
+	Subtypes              []string               `json:"Subtypes,omitempty"`
+	Supertypes            []string               `json:"Supertypes,omitempty"`
+	Toughness             int                    `json:"Toughness,omitempty"`
 }
 
 // LoadCardDefinitions walks the provided path and loads all JSON files into a map of

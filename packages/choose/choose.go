@@ -15,6 +15,14 @@ type Choice interface {
 	//Zone() mtg.Zone // TODO: Is Zone right? Maybe something more generic?
 }
 
+func NewChoices[T Choice](items []T) []Choice {
+	var choices []Choice
+	for _, item := range items {
+		choices = append(choices, item)
+	}
+	return choices
+}
+
 // TODO: Use an interface for ChoiceResult
 type ChoicePrompt2 interface {
 	PromptID() string
@@ -61,6 +69,8 @@ func (c GenericChoice) Zone() mtg.Zone {
 type ResultStruct struct {
 	SelectedIDs []string
 }
+
+// TODO: Use an interface for ChoicePrompt, so it can pass a chooseOne, chooseN, etc.
 
 type ChoicePrompt struct {
 	Choices    []Choice

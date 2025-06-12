@@ -13,6 +13,7 @@ func (e *Engine) applyPriorityEvent(game state.Game, priorityEvent event.Priorit
 	case event.AllPlayersPassedPriorityEvent:
 		return game, nil
 	case event.ReceivePriorityEvent:
+		e.log.Debugf("Player %q received priority", evnt.PlayerID)
 		newGame := game.WithPlayerWithPriority(
 			evnt.PlayerID,
 		)
