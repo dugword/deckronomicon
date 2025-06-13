@@ -7,37 +7,25 @@ import (
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
-	"deckronomicon/packages/query/has"
 	"deckronomicon/packages/state"
 	"errors"
 	"fmt"
 )
 
-func TypecyclingEffectHandler(
+func SearchEffectHandler(
 	game state.Game,
 	player state.Player,
 	source query.Object,
 	modifiers []definition.EffectModifier,
 ) (EffectResult, error) {
-	var subtypeValue string
-	for _, modifier := range modifiers {
-		if modifier.Key == "Subtype" {
-			subtypeValue = modifier.Value
-			break
-		}
+	query, err := buildQuery(modifiers)
+	if err != nil {
+		return EffectResult{}, fmt.Errorf("failed to build query for Search effect: %w", err)
 	}
-	if subtypeValue == "" {
-		return EffectResult{}, fmt.Errorf("missing required modifier %q for Typecycling effect", "Subtype")
-	}
-	subtype, ok := mtg.StringToSubtype(subtypeValue)
-	if !ok {
-		return EffectResult{}, fmt.Errorf("invalid subtype %q for Typecycling effect", subtypeValue)
-	}
-	cards := player.Library().FindAll(
-		has.Subtype(subtype),
-	)
+	cards := player.Library().FindAll(query)
 	choicePrompt := choose.ChoicePrompt{
-		Message: fmt.Sprintf("Choose a card with subtype %q to put into your hand", subtype),
+		// TODO: provide more detail on what kind of card to choose
+		Message: "Choose a card to put into your hand",
 		Source:  source,
 		ChoiceOpts: choose.ChooseOneOpts{
 			Choices: choose.NewChoices(cards),

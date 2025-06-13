@@ -5,7 +5,6 @@ const (
 	EventTypeCheatConjureCard   = "CheatConjureCard"
 	EventTypeCheatDiscard       = "CheatDiscard"
 	EventTypeCheatDraw          = "CheatDraw"
-	EventTypeCheatEnabled       = "CheatEnabled"
 	EventTypeCheatFindCard      = "CheatFindCard"
 	EventTypeCheatPeek          = "CheatPeek"
 	EventTypeCheatResetLandDrop = "CheatResetLandDrop"

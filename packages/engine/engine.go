@@ -291,10 +291,17 @@ func (e *Engine) ResolveResolvable(resolvable state.Resolvable) error {
 		}
 	}
 	if spell, ok := resolvable.(gob.Spell); ok {
-		events = append(events, event.PutSpellInGraveyardEvent{
-			PlayerID: spell.Owner(),
-			SpellID:  resolvable.ID(),
-		})
+		if spell.Flashback() {
+			events = append(events, event.PutSpellInExileEvent{
+				PlayerID: spell.Owner(),
+				SpellID:  resolvable.ID(),
+			})
+		} else {
+			events = append(events, event.PutSpellInGraveyardEvent{
+				PlayerID: spell.Owner(),
+				SpellID:  resolvable.ID(),
+			})
+		}
 	}
 	if ability, ok := resolvable.(gob.AbilityOnStack); ok {
 		events = append(events, event.RemoveAbilityFromStackEvent{

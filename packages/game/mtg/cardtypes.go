@@ -1,7 +1,5 @@
 package mtg
 
-import "fmt"
-
 // CardType is a type of card in Magic: The Gathering.
 type CardType string
 
@@ -60,7 +58,7 @@ func (t CardType) IsSpell() bool {
 // and remove the error return type this will  be consistent with the rest
 // of the codebase
 // StringToCardType converts a string to a CardType.
-func StringToCardType(s string) (CardType, error) {
+func StringToCardType(s string) (CardType, bool) {
 	stringToCardType := map[string]CardType{
 		"Artifact":     CardTypeArtifact,
 		"Battle":       CardTypeBattle,
@@ -73,7 +71,7 @@ func StringToCardType(s string) (CardType, error) {
 	}
 	cardType, ok := stringToCardType[s]
 	if !ok {
-		return "", fmt.Errorf("unknown CardType %q", s)
+		return "", false
 	}
-	return cardType, nil
+	return cardType, true
 }

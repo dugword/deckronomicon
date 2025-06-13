@@ -16,12 +16,15 @@ func CanPayCost(someCost cost.Cost, object query.Object, game state.Game, player
 		return canPayManaCost(c, object, game, player)
 	case cost.TapThisCost:
 		return canPayTapCost(object, player, game)
+	case cost.LifeCost:
+		return canPayLifeCost(c.Amount(), player)
 	case cost.DiscardThisCost:
 		return canPayDiscardCost(object, player, game)
 	default:
 		return false // Unsupported cost type
 	}
 }
+
 func canPayCompositeCost(c cost.CompositeCost, object query.Object, game state.Game, player state.Player) bool {
 	// Check if the player can pay all parts of the composite cost
 	for _, subCost := range c.Costs() {
@@ -34,6 +37,10 @@ func canPayCompositeCost(c cost.CompositeCost, object query.Object, game state.G
 
 func canPayDiscardCost(object query.Object, player state.Player, game state.Game) bool {
 	return player.Hand().Contains(has.ID(object.ID()))
+}
+
+func canPayLifeCost(amount int, player state.Player) bool {
+	return player.Life() > amount
 }
 
 func canPayManaCost(c cost.ManaCost, object query.Object, game state.Game, player state.Player) bool {

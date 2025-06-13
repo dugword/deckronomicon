@@ -3,6 +3,7 @@ package gob
 import (
 	//"deckronomicon/packages/game/core"
 	// "deckronomicon/packages/game/cost"
+	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
@@ -31,9 +32,9 @@ type Spell struct {
 	controller string
 	owner      string
 	//flashback bool
-	id      string
-	loyalty int
-	//manaCost        *cost.ManaCost
+	id        string
+	loyalty   int
+	manaCost  cost.ManaCost
 	name      string
 	power     int
 	rulesText string
@@ -43,20 +44,22 @@ type Spell struct {
 	subtypes        []mtg.Subtype
 	supertypes      []mtg.Supertype
 	toughness       int
+	flashback       bool
 }
 
 // NewSpell creates a new Spell instance from a Card.
-func NewSpell(id string, card Card, playerID string) (Spell, error) {
+func NewSpell(id string, card Card, playerID string, flashback bool) (Spell, error) {
 	spell := Spell{
-		card:       card,
-		cardTypes:  card.CardTypes(),
-		colors:     card.Colors(),
-		controller: playerID,
-		effects:    card.SpellAbility(),
-		owner:      card.Owner(),
-		id:         id,
-		loyalty:    card.Loyalty(),
-		//manaCost:        card.ManaCost(),
+		card:            card,
+		cardTypes:       card.CardTypes(),
+		colors:          card.Colors(),
+		controller:      playerID,
+		effects:         card.SpellAbility(),
+		flashback:       flashback,
+		owner:           card.Owner(),
+		id:              id,
+		loyalty:         card.Loyalty(),
+		manaCost:        card.ManaCost(),
 		name:            card.Name(),
 		power:           card.Power(),
 		rulesText:       card.RulesText(),
@@ -91,6 +94,10 @@ func (s Spell) Effects() []definition.EffectSpec {
 	return s.effects
 }
 
+func (s Spell) Flashback() bool {
+	return s.flashback
+}
+
 // Description returns a string representation of the activated ability.
 func (s Spell) Description() string {
 	var descriptions []string
@@ -116,19 +123,14 @@ func (s Spell) Loyalty() int {
 	return s.loyalty
 }
 
-/*
 // ManaCost returns the mana cost of the spell.
-func (s *Spell) ManaCost() *cost.ManaCost {
+func (s Spell) ManaCost() cost.ManaCost {
 	return s.manaCost
 }
 
-func (s *Spell) ManaValue() int {
-	if s.manaCost == nil {
-		return 0
-	}
-	return s.manaCost.ManaValue()
+func (s Spell) ManaValue() int {
+	return s.manaCost.Amount().Total()
 }
-*/
 
 func (s Spell) Match(predicate query.Predicate) bool {
 	return predicate(s)
@@ -197,7 +199,7 @@ func (s Spell) StaticAbilities() []StaticAbility {
 func (s Spell) StaticKeywords() []mtg.StaticKeyword {
 	var keywords []mtg.StaticKeyword
 	for _, ability := range s.staticAbilities {
-		keyword, ok := mtg.StringToStaticKeyword(ability.ID())
+		keyword, ok := mtg.StringToStaticKeyword(ability.Name())
 		if !ok {
 			continue
 		}

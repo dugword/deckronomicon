@@ -8,6 +8,7 @@ import (
 	"deckronomicon/packages/query/has"
 	"deckronomicon/packages/query/is"
 	"deckronomicon/packages/state"
+	"fmt"
 	"strings"
 )
 
@@ -52,6 +53,14 @@ func CanActivateAbility(
 		}
 		can = false
 	}
+	if ability.Speed() == mtg.SpeedSorcery {
+		if !CanPlaySorcerySpeed(game, player.ID(), ruling) {
+			if ruling != nil && ruling.Explain {
+				ruling.Reasons = append(ruling.Reasons, "ability cannot be activated at instant speed")
+			}
+			can = false
+		}
+	}
 	return can
 }
 
@@ -89,15 +98,21 @@ func CanCastSpell(
 	ruling *Ruling,
 ) bool {
 	can := true
+	if !player.ZoneContains(zone, has.ID(card.ID())) {
+		if ruling != nil && ruling.Explain {
+			ruling.Reasons = append(ruling.Reasons, fmt.Sprintf("player does not have card in zone %q", zone))
+		}
+		can = false
+	}
 	if !card.Match(is.Spell()) {
 		if ruling != nil && ruling.Explain {
 			ruling.Reasons = append(ruling.Reasons, "card is not a spell")
 		}
 		can = false
 	}
-	if zone != mtg.ZoneHand {
+	if !CanCastFromZone(game, player, zone, card, ruling) {
 		if ruling != nil && ruling.Explain {
-			ruling.Reasons = append(ruling.Reasons, "zone is not hand")
+			ruling.Reasons = append(ruling.Reasons, fmt.Sprintf("card cannot be cast from zone %q", zone))
 		}
 		can = false
 	}
@@ -109,6 +124,7 @@ func CanCastSpell(
 			can = false
 		}
 	}
+
 	return can
 }
 
@@ -144,6 +160,63 @@ func CanPlayLand(
 			ruling.Reasons = append(ruling.Reasons, "cannot play land at instant speed")
 		}
 		can = false
+	}
+	return can
+}
+
+func CanCastFromZone(
+	game state.Game,
+	player state.Player,
+	zone mtg.Zone,
+	card gob.Card,
+	ruling *Ruling,
+) bool {
+	can := true
+	switch zone {
+	case mtg.ZoneHand:
+		if !CanPayCost(card.ManaCost(), card, game, player) {
+			if ruling != nil && ruling.Explain {
+				ruling.Reasons = append(ruling.Reasons, "cannot pay cost for spell: "+card.ManaCost().Description())
+			}
+			can = false
+		}
+	case mtg.ZoneGraveyard:
+		if !card.Match(has.StaticKeyword(mtg.StaticKeywordFlashback)) {
+			can = false
+			if ruling != nil && ruling.Explain {
+				ruling.Reasons = append(ruling.Reasons, "card does not have flashback")
+			}
+			return can
+		}
+		var costString string
+		// TODO: Maybe these should be methods on the Card type?
+		// Or maybe a helper function?
+		for _, ability := range card.StaticAbilities() {
+			if ability.StaticKeyword() != mtg.StaticKeywordFlashback {
+				continue
+			}
+			for _, modifier := range ability.Modifiers {
+				if modifier.Key != "Cost" {
+					continue
+				}
+				costString = modifier.Value
+			}
+		}
+		if costString == "" {
+			panic(fmt.Errorf("flashback ability on card %q is missing Cost modifier", card.Name()))
+			can = false
+		}
+		costs, err := cost.ParseCost(costString, card)
+		if err != nil {
+			panic(fmt.Errorf("failed to parse cost: %w", err))
+			can = false
+		}
+		if !CanPayCost(costs, card, game, player) {
+			if ruling != nil && ruling.Explain {
+				ruling.Reasons = append(ruling.Reasons, "cannot pay cost for spell: "+costs.Description())
+			}
+			can = false
+		}
 	}
 	return can
 }

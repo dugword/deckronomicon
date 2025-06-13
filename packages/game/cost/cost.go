@@ -43,6 +43,12 @@ func (c CompositeCost) Description() string {
 			costStrings = append(costStrings, cost.Description())
 		}
 	}
+	// Life
+	for _, cost := range c.costs {
+		if _, ok := cost.(LifeCost); ok {
+			costStrings = append(costStrings, cost.Description())
+		}
+	}
 	//Sacrifice
 	/*
 		for _, cost := range c.costs {
@@ -74,6 +80,12 @@ func ParseCost(costString string, source query.Object) (Cost, error) {
 			costs = append(costs, TapThisCost{})
 		case isDiscardThisCost(trimmed):
 			costs = append(costs, DiscardThisCost{})
+		case isLifeCost(trimmed):
+			lifeCost, err := ParseLifeCost(trimmed)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse life cost %q: %w", trimmed, err)
+			}
+			costs = append(costs, lifeCost)
 		default:
 			return nil, fmt.Errorf("unknown cost %q", trimmed)
 		}

@@ -41,9 +41,9 @@ type CardTypeCondition struct {
 }
 
 func (c *CardTypeCondition) Matches(objs []GameObject, defs map[string][]string) bool {
-	cardType, err := mtg.StringToCardType(c.CardType)
-	if err != nil {
-		panic(err) // or handle error appropriately
+	cardType, ok := mtg.StringToCardType(c.CardType)
+	if !ok {
+		return false
 	}
 	for _, obj := range objs {
 		if obj.HasCardType(cardType) {

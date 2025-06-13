@@ -22,6 +22,7 @@ type CardObject interface {
 	StaticKeywords() []mtg.StaticKeyword
 	Subtypes() []mtg.Subtype
 	Supertypes() []mtg.Supertype
+	ManaValue() int
 }
 
 type AbilityObject interface {
@@ -31,6 +32,7 @@ type PermanentObject interface {
 	CardObject
 	IsTapped() bool
 	HasSummoningSickness() bool
+	ManaValue() int
 }
 
 type Card interface{}

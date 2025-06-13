@@ -94,7 +94,7 @@ func (b *Buffer) UpdateChoices(title string, choices []choose.Choice) {
 		Content: []string{},
 	}
 	for i, choice := range choices {
-		var line = fmt.Sprintf("%s <id:%s>", choice.Name(), choice.ID())
+		var line = fmt.Sprintf("%s <%s>", choice.Name(), choice.ID())
 		line = fmt.Sprintf("%d: %s", i+1, line)
 		choiceData.Content = append(choiceData.Content, line)
 	}

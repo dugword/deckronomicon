@@ -134,6 +134,9 @@ func (a *Agent) Choose(prompt choose.ChoicePrompt) (choose.ChoiceResults, error)
 		if err != nil {
 			return nil, fmt.Errorf("failed to choose one: %w", err)
 		}
+		if len(choices) == 0 {
+			return nil, nil
+		}
 		return choose.ChooseOneResults{Choice: choices[0]}, nil
 	case choose.ChooseManyOpts:
 		choices, err := a.ChooseMany(opts.Choices, opts.Min, opts.Max, prompt.Message, prompt.Source, opts.Optional)
@@ -251,7 +254,7 @@ func (a *Agent) ChooseMany(
 		choice := choicePlus1 - 1 // Convert to 0 based index
 		selected = append(selected, choices[choice])
 		userMessage = append(userMessage, fmt.Sprintf(
-			"Selected: %s <id:%s>",
+			"Selected: %s <%s>",
 			choices[choice].Name(),
 			choices[choice].ID(),
 		))

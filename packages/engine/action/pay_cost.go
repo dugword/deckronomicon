@@ -18,9 +18,21 @@ func PayCost(someCost cost.Cost, object query.Object, player state.Player) ([]ev
 		return payTapCost(object, player)
 	case cost.DiscardThisCost:
 		return payDiscardCost(object, player)
+	case cost.LifeCost:
+		return payLifeCost(c, object, player)
 	default:
 		return nil, fmt.Errorf("unsupported cost type: %T", c)
 	}
+}
+
+func payLifeCost(c cost.LifeCost, object query.Object, player state.Player) ([]event.GameEvent, error) {
+	// Create an event to pay the life cost
+	return []event.GameEvent{
+		event.LoseLifeEvent{
+			PlayerID: player.ID(),
+			Amount:   c.Amount(),
+		},
+	}, nil
 }
 
 func payCompositeCost(c cost.CompositeCost, object query.Object, player state.Player) ([]event.GameEvent, error) {

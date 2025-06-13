@@ -3,6 +3,8 @@ package has
 import (
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
+	"fmt"
+	"slices"
 )
 
 func Any(predicates ...query.Predicate) query.Predicate {
@@ -30,16 +32,15 @@ func All(predicates ...query.Predicate) query.Predicate {
 func CardType(cardTypes ...mtg.CardType) query.Predicate {
 	return func(obj query.Object) bool {
 		for _, t := range cardTypes {
+			fmt.Println("Checking card type", t)
+			fmt.Printf("Object is %T\n", obj)
 			found := false
 			cardObj, ok := obj.(query.CardObject)
 			if !ok {
 				return false
 			}
-			for _, cardType := range cardObj.CardTypes() {
-				if cardType == t {
-					found = true
-					break
-				}
+			if slices.Contains(cardObj.CardTypes(), t) {
+				found = true
 			}
 			if !found {
 				return false
@@ -92,6 +93,16 @@ func Name(name string) query.Predicate {
 	}
 }
 
+func ManaValue(value int) query.Predicate {
+	return func(obj query.Object) bool {
+		cardObj, ok := obj.(query.CardObject)
+		if !ok {
+			return false
+		}
+		return cardObj.ManaValue() == value
+	}
+}
+
 func StaticKeyword(keywords ...mtg.StaticKeyword) query.Predicate {
 	return func(obj query.Object) bool {
 		for _, keyword := range keywords {
@@ -100,11 +111,8 @@ func StaticKeyword(keywords ...mtg.StaticKeyword) query.Predicate {
 			if !ok {
 				return false
 			}
-			for _, objKeyword := range cardObj.StaticKeywords() {
-				if objKeyword == keyword {
-					found = true
-					break
-				}
+			if slices.Contains(cardObj.StaticKeywords(), keyword) {
+				found = true
 			}
 			if !found {
 				return false
@@ -122,11 +130,8 @@ func Subtype(subtypes ...mtg.Subtype) query.Predicate {
 			if !ok {
 				return false
 			}
-			for _, objSubtype := range cardObj.Subtypes() {
-				if objSubtype == subtype {
-					found = true
-					break
-				}
+			if slices.Contains(cardObj.Subtypes(), subtype) {
+				found = true
 			}
 			if !found {
 				return false
@@ -144,11 +149,8 @@ func Supertype(supertypes ...mtg.Supertype) query.Predicate {
 			if !ok {
 				return false
 			}
-			for _, objSupertype := range cardObj.Supertypes() {
-				if objSupertype == supertype {
-					found = true
-					break
-				}
+			if slices.Contains(cardObj.Supertypes(), supertype) {
+				found = true
 			}
 			if !found {
 				return false

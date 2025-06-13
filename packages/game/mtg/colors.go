@@ -17,7 +17,7 @@ const (
 )
 
 // StringToColor converts a string to a Color.
-func StringToColor(s string) (Color, error) {
+func StringToColor(s string) (Color, bool) {
 	colors := map[string]Color{
 		"B": ColorBlack,
 		"C": ColorColorless,
@@ -28,9 +28,9 @@ func StringToColor(s string) (Color, error) {
 	}
 	color, ok := colors[s]
 	if !ok {
-		return "", fmt.Errorf("unknown color: %s", s)
+		return "", false
 	}
-	return color, nil
+	return color, true
 }
 
 // Colors represents the colors of a card or object in the game.
@@ -46,9 +46,9 @@ type Colors struct {
 func StringsToColors(ss []string) (Colors, error) {
 	colors := Colors{}
 	for _, s := range ss {
-		color, err := StringToColor(s)
-		if err != nil {
-			return Colors{}, fmt.Errorf("failed to parse color %q: %w", s, err)
+		color, ok := StringToColor(s)
+		if !ok {
+			return Colors{}, fmt.Errorf("failed to parse color %q", s)
 		}
 		switch color {
 		case ColorBlack:

@@ -103,13 +103,13 @@ func (g Game) WithStack(stack Stack) Game {
 	return g
 }
 
-func (g Game) WithPutSpellOnStack(card gob.Card, playerID string) (Game, error) {
+func (g Game) WithPutSpellOnStack(card gob.Card, playerID string, flashback bool) (Game, error) {
 	id, game := g.GetNextID()
-	spell, err := gob.NewSpell(id, card, playerID)
+	spell, err := gob.NewSpell(id, card, playerID, flashback)
 	if err != nil {
 		return game, err
 	}
-	stack := game.stack.Add(spell)
+	stack := game.stack.AddTop(spell)
 	game = game.WithStack(stack)
 	return game, nil
 }
@@ -130,7 +130,7 @@ func (g Game) WithPutAbilityOnStack(
 		abilityName,
 		effectSpecs,
 	)
-	stack := game.stack.Add(abilityOnStack)
+	stack := game.stack.AddTop(abilityOnStack)
 	game = game.WithStack(stack)
 	return game, nil
 }

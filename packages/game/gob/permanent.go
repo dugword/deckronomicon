@@ -3,6 +3,7 @@ package gob
 import (
 
 	// "deckronomicon/packages/game/cost"
+	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/has"
@@ -18,7 +19,7 @@ type Permanent struct {
 	controller         string
 	id                 string
 	loyalty            int
-	manaCost           string
+	manaCost           cost.ManaCost
 	name               string
 	owner              string
 	power              int
@@ -36,13 +37,13 @@ type Permanent struct {
 func NewPermanent(id string, card Card, playerID string) (Permanent, error) {
 	permanent := Permanent{
 		// TODO: Do I need to generate new IDs for the abilities?
-		card:       card,
-		cardTypes:  card.CardTypes(),
-		colors:     card.Colors(),
-		controller: playerID,
-		id:         id,
-		loyalty:    card.Loyalty(),
-		//manaCost:           card.ManaCost(),
+		card:               card,
+		cardTypes:          card.CardTypes(),
+		colors:             card.Colors(),
+		controller:         playerID,
+		id:                 id,
+		loyalty:            card.Loyalty(),
+		manaCost:           card.ManaCost(),
 		name:               card.Name(),
 		owner:              playerID,
 		power:              card.Power(),
@@ -133,19 +134,14 @@ func (p Permanent) Loyalty() int {
 	return p.loyalty
 }
 
-/*
 // ManCost returns the mana cost of the permanent.
-func (p *Permanent) ManaCost() *cost.ManaCost {
+func (p *Permanent) ManaCost() cost.ManaCost {
 	return p.manaCost
 }
 
 func (p *Permanent) ManaValue() int {
-	if p.manaCost == nil {
-		return 0
-	}
-	return p.manaCost.ManaValue()
+	return p.manaCost.Amount().Total()
 }
-*/
 
 func (per Permanent) Match(predicate query.Predicate) bool {
 	return predicate(per)
@@ -189,7 +185,7 @@ func (p Permanent) StaticAbilities() []StaticAbility {
 func (p Permanent) StaticKeywords() []mtg.StaticKeyword {
 	var keywords []mtg.StaticKeyword
 	for _, ability := range p.staticAbilities {
-		keyword, ok := mtg.StringToStaticKeyword(ability.ID())
+		keyword, ok := mtg.StringToStaticKeyword(ability.Name())
 		if !ok {
 			continue
 		}

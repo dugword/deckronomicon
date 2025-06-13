@@ -52,6 +52,10 @@ func (a Ability) EffectSpecs() []definition.EffectSpec {
 }
 */
 
+func (a Ability) Speed() mtg.Speed {
+	return a.speed
+}
+
 func (a Ability) Source() query.Object {
 	return a.source
 }

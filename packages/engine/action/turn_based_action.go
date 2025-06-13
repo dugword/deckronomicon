@@ -411,11 +411,16 @@ func (a DiscardToHandSizeAction) GetPrompt(game state.Game) (choose.ChoicePrompt
 	}, nil
 }
 
+// TODO: Handle this better - not sure that turn based actions should be actions.
+// Getting no choices back making this not run is also not ideal.
 func (a DiscardToHandSizeAction) Complete(
 	game state.Game,
 	choiceResults choose.ChoiceResults,
 ) ([]event.GameEvent, error) {
 	var discardEvents []event.GameEvent
+	if choiceResults == nil {
+		return nil, nil
+	}
 	selected, ok := choiceResults.(choose.ChooseManyResults)
 	if !ok {
 		return nil, fmt.Errorf("expected multiple choice results")

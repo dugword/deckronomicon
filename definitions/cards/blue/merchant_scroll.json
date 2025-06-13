@@ -13,11 +13,11 @@
         "Name": "Search",
         "Modifiers": [
           {
-            "Key": "TargetCardType",
+            "Key": "CardType",
             "Value": "Instant"
           },
           {
-            "Key": "TargetColor",
+            "Key": "Color",
             "Value": "U"
           }
         ]

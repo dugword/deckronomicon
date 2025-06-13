@@ -112,6 +112,10 @@ func (c Card) ManaCost() cost.ManaCost {
 	return c.manaCost
 }
 
+func (c Card) ManaValue() int {
+	return c.manaCost.Amount().Total()
+}
+
 /*
 func (c Card) ManaValue() int {
 	return c.ManaCost().ManaValue()
@@ -161,7 +165,7 @@ func (c Card) StaticKeywords() []mtg.StaticKeyword {
 			}
 		*/
 		// TODO: Check this error or just use typed values all the way down.
-		keyword, _ := mtg.StringToStaticKeyword(ability.ID())
+		keyword, _ := mtg.StringToStaticKeyword(ability.Name())
 		keywords = append(keywords, keyword)
 	}
 	return keywords

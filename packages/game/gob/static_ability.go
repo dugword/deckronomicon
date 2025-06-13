@@ -3,6 +3,8 @@ package gob
 import (
 	// "deckronomicon/packages/game/definition"
 
+	"deckronomicon/packages/game/definition"
+	"deckronomicon/packages/game/mtg"
 	"fmt"
 	"strings"
 )
@@ -11,7 +13,7 @@ import (
 type StaticAbility struct {
 	// TODO: Maybe add a typed "Keyword" value here
 	// keyword mtg.keyword
-	id string
+	name mtg.StaticKeyword
 	// TODO: I don't like this, it feels close but not quite right.
 	// I think tags should mostly be informational and for finding stuff, not
 	// impacting the actual effect logic.
@@ -22,19 +24,28 @@ type StaticAbility struct {
 	// Maybe I need to create a new Modifier tag...  instead of resuing effect
 	// tags just because they are similiar. :shrug:
 	// TODO: Or maybe this is fine.
-	Modifiers []Tag
+	Modifiers []definition.EffectModifier
 }
 
-func NewStaticAbility(id string, modifiers []Tag) StaticAbility {
-	staticAbility := StaticAbility{
-		id:        id,
-		Modifiers: modifiers,
+/*
+	func NewStaticAbility(id string, modifiers []Tag) StaticAbility {
+		staticAbility := StaticAbility{
+			id:        id,
+			Modifiers: modifiers,
+		}
+		return staticAbility
 	}
-	return staticAbility
+*/
+func (a StaticAbility) Name() string {
+	return string(a.name)
 }
 
-func (a StaticAbility) ID() string {
-	return a.id
+func (a StaticAbility) StaticKeyword() mtg.StaticKeyword {
+	keyword, ok := mtg.StringToStaticKeyword(string(a.name))
+	if !ok {
+		panic(fmt.Sprintf("invalid static keyword: %s", a.name))
+	}
+	return keyword
 }
 
 // Description returns a string representation of the static ability.

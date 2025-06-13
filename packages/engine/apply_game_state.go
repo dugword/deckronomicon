@@ -2,7 +2,6 @@ package engine
 
 import (
 	"deckronomicon/packages/engine/event"
-	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/mana"
 	"deckronomicon/packages/state"
@@ -24,6 +23,10 @@ func (e *Engine) applyGameStateChangeEvent(game state.Game, gameStateChangeEvent
 		return e.applyDiscardCardEvent(game, evnt)
 	case event.DrawCardEvent:
 		return e.applyDrawCardEvent(game, evnt)
+	case event.GainLifeEvent:
+		return e.applyGainLifeEvent(game, evnt)
+	case event.LoseLifeEvent:
+		return e.applyeLoseLifeEvent(game, evnt)
 	//case event.MoveCardEvent:
 	//return e.applyMoveCardEvent(game, evnt)
 	case event.PutCardInHandEvent:
@@ -32,19 +35,11 @@ func (e *Engine) applyGameStateChangeEvent(game state.Game, gameStateChangeEvent
 		return e.applyPutCardOnBottomOfLibraryEvent(game, evnt)
 	case event.PutCardOnTopOfLibraryEvent:
 		return e.applyPutCardOnTopOfLibraryEvent(game, evnt)
-	case event.PutAbilityOnStackEvent:
-		return e.applyPutAbilityOnStackEvent(game, evnt)
 	case event.PutPermanentOnBattlefieldEvent:
 		return e.applyPutPermanentOnBattlefieldEvent(game, evnt)
-	case event.PutSpellInGraveyardEvent:
-		return e.applyPutSpellInGraveyardEvent(game, evnt)
-	case event.PutSpellOnStackEvent:
-		return e.applyPutSpellOnStackEvent(game, evnt)
 	case event.SetActivePlayerEvent:
 		game = game.WithActivePlayer(evnt.PlayerID)
 		return game, nil
-	case event.RemoveAbilityFromStackEvent:
-		return e.applyRemoveAbilityFromStackEvent(game, evnt)
 	case event.ResolveManaAbilityEvent:
 		return e.applyResolveManaAbilityEvent(game, evnt)
 	case event.ShuffleDeckEvent:
@@ -122,6 +117,32 @@ func (e *Engine) applyDrawCardEvent(
 	if err != nil {
 		return game, fmt.Errorf("failed to draw card for %q: %w", player.ID(), err)
 	}
+	game = game.WithUpdatedPlayer(player)
+	return game, nil
+}
+
+func (e *Engine) applyGainLifeEvent(
+	game state.Game,
+	evnt event.GainLifeEvent,
+) (state.Game, error) {
+	player, ok := game.GetPlayer(evnt.PlayerID)
+	if !ok {
+		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
+	}
+	player = player.WithGainLife(evnt.Amount)
+	game = game.WithUpdatedPlayer(player)
+	return game, nil
+}
+
+func (e *Engine) applyeLoseLifeEvent(
+	game state.Game,
+	evnt event.LoseLifeEvent,
+) (state.Game, error) {
+	player, ok := game.GetPlayer(evnt.PlayerID)
+	if !ok {
+		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
+	}
+	player = player.WithLoseLife(evnt.Amount)
 	game = game.WithUpdatedPlayer(player)
 	return game, nil
 }
@@ -225,80 +246,6 @@ func (e *Engine) applyPutPermanentOnBattlefieldEvent(
 	if err != nil {
 		return game, fmt.Errorf("failed to put card %q on battlefield: %w", card.ID(), err)
 	}
-	return game, nil
-}
-
-func (e *Engine) applyPutSpellInGraveyardEvent(
-	game state.Game,
-	evnt event.PutSpellInGraveyardEvent,
-) (state.Game, error) {
-	player, ok := game.GetPlayer(evnt.PlayerID)
-	if !ok {
-		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
-	}
-	object, stack, ok := game.Stack().Take(evnt.SpellID)
-	if !ok {
-		return game, fmt.Errorf("object %q not found on stack", evnt.SpellID)
-	}
-	game = game.WithStack(stack)
-	spell, ok := object.(gob.Spell)
-	if !ok {
-		return game, fmt.Errorf("object %q is not a spell", object.ID())
-	}
-	player, ok = player.WithAddCardToZone(spell.Card(), mtg.ZoneGraveyard)
-	if !ok {
-		return game, fmt.Errorf("failed to move card %q to graveyard", spell.Card().ID())
-	}
-	game = game.WithUpdatedPlayer(player)
-	return game, nil
-}
-
-func (e *Engine) applyPutSpellOnStackEvent(
-	game state.Game,
-	evnt event.PutSpellOnStackEvent,
-) (state.Game, error) {
-	player, ok := game.GetPlayer(evnt.PlayerID)
-	if !ok {
-		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
-	}
-	card, player, ok := player.TakeCardFromZone(evnt.CardID, evnt.FromZone)
-	if !ok {
-		return game, fmt.Errorf("card %q not in zone %q", evnt.CardID, evnt.FromZone)
-	}
-	game = game.WithUpdatedPlayer(player)
-	game, err := game.WithPutSpellOnStack(card, evnt.PlayerID)
-	if err != nil {
-		return game, fmt.Errorf("failed to put card %q on stack: %w", evnt.CardID, err)
-	}
-	return game, nil
-}
-
-func (e *Engine) applyPutAbilityOnStackEvent(
-	game state.Game,
-	evnt event.PutAbilityOnStackEvent,
-) (state.Game, error) {
-	game, err := game.WithPutAbilityOnStack(
-		evnt.PlayerID,
-		evnt.SourceID,
-		evnt.AbilityID,
-		evnt.AbilityName,
-		evnt.Effects,
-	)
-	if err != nil {
-		return game, fmt.Errorf("failed to put ability %q on stack: %w", evnt.AbilityID, err)
-	}
-	return game, nil
-}
-
-func (e *Engine) applyRemoveAbilityFromStackEvent(
-	game state.Game,
-	evnt event.RemoveAbilityFromStackEvent,
-) (state.Game, error) {
-	_, stack, ok := game.Stack().Take(evnt.AbilityID)
-	if !ok {
-		return game, fmt.Errorf("ability %q not found on stack", evnt.AbilityID)
-	}
-	game = game.WithStack(stack)
 	return game, nil
 }
 

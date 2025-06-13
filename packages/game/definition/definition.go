@@ -17,6 +17,8 @@ type EffectSpec struct {
 	Modifiers []EffectModifier `json:"Modifiers,omitempty"`
 }
 
+// TODO: Maybe this should be an interface so different effects can have
+// differently structured modifiers
 type EffectModifier struct {
 	Key   string `json:"Key,omitempty"`
 	Value string `json:"Value,omitempty"`
@@ -40,7 +42,7 @@ type SpellAbilitySpec struct {
 
 // StaticAbility represents the specification of static ability.
 type StaticAbilitySpec struct {
-	ID        string           `json:"ID,omitempty"`
+	Name      string           `json:"Name,omitempty"`
 	Modifiers []EffectModifier `json:"Modifiers,omitempty"`
 }
 

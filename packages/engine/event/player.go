@@ -52,7 +52,7 @@ type CastSpellEvent struct {
 	PlayerBaseEvent
 	PlayerID string
 	CardID   string
-	Zone     mtg.Zone
+	FromZone mtg.Zone
 }
 
 func (e CastSpellEvent) EventType() string {

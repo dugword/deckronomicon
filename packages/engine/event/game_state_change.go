@@ -7,18 +7,17 @@ import (
 )
 
 const (
-	EventTypeAddMana     = "AddMana"
-	EventTypeDiscardCard = "DiscardCard"
-	EventTypeDrawCard    = "DrawCard"
+	EventTypeAddMana      = "AddMana"
+	EventTypeCheatEnabled = "CheatEnabled"
+	EventTypeDiscardCard  = "DiscardCard"
+	EventTypeDrawCard     = "DrawCard"
+	EventTypeGainLife     = "GainLife"
+	EventTypeLoseLife     = "LoseLife"
 	// EventTypeMoveCard                  = "MoveCard"
 	EventTypePutCardInHand             = "PutCardInHand"
 	EventTypePutCardOnTopOfLibrary     = "PutCardOnTopOfLibrary"
 	EventTypePutCardOnBottomOfLibrary  = "PutCardOnBottomOfLibrary"
 	EventTypePutPermanentOnBattlefield = "PutPermanentOnBattlefield"
-	EventTypePutSpellOnStack           = "PutSpellOnStack"
-	EventTypePutSpellInGraveyard       = "PutSpellInGraveyard"
-	EventTypePutAbilityOnStack         = "PutAbilityOnStack"
-	EventTypeRemoveAbilityFromStack    = "RemoveAbilityFromStack"
 	EventTypeResolveManaAbility        = "ResolveManaAbility"
 	EventTypeSetActivePlayer           = "SetActivePlayer"
 	EventTypeSpendMana                 = "SpendMana"
@@ -44,6 +43,15 @@ func (e AddManaEvent) EventType() string {
 	return EventTypeAddMana
 }
 
+type CheatEnabledEvent struct {
+	GameStateChangeBaseEvent
+	Player string // Player ID who enabled cheats
+}
+
+func (e CheatEnabledEvent) EventType() string {
+	return EventTypeCheatEnabled
+}
+
 type DiscardCardEvent struct {
 	GameStateChangeBaseEvent
 	PlayerID string
@@ -63,13 +71,24 @@ func (e DrawCardEvent) EventType() string {
 	return EventTypeDrawCard
 }
 
-type CheatEnabledEvent struct {
+type GainLifeEvent struct {
 	GameStateChangeBaseEvent
-	Player string // Player ID who enabled cheats
+	PlayerID string
+	Amount   int
 }
 
-func (e CheatEnabledEvent) EventType() string {
-	return EventTypeCheatEnabled
+func (e GainLifeEvent) EventType() string {
+	return EventTypeGainLife
+}
+
+type LoseLifeEvent struct {
+	GameStateChangeBaseEvent
+	PlayerID string
+	Amount   int
+}
+
+func (e LoseLifeEvent) EventType() string {
+	return EventTypeLoseLife
 }
 
 /*
@@ -128,51 +147,6 @@ type PutPermanentOnBattlefieldEvent struct {
 
 func (e PutPermanentOnBattlefieldEvent) EventType() string {
 	return EventTypePutPermanentOnBattlefield
-}
-
-type PutSpellInGraveyardEvent struct {
-	GameStateChangeBaseEvent
-	PlayerID string
-	SpellID  string
-}
-
-func (e PutSpellInGraveyardEvent) EventType() string {
-	return EventTypePutSpellInGraveyard
-}
-
-type PutSpellOnStackEvent struct {
-	GameStateChangeBaseEvent
-	PlayerID string
-	CardID   string
-	FromZone mtg.Zone
-}
-
-func (e PutSpellOnStackEvent) EventType() string {
-	return EventTypePutSpellOnStack
-}
-
-type PutAbilityOnStackEvent struct {
-	GameStateChangeBaseEvent
-	PlayerID    string
-	SourceID    string
-	AbilityID   string
-	FromZone    mtg.Zone
-	AbilityName string
-	Effects     []definition.EffectSpec
-}
-
-func (e PutAbilityOnStackEvent) EventType() string {
-	return EventTypePutAbilityOnStack
-}
-
-type RemoveAbilityFromStackEvent struct {
-	GameStateChangeBaseEvent
-	PlayerID  string
-	AbilityID string
-}
-
-func (e RemoveAbilityFromStackEvent) EventType() string {
-	return EventTypeRemoveAbilityFromStack
 }
 
 type ResolveManaAbilityEvent struct {

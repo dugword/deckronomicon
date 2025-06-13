@@ -34,6 +34,13 @@ func NewStack() Stack {
 func (s Stack) Add(resolvable Resolvable) Stack {
 	return Stack{resolvables: add.Item(s.resolvables, resolvable)}
 }
+func (s Stack) AddTop(resolvable Resolvable) Stack {
+	return Stack{resolvables: add.Item([]Resolvable{resolvable}, s.resolvables...)}
+}
+
+func (s Stack) FindAll(predicate query.Predicate) []Resolvable {
+	return query.FindAll(s.resolvables, predicate)
+}
 
 func (s Stack) Get(id string) (Resolvable, bool) {
 	for _, resolvable := range s.resolvables {

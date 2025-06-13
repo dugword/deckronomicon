@@ -122,6 +122,16 @@ func (p Player) WithLandPlayedThisTurn() Player {
 	return p
 }
 
+func (p Player) WithGainLife(amount int) Player {
+	p.life += amount
+	return p
+}
+
+func (p Player) WithLoseLife(amount int) Player {
+	p.life -= amount
+	return p
+}
+
 func (p Player) WithClearLandPlayedThisTurn() Player {
 	p.landPlayedThisTurn = false
 	return p

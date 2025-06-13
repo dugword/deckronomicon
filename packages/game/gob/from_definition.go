@@ -63,9 +63,9 @@ func NewCardFromCardDefinition(id, playerID string, definition definition.Card) 
 	// card.manaCost = manaCost
 	var cardTypes []mtg.CardType
 	for _, cardType := range definition.CardTypes {
-		cardType, err := mtg.StringToCardType(cardType)
-		if err != nil {
-			return Card{}, fmt.Errorf("failed to parse card type %q: %w", cardType, err)
+		cardType, ok := mtg.StringToCardType(cardType)
+		if !ok {
+			return Card{}, fmt.Errorf("invalid card type %q", cardType)
 		}
 		cardTypes = append(cardTypes, cardType)
 	}
@@ -145,20 +145,17 @@ func NewCardFromCardDefinition(id, playerID string, definition definition.Card) 
 		*/
 		card.activatedAbilities = append(card.activatedAbilities, ability)
 	}
-	for _, spec := range definition.SpellAbilitySpec.EffectSpecs {
-		/*
-			var modifiers []Tag
-			for _, modifier := range spec.Modifiers {
-				modifier := Tag{
-					Key:   modifier.Key,
-					Value: modifier.Value,
-				}
-				modifiers = append(modifiers, modifier)
-			}
-		*/
-		card.spellAbility = append(card.spellAbility, spec)
+	card.spellAbility = append(card.spellAbility, definition.SpellAbilitySpec.EffectSpecs...)
+	for _, spec := range definition.StaticAbilitySpecs {
+		keyword, ok := mtg.StringToStaticKeyword(spec.Name)
+		if !ok {
+			return Card{}, fmt.Errorf("invalid static ability keyword %q", spec.Name)
+		}
+		card.staticAbilities = append(card.staticAbilities, StaticAbility{
+			name:      keyword,
+			Modifiers: spec.Modifiers,
+		})
 	}
-
 	/*
 		for _, spec := range card.activatedAbilitySpecs {
 			// TODO: Do this check here or when I am checking for abilities to
@@ -173,13 +170,7 @@ func NewCardFromCardDefinition(id, playerID string, definition definition.Card) 
 				card.activatedAbilities = append(card.activatedAbilities, ability)
 			}
 		}
-		for _, spec := range card.staticAbilitySpecs {
-			staticAbility, err := BuildStaticAbility(*spec, &card)
-			if err != nil {
-				return nil, fmt.Errorf("failed to build static ability: %w", err)
-			}
-			card.staticAbilities = append(card.staticAbilities, staticAbility)
-		}
+
 	*/
 	return card, nil
 }

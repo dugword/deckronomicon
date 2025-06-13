@@ -10,14 +10,14 @@
   "SpellAbility": {
     "Effects": [
       {
-        "Name": "CounterSpell",
+        "Name": "Counterspell",
         "Modifiers": [
           {
-            "Key": "Target",
+            "Key": "CardType",
             "Value": "Instant"
           },
           {
-            "Key": "Target",
+            "Key": "CardType",
             "Value": "Sorcery"
           }
         ]
@@ -27,10 +27,16 @@
   "ActivatedAbilities": [
     {
       "Name": "Transmute",
-      "Cost": "{1}{U}{U}",
+      "Cost": "{1}{U}{U}, Discard this card",
       "Effects": [
         {
-          "Name": "Transmute"
+          "Name": "Search",
+          "Modifiers": [
+            {
+              "Key": "ManaValue",
+              "Value": "2"
+            }
+          ]
         }
       ],
       "Speed": "Sorcery",
