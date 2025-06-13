@@ -7,10 +7,13 @@ import (
 )
 
 const (
-	EventTypeAddMana                   = "AddMana"
-	EventTypeDiscardCard               = "DiscardCard"
-	EventTypeDrawCard                  = "DrawCard"
-	EventTypeMoveCard                  = "MoveCard"
+	EventTypeAddMana     = "AddMana"
+	EventTypeDiscardCard = "DiscardCard"
+	EventTypeDrawCard    = "DrawCard"
+	// EventTypeMoveCard                  = "MoveCard"
+	EventTypePutCardInHand             = "PutCardInHand"
+	EventTypePutCardOnTopOfLibrary     = "PutCardOnTopOfLibrary"
+	EventTypePutCardOnBottomOfLibrary  = "PutCardOnBottomOfLibrary"
 	EventTypePutPermanentOnBattlefield = "PutPermanentOnBattlefield"
 	EventTypePutSpellOnStack           = "PutSpellOnStack"
 	EventTypePutSpellInGraveyard       = "PutSpellInGraveyard"
@@ -69,6 +72,7 @@ func (e CheatEnabledEvent) EventType() string {
 	return EventTypeCheatEnabled
 }
 
+/*
 type MoveCardEvent struct {
 	GameStateChangeBaseEvent
 	PlayerID string
@@ -79,6 +83,40 @@ type MoveCardEvent struct {
 
 func (e MoveCardEvent) EventType() string {
 	return EventTypeMoveCard
+}
+*/
+
+type PutCardInHandEvent struct {
+	GameStateChangeBaseEvent
+	PlayerID string
+	CardID   string
+	FromZone mtg.Zone
+}
+
+func (e PutCardInHandEvent) EventType() string {
+	return EventTypePutCardInHand
+}
+
+type PutCardOnTopOfLibraryEvent struct {
+	GameStateChangeBaseEvent
+	PlayerID string
+	CardID   string
+	FromZone mtg.Zone
+}
+
+func (e PutCardOnTopOfLibraryEvent) EventType() string {
+	return EventTypePutCardOnTopOfLibrary
+}
+
+type PutCardOnBottomOfLibraryEvent struct {
+	GameStateChangeBaseEvent
+	PlayerID string
+	CardID   string
+	FromZone mtg.Zone
+}
+
+func (e PutCardOnBottomOfLibraryEvent) EventType() string {
+	return EventTypePutCardOnBottomOfLibrary
 }
 
 type PutPermanentOnBattlefieldEvent struct {

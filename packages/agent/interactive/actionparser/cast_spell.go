@@ -51,9 +51,9 @@ func buildCastSpellCommandByChoice(
 	player state.Player,
 ) (*CastSpellCommand, error) {
 	prompt := choose.ChoicePrompt{
-		Message: "Choose a card to play",
+		Message: "Choose a spell to cast",
 
-		Source: CommandSource{"Play a card"},
+		Source: CommandSource{"Cast a spell"},
 		ChoiceOpts: choose.ChooseOneOpts{
 			Choices:  choose.NewChoices(cards),
 			Optional: true,

@@ -25,6 +25,12 @@ func (r Revealed) Add(card gob.Card) Revealed {
 	return Revealed{cards: add.Item(r.cards, card)}
 }
 
+func (r Revealed) AddTop(c gob.Card) Revealed {
+	return Revealed{
+		cards: add.Item([]gob.Card{c}, r.cards...),
+	}
+}
+
 func (r Revealed) Get(id string) (gob.Card, bool) {
 	return query.Get(r.cards, id)
 }

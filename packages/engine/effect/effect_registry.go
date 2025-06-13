@@ -1,18 +1,5 @@
 package effect
 
-import (
-	"deckronomicon/packages/game/definition"
-	"deckronomicon/packages/query"
-	"deckronomicon/packages/state"
-)
-
-type EffectHandler func(
-	game state.Game,
-	player state.Player,
-	source query.Object,
-	modifiers []definition.EffectModifier,
-) (EffectResult, error)
-
 type EffectRegistry struct {
 	handlers map[string]EffectHandler
 }
@@ -25,6 +12,7 @@ func NewEffectRegistry() *EffectRegistry {
 	registry.RegisterEffect("AddMana", AddManaEffectHandler)
 	registry.RegisterEffect("Draw", DrawEffectHandler)
 	registry.RegisterEffect("Typecycling", TypecyclingEffectHandler)
+	registry.RegisterEffect("Scry", ScryEffectHandler)
 	return &registry
 }
 

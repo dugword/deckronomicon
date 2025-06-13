@@ -35,3 +35,13 @@ func Top[T query.Object](objects []T) (taken T, remaining []T, ok bool) {
 	}
 	return objects[0], objects[1:], true
 }
+
+func N[T query.Object](objects []T, n int) (taken []T, remaining []T) {
+	if n <= 0 || len(objects) == 0 {
+		return taken, objects
+	}
+	if n >= len(objects) {
+		return objects, nil
+	}
+	return objects[:n], objects[n:]
+}

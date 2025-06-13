@@ -3,7 +3,22 @@ package interactive
 import (
 	"deckronomicon/packages/choose"
 	"fmt"
+	"strings"
 )
+
+// TODO I Don't like this here, or at all really...
+func parseIndexes(line string) []int {
+	var indexes []int
+	parts := strings.Fields(line)
+	for _, part := range parts {
+		var idx int
+		_, err := fmt.Sscanf(part, "%d", &idx)
+		if err == nil {
+			indexes = append(indexes, idx)
+		}
+	}
+	return indexes
+}
 
 // Confirm prompts the user to confirm an action.
 func (a *Agent) Confirm(prompt string, source choose.Source) (bool, error) {
@@ -126,9 +141,54 @@ func (a *Agent) Choose(prompt choose.ChoicePrompt) (choose.ChoiceResults, error)
 			return nil, fmt.Errorf("failed to choose many: %w", err)
 		}
 		return choose.ChooseManyResults{Choices: choices}, nil
+	case choose.MapChoicesToBucketsOpts:
+		return a.ChooseMapChoicesToBuckets(prompt.Message, opts, prompt.Source)
 	default:
 		return nil, fmt.Errorf("unsupported choice type: %T", opts)
 	}
+}
+
+func (a *Agent) ChooseMapChoicesToBuckets(message string, opts choose.MapChoicesToBucketsOpts, source choose.Source) (choose.ChoiceResults, error) {
+	assignments := make(map[choose.Bucket][]choose.Choice)
+	assigned := make(map[int]bool) // track which cards have been assigned
+	// For each bucket, prompt the user
+	title := fmt.Sprintf("%s requires a choice", source.Name())
+	userMessage := []string{}
+	fmt.Println("choices:", opts.Choices)
+	for _, bucket := range opts.Buckets {
+		a.uiBuffer.UpdateMessage(userMessage)
+		a.uiBuffer.UpdateChoices(title, opts.Choices)
+		if err := a.uiBuffer.Render(); err != nil {
+			return nil, fmt.Errorf("failed to render UI Buffer: %w", err)
+		}
+		a.Prompt(message)
+		fmt.Printf("%s: ", bucket)
+		line := a.ReadInput()
+		indexes := parseIndexes(line)
+		for _, idx := range indexes {
+			if idx < 1 || idx > len(opts.Choices) {
+				fmt.Printf("Invalid card number: %d\n", idx)
+				continue
+			}
+			if assigned[idx] {
+				fmt.Printf("Card %d already assigned, skipping.\n", idx)
+				continue
+			}
+			assigned[idx] = true
+			assignments[bucket] = append(assignments[bucket], opts.Choices[idx-1])
+		}
+	}
+	// Handle unassigned cards → mama recommends putting them in last bucket by default!
+	lastBucket := opts.Buckets[len(opts.Buckets)-1]
+	for i := 1; i <= len(opts.Choices); i++ {
+		if !assigned[i] {
+			fmt.Printf("Warning: Card %d was not assigned, defaulting to %s.\n", i, lastBucket)
+			assignments[lastBucket] = append(assignments[lastBucket], opts.Choices[i-1])
+		}
+	}
+	return choose.MapChoicesToBucketsResults{
+		Assignments: assignments,
+	}, nil
 }
 
 func (a *Agent) ChooseMany(

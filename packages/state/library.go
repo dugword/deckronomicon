@@ -95,6 +95,11 @@ func (l Library) TakeBy(query query.Predicate) (gob.Card, Library, bool) {
 	return taken, Library{cards: remaining}, true
 }
 
+func (l Library) TakeN(n int) ([]gob.Card, Library) {
+	cards, remaining := take.N(l.cards, n)
+	return cards, Library{cards: remaining}
+}
+
 func (l Library) TakeTop() (gob.Card, Library, bool) {
 	card, cards, ok := take.Top(l.cards)
 	if !ok {

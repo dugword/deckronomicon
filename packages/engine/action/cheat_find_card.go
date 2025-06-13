@@ -54,10 +54,9 @@ func (a FindCardCheatAction) Complete(
 			PlayerID: a.player.ID(),
 			CardID:   a.card.ID(),
 		},
-		event.MoveCardEvent{
+		event.PutCardInHandEvent{
 			CardID:   card.ID(),
 			FromZone: mtg.ZoneLibrary,
-			ToZone:   mtg.ZoneHand,
 			PlayerID: a.player.ID(),
 		},
 	}, nil

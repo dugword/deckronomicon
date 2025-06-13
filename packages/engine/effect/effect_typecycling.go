@@ -53,11 +53,10 @@ func TypecyclingEffectHandler(
 			return EffectResult{}, errors.New("choice is not a card")
 		}
 		events := []event.GameEvent{
-			event.MoveCardEvent{
+			event.PutCardInHandEvent{
 				PlayerID: player.ID(),
 				CardID:   card.ID(),
 				FromZone: mtg.ZoneLibrary,
-				ToZone:   mtg.ZoneHand,
 			},
 		}
 		return EffectResult{

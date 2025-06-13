@@ -28,6 +28,12 @@ func (g Graveyard) Add(cards ...gob.Card) Graveyard {
 	}
 }
 
+func (g Graveyard) AddTop(c gob.Card) Graveyard {
+	return Graveyard{
+		cards: add.Item([]gob.Card{c}, g.cards...),
+	}
+}
+
 func (g Graveyard) Contains(predicate query.Predicate) bool {
 	return query.Contains(g.cards, predicate)
 }

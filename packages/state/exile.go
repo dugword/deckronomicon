@@ -27,6 +27,12 @@ func (e Exile) Add(cards ...gob.Card) Exile {
 	}
 }
 
+func (e Exile) AddTop(c gob.Card) Exile {
+	return Exile{
+		cards: add.Item([]gob.Card{c}, e.cards...),
+	}
+}
+
 func (e Exile) Contains(predicate query.Predicate) bool {
 	return query.Contains(e.cards, predicate)
 }

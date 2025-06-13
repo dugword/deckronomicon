@@ -21,7 +21,7 @@ func (r ChooseManyResults) ChoiceType() ChoiceType {
 }
 
 type MapChoicesToBucketsResults struct {
-	Buckets map[string][]Choice
+	Assignments map[Bucket][]Choice
 }
 
 func (r MapChoicesToBucketsResults) ChoiceType() ChoiceType {

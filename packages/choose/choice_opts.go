@@ -30,7 +30,18 @@ func (o ChooseManyOpts) ChoiceType() ChoiceType {
 	return ChoiceTypeChooseMany
 }
 
-type MapChoicesToBucketsOpts struct{}
+type Bucket string
+
+const (
+	BucketTop    Bucket = "Top"
+	BucketBottom Bucket = "Bottom"
+)
+
+type MapChoicesToBucketsOpts struct {
+	Buckets  []Bucket
+	Choices  []Choice
+	Optional bool
+}
 
 func (o MapChoicesToBucketsOpts) ChoiceType() ChoiceType {
 	return ChoiceTypeMapChoicesToBuckets

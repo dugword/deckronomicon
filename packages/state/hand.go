@@ -28,6 +28,12 @@ func (h Hand) Add(cards ...gob.Card) Hand {
 	}
 }
 
+func (h Hand) AddTop(c gob.Card) Hand {
+	return Hand{
+		cards: add.Item([]gob.Card{c}, h.cards...),
+	}
+}
+
 func (h Hand) Contains(predicate query.Predicate) bool {
 	return query.Contains(h.cards, predicate)
 }

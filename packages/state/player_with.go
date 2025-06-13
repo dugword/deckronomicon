@@ -56,6 +56,26 @@ func (p Player) WithAddCardToZone(card gob.Card, zone mtg.Zone) (Player, bool) {
 	return p, true
 }
 
+func (p Player) WithAddCardToTopOfZone(card gob.Card, zone mtg.Zone) (Player, bool) {
+	switch zone {
+	case mtg.ZoneExile:
+		exile := p.WithExile(p.exile.AddTop(card))
+		p = exile
+	case mtg.ZoneGraveyard:
+		graveyard := p.WithGraveyard(p.graveyard.AddTop(card))
+		p = graveyard
+	case mtg.ZoneHand:
+		hand := p.WithHand(p.hand.AddTop(card))
+		p = hand
+	case mtg.ZoneLibrary:
+		library := p.WithLibrary(p.library.AddTop(card))
+		p = library
+	default:
+		return p, false // No change for unsupported zones
+	}
+	return p, true
+}
+
 // TODO: Should this be WithMoveCardToZone?
 func (p Player) WithDiscardCard(cardID string) (Player, error) {
 	card, newHand, ok := p.hand.Take(cardID)

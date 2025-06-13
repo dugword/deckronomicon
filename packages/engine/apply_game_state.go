@@ -24,8 +24,14 @@ func (e *Engine) applyGameStateChangeEvent(game state.Game, gameStateChangeEvent
 		return e.applyDiscardCardEvent(game, evnt)
 	case event.DrawCardEvent:
 		return e.applyDrawCardEvent(game, evnt)
-	case event.MoveCardEvent:
-		return e.applyMoveCardEvent(game, evnt)
+	//case event.MoveCardEvent:
+	//return e.applyMoveCardEvent(game, evnt)
+	case event.PutCardInHandEvent:
+		return e.applyPutCardInHandEvent(game, evnt)
+	case event.PutCardOnBottomOfLibraryEvent:
+		return e.applyPutCardOnBottomOfLibraryEvent(game, evnt)
+	case event.PutCardOnTopOfLibraryEvent:
+		return e.applyPutCardOnTopOfLibraryEvent(game, evnt)
 	case event.PutAbilityOnStackEvent:
 		return e.applyPutAbilityOnStackEvent(game, evnt)
 	case event.PutPermanentOnBattlefieldEvent:
@@ -120,6 +126,7 @@ func (e *Engine) applyDrawCardEvent(
 	return game, nil
 }
 
+/*
 func (e *Engine) applyMoveCardEvent(
 	game state.Game,
 	evnt event.MoveCardEvent,
@@ -135,6 +142,67 @@ func (e *Engine) applyMoveCardEvent(
 	player, ok = player.WithAddCardToZone(card, evnt.ToZone)
 	if !ok {
 		return game, fmt.Errorf("failed to move card %q to zone %q", evnt.CardID, evnt.ToZone)
+	}
+	game = game.WithUpdatedPlayer(player)
+	return game, nil
+}
+*/
+
+func (e *Engine) applyPutCardInHandEvent(
+	game state.Game,
+	evnt event.PutCardInHandEvent,
+) (state.Game, error) {
+	player, ok := game.GetPlayer(evnt.PlayerID)
+	if !ok {
+		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
+	}
+	card, player, ok := player.TakeCardFromZone(evnt.CardID, evnt.FromZone)
+	if !ok {
+		return game, fmt.Errorf("card %q not in zone %q", evnt.CardID, evnt.FromZone)
+	}
+	player, ok = player.WithAddCardToZone(card, mtg.ZoneHand)
+	if !ok {
+		return game, fmt.Errorf("failed to move card %q to hand", evnt.CardID)
+	}
+	game = game.WithUpdatedPlayer(player)
+	return game, nil
+}
+
+func (e *Engine) applyPutCardOnBottomOfLibraryEvent(
+	game state.Game,
+	evnt event.PutCardOnBottomOfLibraryEvent,
+) (state.Game, error) {
+	player, ok := game.GetPlayer(evnt.PlayerID)
+	if !ok {
+		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
+	}
+	card, player, ok := player.TakeCardFromZone(evnt.CardID, evnt.FromZone)
+	if !ok {
+		return game, fmt.Errorf("card %q not in zone %q", evnt.CardID, evnt.FromZone)
+	}
+	player, ok = player.WithAddCardToZone(card, mtg.ZoneLibrary)
+	if !ok {
+		return game, fmt.Errorf("failed to move card %q to library", evnt.CardID)
+	}
+	game = game.WithUpdatedPlayer(player)
+	return game, nil
+}
+
+func (e *Engine) applyPutCardOnTopOfLibraryEvent(
+	game state.Game,
+	evnt event.PutCardOnTopOfLibraryEvent,
+) (state.Game, error) {
+	player, ok := game.GetPlayer(evnt.PlayerID)
+	if !ok {
+		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
+	}
+	card, player, ok := player.TakeCardFromZone(evnt.CardID, evnt.FromZone)
+	if !ok {
+		return game, fmt.Errorf("card %q not in zone %q", evnt.CardID, evnt.FromZone)
+	}
+	player, ok = player.WithAddCardToTopOfZone(card, mtg.ZoneLibrary)
+	if !ok {
+		return game, fmt.Errorf("failed to move card %q to library", evnt.CardID)
 	}
 	game = game.WithUpdatedPlayer(player)
 	return game, nil
