@@ -31,17 +31,12 @@ func (a ConcedeAction) Description() string {
 
 func (a ConcedeAction) GetPrompt(state state.Game) (choose.ChoicePrompt, error) {
 	// No player choice needed, but we still return an empty prompt for consistency
-	return choose.ChoicePrompt{
-		Message:  "Conceding the game",
-		Choices:  nil,
-		Optional: false,
-	}, nil
+	return choose.ChoicePrompt{}, nil
 }
 
 func (a ConcedeAction) Complete(
 	game state.Game,
-	env *ResolutionEnvironment,
-	choices []choose.Choice,
+	choiceResults choose.ChoiceResults,
 ) ([]event.GameEvent, error) {
 	opponent, ok := game.GetOpponent(a.player.ID())
 	if !ok {

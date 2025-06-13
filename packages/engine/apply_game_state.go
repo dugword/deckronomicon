@@ -39,6 +39,8 @@ func (e *Engine) applyGameStateChangeEvent(game state.Game, gameStateChangeEvent
 		return game, nil
 	case event.RemoveAbilityFromStackEvent:
 		return e.applyRemoveAbilityFromStackEvent(game, evnt)
+	case event.ResolveManaAbilityEvent:
+		return e.applyResolveManaAbilityEvent(game, evnt)
 	case event.ShuffleDeckEvent:
 		player, ok := game.GetPlayer(evnt.PlayerID)
 		if !ok {
@@ -229,6 +231,38 @@ func (e *Engine) applyRemoveAbilityFromStackEvent(
 		return game, fmt.Errorf("ability %q not found on stack", evnt.AbilityID)
 	}
 	game = game.WithStack(stack)
+	return game, nil
+}
+
+// TODO: Not sure I like how this is handled, think through how I want to have
+// events generated in the reducer.
+func (e *Engine) applyResolveManaAbilityEvent(
+	game state.Game,
+	evnt event.ResolveManaAbilityEvent,
+) (state.Game, error) {
+	player, ok := game.GetPlayer(evnt.PlayerID)
+	if !ok {
+		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
+	}
+	var events []event.GameEvent
+	for _, effect := range evnt.Effects {
+		handler, ok := e.effectRegistry.Get(effect.Name)
+		if !ok {
+			return game, fmt.Errorf("effect %q not found", effect.Name)
+		}
+		effectResults, err := handler(game, player, nil, effect.Modifiers)
+		if err != nil {
+			return game, fmt.Errorf("failed to apply effect %q: %w", effect.Name, err)
+		}
+		events = append(events, effectResults.Events...)
+	}
+	for _, evnt := range events {
+		var err error
+		game, err = e.applyEvent(game, evnt)
+		if err != nil {
+			return game, fmt.Errorf("failed to apply event %T: %w", evnt, err)
+		}
+	}
 	return game, nil
 }
 

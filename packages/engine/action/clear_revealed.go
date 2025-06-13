@@ -31,17 +31,12 @@ func (a ClearRevealedAction) Description() string {
 
 func (a ClearRevealedAction) GetPrompt(game state.Game) (choose.ChoicePrompt, error) {
 	// No player choice needed, but we still return an empty prompt for consistency
-	return choose.ChoicePrompt{
-		Message:  "Clear all revealed cards from your view",
-		Choices:  nil,
-		Optional: false,
-	}, nil
+	return choose.ChoicePrompt{}, nil
 }
 
 func (a ClearRevealedAction) Complete(
 	game state.Game,
-	env *ResolutionEnvironment,
-	choices []choose.Choice,
+	choiceResults choose.ChoiceResults,
 ) ([]event.GameEvent, error) {
 	if !game.CheatsEnabled() {
 		return nil, fmt.Errorf("no cheating you cheater")

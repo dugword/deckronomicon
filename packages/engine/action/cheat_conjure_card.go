@@ -33,23 +33,15 @@ func (a ConjureCardCheatAction) Description() string {
 
 func (a ConjureCardCheatAction) GetPrompt(game state.Game) (choose.ChoicePrompt, error) {
 	// No player choice needed, but we still return an empty prompt for consistency
-	return choose.ChoicePrompt{
-		Message:  "Conjure a card",
-		Choices:  nil,
-		Optional: false,
-	}, nil
+	return choose.ChoicePrompt{}, nil
 }
 
 func (a ConjureCardCheatAction) Complete(
 	game state.Game,
-	env *ResolutionEnvironment,
-	choices []choose.Choice,
+	choiceResults choose.ChoiceResults,
 ) ([]event.GameEvent, error) {
 	if !game.CheatsEnabled() {
 		return nil, fmt.Errorf("no cheating you cheater")
-	}
-	if _, ok := env.Definitions[a.cardName]; !ok {
-		return nil, fmt.Errorf("card %q not found in definitions", a.cardName)
 	}
 	return []event.GameEvent{event.CheatConjureCardEvent{
 		PlayerID: a.player.ID(),

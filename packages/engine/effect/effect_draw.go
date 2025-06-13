@@ -2,7 +2,7 @@ package effect
 
 import (
 	"deckronomicon/packages/engine/event"
-	"deckronomicon/packages/game/gob"
+	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/state"
 	"strconv"
@@ -12,7 +12,7 @@ func DrawEffectHandler(
 	game state.Game,
 	player state.Player,
 	source query.Object,
-	modifiers []gob.Tag,
+	modifiers []definition.EffectModifier,
 ) (EffectResult, error) {
 	var events []event.GameEvent
 	drawCount := 1

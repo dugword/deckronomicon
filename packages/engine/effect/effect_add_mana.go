@@ -2,7 +2,7 @@ package effect
 
 import (
 	"deckronomicon/packages/engine/event"
-	"deckronomicon/packages/game/gob"
+	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/mana"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/state"
@@ -15,7 +15,7 @@ func AddManaEffectHandler(
 	game state.Game,
 	player state.Player,
 	source query.Object,
-	modifiers []gob.Tag,
+	modifiers []definition.EffectModifier,
 ) (EffectResult, error) {
 	var manaString string
 	for _, modifier := range modifiers {
@@ -24,6 +24,7 @@ func AddManaEffectHandler(
 			break
 		}
 	}
+	fmt.Println("AddManaEffectHandler called with manaString:", manaString)
 	if manaString == "" {
 		return EffectResult{}, errors.New("effect 'AddMana' requires 'Mana' modifier")
 	}

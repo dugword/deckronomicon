@@ -3,6 +3,7 @@ package effect
 import (
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
@@ -16,7 +17,7 @@ func TypecyclingEffectHandler(
 	game state.Game,
 	player state.Player,
 	source query.Object,
-	modifiers []gob.Tag,
+	modifiers []definition.EffectModifier,
 ) (EffectResult, error) {
 	var subtypeValue string
 	for _, modifier := range modifiers {
@@ -36,17 +37,18 @@ func TypecyclingEffectHandler(
 		has.Subtype(subtype),
 	)
 	choicePrompt := choose.ChoicePrompt{
-		Choices:    choose.NewChoices(cards),
-		MinChoices: 1,
-		MaxChoices: 1,
-		Message:    fmt.Sprintf("Choose a card with subtype %q to put into your hand", subtype),
-		Source:     source,
+		Message: fmt.Sprintf("Choose a card with subtype %q to put into your hand", subtype),
+		Source:  source,
+		ChoiceOpts: choose.ChooseOneOpts{
+			Choices: choose.NewChoices(cards),
+		},
 	}
-	resumeFunc := func(choices []choose.Choice) (EffectResult, error) {
-		if len(choices) == 0 {
-			return EffectResult{}, errors.New("no choices selected for Typecyling")
+	resumeFunc := func(choiceResults choose.ChoiceResults) (EffectResult, error) {
+		selected, ok := choiceResults.(choose.ChooseOneResults)
+		if !ok {
+			return EffectResult{}, fmt.Errorf("expected a single choice result")
 		}
-		card, ok := choices[0].(gob.Card)
+		card, ok := selected.Choice.(gob.Card)
 		if !ok {
 			return EffectResult{}, errors.New("choice is not a card")
 		}
@@ -58,12 +60,10 @@ func TypecyclingEffectHandler(
 				ToZone:   mtg.ZoneHand,
 			},
 		}
-
 		return EffectResult{
 			Events: events,
 		}, nil
 	}
-
 	// Need to get choices
 	return EffectResult{
 		ChoicePrompt: choicePrompt,

@@ -23,7 +23,7 @@ func (p *ViewCommand) Build(game state.Game, player state.Player) (engine.Action
 
 func parseViewCommand(
 	arg string,
-	chooseOne func(prompt choose.ChoicePrompt) (choose.Choice, error),
+	choose func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
 	game state.Game,
 	player state.Player,
 ) (*ViewCommand, error) {

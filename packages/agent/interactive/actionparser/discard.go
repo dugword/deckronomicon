@@ -26,33 +26,39 @@ func (p *DiscardCheatCommand) Build(game state.Game, player state.Player) (engin
 
 func parseDiscardCheatCommand(
 	idOrName string,
-	chooseOne func(prompt choose.ChoicePrompt) (choose.Choice, error),
+	choose func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
 	game state.Game,
 	player state.Player,
 ) (*DiscardCheatCommand, error) {
 	cards := player.Hand().GetAll()
 	if idOrName == "" {
-		return buildDiscardCommandByChoice(cards, chooseOne, player)
+		return buildDiscardCommandByChoice(cards, choose, player)
 	}
 	return buildDiscardCommandByIDOrName(cards, idOrName, player)
 }
 
 func buildDiscardCommandByChoice(
 	cards []gob.Card,
-	chooseOne func(prompt choose.ChoicePrompt) (choose.Choice, error),
+	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
 	player state.Player,
 ) (*DiscardCheatCommand, error) {
 	prompt := choose.ChoicePrompt{
-		Message:  "Choose a card to discard",
-		Choices:  choose.NewChoices(cards),
-		Source:   CommandSource{"Discard a card"},
-		Optional: true,
+		Message: "Choose a card to discard",
+		Source:  CommandSource{"Discard a card"},
+		ChoiceOpts: choose.ChooseOneOpts{
+			Choices:  choose.NewChoices(cards),
+			Optional: true,
+		},
 	}
-	selected, err := chooseOne(prompt)
+	choiceResults, err := chooseFunc(prompt)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get choices: %w", err)
 	}
-	card, ok := selected.(gob.Card)
+	selected, ok := choiceResults.(choose.ChooseOneResults)
+	if !ok {
+		return nil, fmt.Errorf("expected a single choice result")
+	}
+	card, ok := selected.Choice.(gob.Card)
 	if !ok {
 		return nil, fmt.Errorf("selected choice is not a card in hand")
 	}

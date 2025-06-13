@@ -1,4 +1,4 @@
-definitions/cards/blue/lorien_revealed.json
+definitions/cards/blue/preordain.json
 definitions/cards/blue/psychic_puppetry.json
 definitions/cards/blue/muddle_the_mixture.json
 definitions/cards/blue/brainstorm.json
@@ -6,7 +6,6 @@ definitions/cards/blue/gigadrowse.json
 definitions/cards/blue/ideas_unbound.json
 definitions/cards/blue/peer_through_depths.json
 definitions/cards/blue/hidden_strings.json
-definitions/cards/blue/preordain.json
 definitions/cards/blue/high_tide.json
 definitions/cards/blue/deep_analysis.json
 definitions/cards/blue/merchant_scroll.json
@@ -14,5 +13,3 @@ definitions/cards/blue/pieces_of_the_puzzle.json
 definitions/cards/blue/stream_of_thought.json
 definitions/cards/colorless/candy_trail.json
 definitions/cards/white/pearled_unicorn.json
-definitions/effects/add_mana.json
-definitions/effects/scry.json

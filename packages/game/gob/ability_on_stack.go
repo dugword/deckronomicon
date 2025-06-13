@@ -13,14 +13,15 @@ type AbilityOnStack struct {
 	constroller string
 	sourceID    string
 	abilityID   string
-	effects     []Effect
+	// effects     []Effect
+	effects []definition.EffectSpec
 }
 
 func (a AbilityOnStack) Description() string {
 	return fmt.Sprintf("Write a better description: %s", a.abilityID)
 }
 
-func (a AbilityOnStack) Effects() []Effect {
+func (a AbilityOnStack) Effects() []definition.EffectSpec {
 	return a.effects
 }
 
@@ -58,31 +59,34 @@ func NewAbilityOnStack(id string,
 		sourceID:    sourceID,
 		abilityID:   abilityID,
 		name:        abilityName,
+		effects:     effectSpecs,
 	}
-	var effects []Effect
+	//	var effects []Effect
 	// This is redundant with the code in load_from_definitions, it should probably be removed from there
-	for _, effectSpec := range effectSpecs {
-		var modifiers []Tag
-		for _, modifier := range effectSpec.Modifiers {
-			// TODO: Check if the modifier is valid for the effect
-			modifier := Tag{
-				Key:   modifier.Key,
-				Value: modifier.Value,
+	/*
+		for _, effectSpec := range effectSpecs {
+			var modifiers []Tag
+			for _, modifier := range effectSpec.Modifiers {
+				// TODO: Check if the modifier is valid for the effect
+				modifier := Tag{
+					Key:   modifier.Key,
+					Value: modifier.Value,
+				}
+				modifiers = append(modifiers, modifier)
 			}
-			modifiers = append(modifiers, modifier)
+			// TODO: Check if required modifiers are present
+			var tags []Tag
+			// TODO load the tags from the effect spec
+			effect := Effect{
+				// TODO: Check if the effect exists
+				name:      effectSpec.Name,
+				modifiers: modifiers,
+				optional:  effectSpec.Optional,
+				tags:      tags,
+			}
+			effects = append(effects, effect)
 		}
-		// TODO: Check if required modifiers are present
-		var tags []Tag
-		// TODO load the tags from the effect spec
-		effect := Effect{
-			// TODO: Check if the effect exists
-			name:      effectSpec.Name,
-			modifiers: modifiers,
-			optional:  effectSpec.Optional,
-			tags:      tags,
-		}
-		effects = append(effects, effect)
-	}
-	abilityOnStack.effects = effects
+	*/
+	//abilityOnStack.effects = effects
 	return abilityOnStack
 }

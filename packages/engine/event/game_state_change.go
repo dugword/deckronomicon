@@ -16,6 +16,7 @@ const (
 	EventTypePutSpellInGraveyard       = "PutSpellInGraveyard"
 	EventTypePutAbilityOnStack         = "PutAbilityOnStack"
 	EventTypeRemoveAbilityFromStack    = "RemoveAbilityFromStack"
+	EventTypeResolveManaAbility        = "ResolveManaAbility"
 	EventTypeSetActivePlayer           = "SetActivePlayer"
 	EventTypeSpendMana                 = "SpendMana"
 	EventTypeShuffleDeck               = "ShuffleDeck"
@@ -134,6 +135,20 @@ type RemoveAbilityFromStackEvent struct {
 
 func (e RemoveAbilityFromStackEvent) EventType() string {
 	return EventTypeRemoveAbilityFromStack
+}
+
+type ResolveManaAbilityEvent struct {
+	GameStateChangeBaseEvent
+	PlayerID    string
+	SourceID    string
+	AbilityID   string
+	FromZone    mtg.Zone
+	AbilityName string
+	Effects     []definition.EffectSpec
+}
+
+func (e ResolveManaAbilityEvent) EventType() string {
+	return EventTypeResolveManaAbility
 }
 
 type SetActivePlayerEvent struct {

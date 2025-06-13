@@ -3,6 +3,7 @@ package gob
 import (
 	//"deckronomicon/packages/game/core"
 	// "deckronomicon/packages/game/cost"
+	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 
@@ -33,10 +34,11 @@ type Spell struct {
 	id      string
 	loyalty int
 	//manaCost        *cost.ManaCost
-	name            string
-	power           int
-	rulesText       string
-	effects         []Effect
+	name      string
+	power     int
+	rulesText string
+	//effects         []Effect
+	effects         []definition.EffectSpec
 	staticAbilities []StaticAbility
 	subtypes        []mtg.Subtype
 	supertypes      []mtg.Supertype
@@ -85,7 +87,7 @@ func (s Spell) Controller() string {
 }
 
 // Effects returns the effects of the spell.
-func (s Spell) Effects() []Effect {
+func (s Spell) Effects() []definition.EffectSpec {
 	return s.effects
 }
 
@@ -95,7 +97,7 @@ func (s Spell) Description() string {
 	for _, effect := range s.effects {
 
 		// TODO: Come up with a better way to handle descriptions
-		descriptions = append(descriptions, effect.Name())
+		descriptions = append(descriptions, effect.Name)
 		// descriptions = append(descriptions, effect.Description())
 
 	}

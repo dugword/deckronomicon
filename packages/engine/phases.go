@@ -65,7 +65,7 @@ func (e *Engine) GamePhases() []GamePhase {
 			},
 		},
 		{
-			name: mtg.PhasePostcombatMain,
+			name: mtg.PhasePrecombatMain,
 			steps: []GameStep{
 				{
 					name: mtg.StepPrecombatMain,

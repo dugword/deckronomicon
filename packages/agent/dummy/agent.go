@@ -36,19 +36,27 @@ func (a *Agent) GetNextAction(game state.Game) (engine.Action, error) {
 	return action.NewPassPriorityAction(player), nil
 }
 
-func (a *Agent) Choose(prompt choose.ChoicePrompt) ([]choose.Choice, error) {
-	var selected []choose.Choice
-	for i := range prompt.MinChoices {
-		selected = append(selected, prompt.Choices[i])
+func (a *Agent) Choose(prompt choose.ChoicePrompt) (choose.ChoiceResults, error) {
+	switch opts := prompt.ChoiceOpts.(type) {
+	case choose.ChooseOneOpts:
+		if opts.Optional {
+			return choose.ChooseOneResults{}, nil
+		}
+		if len(opts.Choices) == 0 {
+			return nil, fmt.Errorf("no choices available")
+		}
+		return choose.ChooseOneResults{Choice: opts.Choices[0]}, nil
+	case choose.ChooseManyOpts:
+		if opts.Optional || opts.Min == 0 {
+			return choose.ChooseManyResults{}, nil
+		}
+		if len(opts.Choices) < opts.Min {
+			return nil, fmt.Errorf("not enough choices available")
+		}
+		return choose.ChooseManyResults{Choices: opts.Choices[:opts.Min]}, nil
+	default:
+		return nil, fmt.Errorf("unknown choice options type: %T", opts)
 	}
-	return selected, nil
-}
-
-func (a *Agent) ChooseOne(prompt choose.ChoicePrompt) (choose.Choice, error) {
-	if len(prompt.Choices) == 0 {
-		return nil, fmt.Errorf("no choices available")
-	}
-	return prompt.Choices[0], nil
 }
 
 func (a *Agent) ReportState(game state.Game) error {

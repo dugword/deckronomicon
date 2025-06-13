@@ -18,8 +18,6 @@ import (
 )
 
 func (e *Engine) Apply(gameEvent event.GameEvent) error {
-	e.log.Info("Applying event:", gameEvent.EventType())
-	e.record.Add(gameEvent)
 	game, err := e.applyEvent(e.game, gameEvent)
 	if err != nil {
 		if errors.Is(err, mtg.ErrGameOver) {
@@ -40,6 +38,8 @@ func (e *Engine) Apply(gameEvent event.GameEvent) error {
 }
 
 func (e *Engine) applyEvent(game state.Game, gameEvent event.GameEvent) (state.Game, error) {
+	e.log.Info("Applying event:", gameEvent.EventType())
+	e.record.Add(gameEvent)
 	switch evnt := gameEvent.(type) {
 	case event.GameLifecycleEvent:
 		return e.applyGameLifecycleEvent(game, evnt)

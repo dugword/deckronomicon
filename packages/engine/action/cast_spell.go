@@ -57,8 +57,7 @@ func (a CastSpellAction) GetPrompt(state state.Game) (choose.ChoicePrompt, error
 
 func (a CastSpellAction) Complete(
 	game state.Game,
-	env *ResolutionEnvironment,
-	choices []choose.Choice,
+	choiceResults choose.ChoiceResults,
 ) ([]event.GameEvent, error) {
 	// TODO: This should probably be a part of CanCastSpell from judge maybe?
 	if !a.player.ZoneContains(a.cardInZone.Zone(), has.ID(a.cardInZone.ID())) {

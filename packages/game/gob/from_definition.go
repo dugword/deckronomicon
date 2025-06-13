@@ -107,54 +107,56 @@ func NewCardFromCardDefinition(id, playerID string, definition definition.Card) 
 			}
 		}
 		ability := Ability{
-			cost:        spec.Cost,
-			name:        spec.Name,
-			effectSpecs: spec.EffectSpecs,
-			id:          fmt.Sprintf("%s-%d", id, abilityID),
-			zone:        zone,
-			speed:       speed,
-			source:      card,
+			cost: spec.Cost,
+			name: spec.Name,
+			//effectSpecs: spec.EffectSpecs,
+			effects: spec.EffectSpecs,
+			id:      fmt.Sprintf("%s-%d", id, abilityID),
+			zone:    zone,
+			speed:   speed,
+			source:  card,
 		}
-		var effects []Effect
-		// TODO: I think this should happen in the reducer not on load
-		for _, effectSpec := range spec.EffectSpecs {
+		/*
+			var effects []Effect
+			// TODO: I think this should happen in the reducer not on load
+			for _, effectSpec := range spec.EffectSpecs {
+				var modifiers []Tag
+				for _, modifier := range effectSpec.Modifiers {
+					// TODO: Check if the modifier is valid for the effect
+					modifier := Tag{
+						Key:   modifier.Key,
+						Value: modifier.Value,
+					}
+					modifiers = append(modifiers, modifier)
+				}
+				// TODO: Check if required modifiers are present
+				var tags []Tag
+				// TODO load the tags from the effect spec
+				effect := Effect{
+					// TODO: Check if the effect exists
+					name:      effectSpec.Name,
+					modifiers: modifiers,
+					optional:  effectSpec.Optional,
+					tags:      tags,
+				}
+				effects = append(effects, effect)
+			}
+			ability.effects = effects
+		*/
+		card.activatedAbilities = append(card.activatedAbilities, ability)
+	}
+	for _, spec := range definition.SpellAbilitySpec.EffectSpecs {
+		/*
 			var modifiers []Tag
-			for _, modifier := range effectSpec.Modifiers {
-				// TODO: Check if the modifier is valid for the effect
+			for _, modifier := range spec.Modifiers {
 				modifier := Tag{
 					Key:   modifier.Key,
 					Value: modifier.Value,
 				}
 				modifiers = append(modifiers, modifier)
 			}
-			// TODO: Check if required modifiers are present
-			var tags []Tag
-			// TODO load the tags from the effect spec
-			effect := Effect{
-				// TODO: Check if the effect exists
-				name:      effectSpec.Name,
-				modifiers: modifiers,
-				optional:  effectSpec.Optional,
-				tags:      tags,
-			}
-			effects = append(effects, effect)
-		}
-		ability.effects = effects
-		card.activatedAbilities = append(card.activatedAbilities, ability)
-	}
-	for _, spec := range definition.SpellAbilitySpec.EffectSpecs {
-		var modifiers []Tag
-		for _, modifier := range spec.Modifiers {
-			modifier := Tag{
-				Key:   modifier.Key,
-				Value: modifier.Value,
-			}
-			modifiers = append(modifiers, modifier)
-		}
-		card.spellAbility = append(card.spellAbility, Effect{
-			name:      spec.Name,
-			modifiers: modifiers,
-		})
+		*/
+		card.spellAbility = append(card.spellAbility, spec)
 	}
 
 	/*

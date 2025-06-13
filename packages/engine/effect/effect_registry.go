@@ -1,7 +1,7 @@
 package effect
 
 import (
-	"deckronomicon/packages/game/gob"
+	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/state"
 )
@@ -10,7 +10,7 @@ type EffectHandler func(
 	game state.Game,
 	player state.Player,
 	source query.Object,
-	modifiers []gob.Tag,
+	modifiers []definition.EffectModifier,
 ) (EffectResult, error)
 
 type EffectRegistry struct {

@@ -65,17 +65,12 @@ func (a DrawStartingHandAction) GetPrompt(
 	game state.Game,
 ) (choose.ChoicePrompt, error) {
 	// No player choice needed, but we still return an empty prompt for consistency
-	return choose.ChoicePrompt{
-		Message:  "Drawing starting hand",
-		Choices:  nil,
-		Optional: false,
-	}, nil
+	return choose.ChoicePrompt{}, nil
 }
 
 func (a DrawStartingHandAction) Complete(
 	game state.Game,
-	env *ResolutionEnvironment,
-	choices []choose.Choice,
+	choiceResults choose.ChoiceResults,
 ) ([]event.GameEvent, error) {
 	// This action would typically involve the player drawing their starting hand.
 	// For now, we return an empty event as a placeholder.
@@ -119,14 +114,10 @@ func (a PhaseInPhaseOutAction) Description() string {
 
 func (a PhaseInPhaseOutAction) GetPrompt(game state.Game) (choose.ChoicePrompt, error) {
 	// No player choice needed, but we still return an empty prompt for consistency
-	return choose.ChoicePrompt{
-		Message:  "Phasing in/out",
-		Choices:  nil,
-		Optional: false,
-	}, nil
+	return choose.ChoicePrompt{}, nil
 }
 
-func (a PhaseInPhaseOutAction) Complete(game state.Game, env *ResolutionEnvironment, choices []choose.Choice) ([]event.GameEvent, error) {
+func (a PhaseInPhaseOutAction) Complete(game state.Game, choiceResults choose.ChoiceResults) ([]event.GameEvent, error) {
 	return []event.GameEvent{
 		event.PhaseInPhaseOutEvent{PlayerID: a.PlayerID()},
 	}, nil
@@ -156,14 +147,10 @@ func (a CheckDayNightAction) Description() string {
 
 func (a CheckDayNightAction) GetPrompt(game state.Game) (choose.ChoicePrompt, error) {
 	// No player choice needed, but we still return an empty prompt for consistency
-	return choose.ChoicePrompt{
-		Message:  "Checking day/night designation",
-		Choices:  nil,
-		Optional: false,
-	}, nil
+	return choose.ChoicePrompt{}, nil
 }
 
-func (a CheckDayNightAction) Complete(game state.Game, env *ResolutionEnvironment, choices []choose.Choice) ([]event.GameEvent, error) {
+func (a CheckDayNightAction) Complete(game state.Game, choiceResults choose.ChoiceResults) ([]event.GameEvent, error) {
 	// This action would typically involve checking the game state to see if the day/night designation should change.
 	// For now, we return an empty event as a placeholder.
 	return []event.GameEvent{
@@ -197,14 +184,10 @@ func (a UntapAction) Description() string {
 
 func (a UntapAction) GetPrompt(game state.Game) (choose.ChoicePrompt, error) {
 	// No player choice needed, but we still return an empty prompt for consistency
-	return choose.ChoicePrompt{
-		Message:  "Untapping permanents",
-		Choices:  nil,
-		Optional: false,
-	}, nil
+	return choose.ChoicePrompt{}, nil
 }
 
-func (a UntapAction) Complete(state.Game, *ResolutionEnvironment, []choose.Choice) ([]event.GameEvent, error) {
+func (a UntapAction) Complete(state.Game, choose.ChoiceResults) ([]event.GameEvent, error) {
 	return []event.GameEvent{
 		event.UntapAllEvent{PlayerID: a.PlayerID()},
 	}, nil
@@ -234,14 +217,10 @@ func (a UpkeepAction) Description() string {
 
 func (a UpkeepAction) GetPrompt(game state.Game) (choose.ChoicePrompt, error) {
 	// No player choice needed, but we still return an empty prompt for consistency
-	return choose.ChoicePrompt{
-		Message:  "Performing upkeep actions",
-		Choices:  nil,
-		Optional: false,
-	}, nil
+	return choose.ChoicePrompt{}, nil
 }
 
-func (a UpkeepAction) Complete(game state.Game, env *ResolutionEnvironment, choices []choose.Choice) ([]event.GameEvent, error) {
+func (a UpkeepAction) Complete(game state.Game, choiceResults choose.ChoiceResults) ([]event.GameEvent, error) {
 	// This action would typically involve the player performing any upkeep actions.
 	// For now, we return an empty event as a placeholder.
 	return []event.GameEvent{
@@ -274,13 +253,9 @@ func (a DrawAction) Description() string {
 
 func (a DrawAction) GetPrompt(game state.Game) (choose.ChoicePrompt, error) {
 	// No player choice needed, but we still return an empty prompt for consistency
-	return choose.ChoicePrompt{
-		Message:  "Drawing a card",
-		Choices:  nil,
-		Optional: false,
-	}, nil
+	return choose.ChoicePrompt{}, nil
 }
-func (a DrawAction) Complete(state.Game, *ResolutionEnvironment, []choose.Choice) ([]event.GameEvent, error) {
+func (a DrawAction) Complete(state.Game, choose.ChoiceResults) ([]event.GameEvent, error) {
 	return []event.GameEvent{
 		event.DrawCardEvent{
 			PlayerID: a.PlayerID(),
@@ -311,13 +286,9 @@ func (a DeclareAttackersAction) Description() string {
 }
 func (a DeclareAttackersAction) GetPrompt(game state.Game) (choose.ChoicePrompt, error) {
 	// No player choice needed, but we still return an empty prompt for consistency
-	return choose.ChoicePrompt{
-		Message:  "Declaring attackers",
-		Choices:  nil,
-		Optional: false,
-	}, nil
+	return choose.ChoicePrompt{}, nil
 }
-func (a DeclareAttackersAction) Complete(state.Game, *ResolutionEnvironment, []choose.Choice) ([]event.GameEvent, error) {
+func (a DeclareAttackersAction) Complete(state.Game, choose.ChoiceResults) ([]event.GameEvent, error) {
 	// This action would typically involve the player choosing which creatures to attack with.
 	// For now, we return an empty event as a placeholder.
 	return []event.GameEvent{
@@ -347,14 +318,10 @@ func (a DeclareBlockersAction) Description() string {
 }
 func (a DeclareBlockersAction) GetPrompt(game state.Game) (choose.ChoicePrompt, error) {
 	// No player choice needed, but we still return an empty prompt for consistency
-	return choose.ChoicePrompt{
-		Message:  "Declaring blockers",
-		Choices:  nil,
-		Optional: false,
-	}, nil
+	return choose.ChoicePrompt{}, nil
 }
 
-func (a DeclareBlockersAction) Complete(state.Game, *ResolutionEnvironment, []choose.Choice) ([]event.GameEvent, error) {
+func (a DeclareBlockersAction) Complete(state.Game, choose.ChoiceResults) ([]event.GameEvent, error) {
 	// This action would typically involve the player choosing which creatures to block with.
 	// For now, we return an empty event as a placeholder.
 	return []event.GameEvent{
@@ -386,13 +353,9 @@ func (a CombatDamageAction) Description() string {
 }
 func (a CombatDamageAction) GetPrompt(game state.Game) (choose.ChoicePrompt, error) {
 	// No player choice needed, but we still return an empty prompt for consistency
-	return choose.ChoicePrompt{
-		Message:  "Assigning combat damage",
-		Choices:  nil,
-		Optional: false,
-	}, nil
+	return choose.ChoicePrompt{}, nil
 }
-func (a CombatDamageAction) Complete(state.Game, *ResolutionEnvironment, []choose.Choice) ([]event.GameEvent, error) {
+func (a CombatDamageAction) Complete(state.Game, choose.ChoiceResults) ([]event.GameEvent, error) {
 	// This action would typically involve the player assigning combat damage.
 	// For now, we return an empty event as a placeholder.
 	return []event.GameEvent{
@@ -438,23 +401,27 @@ func (a DiscardToHandSizeAction) GetPrompt(game state.Game) (choose.ChoicePrompt
 		choices = append(choices, gob.NewCardInZone(card, mtg.ZoneHand))
 	}
 	return choose.ChoicePrompt{
-		Message:    fmt.Sprintf("%d cards in hand, discard %d", hand.Size(), excess),
-		Choices:    choices,
-		Source:     a,
-		MinChoices: excess,
-		MaxChoices: excess,
+		Message: fmt.Sprintf("%d cards in hand, discard %d", hand.Size(), excess),
+		Source:  a,
+		ChoiceOpts: choose.ChooseManyOpts{
+			Choices: choices,
+			Min:     excess,
+			Max:     excess,
+		},
 	}, nil
 }
 
 func (a DiscardToHandSizeAction) Complete(
 	game state.Game,
-	env *ResolutionEnvironment,
-	choices []choose.Choice,
+	choiceResults choose.ChoiceResults,
 ) ([]event.GameEvent, error) {
 	var discardEvents []event.GameEvent
-
+	selected, ok := choiceResults.(choose.ChooseManyResults)
+	if !ok {
+		return nil, fmt.Errorf("expected multiple choice results")
+	}
 	// TODO: Verify that the choices are valid cards in the player's hand
-	for _, choice := range choices {
+	for _, choice := range selected.Choices {
 		if choice.ID() == "" {
 			continue // Skip empty choices
 		}
@@ -489,14 +456,10 @@ func (a RemoveDamageAction) Description() string {
 
 func (a RemoveDamageAction) GetPrompt(game state.Game) (choose.ChoicePrompt, error) {
 	// No player choice needed, but we still return an empty prompt for consistency
-	return choose.ChoicePrompt{
-		Message:  "Removing damage",
-		Choices:  nil,
-		Optional: false,
-	}, nil
+	return choose.ChoicePrompt{}, nil
 }
 
-func (a RemoveDamageAction) Complete(game state.Game, env *ResolutionEnvironment, choices []choose.Choice) ([]event.GameEvent, error) {
+func (a RemoveDamageAction) Complete(game state.Game, choiceResults choose.ChoiceResults) ([]event.GameEvent, error) {
 	// This action would typically involve removing all damage from permanents and ending all "until end of turn" effects.
 	// For now, we return an empty event as a placeholder.
 	return []event.GameEvent{
@@ -527,14 +490,10 @@ func (a ProgressSagaAction) Description() string {
 
 func (a ProgressSagaAction) GetPrompt(game state.Game) (choose.ChoicePrompt, error) {
 	// No player choice needed, but we still return an empty prompt for consistency
-	return choose.ChoicePrompt{
-		Message:  "Progressing Sagas",
-		Choices:  nil,
-		Optional: false,
-	}, nil
+	return choose.ChoicePrompt{}, nil
 }
 
-func (a ProgressSagaAction) Complete(state.Game, *ResolutionEnvironment, []choose.Choice) ([]event.GameEvent, error) {
+func (a ProgressSagaAction) Complete(state.Game, choose.ChoiceResults) ([]event.GameEvent, error) {
 	return []event.GameEvent{
 		event.ProgressSagaEvent{PlayerID: a.PlayerID()},
 	}, nil

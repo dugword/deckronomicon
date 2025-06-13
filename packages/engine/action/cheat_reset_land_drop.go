@@ -31,17 +31,12 @@ func (a ResetLandDropCheatAction) Description() string {
 
 func (a ResetLandDropCheatAction) GetPrompt(game state.Game) (choose.ChoicePrompt, error) {
 	// No player choice needed, but we still return an empty prompt for consistency
-	return choose.ChoicePrompt{
-		Message:  "Reset Land Drop",
-		Choices:  nil,
-		Optional: false,
-	}, nil
+	return choose.ChoicePrompt{}, nil
 }
 
 func (a ResetLandDropCheatAction) Complete(
 	game state.Game,
-	env *ResolutionEnvironment,
-	choices []choose.Choice,
+	choiceResults choose.ChoiceResults,
 ) ([]event.GameEvent, error) {
 	if !game.CheatsEnabled() {
 		return nil, fmt.Errorf("no cheating you cheater")

@@ -26,31 +26,37 @@ func (p *FindCardCheatCommand) Build(game state.Game, player state.Player) (engi
 
 func parseFindCardCheatCommand(
 	idOrName string,
-	chooseOne func(prompt choose.ChoicePrompt) (choose.Choice, error),
+	choose func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
 	player state.Player,
 ) (*FindCardCheatCommand, error) {
 	cards := player.Library().GetAll()
 	if idOrName == "" {
-		return buildFindCardCheatCommandByChoice(cards, chooseOne, player)
+		return buildFindCardCheatCommandByChoice(cards, choose, player)
 	}
 	return buildFindCardCheatCommandByIDOrName(cards, idOrName, player)
 }
 
 func buildFindCardCheatCommandByChoice(
 	cards []gob.Card,
-	chooseOne func(prompt choose.ChoicePrompt) (choose.Choice, error),
+	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
 	player state.Player) (*FindCardCheatCommand, error) {
 	prompt := choose.ChoicePrompt{
-		Message:  "Choose a card to put into your hand",
-		Choices:  choose.NewChoices(cards),
-		Source:   CommandSource{"Find a card"},
-		Optional: true,
+		Message: "Choose a card to put into your hand",
+		Source:  CommandSource{"Find a card"},
+		ChoiceOpts: choose.ChooseOneOpts{
+			Choices:  choose.NewChoices(cards),
+			Optional: true,
+		},
 	}
-	selected, err := chooseOne(prompt)
+	choiceResults, err := chooseFunc(prompt)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get choices: %w", err)
 	}
-	card, ok := selected.(gob.Card)
+	selected, ok := choiceResults.(choose.ChooseOneResults)
+	if !ok {
+		return nil, fmt.Errorf("expected a single choice result")
+	}
+	card, ok := selected.Choice.(gob.Card)
 	if !ok {
 		return nil, fmt.Errorf("selected choice is not a card in a zone")
 	}

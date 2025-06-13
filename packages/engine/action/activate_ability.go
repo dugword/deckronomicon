@@ -36,17 +36,12 @@ func (a ActivateAbilityAction) Description() string {
 
 func (a ActivateAbilityAction) GetPrompt(game state.Game) (choose.ChoicePrompt, error) {
 	// No player choice needed, but we still return an empty prompt for consistency
-	return choose.ChoicePrompt{
-		Message:  "Activating an ability",
-		Choices:  nil,
-		Optional: false,
-	}, nil
+	return choose.ChoicePrompt{}, nil
 }
 
 func (a ActivateAbilityAction) Complete(
 	game state.Game,
-	env *ResolutionEnvironment,
-	choices []choose.Choice,
+	choiceResults choose.ChoiceResults,
 ) ([]event.GameEvent, error) {
 	ability := a.abilityOnObjectInZone.Ability()
 	cost, err := cost.ParseCost(ability.Cost(), a.abilityOnObjectInZone.Ability().Source())
@@ -69,18 +64,16 @@ func (a ActivateAbilityAction) Complete(
 		return nil, fmt.Errorf("failed to pay cost %q: %w", cost.Description(), err)
 	}
 	events = append(events, costEvents...)
+	// THIS SHOULD MOVE TO THE APPLY EFFECTS PHASE
 	if ability.IsManaAbility() {
-		for _, effect := range ability.Effects() {
-			handler, ok := env.EffectRegistry.Get(effect.Name())
-			if !ok {
-				return nil, fmt.Errorf("effect %q not found", effect.Name())
-			}
-			effectResults, err := handler(game, a.player, ability.Source(), effect.Modifiers())
-			if err != nil {
-				return nil, fmt.Errorf("failed to apply effect %q: %w", effect.Name(), err)
-			}
-			events = append(events, effectResults.Events...)
-		}
+		events = append(events, event.ResolveManaAbilityEvent{
+			PlayerID:    a.player.ID(),
+			SourceID:    ability.Source().ID(),
+			AbilityID:   ability.ID(),
+			FromZone:    a.abilityOnObjectInZone.Zone(),
+			AbilityName: ability.Name(),
+			Effects:     ability.Effects(),
+		})
 		return events, nil
 	}
 	events = append(events, event.PutAbilityOnStackEvent{
@@ -89,7 +82,7 @@ func (a ActivateAbilityAction) Complete(
 		AbilityID:   ability.ID(),
 		FromZone:    a.abilityOnObjectInZone.Zone(),
 		AbilityName: ability.Name(),
-		Effects:     ability.EffectSpecs(),
+		Effects:     ability.Effects(),
 	})
 	return events, nil
 }

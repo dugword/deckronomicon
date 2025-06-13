@@ -27,7 +27,7 @@ func (p *UntapCheatCommand) Build(game state.Game, player state.Player) (engine.
 
 func parseUntapCheatCommand(
 	idOrName string,
-	chooseOne func(prompt choose.ChoicePrompt) (choose.Choice, error),
+	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
 	game state.Game,
 	player state.Player,
 ) (*UntapCheatCommand, error) {
@@ -35,29 +35,33 @@ func parseUntapCheatCommand(
 		query.And(has.Controller(player.ID()), is.Tapped()),
 	)
 	if idOrName == "" {
-		return buildUntapCommandByChoice(permanents, chooseOne, player)
+		return buildUntapCommandByChoice(permanents, chooseFunc, player)
 	}
 	return buildUntapCommandByIDOrName(permanents, idOrName, player)
 }
 
 func buildUntapCommandByChoice(
 	permanents []gob.Permanent,
-	chooseOne func(prompt choose.ChoicePrompt) (choose.Choice, error),
+	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
 	player state.Player,
 ) (*UntapCheatCommand, error) {
 	prompt := choose.ChoicePrompt{
-		Message:  "Choose a permanent to untap",
-		Choices:  choose.NewChoices(permanents),
-		Source:   CommandSource{"Untap a permanent"},
-		Optional: true,
+		Message: "Choose a permanent to untap",
+		Source:  CommandSource{"Untap a permanent"},
+		ChoiceOpts: choose.ChooseOneOpts{
+			Choices:  choose.NewChoices(permanents),
+			Optional: true,
+		},
 	}
-	selected, err := chooseOne(prompt)
+	choiceResults, err := chooseFunc(prompt)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get choices: %w", err)
 	}
-	// TODO: Do something where I can select this without having to index an slice with a magic 0.
-	// Maybe that choice type that's an interface or something.
-	permanent, ok := selected.(gob.Permanent)
+	selected, ok := choiceResults.(choose.ChooseOneResults)
+	if !ok {
+		return nil, fmt.Errorf("expected a single choice result")
+	}
+	permanent, ok := selected.Choice.(gob.Permanent)
 	if !ok {
 		return nil, fmt.Errorf("selected choice is not a permanent")
 	}

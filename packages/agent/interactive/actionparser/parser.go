@@ -38,7 +38,7 @@ type CommandParser struct {
 
 func (p *CommandParser) ParseInput(
 	input string,
-	chooseOne func(prompt choose.ChoicePrompt) (choose.Choice, error),
+	choose func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
 	game state.Game,
 	player state.Player,
 ) (Command, error) {
@@ -50,7 +50,7 @@ func (p *CommandParser) ParseInput(
 	command = strings.ToLower(command)
 	switch command {
 	case "activate", "tap":
-		return parseActivateAbilityCommand(arg, chooseOne, game, player)
+		return parseActivateAbilityCommand(arg, choose, game, player)
 	case "cheat":
 		return &CheatCommand{Player: player}, nil
 	case "clear":
@@ -62,14 +62,14 @@ func (p *CommandParser) ParseInput(
 	case "pass", "next", "done":
 		return &PassPriorityCommand{Player: player}, nil
 	case "play":
-		return parsePlayLandCommand(arg, chooseOne, game, player)
+		return parsePlayLandCommand(arg, choose, game, player)
 	case "cast":
-		return parseCastSpellCommand(arg, chooseOne, game, player)
+		return parseCastSpellCommand(arg, choose, game, player)
 	case "view":
-		return parseViewCommand(arg, chooseOne, game, player)
+		return parseViewCommand(arg, choose, game, player)
 	default:
 		if game.CheatsEnabled() {
-			return p.ParseCheatCommand(command, arg, chooseOne, game, player)
+			return p.ParseCheatCommand(command, arg, choose, game, player)
 		}
 		return nil, fmt.Errorf("unknown command %q", command)
 	}
@@ -78,7 +78,7 @@ func (p *CommandParser) ParseInput(
 func (p *CommandParser) ParseCheatCommand(
 	command string,
 	arg string,
-	chooseOne func(prompt choose.ChoicePrompt) (choose.Choice, error),
+	choose func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
 	game state.Game,
 	player state.Player,
 ) (Command, error) {
@@ -90,9 +90,9 @@ func (p *CommandParser) ParseCheatCommand(
 	case "draw":
 		return &DrawCheatCommand{Player: player}, nil
 	case "discard":
-		return parseDiscardCheatCommand(arg, chooseOne, game, player)
+		return parseDiscardCheatCommand(arg, choose, game, player)
 	case "find", "tutor":
-		return parseFindCardCheatCommand(arg, chooseOne, player)
+		return parseFindCardCheatCommand(arg, choose, player)
 	case "landdrop":
 		return &ResetLandDropCommand{Player: player}, nil
 	case "peek":
@@ -100,7 +100,7 @@ func (p *CommandParser) ParseCheatCommand(
 	case "shuffle":
 		return &ShuffleCheatCommand{Player: player}, nil
 	case "untap":
-		return parseUntapCheatCommand(arg, chooseOne, game, player)
+		return parseUntapCheatCommand(arg, choose, game, player)
 	default:
 		return nil, fmt.Errorf("unknown cheat command %q", command)
 	}

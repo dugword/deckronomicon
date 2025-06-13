@@ -30,31 +30,38 @@ func (p *PlayLandCommand) Build(
 
 func parsePlayLandCommand(
 	idOrName string,
-	chooseOne func(prompt choose.ChoicePrompt) (choose.Choice, error),
+	choose func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
 	game state.Game,
 	player state.Player,
 ) (*PlayLandCommand, error) {
 	cards := judge.GetLandsAvailableToPlay(game, player)
 	if idOrName == "" {
-		return buildPlayLandCommandByChoice(cards, chooseOne, player)
+		return buildPlayLandCommandByChoice(cards, choose, player)
 	}
 	return buildPlayLandCommandByIDOrName(cards, idOrName, player)
 }
 
 func buildPlayLandCommandByChoice(
 	cards []gob.CardInZone,
-	chooseOne func(prompt choose.ChoicePrompt) (choose.Choice, error), player state.Player) (*PlayLandCommand, error) {
+	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
+	player state.Player) (*PlayLandCommand, error) {
 	prompt := choose.ChoicePrompt{
-		Message:  "Choose a land to play",
-		Choices:  choose.NewChoices(cards),
-		Source:   CommandSource{"Play a land"},
-		Optional: true,
+		Message: "Choose a land to play",
+		Source:  CommandSource{"Play a land"},
+		ChoiceOpts: choose.ChooseOneOpts{
+			Choices:  choose.NewChoices(cards),
+			Optional: true,
+		},
 	}
-	selected, err := chooseOne(prompt)
+	choiceResults, err := chooseFunc(prompt)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get choices: %w", err)
 	}
-	card, ok := selected.(gob.CardInZone)
+	selected, ok := choiceResults.(choose.ChooseOneResults)
+	if !ok {
+		return nil, fmt.Errorf("expected a single choice result")
+	}
+	card, ok := selected.Choice.(gob.CardInZone)
 	if !ok {
 		return nil, fmt.Errorf("selected choice is not a card in a zone")
 	}

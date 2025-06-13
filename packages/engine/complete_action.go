@@ -8,7 +8,6 @@ package engine
 
 import (
 	"deckronomicon/packages/choose"
-	"deckronomicon/packages/engine/action"
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/state"
 	"errors"
@@ -22,7 +21,7 @@ type Action interface {
 	// discard. I guess also declare attackers, declare blockers, and assign combat damage.
 	// Maybe I need to split out Turn Based Actions from Player Actions.
 	GetPrompt(state.Game) (choose.ChoicePrompt, error)
-	Complete(state.Game, *action.ResolutionEnvironment, []choose.Choice) ([]event.GameEvent, error)
+	Complete(state.Game, choose.ChoiceResults) ([]event.GameEvent, error)
 	PlayerID() string
 }
 
@@ -37,8 +36,8 @@ func (e *Engine) CompleteAction(action Action) error {
 			err,
 		)
 	}
-	choices := []choose.Choice{}
-	if len(choicePrompt.Choices) != 0 {
+	var choiceResults choose.ChoiceResults
+	if choicePrompt.ChoiceOpts != nil {
 		cs, err := e.agents[action.PlayerID()].Choose(choicePrompt)
 		if err != nil {
 			return fmt.Errorf(
@@ -47,9 +46,9 @@ func (e *Engine) CompleteAction(action Action) error {
 				err,
 			)
 		}
-		choices = cs
+		choiceResults = cs
 	}
-	evnts, err := action.Complete(e.game, e.resolutionEnvironment, choices)
+	evnts, err := action.Complete(e.game, choiceResults)
 	if err != nil {
 		return fmt.Errorf(
 			"failed to complete action %q: %w",

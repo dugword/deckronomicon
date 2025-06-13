@@ -13,13 +13,14 @@ import (
 type Ability struct {
 	name string
 	// TODO Maybe parse this into a cost type?
-	cost        string
-	effects     []Effect
-	effectSpecs []definition.EffectSpec
-	id          string
-	zone        mtg.Zone
-	source      query.Object
-	speed       mtg.Speed
+	cost string
+	// effects     []Effect
+	// effectSpecs []definition.EffectSpec
+	effects []definition.EffectSpec
+	id      string
+	zone    mtg.Zone
+	source  query.Object
+	speed   mtg.Speed
 }
 
 func NewAbility(id string) Ability {
@@ -41,13 +42,15 @@ func (a Ability) Cost() string {
 	return a.cost
 }
 
-func (a Ability) Effects() []Effect {
+func (a Ability) Effects() []definition.EffectSpec {
 	return a.effects
 }
 
+/*
 func (a Ability) EffectSpecs() []definition.EffectSpec {
 	return a.effectSpecs
 }
+*/
 
 func (a Ability) Source() query.Object {
 	return a.source
@@ -108,7 +111,7 @@ func (a Ability) Description() string {
 	var descriptions []string
 	for _, effect := range a.effects {
 		// TODO: Come up with a better way to handle descriptions
-		descriptions = append(descriptions, effect.Name())
+		descriptions = append(descriptions, effect.Name)
 		//descriptions = append(descriptions, effect.Description())
 	}
 	// return fmt.Sprintf("%s: %s", a.Cost.Description(), strings.Join(descriptions, ", "))
@@ -117,7 +120,9 @@ func (a Ability) Description() string {
 
 // IsManaAbility checks if the activated ability is a mana ability.
 func (a Ability) IsManaAbility() bool {
+	fmt.Println("Checking if ability is mana ability:", a.Name())
 	for _, tag := range a.Tags() {
+		fmt.Printf("Tag: %s=%s\n", tag.Key, tag.Value)
 		if tag.Key == TagManaAbility {
 			return true
 		}
@@ -146,7 +151,12 @@ func (a Ability) Resolve(state core.State, player core.Player) error {
 func (a Ability) Tags() []Tag {
 	var tags []Tag
 	for _, effect := range a.effects {
-		tags = append(tags, effect.Tags()...)
+		for _, modifier := range effect.Modifiers {
+			tags = append(tags, Tag{
+				Key:   modifier.Key,
+				Value: modifier.Value,
+			})
+		}
 	}
 	return tags
 }

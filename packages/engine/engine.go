@@ -16,13 +16,14 @@ import (
 )
 
 type Engine struct {
-	agents                map[string]PlayerAgent
-	deckLists             map[string]configs.DeckList
-	game                  state.Game
-	record                *GameRecord
-	rng                   *RNG
-	log                   *logger.Logger
-	resolutionEnvironment *action.ResolutionEnvironment
+	agents         map[string]PlayerAgent
+	deckLists      map[string]configs.DeckList
+	game           state.Game
+	record         *GameRecord
+	rng            *RNG
+	log            *logger.Logger
+	definitions    map[string]definition.Card
+	effectRegistry *effect.EffectRegistry
 }
 
 type EngineConfig struct {
@@ -39,18 +40,15 @@ func NewEngine(config EngineConfig) *Engine {
 	for id, agent := range config.Agents {
 		agents[id] = agent
 	}
-	resolutionEnvironment := action.ResolutionEnvironment{
-		Definitions:    config.Definitions,
-		EffectRegistry: effect.NewEffectRegistry(),
-	}
 	return &Engine{
-		agents:                agents,
-		deckLists:             config.DeckLists,
-		game:                  state.Game{}.WithPlayers(config.Players),
-		log:                   &logger.Logger{},
-		record:                NewGameRecord(config.Seed),
-		rng:                   NewRNG(config.Seed),
-		resolutionEnvironment: &resolutionEnvironment,
+		agents:         agents,
+		deckLists:      config.DeckLists,
+		game:           state.Game{}.WithPlayers(config.Players),
+		log:            &logger.Logger{},
+		record:         NewGameRecord(config.Seed),
+		rng:            NewRNG(config.Seed),
+		definitions:    config.Definitions,
+		effectRegistry: effect.NewEffectRegistry(),
 	}
 }
 
@@ -69,7 +67,7 @@ func (e *Engine) RunGame() error {
 		}
 		newGame, deck, err := e.game.WithBuildDeck(
 			deckList,
-			e.resolutionEnvironment.Definitions,
+			e.definitions,
 			playerID,
 		)
 		if err != nil {
@@ -263,30 +261,30 @@ func (e *Engine) ResolveResolvable(resolvable state.Resolvable) error {
 	// maybe it could all be one thing.
 	for _, effect := range resolvable.Effects() {
 		e.log.Debug("Resolving effect:", effect)
-		handler, ok := e.resolutionEnvironment.EffectRegistry.Get(effect.Name())
+		handler, ok := e.effectRegistry.Get(effect.Name)
 		if !ok {
-			return fmt.Errorf("effect %q not found", effect.Name())
+			return fmt.Errorf("effect %q not found", effect.Name)
 		}
-		effectResult, err := handler(e.game, player, resolvable, effect.Modifiers())
+		effectResult, err := handler(e.game, player, resolvable, effect.Modifiers)
 		if err != nil {
-			return fmt.Errorf("failed to apply effect %q: %w", effect.Name(), err)
+			return fmt.Errorf("failed to apply effect %q: %w", effect.Name, err)
 		}
 		events = append(events, effectResult.Events...)
 		// TODO: This needs to be a loop, right now we only handle a depth of 1
-		if len(effectResult.ChoicePrompt.Choices) != 0 {
+		if effectResult.ChoicePrompt.ChoiceOpts != nil {
 			agent := e.agents[player.ID()]
-			choices, err := agent.Choose(effectResult.ChoicePrompt)
+			choiceResults, err := agent.Choose(effectResult.ChoicePrompt)
 			if err != nil {
 				return fmt.Errorf("failed to choose action for player %q: %w", player.ID(), err)
 			}
 			if effectResult.ResumeFunc == nil {
-				return fmt.Errorf("effect %q requires choices but has no resume function", effect.Name())
+				return fmt.Errorf("effect %q requires choices but has no resume function", effect.Name)
 			}
-			effectResult, err = effectResult.ResumeFunc(choices)
+			effectResult, err = effectResult.ResumeFunc(choiceResults)
 			if err != nil {
-				return fmt.Errorf("failed to resume function for effect %s: %w", effect.Name(), err)
+				return fmt.Errorf("failed to resume function for effect %s: %w", effect.Name, err)
 			}
-			if len(effectResult.ChoicePrompt.Choices) != 0 {
+			if effectResult.ChoicePrompt.ChoiceOpts != nil {
 				panic("only one level of recursion supported")
 			}
 			events = append(events, effectResult.Events...)

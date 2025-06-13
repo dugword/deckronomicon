@@ -2,7 +2,6 @@ package ui
 
 import (
 	"deckronomicon/packages/choose"
-	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/view"
 	"slices"
 	"testing"
@@ -41,9 +40,9 @@ func TestBufferUpdateChoices(t *testing.T) {
 	})
 	t.Run("Multiple choices", func(t *testing.T) {
 		buffer.UpdateChoices("Make a Choice", []choose.Choice{
-			choose.NewGenericChoice("Choice 1", "c1", mtg.ZoneHand),
-			choose.NewGenericChoice("Choice 2", "c2", mtg.ZoneHand),
-			choose.NewGenericChoice("Choice 3", "c3", mtg.ZoneHand),
+			choose.NewGenericChoice("Choice 1", "c1"),
+			choose.NewGenericChoice("Choice 2", "c2"),
+			choose.NewGenericChoice("Choice 3", "c3"),
 		})
 		if buffer.displayData == nil &&
 			!slices.Contains(buffer.displayData.ChoiceData.Content, "Choice 1") &&

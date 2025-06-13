@@ -14,5 +14,5 @@ import (
 type EffectResult struct {
 	Events       []event.GameEvent
 	ChoicePrompt choose.ChoicePrompt
-	ResumeFunc   func([]choose.Choice) (EffectResult, error)
+	ResumeFunc   func(choose.ChoiceResults) (EffectResult, error)
 }

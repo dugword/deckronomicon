@@ -37,7 +37,7 @@ func (e *Engine) applyCheatEvent(game state.Game, cheatEvent event.CheatEvent) (
 }
 
 func (e *Engine) applyConjureCardCheatEvent(game state.Game, evnt event.CheatConjureCardEvent) (state.Game, error) {
-	cardDef, ok := e.resolutionEnvironment.Definitions[evnt.CardName]
+	cardDef, ok := e.definitions[evnt.CardName]
 	if !ok {
 		return game, fmt.Errorf("card definition for %q not found", evnt.CardName)
 	}

@@ -100,7 +100,7 @@ func (a *Agent) GetNextAction(game state.Game) (engine.Action, error) {
 		commandParser := actionparser.CommandParser{}
 		command, err := commandParser.ParseInput(
 			input,
-			a.ChooseOne,
+			a.Choose,
 			game,
 			player,
 		)

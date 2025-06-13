@@ -1,7 +1,7 @@
 package state
 
 import (
-	"deckronomicon/packages/game/gob"
+	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/add"
@@ -14,7 +14,7 @@ type Resolvable interface {
 	Description() string
 	ID() string
 	Name() string
-	Effects() []gob.Effect
+	Effects() []definition.EffectSpec
 	Match(p query.Predicate) bool
 	Controller() string
 	Owner() string

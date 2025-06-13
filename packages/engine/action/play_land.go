@@ -45,8 +45,7 @@ func (a PlayLandAction) GetPrompt(state state.Game) (choose.ChoicePrompt, error)
 
 func (a PlayLandAction) Complete(
 	game state.Game,
-	env *ResolutionEnvironment,
-	choices []choose.Choice,
+	choiceResults choose.ChoiceResults,
 ) ([]event.GameEvent, error) {
 	// TODO: Maybe this should happen in judge.CanPlayLand?
 	if !a.player.ZoneContains(a.cardInZone.Zone(), has.ID(a.cardInZone.ID())) {

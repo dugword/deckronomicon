@@ -31,6 +31,7 @@ func (a *Agent) EnterNumber(prompt string, source choose.Source) (int, error) {
 	}
 }
 
+/*
 func (a *Agent) ChooseOne(prompt choose.ChoicePrompt) (choose.Choice, error) {
 	prompt.MinChoices = 1
 	prompt.MaxChoices = 1
@@ -44,7 +45,9 @@ func (a *Agent) ChooseOne(prompt choose.ChoicePrompt) (choose.Choice, error) {
 	}
 	return choices[0], nil
 }
+*/
 
+/*
 func (a *Agent) Choose(prompt choose.ChoicePrompt) ([]choose.Choice, error) {
 	if len(prompt.Choices) == 0 {
 		// TODO is this an error?
@@ -104,6 +107,96 @@ func (a *Agent) Choose(prompt choose.ChoicePrompt) ([]choose.Choice, error) {
 		))
 		// TODO Should this follow the same immutable stuff
 		prompt.Choices = append(prompt.Choices[:choice], prompt.Choices[choice+1:]...)
+	}
+	return selected, nil
+}
+*/
+
+func (a *Agent) Choose(prompt choose.ChoicePrompt) (choose.ChoiceResults, error) {
+	switch opts := prompt.ChoiceOpts.(type) {
+	case choose.ChooseOneOpts:
+		choices, err := a.ChooseMany(opts.Choices, 1, 1, prompt.Message, prompt.Source, opts.Optional)
+		if err != nil {
+			return nil, fmt.Errorf("failed to choose one: %w", err)
+		}
+		return choose.ChooseOneResults{Choice: choices[0]}, nil
+	case choose.ChooseManyOpts:
+		choices, err := a.ChooseMany(opts.Choices, opts.Min, opts.Max, prompt.Message, prompt.Source, opts.Optional)
+		if err != nil {
+			return nil, fmt.Errorf("failed to choose many: %w", err)
+		}
+		return choose.ChooseManyResults{Choices: choices}, nil
+	default:
+		return nil, fmt.Errorf("unsupported choice type: %T", opts)
+	}
+}
+
+func (a *Agent) ChooseMany(
+	choices []choose.Choice,
+	min int,
+	max int,
+	message string,
+	source choose.Source,
+	optional bool,
+) ([]choose.Choice, error) {
+	if len(choices) == 0 {
+		// TODO is this an error?
+		return nil, choose.ErrNoChoices
+	}
+	title := fmt.Sprintf("%s requires a choice", source.Name())
+	if min > 1 {
+		if min == max {
+			title = fmt.Sprintf(
+				"%s requires %d choices",
+				source.Name(),
+				min,
+			)
+		} else {
+			title = fmt.Sprintf(
+				"%s requires %d - %d choices",
+				source.Name(),
+				min,
+				max,
+			)
+		}
+	}
+	var selected []choose.Choice
+	var userMessage []string
+	if optional {
+		userMessage = append(userMessage, "Optional: Choose 0 to skip")
+	}
+	if min != max {
+		userMessage = append(userMessage, "Choose 0 to complete selection")
+	}
+	for len(selected) < min || len(selected) > max {
+		a.uiBuffer.UpdateMessage(userMessage)
+		a.uiBuffer.UpdateChoices(title, choices)
+		if err := a.uiBuffer.Render(); err != nil {
+			return nil, fmt.Errorf("failed to render UI Buffer: %w", err)
+		}
+		a.Prompt(message)
+		max := len(choices)
+		choicePlus1, err := a.ReadInputNumber(max)
+		if err != nil {
+			fmt.Printf("Invalid choice. Please enter a number: %d - %d\n", 0, max)
+			continue
+		}
+		if choicePlus1 == 0 {
+			if optional || len(selected) > min {
+				break
+			} else {
+				continue
+			}
+		}
+		choice := choicePlus1 - 1 // Convert to 0 based index
+		selected = append(selected, choices[choice])
+		userMessage = append(userMessage, fmt.Sprintf(
+			"Selected: %s <id:%s>",
+			choices[choice].Name(),
+			choices[choice].ID(),
+		))
+		// TODO Should this follow the same immutable stuff
+		choices = append(choices[:choice], choices[choice+1:]...)
 	}
 	return selected, nil
 }

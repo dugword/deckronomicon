@@ -28,36 +28,42 @@ func (p *ActivateAbilityCommand) Build(game state.Game, player state.Player) (en
 
 func parseActivateAbilityCommand(
 	idOrName string,
-	chooseOne func(prompt choose.ChoicePrompt) (choose.Choice, error),
+	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
 	game state.Game,
 	player state.Player,
 ) (*ActivateAbilityCommand, error) {
 	ruling := judge.Ruling{Explain: true}
 	abilities := judge.GetAbilitiesAvailableToActivate(game, player, &ruling)
 	if idOrName == "" {
-		return buildActivateAbilityCommandByChoice(abilities, chooseOne, player)
+		return buildActivateAbilityCommandByChoice(abilities, chooseFunc, player)
 	}
 	return buildActivateAbilityCommandByIDOrName(abilities, idOrName, player)
 }
 
 func buildActivateAbilityCommandByChoice(
 	abilities []gob.AbilityInZone,
-	chooseOne func(prompt choose.ChoicePrompt) (choose.Choice, error),
+	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
 	player state.Player,
 ) (*ActivateAbilityCommand, error) {
 	prompt := choose.ChoicePrompt{
-		Message:  "Choose an ability to activate",
-		Choices:  choose.NewChoices(abilities),
-		Source:   CommandSource{"Activate an ability"},
-		Optional: true,
+		Message: "Choose an ability to activate",
+		Source:  CommandSource{"Activate an ability"},
+		ChoiceOpts: choose.ChooseOneOpts{
+			Choices:  choose.NewChoices(abilities),
+			Optional: true,
+		},
 	}
-	selected, err := chooseOne(prompt)
+	choiceResults, err := chooseFunc(prompt)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get choices: %w", err)
 	}
+	selected, ok := choiceResults.(choose.ChooseOneResults)
+	if !ok {
+		return nil, fmt.Errorf("expected choose one results, got %T", selected)
+	}
 	// TODO: Do something where I can select this without having to index an slice with a magic 0.
 	// Maybe that choice type that's an interface or something.
-	ability, ok := selected.(gob.AbilityInZone)
+	ability, ok := selected.Choice.(gob.AbilityInZone)
 	if !ok {
 		return nil, fmt.Errorf("selected choice is not an ability on an object in a zone")
 	}

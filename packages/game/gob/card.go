@@ -21,18 +21,19 @@ import (
 type Card struct {
 	activatedAbilities []Ability
 	// activatedAbilitySpecs []definition.ActivatedAbilitySpec
-	definition   definition.Card
-	cardTypes    []mtg.CardType
-	controller   string
-	owner        string
-	colors       mtg.Colors
-	id           string
-	loyalty      int
-	manaCost     cost.ManaCost
-	name         string
-	power        int
-	rulesText    string
-	spellAbility []Effect
+	definition definition.Card
+	cardTypes  []mtg.CardType
+	controller string
+	owner      string
+	colors     mtg.Colors
+	id         string
+	loyalty    int
+	manaCost   cost.ManaCost
+	name       string
+	power      int
+	rulesText  string
+	// spellAbility []Effect
+	spellAbility []definition.EffectSpec
 	// TODO: Maybe this should just be spell spec? sepll effect spec?
 	//spellAbilitySpec      definition.SpellAbilitySpec
 	staticAbilities []StaticAbility
@@ -141,7 +142,7 @@ func (c Card) RulesText() string {
 	return c.rulesText
 }
 
-func (c Card) SpellAbility() []Effect {
+func (c Card) SpellAbility() []definition.EffectSpec {
 	return c.spellAbility
 }
 

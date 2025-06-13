@@ -1,6 +1,8 @@
 package gob
 
-const TagManaAbility = "ManaAbility"
+// const TagManaAbility = "ManaAbility"
+// TODO: Think if this is how I want to handle this.
+const TagManaAbility = "Mana"
 
 // Effect represents an effect that can be applied to a game state.
 type Effect struct {

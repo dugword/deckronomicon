@@ -34,17 +34,12 @@ func (a ViewAction) Description() string {
 
 func (a ViewAction) GetPrompt(game state.Game) (choose.ChoicePrompt, error) {
 	// No player choice needed, but we still return an empty prompt for consistency
-	return choose.ChoicePrompt{
-		Message:  "View card",
-		Choices:  nil,
-		Optional: false,
-	}, nil
+	return choose.ChoicePrompt{}, nil
 }
 
 func (a ViewAction) Complete(
 	game state.Game,
-	env *ResolutionEnvironment,
-	choices []choose.Choice,
+	choiceResults choose.ChoiceResults,
 ) ([]event.GameEvent, error) {
 	return []event.GameEvent{event.NoOpEvent{
 		Message: "Viewed card in zone " + a.zone + ": " + a.cardID,

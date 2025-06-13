@@ -34,33 +34,40 @@ func (p *CastSpellCommand) Build(
 
 func parseCastSpellCommand(
 	idOrName string,
-	chooseOne func(prompt choose.ChoicePrompt) (choose.Choice, error),
+	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
 	game state.Game,
 	player state.Player,
 ) (*CastSpellCommand, error) {
 	cards := judge.GetSpellsAvailableToCast(game, player)
 	if idOrName == "" {
-		return buildCastSpellCommandByChoice(cards, chooseOne, player)
+		return buildCastSpellCommandByChoice(cards, chooseFunc, player)
 	}
 	return buildCastSpellCommandByIDOrName(cards, idOrName, player)
 }
 
 func buildCastSpellCommandByChoice(
 	cards []gob.CardInZone,
-	chooseOne func(prompt choose.ChoicePrompt) (choose.Choice, error),
+	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
 	player state.Player,
 ) (*CastSpellCommand, error) {
 	prompt := choose.ChoicePrompt{
-		Message:  "Choose a card to play",
-		Choices:  choose.NewChoices(cards),
-		Source:   CommandSource{"Play a card"},
-		Optional: true,
+		Message: "Choose a card to play",
+
+		Source: CommandSource{"Play a card"},
+		ChoiceOpts: choose.ChooseOneOpts{
+			Choices:  choose.NewChoices(cards),
+			Optional: true,
+		},
 	}
-	selected, err := chooseOne(prompt)
+	choiceResults, err := chooseFunc(prompt)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get choices: %w", err)
 	}
-	card, ok := selected.(gob.CardInZone)
+	selected, ok := choiceResults.(choose.ChooseOneResults)
+	if !ok {
+		return nil, fmt.Errorf("selected choice is not a card in a zone")
+	}
+	card, ok := selected.Choice.(gob.CardInZone)
 	if !ok {
 		return nil, fmt.Errorf("selected choice is not a card in a zone")
 	}
