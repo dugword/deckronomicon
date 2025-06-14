@@ -3,7 +3,7 @@ package effect
 import (
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/game/definition"
-	"deckronomicon/packages/mana"
+	"deckronomicon/packages/game/mana"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/state"
 

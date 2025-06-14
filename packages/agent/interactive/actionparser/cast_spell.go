@@ -6,7 +6,7 @@ import (
 	"deckronomicon/packages/engine/action"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/judge"
-	"deckronomicon/packages/mana"
+	"deckronomicon/packages/game/mana"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/has"
 	"deckronomicon/packages/state"

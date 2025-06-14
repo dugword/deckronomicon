@@ -1,7 +1,7 @@
 package cost
 
 import (
-	"deckronomicon/packages/mana"
+	"deckronomicon/packages/game/mana"
 	"fmt"
 	"regexp"
 )

@@ -2,8 +2,8 @@ package engine
 
 import (
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/game/mana"
 	"deckronomicon/packages/game/mtg"
-	"deckronomicon/packages/mana"
 	"deckronomicon/packages/state"
 	"fmt"
 )

@@ -2,8 +2,8 @@ package state
 
 import (
 	"deckronomicon/packages/game/gob"
+	"deckronomicon/packages/game/mana"
 	"deckronomicon/packages/game/mtg"
-	"deckronomicon/packages/mana"
 	"deckronomicon/packages/query"
 )
 

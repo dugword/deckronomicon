@@ -2,8 +2,8 @@ package event
 
 import (
 	"deckronomicon/packages/game/definition"
+	"deckronomicon/packages/game/mana"
 	"deckronomicon/packages/game/mtg"
-	"deckronomicon/packages/mana"
 )
 
 const (
