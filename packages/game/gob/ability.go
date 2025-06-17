@@ -126,7 +126,6 @@ func (a Ability) Description() string {
 // IsManaAbility checks if the activated ability is a mana ability.
 // TODO: This needs to happen per effect not per ability.
 func (a Ability) IsManaAbility() bool {
-	fmt.Println("Checking if ability is mana ability:", a.Name())
 	for _, effect := range a.effectSpecs {
 		if effect.Name == "AddMana" {
 			return true

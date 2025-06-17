@@ -20,14 +20,15 @@ type TriggeredEffectOG struct {
 
 type TriggeredEffect struct {
 	ID       string
+	PlayerID string
 	Duration mtg.Duration
 	Effect   []definition.EffectSpec
-	Source   query.Object
-	Trigger  Trigger
+	//Source  query.Object
+	Trigger Trigger
 }
 
 type TriggerCondition struct {
-	Type   string // "TappedForMana"
+	Type   string
 	Filter query.Predicate
 }
 
@@ -37,6 +38,11 @@ type EffectToApply struct {
 }
 
 type Trigger struct {
-	Type   string // "TappedForMana"
-	Filter query.Predicate
+	EventType string
+	Filter    Filter
+}
+
+type Filter struct {
+	CardTypes []mtg.CardType
+	Subtypes  []mtg.Subtype
 }

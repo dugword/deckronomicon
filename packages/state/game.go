@@ -25,8 +25,9 @@ type Game struct {
 	players               []Player
 	stack                 Stack
 	winnerID              string
-	triggeredEffects      []TriggeredEffect
-	continuousEffects     []ContinuousEffect
+	// TODO: Rename triggered abilities or something....
+	triggeredEffects  []TriggeredEffect
+	continuousEffects []ContinuousEffect
 }
 
 func (g Game) CheatsEnabled() bool {
@@ -145,4 +146,8 @@ type GameStateSnapshot struct {
 func (g Game) GetNextID() (id string, game Game) {
 	g.id++
 	return strconv.Itoa(g.id), g
+}
+
+func (g Game) TriggeredEffects() []TriggeredEffect {
+	return g.triggeredEffects
 }

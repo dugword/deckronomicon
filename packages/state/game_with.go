@@ -137,3 +137,32 @@ func (g Game) WithPutAbilityOnStack(
 	game = game.WithStack(stack)
 	return game, nil
 }
+
+func (g Game) WithRegisteredTriggeredEffect(
+	playerID string,
+	trigger Trigger,
+	effectSpecs []definition.EffectSpec,
+	duration mtg.Duration,
+) Game {
+	id, game := g.GetNextID()
+	triggeredEffect := TriggeredEffect{
+		ID:       id,
+		PlayerID: playerID,
+		Trigger:  trigger,
+		Effect:   effectSpecs,
+		Duration: duration,
+	}
+	game.triggeredEffects = append(game.triggeredEffects[:], triggeredEffect)
+	return game
+}
+
+func (g Game) WithRemoveTriggeredEffect(triggeredEffectID string) Game {
+	var newTriggeredEffects []TriggeredEffect
+	for _, te := range g.triggeredEffects {
+		if te.ID != triggeredEffectID {
+			newTriggeredEffects = append(newTriggeredEffects, te)
+		}
+	}
+	g.triggeredEffects = newTriggeredEffects
+	return g
+}

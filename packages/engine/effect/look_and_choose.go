@@ -66,7 +66,6 @@ func (e LookAndChooseEffect) Resolve(
 		return EffectResult{}, fmt.Errorf("failed to build query for LookAndChoose: %w", err)
 	}
 	choiceCards := query.FindAll(cards, predicate)
-	fmt.Println("LookAndChoose found cards:", len(choiceCards))
 	choicePrompt := choose.ChoicePrompt{
 		// TODO: Add type information to message
 		Message:  fmt.Sprintf("Look at the top %d cards of your library. Choose %d of them", e.Look, e.Choose),

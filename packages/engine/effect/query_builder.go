@@ -4,7 +4,6 @@ import (
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/has"
-	"fmt"
 )
 
 type QueryOpts struct {
@@ -17,7 +16,6 @@ type QueryOpts struct {
 func buildQuery(
 	opts QueryOpts,
 ) (query.Predicate, error) {
-	fmt.Println("Building query with options:", opts)
 	// TODO: Can this be more simple/elegant?
 	var cardTypePredicates []query.Predicate
 	for _, cardType := range opts.CardTypes {
@@ -48,8 +46,6 @@ func buildQuery(
 	if len(manaValuePredicates) != 0 {
 		predicates = append(predicates, query.Or(manaValuePredicates...))
 	}
-	fmt.Println("Built predicates:", predicates)
-	fmt.Println("Len(predicates):", len(predicates))
 	query := query.And(predicates...)
 	return query, nil
 }
