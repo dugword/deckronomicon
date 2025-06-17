@@ -44,4 +44,5 @@ func init() {
 	Register("LookAndChoose", NewLookAndChooseEffect)
 	Register("Mill", NewMillEffect)
 	Register("ShuffleFromGraveyard", NewShuffleFromGraveyardEffect)
+	Register("RegisterDelayedEffect", NewRegisterDelayedEffectEffect)
 }

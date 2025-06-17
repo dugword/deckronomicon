@@ -16,15 +16,19 @@ type TriggeredEffectOG struct {
 	TriggerCondition TriggerCondition
 	EffectSpecs      []definition.EffectSpec
 	Duration         mtg.Duration
+	OneShot          bool
 }
 
 type TriggeredEffect struct {
-	ID       string
-	PlayerID string
-	Duration mtg.Duration
-	Effect   []definition.EffectSpec
+	ID         string
+	SourceID   string
+	SourceName string
+	PlayerID   string
+	Duration   mtg.Duration
+	Effect     []definition.EffectSpec
 	//Source  query.Object
 	Trigger Trigger
+	OneShot bool
 }
 
 type TriggerCondition struct {
