@@ -27,6 +27,8 @@ func ApplyEvent(game state.Game, gameEvent event.GameEvent) (state.Game, error) 
 		return applyPriorityEvent(game, evnt)
 	case event.StackEvent:
 		return applyStackEvent(game, evnt)
+	case event.TriggeredEffectEvent:
+		return applyTriggeredEffect(game, evnt)
 	case event.TurnBasedActionEvent:
 		return applyTurnBasedActionEvent(game, evnt)
 	case event.MilestoneEvent:
