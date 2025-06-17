@@ -2,6 +2,7 @@ package action
 
 import (
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/state"
@@ -32,7 +33,7 @@ func (a FindCardCheatAction) Description() string {
 	return "Find a card into your hand."
 }
 
-func (a FindCardCheatAction) Complete(game state.Game) ([]event.GameEvent, error) {
+func (a FindCardCheatAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	if !game.CheatsEnabled() {
 		return nil, fmt.Errorf("no cheating you cheater")
 	}

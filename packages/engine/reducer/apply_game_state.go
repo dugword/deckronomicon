@@ -1,9 +1,7 @@
-package engine
+package reducer
 
 import (
-	"deckronomicon/packages/engine/effect"
 	"deckronomicon/packages/engine/event"
-	"deckronomicon/packages/engine/target"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mana"
 	"deckronomicon/packages/game/mtg"
@@ -14,34 +12,33 @@ import (
 // These are game state change events that modify the game state directly. The should be resuable and not
 // specific to a single action.
 
-func (e *Engine) applyGameStateChangeEvent(game state.Game, gameStateChangeEvent event.GameStateChangeEvent) (state.Game, error) {
+func applyGameStateChangeEvent(game state.Game, gameStateChangeEvent event.GameStateChangeEvent) (state.Game, error) {
 	switch evnt := gameStateChangeEvent.(type) {
 	case event.AddManaEvent:
-		return e.applyAddManaEvent(game, evnt)
+		return applyAddManaEvent(game, evnt)
 	case event.CheatEnabledEvent:
 		game = game.WithCheatsEnabled(true)
-		e.log.Info("Cheats enabled")
 		return game, nil
 	case event.DiscardCardEvent:
-		return e.applyDiscardCardEvent(game, evnt)
+		return applyDiscardCardEvent(game, evnt)
 	case event.DrawCardEvent:
-		return e.applyDrawCardEvent(game, evnt)
+		return applyDrawCardEvent(game, evnt)
 	case event.GainLifeEvent:
-		return e.applyGainLifeEvent(game, evnt)
+		return applyGainLifeEvent(game, evnt)
 	case event.LoseLifeEvent:
-		return e.applyeLoseLifeEvent(game, evnt)
+		return applyeLoseLifeEvent(game, evnt)
 	//case event.MoveCardEvent:
-	//return e.applyMoveCardEvent(game, evnt)
+	//return applyMoveCardEvent(game, evnt)
 	case event.PutCardInHandEvent:
-		return e.applyPutCardInHandEvent(game, evnt)
+		return applyPutCardInHandEvent(game, evnt)
 	case event.PutCardInGraveyardEvent:
-		return e.applyPutCardInGraveyardEvent(game, evnt)
+		return applyPutCardInGraveyardEvent(game, evnt)
 	case event.PutCardOnBottomOfLibraryEvent:
-		return e.applyPutCardOnBottomOfLibraryEvent(game, evnt)
+		return applyPutCardOnBottomOfLibraryEvent(game, evnt)
 	case event.PutCardOnTopOfLibraryEvent:
-		return e.applyPutCardOnTopOfLibraryEvent(game, evnt)
+		return applyPutCardOnTopOfLibraryEvent(game, evnt)
 	case event.PutPermanentOnBattlefieldEvent:
-		return e.applyPutPermanentOnBattlefieldEvent(game, evnt)
+		return applyPutPermanentOnBattlefieldEvent(game, evnt)
 	case event.RevealCardEvent:
 		player, ok := game.GetPlayer(evnt.PlayerID)
 		if !ok {
@@ -54,14 +51,15 @@ func (e *Engine) applyGameStateChangeEvent(game state.Game, gameStateChangeEvent
 		revealed := player.Revealed().Add(card)
 		player = player.WithRevealed(revealed)
 		game = game.WithUpdatedPlayer(player)
-		e.log.Infof("Player %q reveals card %q from %q", player.ID(), card.Name(), evnt.FromZone)
 		return game, nil
 	case event.SetActivePlayerEvent:
 		game = game.WithActivePlayer(evnt.PlayerID)
 		return game, nil
-	case event.ResolveManaAbilityEvent:
-		return e.applyResolveManaAbilityEvent(game, evnt)
-	case event.ShuffleDeckEvent:
+	//case event.ResolveManaAbilityEvent:
+	//return applyResolveManaAbilityEvent(game, evnt)
+	//case event.ShuffleDeckEvent:
+	//return game, fmt.Errorf("ShuffleDeckEvent not implemented")
+	/*
 		player, ok := game.GetPlayer(evnt.PlayerID)
 		if !ok {
 			return game, fmt.Errorf("player %q not found", evnt.PlayerID)
@@ -69,6 +67,9 @@ func (e *Engine) applyGameStateChangeEvent(game state.Game, gameStateChangeEvent
 		player = player.WithShuffleDeck(e.rng.DeckShuffler())
 		game := game.WithUpdatedPlayer(player)
 		return game, nil
+	*/
+	case event.ShuffleLibraryEvent:
+		return applyShuffleLibraryEvent(game, evnt)
 	case event.SpendManaEvent:
 		player, ok := game.GetPlayer(evnt.PlayerID)
 		if !ok {
@@ -87,15 +88,15 @@ func (e *Engine) applyGameStateChangeEvent(game state.Game, gameStateChangeEvent
 		return game, nil
 
 	case event.TapPermanentEvent:
-		return e.applyTapPermanentEvent(game, evnt)
+		return applyTapPermanentEvent(game, evnt)
 	case event.UntapPermanentEvent:
-		return e.applyUntapPermanentEvent(game, evnt)
+		return applyUntapPermanentEvent(game, evnt)
 	default:
 		return game, fmt.Errorf("unknown game state change event type '%T'", evnt)
 	}
 }
 
-func (e *Engine) applyAddManaEvent(
+func applyAddManaEvent(
 	game state.Game,
 	addManaEvent event.AddManaEvent,
 ) (state.Game, error) {
@@ -108,7 +109,7 @@ func (e *Engine) applyAddManaEvent(
 	return game, nil
 }
 
-func (e *Engine) applyDiscardCardEvent(
+func applyDiscardCardEvent(
 	game state.Game,
 	event event.DiscardCardEvent,
 ) (state.Game, error) {
@@ -124,7 +125,7 @@ func (e *Engine) applyDiscardCardEvent(
 	return game, nil
 }
 
-func (e *Engine) applyDrawCardEvent(
+func applyDrawCardEvent(
 	game state.Game,
 	event event.DrawCardEvent,
 ) (state.Game, error) {
@@ -140,7 +141,7 @@ func (e *Engine) applyDrawCardEvent(
 	return game, nil
 }
 
-func (e *Engine) applyGainLifeEvent(
+func applyGainLifeEvent(
 	game state.Game,
 	evnt event.GainLifeEvent,
 ) (state.Game, error) {
@@ -153,7 +154,7 @@ func (e *Engine) applyGainLifeEvent(
 	return game, nil
 }
 
-func (e *Engine) applyeLoseLifeEvent(
+func applyeLoseLifeEvent(
 	game state.Game,
 	evnt event.LoseLifeEvent,
 ) (state.Game, error) {
@@ -167,7 +168,7 @@ func (e *Engine) applyeLoseLifeEvent(
 }
 
 /*
-func (e *Engine) applyMoveCardEvent(
+func  applyMoveCardEvent(
 	game state.Game,
 	evnt event.MoveCardEvent,
 ) (state.Game, error) {
@@ -188,7 +189,7 @@ func (e *Engine) applyMoveCardEvent(
 }
 */
 
-func (e *Engine) applyPutCardInHandEvent(
+func applyPutCardInHandEvent(
 	game state.Game,
 	evnt event.PutCardInHandEvent,
 ) (state.Game, error) {
@@ -208,7 +209,7 @@ func (e *Engine) applyPutCardInHandEvent(
 	return game, nil
 }
 
-func (e *Engine) applyPutCardInGraveyardEvent(
+func applyPutCardInGraveyardEvent(
 	game state.Game,
 	evnt event.PutCardInGraveyardEvent,
 ) (state.Game, error) {
@@ -228,7 +229,7 @@ func (e *Engine) applyPutCardInGraveyardEvent(
 	return game, nil
 }
 
-func (e *Engine) applyPutCardOnBottomOfLibraryEvent(
+func applyPutCardOnBottomOfLibraryEvent(
 	game state.Game,
 	evnt event.PutCardOnBottomOfLibraryEvent,
 ) (state.Game, error) {
@@ -248,7 +249,7 @@ func (e *Engine) applyPutCardOnBottomOfLibraryEvent(
 	return game, nil
 }
 
-func (e *Engine) applyPutCardOnTopOfLibraryEvent(
+func applyPutCardOnTopOfLibraryEvent(
 	game state.Game,
 	evnt event.PutCardOnTopOfLibraryEvent,
 ) (state.Game, error) {
@@ -268,7 +269,7 @@ func (e *Engine) applyPutCardOnTopOfLibraryEvent(
 	return game, nil
 }
 
-func (e *Engine) applyPutPermanentOnBattlefieldEvent(
+func applyPutPermanentOnBattlefieldEvent(
 	game state.Game,
 	evnt event.PutPermanentOnBattlefieldEvent,
 ) (state.Game, error) {
@@ -307,37 +308,61 @@ func (e *Engine) applyPutPermanentOnBattlefieldEvent(
 
 // TODO: Not sure I like how this is handled, think through how I want to have
 // events generated in the reducer.
-func (e *Engine) applyResolveManaAbilityEvent(
+/*
+func applyResolveManaAbilityEvent(
 	game state.Game,
 	evnt event.ResolveManaAbilityEvent,
+) (state.Game, error) {
+	return game, fmt.Errorf("ResolveManaAbilityEvent not implemented")
+
+		player, ok := game.GetPlayer(evnt.PlayerID)
+		if !ok {
+			return game, fmt.Errorf("player %q not found", evnt.PlayerID)
+		}
+		var events []event.GameEvent
+		for _, effectSpec := range evnt.EffectSpecs {
+			efct, err := effect.Build(effectSpec)
+			if err != nil {
+				return game, fmt.Errorf("effect %q not found: %w", effectSpec.Name, err)
+			}
+			effectResults, err := efct.Resolve(game, player, nil, target.TargetValue{})
+			if err != nil {
+				return game, fmt.Errorf("failed to apply effect %q: %w", effectSpec.Name, err)
+			}
+			events = append(events, effectResults.Events...)
+		}
+		for _, evnt := range events {
+			var err error
+			game, err = ApplyEvent(game, evnt)
+			if err != nil {
+				return game, fmt.Errorf("failed to apply event %T: %w", evnt, err)
+			}
+		}
+		return game, nil
+
+}
+*/
+
+func applyShuffleLibraryEvent(
+	game state.Game,
+	evnt event.ShuffleLibraryEvent,
 ) (state.Game, error) {
 	player, ok := game.GetPlayer(evnt.PlayerID)
 	if !ok {
 		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
 	}
-	var events []event.GameEvent
-	for _, effectSpec := range evnt.EffectSpecs {
-		efct, err := effect.Build(effectSpec)
-		if err != nil {
-			return game, fmt.Errorf("effect %q not found: %w", effectSpec.Name, err)
-		}
-		effectResults, err := efct.Resolve(game, player, nil, target.TargetValue{})
-		if err != nil {
-			return game, fmt.Errorf("failed to apply effect %q: %w", effectSpec.Name, err)
-		}
-		events = append(events, effectResults.Events...)
+	player, err := player.WithShuffledLibrary(evnt.ShuffledCardsIDs)
+	if err != nil {
+		return game, fmt.Errorf(
+			"failed to shuffle library for player %q: %w",
+			evnt.PlayerID, err,
+		)
 	}
-	for _, evnt := range events {
-		var err error
-		game, err = e.applyEvent(game, evnt)
-		if err != nil {
-			return game, fmt.Errorf("failed to apply event %T: %w", evnt, err)
-		}
-	}
+	game = game.WithUpdatedPlayer(player)
 	return game, nil
 }
 
-func (e *Engine) applyTapPermanentEvent(
+func applyTapPermanentEvent(
 	game state.Game,
 	evnt event.TapPermanentEvent,
 ) (state.Game, error) {
@@ -354,7 +379,7 @@ func (e *Engine) applyTapPermanentEvent(
 	return game, nil
 }
 
-func (e *Engine) applyUntapPermanentEvent(
+func applyUntapPermanentEvent(
 	game state.Game,
 	evnt event.UntapPermanentEvent,
 ) (state.Game, error) {

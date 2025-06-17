@@ -5,7 +5,6 @@ import (
 	"deckronomicon/packages/engine/target"
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/gob"
-
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/has"

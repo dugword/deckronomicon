@@ -1,4 +1,4 @@
-package engine
+package reducer
 
 import (
 	"deckronomicon/packages/engine/event"
@@ -10,26 +10,26 @@ import (
 
 // These are events that manage the priority system in the game.
 
-func (e *Engine) applyStackEvent(game state.Game, stackEvent event.StackEvent) (state.Game, error) {
+func applyStackEvent(game state.Game, stackEvent event.StackEvent) (state.Game, error) {
 	switch evnt := stackEvent.(type) {
 	case event.ResolveTopObjectOnStackEvent:
 		return game, nil
 	case event.PutAbilityOnStackEvent:
-		return e.applyPutAbilityOnStackEvent(game, evnt)
+		return applyPutAbilityOnStackEvent(game, evnt)
 	case event.PutSpellOnStackEvent:
-		return e.applyPutSpellOnStackEvent(game, evnt)
+		return applyPutSpellOnStackEvent(game, evnt)
 	case event.RemoveAbilityFromStackEvent:
-		return e.applyRemoveAbilityFromStackEvent(game, evnt)
+		return applyRemoveAbilityFromStackEvent(game, evnt)
 	case event.PutSpellInExileEvent:
-		return e.applyPutSpellInZoneEvent(game, evnt.PlayerID, evnt.SpellID, mtg.ZoneExile)
+		return applyPutSpellInZoneEvent(game, evnt.PlayerID, evnt.SpellID, mtg.ZoneExile)
 	case event.PutSpellInGraveyardEvent:
-		return e.applyPutSpellInZoneEvent(game, evnt.PlayerID, evnt.SpellID, mtg.ZoneGraveyard)
+		return applyPutSpellInZoneEvent(game, evnt.PlayerID, evnt.SpellID, mtg.ZoneGraveyard)
 	default:
 		return game, fmt.Errorf("unknown stack event type '%T'", evnt)
 	}
 }
 
-func (e *Engine) applyPutSpellOnStackEvent(
+func applyPutSpellOnStackEvent(
 	game state.Game,
 	evnt event.PutSpellOnStackEvent,
 ) (state.Game, error) {
@@ -49,7 +49,7 @@ func (e *Engine) applyPutSpellOnStackEvent(
 	return game, nil
 }
 
-func (e *Engine) applyPutSpellInZoneEvent(
+func applyPutSpellInZoneEvent(
 	game state.Game,
 	playerID string,
 	spellID string,
@@ -76,7 +76,7 @@ func (e *Engine) applyPutSpellInZoneEvent(
 	return game, nil
 }
 
-func (e *Engine) applyPutAbilityOnStackEvent(
+func applyPutAbilityOnStackEvent(
 	game state.Game,
 	evnt event.PutAbilityOnStackEvent,
 ) (state.Game, error) {
@@ -94,7 +94,7 @@ func (e *Engine) applyPutAbilityOnStackEvent(
 	return game, nil
 }
 
-func (e *Engine) applyRemoveAbilityFromStackEvent(
+func applyRemoveAbilityFromStackEvent(
 	game state.Game,
 	evnt event.RemoveAbilityFromStackEvent,
 ) (state.Game, error) {

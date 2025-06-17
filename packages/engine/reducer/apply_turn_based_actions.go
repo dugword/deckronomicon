@@ -1,4 +1,4 @@
-package engine
+package reducer
 
 import (
 	"deckronomicon/packages/engine/event"
@@ -10,7 +10,7 @@ import (
 // They are not triggered by player actions, but rather by the game state itself. These events are used to
 // manage the game state, such as untapping permanents, progressing sagas, or checking day/night status.
 
-func (e *Engine) applyTurnBasedActionEvent(game state.Game, turnBasedActionEvent event.TurnBasedActionEvent) (state.Game, error) {
+func applyTurnBasedActionEvent(game state.Game, turnBasedActionEvent event.TurnBasedActionEvent) (state.Game, error) {
 	switch evnt := turnBasedActionEvent.(type) {
 	case event.CheckDayNightEvent:
 		return game, nil
@@ -25,7 +25,7 @@ func (e *Engine) applyTurnBasedActionEvent(game state.Game, turnBasedActionEvent
 	case event.RemoveDamageEvent:
 		return game, nil
 	case event.UntapAllEvent:
-		return e.applyUntapAllEvent(game, evnt)
+		return applyUntapAllEvent(game, evnt)
 	case event.UpkeepEvent:
 		return game, nil
 	default:
@@ -33,7 +33,7 @@ func (e *Engine) applyTurnBasedActionEvent(game state.Game, turnBasedActionEvent
 	}
 }
 
-func (e *Engine) applyUntapAllEvent(
+func applyUntapAllEvent(
 	game state.Game,
 	evnt event.UntapAllEvent,
 ) (state.Game, error) {

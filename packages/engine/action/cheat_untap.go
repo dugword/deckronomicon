@@ -2,6 +2,7 @@ package action
 
 import (
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/state"
 	"fmt"
@@ -30,7 +31,7 @@ func (a UntapCheatAction) Name() string {
 func (a UntapCheatAction) Description() string {
 	return "Untap target permanent."
 }
-func (a UntapCheatAction) Complete(game state.Game) ([]event.GameEvent, error) {
+func (a UntapCheatAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	if !game.CheatsEnabled() {
 		return nil, fmt.Errorf("no cheating you cheater")
 	}

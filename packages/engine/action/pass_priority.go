@@ -2,6 +2,7 @@ package action
 
 import (
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/state"
 )
 
@@ -27,7 +28,7 @@ func (a PassPriorityAction) Description() string {
 	return "The active player passes priority to the next player."
 }
 
-func (a PassPriorityAction) Complete(game state.Game) ([]event.GameEvent, error) {
+func (a PassPriorityAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	return []event.GameEvent{event.PassPriorityEvent{
 		PlayerID: a.player.ID(),
 	}}, nil

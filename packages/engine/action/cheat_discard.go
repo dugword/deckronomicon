@@ -2,6 +2,7 @@ package action
 
 import (
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/state"
 	"fmt"
@@ -31,7 +32,7 @@ func (a DiscardCheatAction) Description() string {
 	return "Discard a card from your hand."
 }
 
-func (a DiscardCheatAction) Complete(game state.Game) ([]event.GameEvent, error) {
+func (a DiscardCheatAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	if !game.CheatsEnabled() {
 		return nil, fmt.Errorf("no cheating you cheater")
 	}

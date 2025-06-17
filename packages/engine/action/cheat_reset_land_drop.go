@@ -2,6 +2,7 @@ package action
 
 import (
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/state"
 	"fmt"
 )
@@ -28,7 +29,7 @@ func (a ResetLandDropCheatAction) Description() string {
 	return "Reset the land drop for the turn."
 }
 
-func (a ResetLandDropCheatAction) Complete(game state.Game) ([]event.GameEvent, error) {
+func (a ResetLandDropCheatAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	if !game.CheatsEnabled() {
 		return nil, fmt.Errorf("no cheating you cheater")
 	}
