@@ -16,10 +16,19 @@
           }
       },
       {
-        "Name": "Discard",
+        "Name": "RegisterDelayedEffect",
         "Modifiers": {
-          "Count": 3,
-          "Delay": "EndStep"
+          "Trigger": {
+            "EventType": "BeginEndStep"
+          },
+          "Effects": [
+            {
+            "Name": "Discard",
+            "Modifiers": {
+              "Count": 3
+            }
+          }
+        ]
         }
       }
     ]

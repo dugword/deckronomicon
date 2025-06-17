@@ -39,8 +39,6 @@ func applyGameStateChangeEvent(game state.Game, gameStateChangeEvent event.GameS
 		return applyPutCardOnTopOfLibraryEvent(game, evnt)
 	case event.PutPermanentOnBattlefieldEvent:
 		return applyPutPermanentOnBattlefieldEvent(game, evnt)
-	case event.RegisterTriggeredEffectEvent:
-		return applyRegisterTriggeredEffectEvent(game, evnt)
 	case event.RevealCardEvent:
 		player, ok := game.GetPlayer(evnt.PlayerID)
 		if !ok {
@@ -305,24 +303,6 @@ func applyPutPermanentOnBattlefieldEvent(
 	if err != nil {
 		return game, fmt.Errorf("failed to put card %q on battlefield: %w", card.ID(), err)
 	}
-	return game, nil
-}
-
-func applyRegisterTriggeredEffectEvent(
-	game state.Game,
-	evnt event.RegisterTriggeredEffectEvent,
-) (state.Game, error) {
-	player, ok := game.GetPlayer(evnt.PlayerID)
-	if !ok {
-		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
-	}
-	game = game.WithRegisteredTriggeredEffect(
-		player.ID(),
-		evnt.Trigger,
-		evnt.EffectSpecs,
-		evnt.Duration,
-	)
-	// TODO: Implement the logic for registering the triggered effect
 	return game, nil
 }
 

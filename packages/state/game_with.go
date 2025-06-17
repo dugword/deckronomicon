@@ -140,17 +140,23 @@ func (g Game) WithPutAbilityOnStack(
 
 func (g Game) WithRegisteredTriggeredEffect(
 	playerID string,
+	sourceName string,
+	sourceID string,
 	trigger Trigger,
 	effectSpecs []definition.EffectSpec,
 	duration mtg.Duration,
+	oneShot bool,
 ) Game {
 	id, game := g.GetNextID()
 	triggeredEffect := TriggeredEffect{
-		ID:       id,
-		PlayerID: playerID,
-		Trigger:  trigger,
-		Effect:   effectSpecs,
-		Duration: duration,
+		ID:         id,
+		SourceID:   sourceID,
+		SourceName: sourceName,
+		PlayerID:   playerID,
+		Trigger:    trigger,
+		Effect:     effectSpecs,
+		Duration:   duration,
+		OneShot:    oneShot,
 	}
 	game.triggeredEffects = append(game.triggeredEffects[:], triggeredEffect)
 	return game

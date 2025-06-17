@@ -1,12 +1,14 @@
 package effect
 
 import (
+	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/engine/target"
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/state"
 	"encoding/json"
+	"errors"
 	"fmt"
 )
 
@@ -45,13 +47,40 @@ func (e DiscardEffect) Resolve(
 	source query.Object,
 	target target.TargetValue,
 ) (EffectResult, error) {
-	var events []event.GameEvent
-	for range e.Count {
-		events = append(events, event.DiscardCardEvent{
-			PlayerID: player.ID(),
-		})
+	if e.Count <= 0 {
+		return EffectResult{}, fmt.Errorf("invalid required modifier %q for Discard effect", "Count")
+	}
+	cards := player.Hand().GetAll()
+	choicePrompt := choose.ChoicePrompt{
+		Message: "Chose cards to discard",
+		Source:  source,
+		ChoiceOpts: choose.ChooseManyOpts{
+			Choices: choose.NewChoices(cards),
+			Min:     e.Count,
+			Max:     e.Count,
+		},
+	}
+	resumeFunc := func(choiceResults choose.ChoiceResults) (EffectResult, error) {
+		selected, ok := choiceResults.(choose.ChooseManyResults)
+		if !ok {
+			return EffectResult{}, errors.New("invalid choice results for Discarding")
+		}
+		var events []event.GameEvent
+		for _, choice := range selected.Choices {
+			// Create the discard event
+			discardEvent := event.DiscardCardEvent{
+				PlayerID: player.ID(),
+				CardID:   choice.ID(),
+			}
+			// Apply the discard event to the game state
+			events = append(events, discardEvent)
+		}
+		return EffectResult{
+			Events: events,
+		}, nil
 	}
 	return EffectResult{
-		Events: events,
+		ChoicePrompt: choicePrompt,
+		ResumeFunc:   resumeFunc,
 	}, nil
 }
