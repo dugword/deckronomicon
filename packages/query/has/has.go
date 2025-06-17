@@ -3,7 +3,6 @@ package has
 import (
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
-	"fmt"
 	"slices"
 )
 
@@ -32,15 +31,11 @@ func All(predicates ...query.Predicate) query.Predicate {
 func CardType(cardTypes ...mtg.CardType) query.Predicate {
 	return func(obj query.Object) bool {
 		for _, t := range cardTypes {
-			fmt.Println("Checking card type", t)
-			fmt.Printf("Object is %T\n", obj)
 			found := false
 			cardObj, ok := obj.(query.CardObject)
 			if !ok {
-				fmt.Println("Card was not a card object")
 				return false
 			}
-			fmt.Println("Card was a card object")
 			if slices.Contains(cardObj.CardTypes(), t) {
 				found = true
 			}

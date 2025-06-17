@@ -9,6 +9,7 @@ import (
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/judge"
+	"deckronomicon/packages/query/is"
 	"deckronomicon/packages/state"
 	"fmt"
 )
@@ -59,19 +60,30 @@ func (a ActivateAbilityAction) Complete(game state.Game, resEnv *resenv.ResEnv) 
 			Zone:      a.abilityOnObjectInZone.Zone(),
 		},
 	}
-	cost, err := cost.ParseCost(ability.Cost(), a.abilityOnObjectInZone.Ability().Source())
+	cst, err := cost.ParseCost(ability.Cost(), a.abilityOnObjectInZone.Ability().Source())
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse cost %q: %w", ability.Cost(), err)
 	}
-	costEvents, err := PayCost(cost, ability.Source(), a.player)
+	costEvents, err := PayCost(cst, ability.Source(), a.player)
 	if err != nil {
-		return nil, fmt.Errorf("failed to pay cost %q: %w", cost.Description(), err)
+		return nil, fmt.Errorf("failed to pay cost %q: %w", cst.Description(), err)
 	}
 	events = append(events, costEvents...)
 	// TODO: I think I need to do this on a per effect basis, like I think for
 	// chromatic star I get the mana fixing buy the draw a card effect still
 	// goes on the stack.
 	if ability.IsManaAbility() {
+		if permanent, ok := ability.Source().(gob.Permanent); ok {
+			if permanent.Match(is.Land()) {
+				if cost.HasCostType(cst, cost.TapThisCost{}) {
+					events = append(events, event.LandTappedForManaEvent{
+						PlayerID: a.player.ID(),
+						ObjectID: permanent.ID(),
+						Subtypes: permanent.Subtypes(),
+					})
+				}
+			}
+		}
 		manaEvents, err := buildManaAbilityEvents(game, a.player, ability.EffectSpecs())
 		if err != nil {
 			return nil, fmt.Errorf("failed to build mana ability events: %w", err)

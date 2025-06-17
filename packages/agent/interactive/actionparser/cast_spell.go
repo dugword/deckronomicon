@@ -78,10 +78,8 @@ func getTargetsForSpell(
 		if err != nil {
 			return nil, fmt.Errorf("effect %q not found: %w", effectSpec.Name, err)
 		}
-		fmt.Println("Processing effect", effectSpec.Name, "with target spec", efct.TargetSpec())
 		switch targetSpec := efct.TargetSpec().(type) {
 		case nil, target.NoneTargetSpec:
-			fmt.Println("No target required for effect", effectSpec.Name)
 			targets[effectSpec.Name] = target.TargetValue{
 				TargetType: target.TargetTypeNone,
 			}

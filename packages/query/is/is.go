@@ -1,12 +1,15 @@
 package is
 
 import (
+	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 	"slices"
 )
 
 func Land() query.Predicate {
+	var foos []query.CardObject
+	foos = append(foos, gob.Permanent{})
 	return func(obj query.Object) bool {
 		cardObj, ok := obj.(query.CardObject)
 		if !ok {

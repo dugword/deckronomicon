@@ -18,6 +18,7 @@ const (
 	EventTypePassPriority       = "PassPriority"
 	EventTypePlayLand           = "PlayLand"
 	EventTypeCycleCard          = "CycleCard"
+	EventTypeLandTappedForMana  = "LandTappedForMana"
 )
 
 type PlayerEvent interface{ isPlayerEvent() }
@@ -124,4 +125,15 @@ type CycleCardEvent struct {
 
 func (e CycleCardEvent) EventType() string {
 	return EventTypeCycleCard
+}
+
+type LandTappedForManaEvent struct {
+	PlayerBaseEvent
+	PlayerID string
+	ObjectID string
+	Subtypes []mtg.Subtype
+}
+
+func (e LandTappedForManaEvent) EventType() string {
+	return EventTypeLandTappedForMana
 }
