@@ -27,7 +27,10 @@ func (e *Engine) ApplyEvent(gameEvent event.GameEvent) error {
 			return fmt.Errorf("failed to report state to agent for %q: %w", agent.PlayerID(), err)
 		}
 	}
-	triggeredEvents := e.CheckTriggeredEffects(e.game, gameEvent)
+	triggeredEvents, err := e.CheckTriggeredEffects(e.game, gameEvent)
+	if err != nil {
+		return fmt.Errorf("failed to check triggered effects: %w", err)
+	}
 	for _, triggeredEvent := range triggeredEvents {
 		if err := e.ApplyEvent(triggeredEvent); err != nil {
 			return fmt.Errorf("failed to apply triggered event %q: %w", triggeredEvent.EventType(), err)

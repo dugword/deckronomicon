@@ -1,8 +1,10 @@
 package event
 
 import (
+	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/mana"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/state"
 )
 
 const (
@@ -19,9 +21,10 @@ const (
 	EventTypePutCardOnBottomOfLibrary  = "PutCardOnBottomOfLibrary"
 	EventTypePutPermanentOnBattlefield = "PutPermanentOnBattlefield"
 	// EventTypeResolveManaAbility        = "ResolveManaAbility"
-	EventTypeRevealCard      = "RevealCard"
-	EventTypeSetActivePlayer = "SetActivePlayer"
-	EventTypeSpendMana       = "SpendMana"
+	EventTypeRegisterTriggeredEffect = "RegisterTriggeredEffect"
+	EventTypeRevealCard              = "RevealCard"
+	EventTypeSetActivePlayer         = "SetActivePlayer"
+	EventTypeSpendMana               = "SpendMana"
 	// EventTypeShuffleDeck     = "ShuffleDeck"
 	EventTypeShuffleLibrary = "ShuffleLibrary"
 	EventTypeTapPermanent   = "TapPermanent"
@@ -177,6 +180,18 @@ func (e ResolveManaAbilityEvent) EventType() string {
 	return EventTypeResolveManaAbility
 }
 */
+
+type RegisterTriggeredEffectEvent struct {
+	GameStateChangeBaseEvent
+	PlayerID    string
+	Trigger     state.Trigger
+	EffectSpecs []definition.EffectSpec
+	Duration    mtg.Duration
+}
+
+func (e RegisterTriggeredEffectEvent) EventType() string {
+	return EventTypeRegisterTriggeredEffect
+}
 
 type RevealCardEvent struct {
 	GameStateChangeBaseEvent
