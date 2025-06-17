@@ -140,11 +140,11 @@ func (p Permanent) Loyalty() int {
 }
 
 // ManCost returns the mana cost of the permanent.
-func (p *Permanent) ManaCost() cost.ManaCost {
+func (p Permanent) ManaCost() cost.ManaCost {
 	return p.manaCost
 }
 
-func (p *Permanent) ManaValue() int {
+func (p Permanent) ManaValue() int {
 	return p.manaCost.Amount().Total()
 }
 

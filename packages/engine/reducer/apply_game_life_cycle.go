@@ -206,6 +206,11 @@ func applyEndTurnEvent(game state.Game, evnt event.EndTurnEvent) (state.Game, er
 	if !ok {
 		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
 	}
+	for _, te := range game.TriggeredEffects() {
+		if te.PlayerID == evnt.PlayerID && te.Duration == mtg.DurationEndOfTurn {
+			game = game.WithRemoveTriggeredEffect(te.ID)
+		}
+	}
 	player = player.WithClearSpellsCastsThisTurn()
 	player = player.WithClearLandPlayedThisTurn()
 	game = game.WithUpdatedPlayer(player)

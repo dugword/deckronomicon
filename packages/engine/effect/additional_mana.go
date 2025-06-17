@@ -1,9 +1,10 @@
 package effect
 
 import (
-	"deckronomicon/packages/engine/resenv"
+	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/engine/target"
 	"deckronomicon/packages/game/definition"
+	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/state"
 	"encoding/json"
@@ -11,9 +12,9 @@ import (
 )
 
 type AdditionalManaEffect struct {
-	Subtype  string `json:"Subtype"`
-	Mana     string `json:"Mana"`
-	Duration string `json:"Duration"`
+	Subtype  mtg.Subtype  `json:"Subtype"`
+	Mana     string       `json:"Mana"`
+	Duration mtg.Duration `json:"Duration"`
 }
 
 func NewAdditionalManaEffect(effectSpec definition.EffectSpec) (Effect, error) {
@@ -38,21 +39,23 @@ func (e AdditionalManaEffect) Resolve(
 	source query.Object,
 	target target.TargetValue,
 ) (EffectResult, error) {
-
+	evnt := event.RegisterTriggeredEffectEvent{
+		PlayerID: player.ID(),
+		Trigger: state.Trigger{
+			EventType: "LandTappedForMana",
+			Filter: state.Filter{
+				Subtypes: []mtg.Subtype{e.Subtype},
+			},
+		},
+		Duration: e.Duration,
+		EffectSpecs: []definition.EffectSpec{
+			{
+				Name:      "AddMana",
+				Modifiers: json.RawMessage(fmt.Sprintf(`{"Mana": "%s"}`, e.Mana)),
+			},
+		},
+	}
 	return EffectResult{
-		Events: nil,
-	}, nil
-}
-
-func (e AdditionalManaEffect) ResolveNew(
-	game state.Game,
-	player state.Player,
-	source query.Object,
-	target target.TargetValue,
-	resEnv *resenv.ResEnv,
-) (EffectResult, error) {
-
-	return EffectResult{
-		Events: nil,
+		Events: []event.GameEvent{evnt},
 	}, nil
 }

@@ -30,7 +30,6 @@ func (d DrawEffect) Name() string {
 func (d DrawEffect) TargetSpec() target.TargetSpec {
 	switch d.Target {
 	case "":
-		fmt.Println("Returning NoneTargetSpec for empty target in DrawEffect")
 		return target.NoneTargetSpec{}
 	case "Player":
 		return target.PlayerTargetSpec{}

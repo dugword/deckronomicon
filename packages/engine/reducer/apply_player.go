@@ -28,6 +28,8 @@ func applyPlayerEvent(game state.Game, playerEvent event.PlayerEvent) (state.Gam
 		return game, nil
 	case event.DeclareBlockersEvent:
 		return game, nil
+	case event.LandTappedForManaEvent:
+		return game, nil
 	case event.PassPriorityEvent:
 		return applyPassPriorityEvent(game, evnt)
 	case event.PlayLandEvent:
