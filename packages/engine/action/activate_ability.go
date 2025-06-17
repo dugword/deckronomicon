@@ -1,8 +1,12 @@
 package action
 
 import (
+	"deckronomicon/packages/engine/effect"
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/engine/resenv"
+	"deckronomicon/packages/engine/target"
 	"deckronomicon/packages/game/cost"
+	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/judge"
 	"deckronomicon/packages/state"
@@ -33,7 +37,7 @@ func (a ActivateAbilityAction) Description() string {
 	return "The active player activates an ability."
 }
 
-func (a ActivateAbilityAction) Complete(game state.Game) ([]event.GameEvent, error) {
+func (a ActivateAbilityAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	ability := a.abilityOnObjectInZone.Ability()
 	ruling := judge.Ruling{Explain: true}
 	// TODO: Should it be abilityOnObjectInZone.Object() instead of Source()?
@@ -68,14 +72,11 @@ func (a ActivateAbilityAction) Complete(game state.Game) ([]event.GameEvent, err
 	// chromatic star I get the mana fixing buy the draw a card effect still
 	// goes on the stack.
 	if ability.IsManaAbility() {
-		events = append(events, event.ResolveManaAbilityEvent{
-			PlayerID:    a.player.ID(),
-			SourceID:    ability.Source().ID(),
-			AbilityID:   ability.ID(),
-			FromZone:    a.abilityOnObjectInZone.Zone(),
-			AbilityName: ability.Name(),
-			EffectSpecs: ability.EffectSpecs(),
-		})
+		manaEvents, err := buildManaAbilityEvents(game, a.player, ability.EffectSpecs())
+		if err != nil {
+			return nil, fmt.Errorf("failed to build mana ability events: %w", err)
+		}
+		events = append(events, manaEvents...)
 		return events, nil
 	}
 	events = append(events, event.PutAbilityOnStackEvent{
@@ -86,5 +87,25 @@ func (a ActivateAbilityAction) Complete(game state.Game) ([]event.GameEvent, err
 		AbilityName: ability.Name(),
 		EffectSpecs: ability.EffectSpecs(),
 	})
+	return events, nil
+}
+
+func buildManaAbilityEvents(
+	game state.Game,
+	player state.Player,
+	effectSpecs []definition.EffectSpec,
+) ([]event.GameEvent, error) {
+	var events []event.GameEvent
+	for _, effectSpec := range effectSpecs {
+		efct, err := effect.Build(effectSpec)
+		if err != nil {
+			return nil, fmt.Errorf("effect %q not found: %w", effectSpec.Name, err)
+		}
+		effectResults, err := efct.Resolve(game, player, nil, target.TargetValue{})
+		if err != nil {
+			return nil, fmt.Errorf("failed to apply effect %q: %w", effectSpec.Name, err)
+		}
+		events = append(events, effectResults.Events...)
+	}
 	return events, nil
 }

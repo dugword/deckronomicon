@@ -1,6 +1,7 @@
 package effect
 
 import (
+	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/engine/target"
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/query"
@@ -36,6 +37,19 @@ func (e AdditionalManaEffect) Resolve(
 	player state.Player,
 	source query.Object,
 	target target.TargetValue,
+) (EffectResult, error) {
+
+	return EffectResult{
+		Events: nil,
+	}, nil
+}
+
+func (e AdditionalManaEffect) ResolveNew(
+	game state.Game,
+	player state.Player,
+	source query.Object,
+	target target.TargetValue,
+	resEnv *resenv.ResEnv,
 ) (EffectResult, error) {
 
 	return EffectResult{

@@ -2,6 +2,7 @@ package action
 
 import (
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/state"
 	"fmt"
 )
@@ -28,16 +29,18 @@ func (a ShuffleCheatAction) Description() string {
 	return "Shuffle the player's deck."
 }
 
-func (a ShuffleCheatAction) Complete(game state.Game) ([]event.GameEvent, error) {
+func (a ShuffleCheatAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	if !game.CheatsEnabled() {
 		return nil, fmt.Errorf("no cheating you cheater")
 	}
+	shuffledCardsIDs := resEnv.RNG.ShuffleCardsIDs(a.player.Library().GetAll())
 	return []event.GameEvent{
 		event.CheatShuffleDeckEvent{
 			PlayerID: a.PlayerID(),
 		},
-		event.ShuffleDeckEvent{
-			PlayerID: a.PlayerID(),
+		event.ShuffleLibraryEvent{
+			PlayerID:         a.PlayerID(),
+			ShuffledCardsIDs: shuffledCardsIDs,
 		},
 	}, nil
 }

@@ -2,6 +2,7 @@ package action
 
 import (
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/state"
 )
 
@@ -27,7 +28,7 @@ func (a CheatAction) Description() string {
 	return "Enable cheat mode"
 }
 
-func (a CheatAction) Complete(game state.Game) ([]event.GameEvent, error) {
+func (a CheatAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	return []event.GameEvent{event.CheatEnabledEvent{
 		Player: a.player.ID(),
 	}}, nil

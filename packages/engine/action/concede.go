@@ -2,6 +2,7 @@ package action
 
 import (
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/state"
 	"fmt"
 )
@@ -28,7 +29,7 @@ func (a ConcedeAction) Description() string {
 	return "The active player concedes the game."
 }
 
-func (a ConcedeAction) Complete(game state.Game) ([]event.GameEvent, error) {
+func (a ConcedeAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	opponent, ok := game.GetOpponent(a.player.ID())
 	if !ok {
 		return nil, fmt.Errorf("opponent for player %q not found", a.player.ID())

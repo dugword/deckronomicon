@@ -25,6 +25,8 @@ type Game struct {
 	players               []Player
 	stack                 Stack
 	winnerID              string
+	triggeredEffects      []TriggeredEffect
+	continuousEffects     []ContinuousEffect
 }
 
 func (g Game) CheatsEnabled() bool {

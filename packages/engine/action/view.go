@@ -2,6 +2,7 @@ package action
 
 import (
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/state"
 )
 
@@ -31,7 +32,7 @@ func (a ViewAction) Description() string {
 	return "View a card in any zone."
 }
 
-func (a ViewAction) Complete(game state.Game) ([]event.GameEvent, error) {
+func (a ViewAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	return []event.GameEvent{event.NoOpEvent{
 		Message: "Viewed card in zone " + a.zone + ": " + a.cardID,
 	}}, nil

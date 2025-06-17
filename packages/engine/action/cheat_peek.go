@@ -2,6 +2,7 @@ package action
 
 import (
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/state"
 	"fmt"
 )
@@ -28,7 +29,7 @@ func (a PeekCheatAction) Description() string {
 	return "Look at the top card of your deck."
 }
 
-func (a PeekCheatAction) Complete(game state.Game) ([]event.GameEvent, error) {
+func (a PeekCheatAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	if !game.CheatsEnabled() {
 		return nil, fmt.Errorf("no cheating you cheater")
 	}

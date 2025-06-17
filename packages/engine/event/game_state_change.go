@@ -1,7 +1,6 @@
 package event
 
 import (
-	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/mana"
 	"deckronomicon/packages/game/mtg"
 )
@@ -19,13 +18,14 @@ const (
 	EventTypePutCardOnTopOfLibrary     = "PutCardOnTopOfLibrary"
 	EventTypePutCardOnBottomOfLibrary  = "PutCardOnBottomOfLibrary"
 	EventTypePutPermanentOnBattlefield = "PutPermanentOnBattlefield"
-	EventTypeResolveManaAbility        = "ResolveManaAbility"
-	EventTypeRevealCard                = "RevealCard"
-	EventTypeSetActivePlayer           = "SetActivePlayer"
-	EventTypeSpendMana                 = "SpendMana"
-	EventTypeShuffleDeck               = "ShuffleDeck"
-	EventTypeTapPermanent              = "TapPermanent"
-	EventTypeUntapPermanent            = "UntapPermanent"
+	// EventTypeResolveManaAbility        = "ResolveManaAbility"
+	EventTypeRevealCard      = "RevealCard"
+	EventTypeSetActivePlayer = "SetActivePlayer"
+	EventTypeSpendMana       = "SpendMana"
+	// EventTypeShuffleDeck     = "ShuffleDeck"
+	EventTypeShuffleLibrary = "ShuffleLibrary"
+	EventTypeTapPermanent   = "TapPermanent"
+	EventTypeUntapPermanent = "UntapPermanent"
 )
 
 type GameStateChangeEvent interface{ isGameStateChangeEvent() }
@@ -162,6 +162,7 @@ func (e PutPermanentOnBattlefieldEvent) EventType() string {
 	return EventTypePutPermanentOnBattlefield
 }
 
+/*
 type ResolveManaAbilityEvent struct {
 	GameStateChangeBaseEvent
 	PlayerID    string
@@ -175,6 +176,7 @@ type ResolveManaAbilityEvent struct {
 func (e ResolveManaAbilityEvent) EventType() string {
 	return EventTypeResolveManaAbility
 }
+*/
 
 type RevealCardEvent struct {
 	GameStateChangeBaseEvent
@@ -196,6 +198,7 @@ func (e SetActivePlayerEvent) EventType() string {
 	return EventTypeSetActivePlayer
 }
 
+/*
 type ShuffleDeckEvent struct {
 	GameStateChangeBaseEvent
 	PlayerID string
@@ -203,6 +206,17 @@ type ShuffleDeckEvent struct {
 
 func (e ShuffleDeckEvent) EventType() string {
 	return EventTypeShuffleDeck
+}
+*/
+
+type ShuffleLibraryEvent struct {
+	GameStateChangeBaseEvent
+	PlayerID         string
+	ShuffledCardsIDs []string // IDs of the cards in the shuffled order
+}
+
+func (e ShuffleLibraryEvent) EventType() string {
+	return EventTypeShuffleLibrary
 }
 
 type SpendManaEvent struct {

@@ -1,4 +1,4 @@
-package engine
+package reducer
 
 import (
 	"deckronomicon/packages/engine/event"
@@ -7,39 +7,39 @@ import (
 	"fmt"
 )
 
-func (e *Engine) applyGameLifecycleEvent(game state.Game, gameLifecycleEvent event.GameLifecycleEvent) (state.Game, error) {
+func applyGameLifecycleEvent(game state.Game, gameLifecycleEvent event.GameLifecycleEvent) (state.Game, error) {
 	switch evnt := gameLifecycleEvent.(type) {
 	case event.TurnEvent:
-		return e.applyTurnEvent(game, evnt)
+		return applyTurnEvent(game, evnt)
 	case event.BeginGameEvent:
-		return e.applyBeginGameEvent(game, evnt)
+		return applyBeginGameEvent(game, evnt)
 	case event.EndGameEvent:
-		return e.applyEndGameEvent(game, evnt)
+		return applyEndGameEvent(game, evnt)
 	default:
 		return game, fmt.Errorf("unknown game lifecycle event '%T'", evnt)
 	}
 }
 
-func (e *Engine) applyTurnEvent(game state.Game, turnEvent event.TurnEvent) (state.Game, error) {
+func applyTurnEvent(game state.Game, turnEvent event.TurnEvent) (state.Game, error) {
 	switch evnt := turnEvent.(type) {
 	case event.BeginPhaseEvent:
-		return e.applyBeginPhaseEvent(game, evnt)
+		return applyBeginPhaseEvent(game, evnt)
 	case event.EndPhaseEvent:
-		return e.applyEndPhaseEvent(game, evnt)
+		return applyEndPhaseEvent(game, evnt)
 	case event.BeginStepEvent:
-		return e.applyBeginStepEvent(game, evnt)
+		return applyBeginStepEvent(game, evnt)
 	case event.EndStepEvent:
-		return e.applyEndStepEvent(game, evnt)
+		return applyEndStepEvent(game, evnt)
 	case event.BeginTurnEvent:
-		return e.applyBeginTurnEvent(game, evnt)
+		return applyBeginTurnEvent(game, evnt)
 	case event.EndTurnEvent:
-		return e.applyEndTurnEvent(game, evnt)
+		return applyEndTurnEvent(game, evnt)
 	default:
 		return game, fmt.Errorf("unknown turn event '%T'", evnt)
 	}
 }
 
-func (e *Engine) applyBeginPhaseEvent(
+func applyBeginPhaseEvent(
 	game state.Game,
 	beginPhaseEvent event.BeginPhaseEvent,
 ) (state.Game, error) {
@@ -64,7 +64,7 @@ func (e *Engine) applyBeginPhaseEvent(
 	}
 }
 
-func (e *Engine) applyEndPhaseEvent(
+func applyEndPhaseEvent(
 	game state.Game,
 	endPhaseEvent event.EndPhaseEvent,
 ) (state.Game, error) {
@@ -84,7 +84,7 @@ func (e *Engine) applyEndPhaseEvent(
 	}
 }
 
-func (e *Engine) applyBeginStepEvent(
+func applyBeginStepEvent(
 	game state.Game,
 	beginStepEvent event.BeginStepEvent,
 ) (state.Game, error) {
@@ -130,24 +130,22 @@ func (e *Engine) applyBeginStepEvent(
 	}
 }
 
-func (e *Engine) applyBeginGameEvent(
+func applyBeginGameEvent(
 	game state.Game,
 	beginGameEvent event.BeginGameEvent,
 ) (state.Game, error) {
-	e.log.Info("Game started")
 	return game, nil
 }
 
-func (e *Engine) applyEndGameEvent(
+func applyEndGameEvent(
 	game state.Game,
 	evnt event.EndGameEvent,
 ) (state.Game, error) {
-	e.log.Info("Game over, winner:", evnt.WinnerID)
 	game = game.WithGameOver(evnt.WinnerID)
 	return game, mtg.ErrGameOver
 }
 
-func (e *Engine) applyEndStepEvent(
+func applyEndStepEvent(
 	game state.Game,
 	endStepEvent event.EndStepEvent,
 ) (state.Game, error) {
@@ -190,7 +188,7 @@ func (e *Engine) applyEndStepEvent(
 	return game, fmt.Errorf("unknown end step event '%T'", endStepEvent)
 }
 
-func (e *Engine) applyBeginTurnEvent(game state.Game, evnt event.BeginTurnEvent) (state.Game, error) {
+func applyBeginTurnEvent(game state.Game, evnt event.BeginTurnEvent) (state.Game, error) {
 	// Reset player state for the new turn
 	player, ok := game.GetPlayer(evnt.PlayerID)
 	if !ok {
@@ -203,7 +201,7 @@ func (e *Engine) applyBeginTurnEvent(game state.Game, evnt event.BeginTurnEvent)
 	return game, nil
 }
 
-func (e *Engine) applyEndTurnEvent(game state.Game, evnt event.EndTurnEvent) (state.Game, error) {
+func applyEndTurnEvent(game state.Game, evnt event.EndTurnEvent) (state.Game, error) {
 	player, ok := game.GetPlayer(evnt.PlayerID)
 	if !ok {
 		return game, fmt.Errorf("player %q not found", evnt.PlayerID)

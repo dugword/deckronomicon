@@ -5,6 +5,10 @@ import (
 	"fmt"
 )
 
+// TODO: Think through how to make this work more like actions? I think maybe
+// I need to split the effect into two parts: a "spec" that describes the effect
+// and a "runtime" that is the actual effect that can be applied to the game.
+
 type EffectConstructor func(effectSpec definition.EffectSpec) (Effect, error)
 
 var registry = map[string]EffectConstructor{}

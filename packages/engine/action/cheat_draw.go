@@ -2,6 +2,7 @@ package action
 
 import (
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/state"
 	"fmt"
 )
@@ -28,7 +29,7 @@ func (a DrawCheatAction) Description() string {
 	return "Draw a card from your hand."
 }
 
-func (a DrawCheatAction) Complete(game state.Game) ([]event.GameEvent, error) {
+func (a DrawCheatAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	if !game.CheatsEnabled() {
 		return nil, fmt.Errorf("no cheating you cheater")
 	}

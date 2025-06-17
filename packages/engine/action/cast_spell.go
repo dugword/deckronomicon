@@ -2,6 +2,7 @@ package action
 
 import (
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/engine/static_abilities"
 	"deckronomicon/packages/engine/target"
 	"deckronomicon/packages/game/cost"
@@ -42,7 +43,7 @@ func (a CastSpellAction) Description() string {
 	return "The active player casts a spell from their hand."
 }
 
-func (a CastSpellAction) Complete(game state.Game) ([]event.GameEvent, error) {
+func (a CastSpellAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	ruling := judge.Ruling{Explain: true}
 	if !judge.CanCastSpell(
 		game,

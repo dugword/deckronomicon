@@ -1,22 +1,20 @@
-package engine
+package reducer
 
 import (
 	"deckronomicon/packages/engine/event"
-	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/state"
 	"fmt"
 )
 
 // These are events that manage the priority system in the game.
 
-func (e *Engine) applyCheatEvent(game state.Game, cheatEvent event.CheatEvent) (state.Game, error) {
+func applyCheatEvent(game state.Game, cheatEvent event.CheatEvent) (state.Game, error) {
 	switch evnt := cheatEvent.(type) {
 
 	case event.CheatAddManaEvent:
 		return game, nil
 	case event.CheatConjureCardEvent:
-		e.log.Info("Conjuring card:", evnt.CardName)
-		return e.applyConjureCardCheatEvent(game, evnt)
+		return applyConjureCardCheatEvent(game, evnt)
 	case event.CheatDiscardEvent:
 		return game, nil
 	case event.CheatDrawEvent:
@@ -24,9 +22,9 @@ func (e *Engine) applyCheatEvent(game state.Game, cheatEvent event.CheatEvent) (
 	case event.CheatFindCardEvent:
 		return game, nil
 	case event.CheatPeekEvent:
-		return e.applyCheatPeekEvent(game, evnt)
+		return applyCheatPeekEvent(game, evnt)
 	case event.CheatResetLandDropEvent:
-		return e.applyResetLandDropCheatEvent(game, evnt)
+		return applyResetLandDropCheatEvent(game, evnt)
 	case event.CheatShuffleDeckEvent:
 		return game, nil
 	case event.CheatUntapEvent:
@@ -36,29 +34,32 @@ func (e *Engine) applyCheatEvent(game state.Game, cheatEvent event.CheatEvent) (
 	}
 }
 
-func (e *Engine) applyConjureCardCheatEvent(game state.Game, evnt event.CheatConjureCardEvent) (state.Game, error) {
-	cardDef, ok := e.definitions[evnt.CardName]
-	if !ok {
-		return game, fmt.Errorf("card definition for %q not found", evnt.CardName)
-	}
-	id, game := game.GetNextID()
-	card, err := gob.NewCardFromCardDefinition(id, evnt.PlayerID, cardDef)
-	if err != nil {
-		return game, fmt.Errorf("failed to create card from definition: %w", err)
-	}
-	player, ok := game.GetPlayer(evnt.PlayerID)
-	if !ok {
-		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
-	}
-	game = game.WithUpdatedPlayer(
-		player.WithHand(
-			player.Hand().Add(card),
-		),
-	)
+func applyConjureCardCheatEvent(game state.Game, evnt event.CheatConjureCardEvent) (state.Game, error) {
 	return game, nil
+	/*
+		cardDef, ok := e.definitions[evnt.CardName]
+		if !ok {
+			return game, fmt.Errorf("card definition for %q not found", evnt.CardName)
+		}
+		id, game := game.GetNextID()
+		card, err := gob.NewCardFromCardDefinition(id, evnt.PlayerID, cardDef)
+		if err != nil {
+			return game, fmt.Errorf("failed to create card from definition: %w", err)
+		}
+		player, ok := game.GetPlayer(evnt.PlayerID)
+		if !ok {
+			return game, fmt.Errorf("player %q not found", evnt.PlayerID)
+		}
+		game = game.WithUpdatedPlayer(
+			player.WithHand(
+				player.Hand().Add(card),
+			),
+		)
+		return game, nil
+	*/
 }
 
-func (e *Engine) applyCheatPeekEvent(game state.Game, evnt event.CheatPeekEvent) (state.Game, error) {
+func applyCheatPeekEvent(game state.Game, evnt event.CheatPeekEvent) (state.Game, error) {
 	player, ok := game.GetPlayer(evnt.PlayerID)
 	if !ok {
 		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
@@ -69,7 +70,7 @@ func (e *Engine) applyCheatPeekEvent(game state.Game, evnt event.CheatPeekEvent)
 	return game, nil
 }
 
-func (e *Engine) applyResetLandDropCheatEvent(
+func applyResetLandDropCheatEvent(
 	game state.Game,
 	evnt event.CheatResetLandDropEvent,
 ) (state.Game, error) {
@@ -79,6 +80,5 @@ func (e *Engine) applyResetLandDropCheatEvent(
 	}
 	player = player.WithClearLandPlayedThisTurn()
 	game = game.WithUpdatedPlayer(player)
-	e.log.Info("Reset land drop for player:", evnt.PlayerID)
 	return game, nil
 }

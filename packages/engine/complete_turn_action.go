@@ -54,7 +54,7 @@ func (e *Engine) CompleteTurnAction(action TurnBasedAction) error {
 		)
 	}
 	for _, evnt := range evnts {
-		if err := e.Apply(evnt); err != nil {
+		if err := e.ApplyEvent(evnt); err != nil {
 			return fmt.Errorf(
 				"failed to apply event %q: %w",
 				evnt.EventType(),

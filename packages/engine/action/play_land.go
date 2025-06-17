@@ -2,6 +2,7 @@ package action
 
 import (
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mana"
 	"deckronomicon/packages/judge"
@@ -38,7 +39,7 @@ func (a PlayLandAction) Description() string {
 	return "The active player plays a land from their hand."
 }
 
-func (a PlayLandAction) Complete(game state.Game) ([]event.GameEvent, error) {
+func (a PlayLandAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	// TODO: Maybe this should happen in judge.CanPlayLand?
 	if !a.player.ZoneContains(a.cardInZone.Zone(), has.ID(a.cardInZone.ID())) {
 		return nil, fmt.Errorf(

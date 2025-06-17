@@ -8,6 +8,7 @@ package engine
 
 import (
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/state"
 	"errors"
 	"fmt"
@@ -15,7 +16,7 @@ import (
 
 type Action interface {
 	Name() string
-	Complete(state.Game) ([]event.GameEvent, error)
+	Complete(state.Game, *resenv.ResEnv) ([]event.GameEvent, error)
 	Description() string
 	PlayerID() string
 }
@@ -23,7 +24,7 @@ type Action interface {
 var ErrInvalidUserAction = errors.New("invalid user action")
 
 func (e *Engine) CompleteAction(action Action) error {
-	evnts, err := action.Complete(e.game)
+	evnts, err := action.Complete(e.game, e.resEnv)
 	if err != nil {
 		return fmt.Errorf(
 			"failed to complete action %q: %w",
@@ -32,7 +33,7 @@ func (e *Engine) CompleteAction(action Action) error {
 		)
 	}
 	for _, evnt := range evnts {
-		if err := e.Apply(evnt); err != nil {
+		if err := e.ApplyEvent(evnt); err != nil {
 			return fmt.Errorf(
 				"failed to apply event %q: %w",
 				evnt.EventType(),

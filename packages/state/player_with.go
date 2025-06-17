@@ -12,6 +12,7 @@ func (p Player) WithAddMana(manaType mana.ManaType, amount int) Player {
 	return p
 }
 
+/*
 func (p Player) WithShuffleDeck(
 	deckShuffler func([]gob.Card) []gob.Card,
 ) Player {
@@ -20,6 +21,7 @@ func (p Player) WithShuffleDeck(
 	p.library.cards = cards
 	return p
 }
+*/
 
 func (p Player) WithNextTurn() Player {
 	p.turn++
@@ -150,6 +152,23 @@ func (p Player) WithClearRevealed() Player {
 func (p Player) WithSpellCastThisTurn() Player {
 	p.spellsCastThisTurn++
 	return p
+}
+
+func (p Player) WithShuffledLibrary(shuffledCardsIds []string) (Player, error) {
+	cardIDMap := map[string]gob.Card{}
+	for _, card := range p.library.GetAll() {
+		cardIDMap[card.ID()] = card
+	}
+	var redordered []gob.Card
+	for _, id := range shuffledCardsIds {
+		if card, ok := cardIDMap[id]; ok {
+			redordered = append(redordered, card)
+		} else {
+			return p, fmt.Errorf("card %q not found in library", id)
+		}
+	}
+	p = p.WithLibrary(Library{cards: redordered})
+	return p, nil
 }
 
 func (p Player) WithClearSpellsCastsThisTurn() Player {

@@ -1,4 +1,4 @@
-package engine
+package reducer
 
 import (
 	"deckronomicon/packages/engine/event"
@@ -12,14 +12,14 @@ import (
 // creates as attacking/blocking, etc.
 // Changes that represent "visable" state changes should be handled in the state change events.
 
-func (e *Engine) applyPlayerEvent(game state.Game, playerEvent event.PlayerEvent) (state.Game, error) {
+func applyPlayerEvent(game state.Game, playerEvent event.PlayerEvent) (state.Game, error) {
 	switch evnt := playerEvent.(type) {
 	case event.ActivateAbilityEvent:
 		return game, nil
 	case event.AssignCombatDamageEvent:
 		return game, nil
 	case event.CastSpellEvent:
-		return e.applyCastSpellEvent(game, evnt)
+		return applyCastSpellEvent(game, evnt)
 	case event.ConcedeEvent:
 		return game, nil
 	case event.CycleCardEvent:
@@ -29,17 +29,17 @@ func (e *Engine) applyPlayerEvent(game state.Game, playerEvent event.PlayerEvent
 	case event.DeclareBlockersEvent:
 		return game, nil
 	case event.PassPriorityEvent:
-		return e.applyPassPriorityEvent(game, evnt)
+		return applyPassPriorityEvent(game, evnt)
 	case event.PlayLandEvent:
-		return e.applyPlayLandEvent(game, evnt)
+		return applyPlayLandEvent(game, evnt)
 	case event.ClearRevealedEvent:
-		return e.applyClearRevealedEvent(game, evnt)
+		return applyClearRevealedEvent(game, evnt)
 	default:
 		return game, fmt.Errorf("unknown player event type '%T'", evnt)
 	}
 }
 
-func (e *Engine) applyCastSpellEvent(
+func applyCastSpellEvent(
 	game state.Game,
 	event event.CastSpellEvent,
 ) (state.Game, error) {
@@ -52,7 +52,7 @@ func (e *Engine) applyCastSpellEvent(
 	return game, nil
 }
 
-func (e *Engine) applyPassPriorityEvent(
+func applyPassPriorityEvent(
 	game state.Game,
 	evnt event.PassPriorityEvent,
 ) (state.Game, error) {
@@ -67,7 +67,7 @@ func (e *Engine) applyPassPriorityEvent(
 	return game, nil
 }
 
-func (e *Engine) applyPlayLandEvent(
+func applyPlayLandEvent(
 	game state.Game,
 	evnt event.PlayLandEvent,
 ) (state.Game, error) {
@@ -79,7 +79,7 @@ func (e *Engine) applyPlayLandEvent(
 	return game, nil
 }
 
-func (e *Engine) applyClearRevealedEvent(
+func applyClearRevealedEvent(
 	game state.Game,
 	evnt event.ClearRevealedEvent,
 ) (state.Game, error) {

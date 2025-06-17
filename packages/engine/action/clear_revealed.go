@@ -2,6 +2,7 @@ package action
 
 import (
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/state"
 	"fmt"
 )
@@ -28,7 +29,7 @@ func (a ClearRevealedAction) Description() string {
 	return "Clear all revealed cards from your view."
 }
 
-func (a ClearRevealedAction) Complete(game state.Game) ([]event.GameEvent, error) {
+func (a ClearRevealedAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	if !game.CheatsEnabled() {
 		return nil, fmt.Errorf("no cheating you cheater")
 	}
