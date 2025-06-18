@@ -17,16 +17,8 @@ func NewConcedeAction(player state.Player) ConcedeAction {
 	}
 }
 
-func (a ConcedeAction) PlayerID() string {
-	return a.player.ID()
-}
-
 func (a ConcedeAction) Name() string {
 	return "Concede"
-}
-
-func (a ConcedeAction) Description() string {
-	return "The active player concedes the game."
 }
 
 func (a ConcedeAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {

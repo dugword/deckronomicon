@@ -97,8 +97,7 @@ func (a *Agent) GetNextAction(game state.Game) (engine.Action, error) {
 		}
 		a.Prompt("take action")
 		input := a.ReadInput()
-		commandParser := actionparser.CommandParser{}
-		command, err := commandParser.ParseInput(
+		action, err := actionparser.ParseInput(
 			input,
 			a.Choose,
 			game,
@@ -108,11 +107,6 @@ func (a *Agent) GetNextAction(game state.Game) (engine.Action, error) {
 			a.inputError = err.Error()
 			a.uiBuffer.UpdateChoices("", []choose.Choice{})
 			a.uiBuffer.UpdateMessage([]string{})
-			continue
-		}
-		action, err := command.Build(game, player)
-		if err != nil {
-			a.inputError = err.Error()
 			continue
 		}
 		return action, nil

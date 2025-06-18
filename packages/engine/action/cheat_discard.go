@@ -20,16 +20,8 @@ func NewDiscardCheatAction(player state.Player, card gob.Card) DiscardCheatActio
 	}
 }
 
-func (a DiscardCheatAction) PlayerID() string {
-	return a.player.ID()
-}
-
 func (a DiscardCheatAction) Name() string {
 	return "Discard a Card"
-}
-
-func (a DiscardCheatAction) Description() string {
-	return "Discard a card from your hand."
 }
 
 func (a DiscardCheatAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {

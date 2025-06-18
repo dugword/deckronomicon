@@ -1,10 +1,52 @@
 package cost
 
 import (
-	"deckronomicon/packages/query"
 	"fmt"
 	"strings"
 )
+
+// CombineCosts takes a cost and a list of costs and combines them into a single new composite cost.
+// If either the cost or the costs are composite costs, it flattens them into a single composite cost.
+// If any cost is nil or if any composite cost is empty they are skipped and the new composite cost
+// will not include them. If the cost is nil, it returns a new composite cost with the costs.
+func CombineCosts(cost Cost, costs ...Cost) CompositeCost {
+	if cost == nil && len(costs) == 0 {
+		return CompositeCost{}
+	}
+	var combinedCosts []Cost
+	if cost != nil {
+		if compositeCost, ok := cost.(CompositeCost); ok {
+			combinedCosts = append(combinedCosts, compositeCost.Costs()...)
+		} else {
+			combinedCosts = append(combinedCosts, cost)
+		}
+	}
+	for _, c := range costs {
+		if c == nil {
+			continue
+		}
+		if compositeCost, ok := c.(CompositeCost); ok {
+			for _, subCost := range compositeCost.Costs() {
+				if subCost == nil {
+					continue
+				}
+				if _, ok := subCost.(CompositeCost); ok {
+					// If the subCost is a composite cost, we need to flatten it.
+					// TODO: This should be recursive.
+					combinedCosts = append(combinedCosts, subCost.(CompositeCost).Costs()...)
+				} else {
+					combinedCosts = append(combinedCosts, subCost)
+				}
+			}
+		} else {
+			combinedCosts = append(combinedCosts, c)
+		}
+	}
+	if len(combinedCosts) == 0 {
+		return CompositeCost{}
+	}
+	return NewCompositeCost(combinedCosts...)
+}
 
 // Has checks if the cost has a specific cost type. E.g.
 // Has(cost, ManaCost{}) returns true if the cost has a mana cost.
@@ -43,6 +85,10 @@ type Cost interface {
 
 type CompositeCost struct {
 	costs []Cost
+}
+
+func NewCompositeCost(costs ...Cost) CompositeCost {
+	return CompositeCost{costs: costs}
 }
 
 func (c CompositeCost) isCost() {}
@@ -94,7 +140,7 @@ func (c CompositeCost) Description() string {
 // that action can then use to provide the cost when the action is executed. Kinda like how we do with command
 // parsing with a "IsComplete" method that returns true when the cost is fully specified.
 
-func ParseCost(costString string, source query.Object) (Cost, error) {
+func ParseCost(costString string) (Cost, error) {
 	parts := strings.Split(costString, ",")
 	var costs []Cost
 	for _, part := range parts {

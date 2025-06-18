@@ -283,15 +283,11 @@ func (e *Engine) ResolveResolvable(resolvable state.Resolvable) error {
 			ID:   resolvable.ID(),
 		},
 	}
-	// TODO: This could probably be more elegent, instead of having the top level effect array be different than the chain it starts,
-	// maybe it could all be one thing.
-	// TODO: Rename to EffectSpecs()
-	targets := resolvable.Targets()
-	for _, effectSpec := range resolvable.Effects() {
-		e.log.Debug("Resolving effect:", effectSpec.Name)
-		effectEvents, err := e.ResolveEffect(e.game, player, resolvable, targets, effectSpec)
+	for _, effectWithTarget := range resolvable.EffectWithTargets() {
+		e.log.Debug("Resolving effect:", effectWithTarget.EffectSpec.Name)
+		effectEvents, err := e.ResolveEffect(e.game, player, resolvable, effectWithTarget.Target, effectWithTarget.EffectSpec)
 		if err != nil {
-			return fmt.Errorf("failed to resolve effect %q: %w", effectSpec.Name, err)
+			return fmt.Errorf("failed to resolve effect %q: %w", effectWithTarget.EffectSpec.Name, err)
 		}
 		events = append(events, effectEvents...)
 	}

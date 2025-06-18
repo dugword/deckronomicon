@@ -1,8 +1,7 @@
 package state
 
 import (
-	"deckronomicon/packages/engine/target"
-	"deckronomicon/packages/game/definition"
+	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/add"
@@ -15,11 +14,11 @@ type Resolvable interface {
 	Description() string
 	ID() string
 	Name() string
-	Effects() []definition.EffectSpec
+	EffectWithTargets() []gob.EffectWithTarget
 	Match(p query.Predicate) bool
 	Controller() string
 	Owner() string
-	Targets() map[string]target.TargetValue
+	// Targets() map[string]target.TargetValue
 }
 
 type Stack struct {

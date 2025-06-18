@@ -2,52 +2,68 @@ package actionparser
 
 import (
 	"deckronomicon/packages/choose"
-	"deckronomicon/packages/engine"
 	"deckronomicon/packages/engine/action"
+	"deckronomicon/packages/engine/judge"
 	"deckronomicon/packages/game/gob"
-	"deckronomicon/packages/judge"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/has"
 	"deckronomicon/packages/state"
 	"fmt"
 )
 
-type ActivateAbilityCommand struct {
-	Player                state.Player
-	AbilityOnObjectInZone gob.AbilityInZone
-}
-
-func (p *ActivateAbilityCommand) IsComplete() bool {
-	return p.Player.ID() != "" && p.AbilityOnObjectInZone.ID() != ""
-}
-
-// TODO: What is this really even doing? Maybe just return a new action instead of building a command?
-func (p *ActivateAbilityCommand) Build(game state.Game, player state.Player) (engine.Action, error) {
-	return action.NewActivateAbilityAction(p.Player, p.AbilityOnObjectInZone), nil
-}
-
 func parseActivateAbilityCommand(
 	idOrName string,
-	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
 	game state.Game,
 	player state.Player,
-) (*ActivateAbilityCommand, error) {
+	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
+) (action.ActivateAbilityAction, error) {
+	var abilityInZone gob.AbilityInZone
+	var err error
 	ruling := judge.Ruling{Explain: true}
-	abilities := judge.GetAbilitiesAvailableToActivate(game, player, &ruling)
+	abilityInZones := judge.GetAbilitiesAvailableToActivate(game, player, &ruling)
 	if idOrName == "" {
-		return buildActivateAbilityCommandByChoice(abilities, chooseFunc, player)
+		abilityInZone, err = buildActivateAbilityCommandByChoice(abilityInZones, chooseFunc, player)
+		if err != nil {
+			return action.ActivateAbilityAction{}, fmt.Errorf("failed to choose an ability to activate: %w", err)
+		}
+	} else {
+		found, ok := query.Find(abilityInZones, query.Or(has.ID(idOrName), has.Name(idOrName)))
+		if !ok {
+			return action.ActivateAbilityAction{}, fmt.Errorf("failed to find ability with ID or name %q: %w", idOrName, err)
+		}
+		abilityInZone = found
 	}
-	return buildActivateAbilityCommandByIDOrName(abilities, idOrName, player)
+	targetsForEffects, err := getTargetsForEffects(
+		abilityInZone.Ability(),
+		abilityInZone.Ability().EffectSpecs(),
+		game,
+		chooseFunc,
+	)
+	if err != nil {
+		return action.ActivateAbilityAction{}, fmt.Errorf("failed to get targets for spell: %w", err)
+	}
+	fmt.Println("TargetsForEffects")
+	for key, value := range targetsForEffects {
+		fmt.Printf("  %v: %v\n", key, value)
+	}
+	fmt.Println("Length of targetsForEffects:", len(targetsForEffects))
+	request := action.ActivateAbilityRequest{
+		AbilityID:         abilityInZone.Ability().ID(),
+		SourceID:          abilityInZone.Source().ID(),
+		Zone:              abilityInZone.Zone(),
+		TargetsForEffects: targetsForEffects,
+	}
+	return action.NewActivateAbilityAction(player.ID(), request), nil
 }
 
 func buildActivateAbilityCommandByChoice(
 	abilities []gob.AbilityInZone,
 	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
 	player state.Player,
-) (*ActivateAbilityCommand, error) {
+) (gob.AbilityInZone, error) {
 	prompt := choose.ChoicePrompt{
 		Message:  "Choose an ability to activate",
-		Source:   CommandSource{"Activate an ability"},
+		Source:   player,
 		Optional: true,
 		ChoiceOpts: choose.ChooseOneOpts{
 			Choices: choose.NewChoices(abilities),
@@ -55,34 +71,15 @@ func buildActivateAbilityCommandByChoice(
 	}
 	choiceResults, err := chooseFunc(prompt)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get choices: %w", err)
+		return gob.AbilityInZone{}, fmt.Errorf("failed to get choices: %w", err)
 	}
 	selected, ok := choiceResults.(choose.ChooseOneResults)
 	if !ok {
-		return nil, fmt.Errorf("expected choose one results, got %T", selected)
+		return gob.AbilityInZone{}, fmt.Errorf("expected choose one results, got %T", selected)
 	}
-	// TODO: Do something where I can select this without having to index an slice with a magic 0.
-	// Maybe that choice type that's an interface or something.
 	ability, ok := selected.Choice.(gob.AbilityInZone)
 	if !ok {
-		return nil, fmt.Errorf("selected choice is not an ability on an object in a zone")
+		return gob.AbilityInZone{}, fmt.Errorf("selected choice is not an ability on an object in a zone")
 	}
-	return &ActivateAbilityCommand{
-		Player:                player,
-		AbilityOnObjectInZone: ability,
-	}, nil
-}
-
-func buildActivateAbilityCommandByIDOrName(
-	abilities []gob.AbilityInZone,
-	idOrName string,
-	player state.Player,
-) (*ActivateAbilityCommand, error) {
-	if ability, ok := query.Find(abilities, query.Or(has.ID(idOrName), has.Name(idOrName))); ok {
-		return &ActivateAbilityCommand{
-			Player:                player,
-			AbilityOnObjectInZone: ability,
-		}, nil
-	}
-	return nil, fmt.Errorf("no ability found with ID or name %q", idOrName)
+	return ability, nil
 }

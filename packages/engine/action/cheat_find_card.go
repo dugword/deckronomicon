@@ -14,23 +14,15 @@ type FindCardCheatAction struct {
 	card   gob.Card
 }
 
-func NewFindCardCheatAction(player state.Player, cardInZone gob.Card) FindCardCheatAction {
+func NewFindCardCheatAction(player state.Player, card gob.Card) FindCardCheatAction {
 	return FindCardCheatAction{
 		player: player,
-		card:   cardInZone,
+		card:   card,
 	}
 }
 
 func (a FindCardCheatAction) Name() string {
 	return "Find Card"
-}
-
-func (a FindCardCheatAction) PlayerID() string {
-	return a.player.ID()
-}
-
-func (a FindCardCheatAction) Description() string {
-	return "Find a card into your hand."
 }
 
 func (a FindCardCheatAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {

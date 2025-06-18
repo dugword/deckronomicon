@@ -16,16 +16,8 @@ func NewPassPriorityAction(player state.Player) PassPriorityAction {
 	}
 }
 
-func (a PassPriorityAction) PlayerID() string {
-	return a.player.ID()
-}
-
 func (a PassPriorityAction) Name() string {
 	return "Pass Priority"
-}
-
-func (a PassPriorityAction) Description() string {
-	return "The active player passes priority to the next player."
 }
 
 func (a PassPriorityAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {

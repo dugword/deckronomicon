@@ -1,76 +1,58 @@
 package gob
 
 import (
-	//"deckronomicon/packages/game/core"
-	// "deckronomicon/packages/game/cost"
-
-	"deckronomicon/packages/engine/target"
 	"deckronomicon/packages/game/cost"
-	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
-
-	// "deckronomicon/packages_old/game/core"
-	"fmt"
-	"strings"
 )
-
-// TODO make these interfaces private
-/*
-type BattlefieldAdder interface {
-	AddToBattlefield(permanent Permanent)
-}
-
-type CardPlacer interface {
-	PlaceCard(card Card, zone mtg.Zone) error
-}
-*/
 
 // Spell represents a spell object on the stack.
 type Spell struct {
-	card       Card
-	cardTypes  []mtg.CardType
-	colors     mtg.Colors
-	controller string
-	owner      string
-	//flashback bool
-	id        string
-	loyalty   int
-	manaCost  cost.ManaCost
-	name      string
-	power     int
-	rulesText string
-	//effects         []Effect
-	effects         []definition.EffectSpec
-	staticAbilities []StaticAbility
-	subtypes        []mtg.Subtype
-	supertypes      []mtg.Supertype
-	toughness       int
-	flashback       bool
-	targets         map[string]target.TargetValue
+	card              Card
+	cardTypes         []mtg.CardType
+	colors            mtg.Colors
+	controller        string
+	owner             string
+	id                string
+	loyalty           int
+	manaCost          cost.ManaCost
+	name              string
+	power             int
+	rulesText         string
+	effectWithTargets []EffectWithTarget
+	staticAbilities   []StaticAbility
+	subtypes          []mtg.Subtype
+	supertypes        []mtg.Supertype
+	toughness         int
+	flashback         bool
 }
 
 // NewSpell creates a new Spell instance from a Card.
-func NewSpell(id string, card Card, playerID string, targets map[string]target.TargetValue, flashback bool) (Spell, error) {
+func NewSpell(
+	id string,
+	card Card,
+	playerID string,
+	effectWithTargets []EffectWithTarget,
+	flashback bool,
+) (Spell, error) {
 	spell := Spell{
-		card:            card,
-		cardTypes:       card.CardTypes(),
-		colors:          card.Colors(),
-		controller:      playerID,
-		effects:         card.SpellAbility(),
-		flashback:       flashback,
-		owner:           card.Owner(),
-		id:              id,
-		loyalty:         card.Loyalty(),
-		manaCost:        card.ManaCost(),
-		name:            card.Name(),
-		power:           card.Power(),
-		rulesText:       card.RulesText(),
-		staticAbilities: card.StaticAbilities(),
-		subtypes:        card.Subtypes(),
-		supertypes:      card.Supertypes(),
-		toughness:       card.Toughness(),
-		targets:         targets,
+		card:              card,
+		cardTypes:         card.CardTypes(),
+		colors:            card.Colors(),
+		controller:        playerID,
+		effectWithTargets: effectWithTargets,
+		flashback:         flashback,
+		owner:             card.Owner(),
+		id:                id,
+		loyalty:           card.Loyalty(),
+		manaCost:          card.ManaCost(),
+		name:              card.Name(),
+		power:             card.Power(),
+		rulesText:         card.RulesText(),
+		staticAbilities:   card.StaticAbilities(),
+		subtypes:          card.Subtypes(),
+		supertypes:        card.Supertypes(),
+		toughness:         card.Toughness(),
 	}
 	return spell, nil
 }
@@ -94,31 +76,17 @@ func (s Spell) Controller() string {
 }
 
 // Effects returns the effects of the spell.
-func (s Spell) Effects() []definition.EffectSpec {
-	return s.effects
+func (s Spell) EffectWithTargets() []EffectWithTarget {
+	return s.effectWithTargets
 }
 
 func (s Spell) Flashback() bool {
 	return s.flashback
 }
 
-func (s Spell) Targets() map[string]target.TargetValue {
-	return s.targets
-}
-
 // Description returns a string representation of the activated ability.
 func (s Spell) Description() string {
-	var descriptions []string
-	for _, effect := range s.effects {
-
-		// TODO: Come up with a better way to handle descriptions
-		descriptions = append(descriptions, effect.Name)
-		// descriptions = append(descriptions, effect.Description())
-
-	}
-	// TODO: Support additional costs
-	// return fmt.Sprintf("%s: %s", s.ManaCost().Description(), strings.Join(descriptions, ", "))
-	return fmt.Sprintf("%s: %s", "<cost>", strings.Join(descriptions, ", "))
+	return "Put something good here"
 }
 
 // ID returns the ID of the spell.
@@ -158,41 +126,6 @@ func (s Spell) Power() int {
 	return s.power
 }
 
-/* // func Resolve
-	// TODO: Do I need to check for effects here?
-	if s.Effects == nil && s.card.Match(is.Permanent()) {
-		permanent, err := NewPermanent(s.card, state, player)
-		if err != nil {
-			return fmt.Errorf("failed to create permanent: %w", err)
-		}
-		battlefieldAdder, ok := state.(BattlefieldAdder)
-		if !ok {
-			return fmt.Errorf("state does not implement BattlefieldAdder")
-		}
-		battlefieldAdder.AddToBattlefield(permanent)
-	}
-	for _, effect := range s.effects {
-		if err := effect.Apply(state, player); err != nil {
-			return fmt.Errorf("cannot resolve effect: %w", err)
-		}
-	}
-	cardPlacer, ok := state.(CardPlacer)
-	if !ok {
-		return fmt.Errorf("state does not implement CardPlacer")
-	}
-	if s.flashback {
-		if err := cardPlacer.PlaceCard(s.card, mtg.ZoneExile); err != nil {
-			return fmt.Errorf("cannot place card in exile: %w", err)
-		}
-		return nil
-	}
-	if err := cardPlacer.PlaceCard(s.card, mtg.ZoneGraveyard); err != nil {
-		return fmt.Errorf("cannot move spell to graveyard: %w", err)
-	}
-	return nil
-}
-*/
-
 // RulesText returns the rules text of the spell. The RulesText does not
 // impact the game logic.
 func (s Spell) RulesText() string {
@@ -230,12 +163,3 @@ func (s Spell) Supertypes() []mtg.Supertype {
 func (s Spell) Toughness() int {
 	return s.toughness
 }
-
-/*
-func (s *Spell) Splice(state core.State, card *Card) error {
-	for _, effect := range card.SpellAbility() {
-		s.effects = append(s.effects, effect)
-	}
-	return nil
-}
-*/

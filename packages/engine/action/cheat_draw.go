@@ -17,16 +17,8 @@ func NewDrawCheatAction(player state.Player) DrawCheatAction {
 	}
 }
 
-func (a DrawCheatAction) PlayerID() string {
-	return a.player.ID()
-}
-
 func (a DrawCheatAction) Name() string {
 	return "Draw a Card"
-}
-
-func (a DrawCheatAction) Description() string {
-	return "Draw a card from your hand."
 }
 
 func (a DrawCheatAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {

@@ -2,7 +2,6 @@ package actionparser
 
 import (
 	"deckronomicon/packages/choose"
-	"deckronomicon/packages/engine"
 	"deckronomicon/packages/engine/action"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/query"
@@ -11,40 +10,38 @@ import (
 	"fmt"
 )
 
-type DiscardCheatCommand struct {
-	Player state.Player
-	Card   gob.Card
-}
-
-func (p *DiscardCheatCommand) IsComplete() bool {
-	return p.Player.ID() != "" && p.Card.ID() != ""
-}
-
-func (p *DiscardCheatCommand) Build(game state.Game, player state.Player) (engine.Action, error) {
-	return action.NewDiscardCheatAction(p.Player, p.Card), nil
-}
-
 func parseDiscardCheatCommand(
 	idOrName string,
-	choose func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
 	game state.Game,
 	player state.Player,
-) (*DiscardCheatCommand, error) {
+	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
+) (action.DiscardCheatAction, error) {
 	cards := player.Hand().GetAll()
+	var card gob.Card
+	var err error
 	if idOrName == "" {
-		return buildDiscardCommandByChoice(cards, choose, player)
+		card, err = buildDiscardCommandByChoice(cards, player, chooseFunc)
+		if err != nil {
+			return action.DiscardCheatAction{}, fmt.Errorf("failed to choose a card to discard: %w", err)
+		}
+	} else {
+		found, ok := query.Find(cards, query.Or(has.ID(idOrName), has.Name(idOrName)))
+		if !ok {
+			return action.DiscardCheatAction{}, fmt.Errorf("no land found with ID or name %q", idOrName)
+		}
+		card = found
 	}
-	return buildDiscardCommandByIDOrName(cards, idOrName, player)
+	return action.NewDiscardCheatAction(player, card), nil
 }
 
 func buildDiscardCommandByChoice(
 	cards []gob.Card,
-	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
 	player state.Player,
-) (*DiscardCheatCommand, error) {
+	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
+) (gob.Card, error) {
 	prompt := choose.ChoicePrompt{
 		Message:  "Choose a card to discard",
-		Source:   CommandSource{"Discard a card"},
+		Source:   player,
 		Optional: true,
 		ChoiceOpts: choose.ChooseOneOpts{
 			Choices: choose.NewChoices(cards),
@@ -52,32 +49,15 @@ func buildDiscardCommandByChoice(
 	}
 	choiceResults, err := chooseFunc(prompt)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get choices: %w", err)
+		return gob.Card{}, fmt.Errorf("failed to get choices: %w", err)
 	}
 	selected, ok := choiceResults.(choose.ChooseOneResults)
 	if !ok {
-		return nil, fmt.Errorf("expected a single choice result")
+		return gob.Card{}, fmt.Errorf("expected a single choice result")
 	}
 	card, ok := selected.Choice.(gob.Card)
 	if !ok {
-		return nil, fmt.Errorf("selected choice is not a card in hand")
+		return gob.Card{}, fmt.Errorf("selected choice is not a card in hand")
 	}
-	return &DiscardCheatCommand{
-		Card:   card,
-		Player: player,
-	}, nil
-}
-
-func buildDiscardCommandByIDOrName(
-	cards []gob.Card,
-	idOrName string,
-	player state.Player,
-) (*DiscardCheatCommand, error) {
-	if card, ok := query.Find(cards, query.Or(has.ID(idOrName), has.Name(idOrName))); ok {
-		return &DiscardCheatCommand{
-			Card:   card,
-			Player: player,
-		}, nil
-	}
-	return nil, fmt.Errorf("no land found with ID or name %q", idOrName)
+	return card, nil
 }

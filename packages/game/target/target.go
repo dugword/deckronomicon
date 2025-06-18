@@ -5,6 +5,8 @@ import "deckronomicon/packages/query"
 // TODO Maybe target is its own package.
 // Could be a compound type like cost
 
+// TODO: This maybe should live in game/target
+
 // This could be a thing with json.RawMessage like the effects.
 // Then I could still have type safety with targets, and have different target types.
 // and still have it be JSON serializable.
@@ -52,8 +54,7 @@ func (t PlayerTargetSpec) TargetType() TargetType {
 	return TargetTypePlayer
 }
 
-type PermanentTargetSpec struct {
-}
+type PermanentTargetSpec struct{}
 
 func (t PermanentTargetSpec) Name() string {
 	return string(TargetTypePermanent)

@@ -1,9 +1,9 @@
 package state
 
 import (
-	"deckronomicon/packages/engine/target"
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/query"
 )
 

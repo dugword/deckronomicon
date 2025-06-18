@@ -21,9 +21,7 @@
   "StaticAbilities": [
     {
       "Name": "Flashback",
-      "Modifiers": {
-          "Cost": "{1}{U}, Pay 3 life"
-        }
+      "Cost": "{1}{U}, Pay 3 life"
     }
   ],
   "RulesText": "Target player draws two cards.\nFlashback—{1}{U}, Pay 3 life. (You may cast this card from your graveyard for its flashback cost. Then exile it.)"

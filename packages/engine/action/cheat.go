@@ -16,16 +16,8 @@ func NewCheatAction(player state.Player) CheatAction {
 	}
 }
 
-func (a CheatAction) PlayerID() string {
-	return a.player.ID()
-}
-
 func (a CheatAction) Name() string {
 	return "Enable Cheats"
-}
-
-func (a CheatAction) Description() string {
-	return "Enable cheat mode"
 }
 
 func (a CheatAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {

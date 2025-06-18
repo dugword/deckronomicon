@@ -2,6 +2,9 @@
   "CardTypes": [
     "Sorcery"
   ],
+  "SubTypes": [
+    "Arcane"
+  ],
   "Color": [
     "U"
   ],

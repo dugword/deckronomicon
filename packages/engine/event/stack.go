@@ -1,8 +1,7 @@
 package event
 
 import (
-	"deckronomicon/packages/engine/target"
-	"deckronomicon/packages/game/definition"
+	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
 )
 
@@ -54,11 +53,11 @@ func (e PutSpellInGraveyardEvent) EventType() string {
 
 type PutSpellOnStackEvent struct {
 	StackBaseEvent
-	PlayerID  string
-	CardID    string
-	FromZone  mtg.Zone
-	Targets   map[string]target.TargetValue
-	Flashback bool
+	PlayerID          string
+	CardID            string
+	FromZone          mtg.Zone
+	EffectWithTargets []gob.EffectWithTarget
+	Flashback         bool
 }
 
 func (e PutSpellOnStackEvent) EventType() string {
@@ -67,13 +66,12 @@ func (e PutSpellOnStackEvent) EventType() string {
 
 type PutAbilityOnStackEvent struct {
 	StackBaseEvent
-	PlayerID    string
-	SourceID    string
-	AbilityID   string
-	FromZone    mtg.Zone
-	AbilityName string
-	Targets     map[string]target.TargetValue
-	EffectSpecs []definition.EffectSpec
+	PlayerID          string
+	SourceID          string
+	AbilityID         string
+	FromZone          mtg.Zone
+	AbilityName       string
+	EffectWithTargets []gob.EffectWithTarget
 }
 
 func (e PutAbilityOnStackEvent) EventType() string {

@@ -1,7 +1,6 @@
 package state
 
 import (
-	"deckronomicon/packages/engine/target"
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
@@ -104,9 +103,20 @@ func (g Game) WithStack(stack Stack) Game {
 	return g
 }
 
-func (g Game) WithPutSpellOnStack(card gob.Card, playerID string, targets map[string]target.TargetValue, flashback bool) (Game, error) {
+func (g Game) WithPutSpellOnStack(
+	card gob.Card,
+	playerID string,
+	effectWithTargets []gob.EffectWithTarget,
+	flashback bool,
+) (Game, error) {
 	id, game := g.GetNextID()
-	spell, err := gob.NewSpell(id, card, playerID, targets, flashback)
+	spell, err := gob.NewSpell(
+		id,
+		card,
+		playerID,
+		effectWithTargets,
+		flashback,
+	)
 	if err != nil {
 		return game, err
 	}
@@ -120,8 +130,9 @@ func (g Game) WithPutAbilityOnStack(
 	sourceID,
 	abilityID,
 	abilityName string,
-	effectSpecs []definition.EffectSpec,
-	targets map[string]target.TargetValue,
+	effectWithTargets []gob.EffectWithTarget,
+	// effectSpecs []definition.EffectSpec,
+	// targets map[string]target.TargetValue,
 ) (Game, error) {
 	id, game := g.GetNextID()
 	abilityOnStack := gob.NewAbilityOnStack(
@@ -130,8 +141,9 @@ func (g Game) WithPutAbilityOnStack(
 		sourceID,
 		abilityID,
 		abilityName,
-		effectSpecs,
-		targets,
+		effectWithTargets,
+		// effectSpecs,
+		// targets,
 	)
 	stack := game.stack.AddTop(abilityOnStack)
 	game = game.WithStack(stack)

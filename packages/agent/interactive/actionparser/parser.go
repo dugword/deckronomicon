@@ -12,36 +12,19 @@ package actionparser
 import (
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine"
+	"deckronomicon/packages/engine/action"
 	"deckronomicon/packages/state"
 	"errors"
 	"fmt"
 	"strings"
 )
 
-type CommandSource struct {
-	name string
-}
-
-func (c CommandSource) Name() string {
-	return c.name
-}
-
-type Command interface {
-	IsComplete() bool
-	Build(game state.Game, player state.Player) (engine.Action, error)
-	// PromptNext(game state.Game, player state.Player) (choose.ChoicePrompt, error)
-}
-
-type CommandParser struct {
-	Command Command
-}
-
-func (p *CommandParser) ParseInput(
+func ParseInput(
 	input string,
 	choose func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
 	game state.Game,
 	player state.Player,
-) (Command, error) {
+) (engine.Action, error) {
 	parts := strings.Fields(input)
 	if len(parts) == 0 {
 		return nil, errors.New("no command provided")
@@ -50,57 +33,58 @@ func (p *CommandParser) ParseInput(
 	command = strings.ToLower(command)
 	switch command {
 	case "activate", "tap":
-		return parseActivateAbilityCommand(arg, choose, game, player)
+		return parseActivateAbilityCommand(arg, game, player, choose)
 	case "cheat":
-		return &CheatCommand{Player: player}, nil
+		return action.NewCheatAction(player), nil
 	case "clear":
-		return &ClearCommand{Player: player}, nil
+		return action.NewClearRevealedAction(player), nil
 	case "concede", "exit", "quit":
-		return &ConcedeCommand{Player: player}, nil
+		return action.NewConcedeAction(player), nil
 	case "help":
-		return &HelpCommand{}, nil
+		fmt.Println("Need to implement help command")
+		return nil, nil
 	case "pass", "next", "done":
-		return &PassPriorityCommand{Player: player}, nil
+		return action.NewPassPriorityAction(player), nil
 	case "play":
-		return parsePlayLandCommand(arg, choose, game, player)
+		return parsePlayLandCommand(arg, game, player, choose)
 	case "cast":
-		return parseCastSpellCommand(arg, choose, game, player)
+		return parseCastSpellCommand(arg, game, player, choose)
 	case "view":
-		return parseViewCommand(arg, choose, game, player)
+		return parseViewCommand(arg, game, player, choose)
 	default:
 		if game.CheatsEnabled() {
-			return p.ParseCheatCommand(command, arg, choose, game, player)
+			return parseCheatCommand(command, arg, choose, game, player)
 		}
 		return nil, fmt.Errorf("unknown command %q", command)
 	}
 }
 
-func (p *CommandParser) ParseCheatCommand(
+func parseCheatCommand(
 	command string,
 	arg string,
 	choose func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
 	game state.Game,
 	player state.Player,
-) (Command, error) {
+) (engine.Action, error) {
 	switch command {
 	case "addmana":
 		return parseAddManaCheatCommand(arg, player)
 	case "conjure":
 		return parseConjureCardCheatCommand(arg, player)
 	case "draw":
-		return &DrawCheatCommand{Player: player}, nil
+		return action.NewDrawCheatAction(player), nil
 	case "discard":
-		return parseDiscardCheatCommand(arg, choose, game, player)
+		return parseDiscardCheatCommand(arg, game, player, choose)
 	case "find", "tutor":
-		return parseFindCardCheatCommand(arg, choose, player)
+		return parseFindCardCheatCommand(arg, player, choose)
 	case "landdrop":
-		return &ResetLandDropCommand{Player: player}, nil
+		return action.NewResetLandDropCheatAction(player), nil
 	case "peek":
-		return &PeekCheatCommand{Player: player}, nil
+		return action.NewPeekCheatAction(player), nil
 	case "shuffle":
-		return &ShuffleCheatCommand{Player: player}, nil
+		return action.NewShuffleCheatAction(player), nil
 	case "untap":
-		return parseUntapCheatCommand(arg, choose, game, player)
+		return parseUntapCheatCommand(arg, game, player, choose)
 	default:
 		return nil, fmt.Errorf("unknown cheat command %q", command)
 	}

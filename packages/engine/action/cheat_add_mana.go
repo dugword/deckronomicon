@@ -25,14 +25,6 @@ func (a AddManaCheatAction) Name() string {
 	return "CHEAT: Add Mana"
 }
 
-func (a AddManaCheatAction) PlayerID() string {
-	return a.Player.ID()
-}
-
-func (a AddManaCheatAction) Description() string {
-	return "CHEAT: The active player adds mana."
-}
-
 func (a AddManaCheatAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	if !game.CheatsEnabled() {
 		return nil, fmt.Errorf("no cheating you cheater")

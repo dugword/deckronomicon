@@ -2,52 +2,51 @@ package actionparser
 
 import (
 	"deckronomicon/packages/choose"
-	"deckronomicon/packages/engine"
 	"deckronomicon/packages/engine/action"
+	"deckronomicon/packages/engine/judge"
 	"deckronomicon/packages/game/gob"
-	"deckronomicon/packages/judge"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/has"
 	"deckronomicon/packages/state"
 	"fmt"
 )
 
-type PlayLandCommand struct {
-	CardInZone gob.CardInZone
-	Player     state.Player
-}
-
-func (p *PlayLandCommand) IsComplete() bool {
-	return p.CardInZone.ID() == "" && p.Player.ID() != ""
-}
-
-func (p *PlayLandCommand) Build(
-	game state.Game,
-	player state.Player,
-) (engine.Action, error) {
-	return action.NewPlayLandAction(player, p.CardInZone), nil
-}
-
 func parsePlayLandCommand(
 	idOrName string,
-	choose func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
 	game state.Game,
 	player state.Player,
-) (*PlayLandCommand, error) {
-	cards := judge.GetLandsAvailableToPlay(game, player)
+	choose func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
+) (action.PlayLandAction, error) {
+	ruling := judge.Ruling{Explain: true}
+	cards := judge.GetLandsAvailableToPlay(game, player, &ruling)
+	var cardInZone gob.CardInZone
+	var err error
 	if idOrName == "" {
-		return buildPlayLandCommandByChoice(cards, choose, player)
+		cardInZone, err = buildPlayLandCommandByChoice(cards, player, choose)
+		if err != nil {
+			return action.PlayLandAction{}, fmt.Errorf("failed to choose a land to play: %w", err)
+		}
+	} else {
+		found, ok := query.Find(cards, query.Or(has.ID(idOrName), has.Name(idOrName)))
+		if !ok {
+			return action.PlayLandAction{}, fmt.Errorf("no land found with ID or name %q", idOrName)
+		}
+		cardInZone = found
 	}
-	return buildPlayLandCommandByIDOrName(cards, idOrName, player)
+	request := action.PlayLandRequest{
+		CardID: cardInZone.Card().ID(),
+	}
+	return action.NewPlayLandAction(player, request), nil
 }
 
 func buildPlayLandCommandByChoice(
 	cards []gob.CardInZone,
+	player state.Player,
 	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
-	player state.Player) (*PlayLandCommand, error) {
+) (gob.CardInZone, error) {
 	prompt := choose.ChoicePrompt{
 		Message:  "Choose a land to play",
-		Source:   CommandSource{"Play a land"},
+		Source:   player,
 		Optional: true,
 		ChoiceOpts: choose.ChooseOneOpts{
 			Choices: choose.NewChoices(cards),
@@ -55,32 +54,15 @@ func buildPlayLandCommandByChoice(
 	}
 	choiceResults, err := chooseFunc(prompt)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get choices: %w", err)
+		return gob.CardInZone{}, fmt.Errorf("failed to get choices: %w", err)
 	}
 	selected, ok := choiceResults.(choose.ChooseOneResults)
 	if !ok {
-		return nil, fmt.Errorf("expected a single choice result")
+		return gob.CardInZone{}, fmt.Errorf("expected a single choice result")
 	}
-	card, ok := selected.Choice.(gob.CardInZone)
+	cardInZone, ok := selected.Choice.(gob.CardInZone)
 	if !ok {
-		return nil, fmt.Errorf("selected choice is not a card in a zone")
+		return gob.CardInZone{}, fmt.Errorf("selected choice is not a card in a zone")
 	}
-	return &PlayLandCommand{
-		CardInZone: card,
-		Player:     player,
-	}, nil
-}
-
-func buildPlayLandCommandByIDOrName(
-	cards []gob.CardInZone,
-	idOrName string,
-	player state.Player,
-) (*PlayLandCommand, error) {
-	if card, ok := query.Find(cards, query.Or(has.ID(idOrName), has.Name(idOrName))); ok {
-		return &PlayLandCommand{
-			CardInZone: card,
-			Player:     player,
-		}, nil
-	}
-	return nil, fmt.Errorf("no land found with ID or name %q", idOrName)
+	return cardInZone, nil
 }

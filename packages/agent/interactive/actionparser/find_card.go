@@ -2,7 +2,6 @@ package actionparser
 
 import (
 	"deckronomicon/packages/choose"
-	"deckronomicon/packages/engine"
 	"deckronomicon/packages/engine/action"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/query"
@@ -11,38 +10,37 @@ import (
 	"fmt"
 )
 
-type FindCardCheatCommand struct {
-	Player state.Player
-	Card   gob.Card
-}
-
-func (p *FindCardCheatCommand) IsComplete() bool {
-	return p.Player.ID() != "" && p.Card.ID() != ""
-}
-
-func (p *FindCardCheatCommand) Build(game state.Game, player state.Player) (engine.Action, error) {
-	return action.NewFindCardCheatAction(p.Player, p.Card), nil
-}
-
 func parseFindCardCheatCommand(
 	idOrName string,
-	choose func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
 	player state.Player,
-) (*FindCardCheatCommand, error) {
+	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
+) (action.FindCardCheatAction, error) {
 	cards := player.Library().GetAll()
+	var card gob.Card
+	var err error
 	if idOrName == "" {
-		return buildFindCardCheatCommandByChoice(cards, choose, player)
+		card, err = buildFindCardCheatCommandByChoice(cards, player, chooseFunc)
+		if err != nil {
+			return action.FindCardCheatAction{}, fmt.Errorf("failed to choose a card to find: %w", err)
+		}
+	} else {
+		found, ok := query.Find(cards, query.Or(has.ID(idOrName), has.Name(idOrName)))
+		if !ok {
+			return action.FindCardCheatAction{}, fmt.Errorf("no card found with ID or name %q", idOrName)
+		}
+		card = found
 	}
-	return buildFindCardCheatCommandByIDOrName(cards, idOrName, player)
+	return action.NewFindCardCheatAction(player, card), nil
 }
 
 func buildFindCardCheatCommandByChoice(
 	cards []gob.Card,
+	player state.Player,
 	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
-	player state.Player) (*FindCardCheatCommand, error) {
+) (gob.Card, error) {
 	prompt := choose.ChoicePrompt{
 		Message:  "Choose a card to put into your hand",
-		Source:   CommandSource{"Find a card"},
+		Source:   player,
 		Optional: true,
 		ChoiceOpts: choose.ChooseOneOpts{
 			Choices: choose.NewChoices(cards),
@@ -50,32 +48,15 @@ func buildFindCardCheatCommandByChoice(
 	}
 	choiceResults, err := chooseFunc(prompt)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get choices: %w", err)
+		return gob.Card{}, fmt.Errorf("failed to get choices: %w", err)
 	}
 	selected, ok := choiceResults.(choose.ChooseOneResults)
 	if !ok {
-		return nil, fmt.Errorf("expected a single choice result")
+		return gob.Card{}, fmt.Errorf("expected a single choice result")
 	}
 	card, ok := selected.Choice.(gob.Card)
 	if !ok {
-		return nil, fmt.Errorf("selected choice is not a card in a zone")
+		return gob.Card{}, fmt.Errorf("selected choice is not a card")
 	}
-	return &FindCardCheatCommand{
-		Card:   card,
-		Player: player,
-	}, nil
-}
-
-func buildFindCardCheatCommandByIDOrName(
-	cards []gob.Card,
-	idOrName string,
-	player state.Player,
-) (*FindCardCheatCommand, error) {
-	if card, ok := query.Find(cards, query.Or(has.ID(idOrName), has.Name(idOrName))); ok {
-		return &FindCardCheatCommand{
-			Card:   card,
-			Player: player,
-		}, nil
-	}
-	return nil, fmt.Errorf("no card found with ID or name %q", idOrName)
+	return card, nil
 }

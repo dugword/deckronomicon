@@ -20,16 +20,8 @@ func NewViewAction(player state.Player, zone string, cardID string) ViewAction {
 	}
 }
 
-func (a ViewAction) PlayerID() string {
-	return a.player.ID()
-}
-
 func (a ViewAction) Name() string {
 	return "View card"
-}
-
-func (a ViewAction) Description() string {
-	return "View a card in any zone."
 }
 
 func (a ViewAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {

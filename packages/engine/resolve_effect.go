@@ -3,8 +3,8 @@ package engine
 import (
 	"deckronomicon/packages/engine/effect"
 	"deckronomicon/packages/engine/event"
-	"deckronomicon/packages/engine/target"
 	"deckronomicon/packages/game/definition"
+	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/state"
 	"fmt"
 )
@@ -13,7 +13,7 @@ func (e *Engine) ResolveEffect(
 	game state.Game,
 	player state.Player,
 	resolvable state.Resolvable,
-	targets map[string]target.TargetValue,
+	target target.TargetValue,
 	effectSpec definition.EffectSpec,
 ) ([]event.GameEvent, error) {
 	var events []event.GameEvent
@@ -21,8 +21,7 @@ func (e *Engine) ResolveEffect(
 	if err != nil {
 		return nil, fmt.Errorf("effect %q not found: %w", effectSpec.Name, err)
 	}
-	//effectResult := effect.EffectResult{}
-	effectResult, err := efct.Resolve(e.game, player, resolvable, targets[effectSpec.Name])
+	effectResult, err := efct.Resolve(e.game, player, resolvable, target)
 	if err != nil {
 		return nil, fmt.Errorf("failed to apply effect %q: %w", effectSpec.Name, err)
 	}
