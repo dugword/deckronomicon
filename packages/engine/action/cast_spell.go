@@ -2,142 +2,205 @@ package action
 
 import (
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/engine/judge"
+	"deckronomicon/packages/engine/pay"
 	"deckronomicon/packages/engine/resenv"
-	"deckronomicon/packages/engine/static_abilities"
-	"deckronomicon/packages/engine/target"
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/gob"
-	"deckronomicon/packages/game/mana"
 	"deckronomicon/packages/game/mtg"
-	"deckronomicon/packages/judge"
-	"deckronomicon/packages/query/has"
+	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/state"
-	"encoding/json"
 	"fmt"
 )
 
+type CastSpellRequest struct {
+	CardID            string
+	SpliceCardIDs     []string
+	TargetsForEffects map[EffectTargetKey]target.TargetValue
+	WithFlashback     bool
+}
+
 type CastSpellAction struct {
-	player          state.Player
-	cardInZone      gob.CardInZone
-	manaPayment     mana.Pool
-	additionalCosts []string
-	targets         map[string]target.TargetValue
+	playerID          string
+	cardID            string
+	targetsForEffects map[EffectTargetKey]target.TargetValue
+	spliceCardIDs     []string
+	withFlashback     bool
 }
 
-func NewCastSpellAction(player state.Player, cardInZone gob.CardInZone, targets map[string]target.TargetValue) CastSpellAction {
+func NewCastSpellAction(
+	playerID string,
+	request CastSpellRequest,
+) CastSpellAction {
 	return CastSpellAction{
-		player:     player,
-		cardInZone: cardInZone,
-		targets:    targets,
+		playerID:          playerID,
+		cardID:            request.CardID,
+		targetsForEffects: request.TargetsForEffects,
+		spliceCardIDs:     request.SpliceCardIDs,
+		withFlashback:     request.WithFlashback,
 	}
-}
-
-func (a CastSpellAction) PlayerID() string {
-	return a.player.ID()
 }
 
 func (a CastSpellAction) Name() string {
 	return "Cast Spell"
 }
-func (a CastSpellAction) Description() string {
-	return "The active player casts a spell from their hand."
-}
 
 func (a CastSpellAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
+	player, ok := game.GetPlayer(a.playerID)
+	if !ok {
+		return nil, fmt.Errorf("player %q not found in game", a.playerID)
+	}
+	if a.withFlashback {
+		return a.castWithFlashback(game, player)
+	}
+	return a.castFromHand(game, player)
+}
+
+func (a CastSpellAction) castWithFlashback(game state.Game, player state.Player) ([]event.GameEvent, error) {
+	cardToCast, ok := player.GetCardFromZone(a.cardID, mtg.ZoneGraveyard)
+	if !ok {
+		return nil, fmt.Errorf("player %q does not have card %q in graveyard", a.playerID, a.cardID)
+	}
+	flashbackCost, ok := cardToCast.GetStaticAbilityCost(mtg.StaticKeywordFlashback)
+	if !ok {
+		return nil, fmt.Errorf("card %q does not have flashback", cardToCast.ID())
+	}
 	ruling := judge.Ruling{Explain: true}
-	if !judge.CanCastSpell(
+	if !judge.CanCastSpellWithFlashback(
 		game,
-		a.player,
-		a.cardInZone.Zone(),
-		a.cardInZone.Card(),
+		player,
+		cardToCast,
+		flashbackCost,
 		&ruling,
 	) {
 		return nil, fmt.Errorf(
-			"player %q cannot cast card %q from zone %q: %s",
-			a.player.ID(),
-			a.cardInZone.ID(),
-			a.cardInZone.Zone(),
+			"player %q cannot cast card %q with flashback: %s",
+			a.playerID,
+			cardToCast.ID(),
 			ruling.Why(),
 		)
 	}
-	switch a.cardInZone.Zone() {
-	case mtg.ZoneGraveyard:
-		return a.castFromGraveyard(game)
-	case mtg.ZoneHand:
-		return a.castFromHand(game)
-	default:
-		return nil, fmt.Errorf("casting from zone %q not implemented", a.cardInZone.Zone())
-	}
-}
-
-func (a CastSpellAction) castFromGraveyard(game state.Game) ([]event.GameEvent, error) {
-	if !a.cardInZone.Card().Match(has.StaticKeyword(mtg.StaticKeywordFlashback)) {
-		// Only flashback is supported for now
-		return nil, fmt.Errorf("card %q does not have flashback", a.cardInZone.ID())
-	}
-	var costString string
-	// TODO: Maybe these should be methods on the Card type?
-	// Or maybe a helper function?
-	for _, ability := range a.cardInZone.Card().StaticAbilities() {
-		if ability.StaticKeyword() != mtg.StaticKeywordFlashback {
-			continue
-		}
-		if ability.StaticKeyword() != mtg.StaticKeywordFlashback {
-			continue
-		}
-		//TODO Have some kind of helper function to get static abilities
-		// or maybe some kind of interface so I can have these live on the card type....
-		flashbackModifiers := static_abilities.FlashbackModifiers{}
-		if err := json.Unmarshal(ability.Modifiers, &flashbackModifiers); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal flashback modifiers: %w", err)
-		}
-		costString = flashbackModifiers.Cost
-	}
-	if costString == "" {
-		return nil, fmt.Errorf("flashback ability on card %q is missing Cost modifier", a.cardInZone.Name())
-	}
-	costs, err := cost.ParseCost(costString, a.cardInZone.Card())
+	effectWithTargets, err := buildEffectWithTargets(cardToCast.ID(), cardToCast.SpellAbility(), a.targetsForEffects)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse cost: %w", err)
+		return nil, err
 	}
-	costEvents, err := PayCost(costs, a.cardInZone.Card(), a.player)
-	if err != nil {
-		return nil, fmt.Errorf("failed to pay cost: %w", err)
-	}
-	events := append(costEvents,
+	costEvents := pay.PayCost(flashbackCost, cardToCast, player)
+	events := append(
+		costEvents,
 		event.CastSpellEvent{
-			PlayerID: a.player.ID(),
-			CardID:   a.cardInZone.ID(),
+			PlayerID: a.playerID,
+			CardID:   cardToCast.ID(),
 			FromZone: mtg.ZoneGraveyard,
 		},
 		event.PutSpellOnStackEvent{
-			PlayerID:  a.player.ID(),
-			CardID:    a.cardInZone.ID(),
-			FromZone:  mtg.ZoneGraveyard,
-			Targets:   a.targets,
-			Flashback: true,
+			PlayerID:          a.playerID,
+			CardID:            cardToCast.ID(),
+			FromZone:          mtg.ZoneGraveyard,
+			EffectWithTargets: effectWithTargets,
+			Flashback:         true,
 		},
 	)
 	return events, nil
 }
 
-func (a CastSpellAction) castFromHand(game state.Game) ([]event.GameEvent, error) {
-	costEvents, err := PayCost(a.cardInZone.Card().ManaCost(), a.cardInZone.Card(), a.player)
-	if err != nil {
-		return nil, fmt.Errorf("failed to pay cost: %w", err)
+func (a CastSpellAction) castFromHand(game state.Game, player state.Player) ([]event.GameEvent, error) {
+	cardToCast, ok := player.GetCardFromZone(a.cardID, mtg.ZoneHand)
+	if !ok {
+		return nil, fmt.Errorf("player %q does not have card %q in hand", a.playerID, a.cardID)
 	}
-	events := append(costEvents,
+	var totalCost cost.Cost = cardToCast.ManaCost()
+	effectWithTargets, err := buildEffectWithTargets(cardToCast.ID(), cardToCast.SpellAbility(), a.targetsForEffects)
+	if err != nil {
+		return nil, err
+	}
+	if len(a.spliceCardIDs) > 0 {
+		spliceEffectWithCards, spliceCosts, err := buildSpliceEffectWithCards(
+			player,
+			cardToCast,
+			a.spliceCardIDs,
+			a.targetsForEffects,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to build splice effect with cards: %w", err)
+		}
+		effectWithTargets = append(effectWithTargets, spliceEffectWithCards...)
+		totalCost = cost.CombineCosts(totalCost, spliceCosts...)
+	}
+	ruling := judge.Ruling{Explain: true}
+	if !judge.CanCastSpellFromHand(
+		game,
+		player,
+		cardToCast,
+		totalCost,
+		&ruling,
+	) {
+		return nil, fmt.Errorf(
+			"player %q cannot cast card %q from from hand: %s",
+			a.playerID,
+			cardToCast.ID(),
+			ruling.Why(),
+		)
+	}
+	costEvents := pay.PayCost(totalCost, cardToCast, player)
+	events := append(
+		costEvents,
 		event.CastSpellEvent{
-			PlayerID: a.player.ID(),
-			CardID:   a.cardInZone.ID(),
+			PlayerID: a.playerID,
+			CardID:   cardToCast.ID(),
 			FromZone: mtg.ZoneHand,
 		},
 		event.PutSpellOnStackEvent{
-			PlayerID: a.player.ID(),
-			CardID:   a.cardInZone.ID(),
-			Targets:  a.targets,
-			FromZone: mtg.ZoneHand,
+			PlayerID:          a.playerID,
+			CardID:            cardToCast.ID(),
+			EffectWithTargets: effectWithTargets,
+			FromZone:          mtg.ZoneHand,
 		},
 	)
 	return events, nil
+}
+
+func buildSpliceEffectWithCards(
+	player state.Player,
+	cardToCast gob.Card,
+	spliceCardIDs []string,
+	targetsForEffects map[EffectTargetKey]target.TargetValue,
+) ([]gob.EffectWithTarget, []cost.Cost, error) {
+	var spliceCosts []cost.Cost
+	var effectWithTargets []gob.EffectWithTarget
+	for _, spliceCardID := range spliceCardIDs {
+		spliceCard, ok := player.GetCardFromZone(spliceCardID, mtg.ZoneHand)
+		if !ok {
+			return nil, nil, fmt.Errorf("card %q not found in hand for splicing", spliceCardID)
+		}
+		var ruling judge.Ruling
+		if !judge.CanSpliceCard(
+			player,
+			cardToCast,
+			spliceCard,
+			&ruling,
+		) {
+			return nil, nil, fmt.Errorf(
+				"player %q cannot splice card %q onto spell %q: %s",
+				player.ID(),
+				spliceCardID,
+				cardToCast.ID(),
+				ruling.Why(),
+			)
+		}
+		staticAbilityCost, ok := spliceCard.GetStaticAbilityCost(mtg.StaticKeywordSplice)
+		if !ok {
+			return nil, nil, fmt.Errorf("card %q does not have splice ability", spliceCardID)
+		}
+		spliceCosts = append(spliceCosts, staticAbilityCost)
+		effectWithSpliceTargets, err := buildEffectWithTargets(
+			spliceCard.ID(),
+			spliceCard.SpellAbility(),
+			targetsForEffects,
+		)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to build effect with targets for splice card %q: %w", spliceCardID, err)
+		}
+		effectWithTargets = append(effectWithTargets, effectWithSpliceTargets...)
+	}
+	return effectWithTargets, spliceCosts, nil
 }

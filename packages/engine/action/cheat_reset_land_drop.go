@@ -17,16 +17,8 @@ func NewResetLandDropCheatAction(player state.Player) ResetLandDropCheatAction {
 	}
 }
 
-func (a ResetLandDropCheatAction) PlayerID() string {
-	return a.player.ID()
-}
-
 func (a ResetLandDropCheatAction) Name() string {
 	return "Reset Land Drop"
-}
-
-func (a ResetLandDropCheatAction) Description() string {
-	return "Reset the land drop for the turn."
 }
 
 func (a ResetLandDropCheatAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
@@ -34,6 +26,6 @@ func (a ResetLandDropCheatAction) Complete(game state.Game, resEnv *resenv.ResEn
 		return nil, fmt.Errorf("no cheating you cheater")
 	}
 	return []event.GameEvent{event.CheatResetLandDropEvent{
-		PlayerID: a.PlayerID(),
+		PlayerID: a.player.ID(),
 	}}, nil
 }

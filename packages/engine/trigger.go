@@ -3,9 +3,10 @@ package engine
 import (
 	"deckronomicon/packages/engine/effect"
 	"deckronomicon/packages/engine/event"
-	"deckronomicon/packages/engine/target"
 	"deckronomicon/packages/game/definition"
+	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/state"
 	"fmt"
 	"slices"
@@ -124,13 +125,24 @@ func (e *Engine) HandleTriggeredEffect(game state.Game, playerID string, te stat
 			effectSpecs = append(effectSpecs, effectSpec)
 		}
 	}
+	// TODO: Get targets
+	var effectWithTargets []gob.EffectWithTarget
+	for _, effectSpec := range effectSpecs {
+		effectWithTargets = append(effectWithTargets, gob.EffectWithTarget{
+			EffectSpec: effectSpec,
+			Target: target.TargetValue{
+				TargetType: target.TargetTypeNone,
+			},
+		})
+	}
 	if len(effectSpecs) > 0 {
 		events = append(events, event.PutAbilityOnStackEvent{
 			PlayerID:    playerID,
 			SourceID:    te.ID,
 			AbilityID:   te.ID,
 			AbilityName: "Triggered Effect",
-			EffectSpecs: effectSpecs,
+			// EffectSpecs: effectSpecs,
+			EffectWithTargets: effectWithTargets,
 		})
 	}
 	return events, nil

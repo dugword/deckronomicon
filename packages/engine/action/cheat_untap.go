@@ -20,17 +20,10 @@ func NewUntapCheatAction(player state.Player, permanent gob.Permanent) UntapChea
 	}
 }
 
-func (a UntapCheatAction) PlayerID() string {
-	return a.player.ID()
-}
-
 func (a UntapCheatAction) Name() string {
 	return "Untap target permanent"
 }
 
-func (a UntapCheatAction) Description() string {
-	return "Untap target permanent."
-}
 func (a UntapCheatAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	if !game.CheatsEnabled() {
 		return nil, fmt.Errorf("no cheating you cheater")

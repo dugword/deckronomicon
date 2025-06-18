@@ -20,12 +20,7 @@
   "StaticAbilities": [
     {
       "Name": "Replicate",
-      "Modifiers": [
-        {
-          "Key": "Cost",
-          "Value": "{U}"
-        }
-      ]
+      "Cost": "{U}"
     }
   ],
   "RulesText": "Replicate {U} (When you cast this spell, copy it for each time you paid its replicate cost. You may choose new targets for the copies.)\nTap target permanent."

@@ -58,7 +58,8 @@ func (n *ActivateActionNode) Resolve(ctx *evalstate.EvalState) (engine.Action, e
 			Target: engine.ActionTarget{ID: object.ID()},
 		}, nil
 	*/
-	return action.NewActivateAbilityAction(n.Player, n.AbilityInZone), nil
+	request := action.ActivateAbilityRequest{}
+	return action.NewActivateAbilityAction(n.Player.ID(), request), nil
 }
 
 type PlayCardActionNode struct {
@@ -85,5 +86,8 @@ func (n *PlayCardActionNode) Resolve(ctx *evalstate.EvalState) (engine.Action, e
 			Target: engine.ActionTarget{ID: object.ID()},
 		}, nil
 	*/
-	return action.NewPlayLandAction(n.Player, n.CardInZone), nil
+	request := action.PlayLandRequest{
+		CardID: n.CardInZone.Card().ID(),
+	}
+	return action.NewPlayLandAction(n.Player, request), nil
 }

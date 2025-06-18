@@ -42,7 +42,7 @@ func applyPutSpellOnStackEvent(
 		return game, fmt.Errorf("card %q not in zone %q", evnt.CardID, evnt.FromZone)
 	}
 	game = game.WithUpdatedPlayer(player)
-	game, err := game.WithPutSpellOnStack(card, evnt.PlayerID, evnt.Targets, evnt.Flashback)
+	game, err := game.WithPutSpellOnStack(card, evnt.PlayerID, evnt.EffectWithTargets, evnt.Flashback)
 	if err != nil {
 		return game, fmt.Errorf("failed to put card %q on stack: %w", evnt.CardID, err)
 	}
@@ -85,8 +85,7 @@ func applyPutAbilityOnStackEvent(
 		evnt.SourceID,
 		evnt.AbilityID,
 		evnt.AbilityName,
-		evnt.EffectSpecs,
-		evnt.Targets,
+		evnt.EffectWithTargets,
 	)
 	if err != nil {
 		return game, fmt.Errorf("failed to put ability %q on stack: %w", evnt.AbilityID, err)

@@ -2,8 +2,8 @@ package effect
 
 import (
 	"deckronomicon/packages/engine/event"
-	"deckronomicon/packages/engine/target"
 	"deckronomicon/packages/game/definition"
+	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/state"
 	"encoding/json"
@@ -44,8 +44,12 @@ func (e TapOrUntapEffect) Resolve(
 	source query.Object,
 	target target.TargetValue,
 ) (EffectResult, error) {
-	var events []event.GameEvent
 	return EffectResult{
-		Events: events,
+		Events: []event.GameEvent{
+			event.UntapPermanentEvent{
+				PlayerID:    player.ID(),
+				PermanentID: target.ObjectID,
+			},
+		},
 	}, nil
 }

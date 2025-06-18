@@ -3,9 +3,9 @@ package gob
 import (
 	// "deckronomicon/packages/game/definition"
 
+	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/mtg"
 	"encoding/json"
-	"fmt"
 	"strings"
 )
 
@@ -14,6 +14,8 @@ type StaticAbility struct {
 	// TODO: Maybe add a typed "Keyword" value here
 	// keyword mtg.keyword
 	name mtg.StaticKeyword
+	// cost cost.Cost
+	cost cost.Cost
 	// TODO: I don't like this, it feels close but not quite right.
 	// I think tags should mostly be informational and for finding stuff, not
 	// impacting the actual effect logic.
@@ -41,11 +43,7 @@ func (a StaticAbility) Name() string {
 }
 
 func (a StaticAbility) StaticKeyword() mtg.StaticKeyword {
-	keyword, ok := mtg.StringToStaticKeyword(string(a.name))
-	if !ok {
-		panic(fmt.Sprintf("invalid static keyword: %s", a.name))
-	}
-	return keyword
+	return a.name
 }
 
 // Description returns a string representation of the static ability.

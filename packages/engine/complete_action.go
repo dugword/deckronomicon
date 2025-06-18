@@ -17,8 +17,6 @@ import (
 type Action interface {
 	Name() string
 	Complete(state.Game, *resenv.ResEnv) ([]event.GameEvent, error)
-	Description() string
-	PlayerID() string
 }
 
 var ErrInvalidUserAction = errors.New("invalid user action")

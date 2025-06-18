@@ -2,6 +2,9 @@
   "CardTypes": [
     "Instant"
   ],
+   "SubTypes": [
+    "Arcane"
+  ],
   "Color": [
     "U"
   ],

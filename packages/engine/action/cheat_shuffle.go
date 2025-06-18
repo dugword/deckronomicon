@@ -17,16 +17,8 @@ func NewShuffleCheatAction(player state.Player) ShuffleCheatAction {
 	}
 }
 
-func (a ShuffleCheatAction) PlayerID() string {
-	return a.player.ID()
-}
-
 func (a ShuffleCheatAction) Name() string {
 	return "Shuffle Deck"
-}
-
-func (a ShuffleCheatAction) Description() string {
-	return "Shuffle the player's deck."
 }
 
 func (a ShuffleCheatAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
@@ -36,10 +28,10 @@ func (a ShuffleCheatAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]
 	shuffledCardsIDs := resEnv.RNG.ShuffleCardsIDs(a.player.Library().GetAll())
 	return []event.GameEvent{
 		event.CheatShuffleDeckEvent{
-			PlayerID: a.PlayerID(),
+			PlayerID: a.player.ID(),
 		},
 		event.ShuffleLibraryEvent{
-			PlayerID:         a.PlayerID(),
+			PlayerID:         a.player.ID(),
 			ShuffledCardsIDs: shuffledCardsIDs,
 		},
 	}, nil

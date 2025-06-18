@@ -17,16 +17,8 @@ func NewClearRevealedAction(player state.Player) ClearRevealedAction {
 	}
 }
 
-func (a ClearRevealedAction) PlayerID() string {
-	return a.player.ID()
-}
-
 func (a ClearRevealedAction) Name() string {
 	return "Clear revealed cards"
-}
-
-func (a ClearRevealedAction) Description() string {
-	return "Clear all revealed cards from your view."
 }
 
 func (a ClearRevealedAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {

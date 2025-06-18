@@ -71,19 +71,6 @@ func NewPermanent(id string, card Card, playerID string) (Permanent, error) {
 		}
 		permanent.activatedAbilities = append(permanent.activatedAbilities, ability)
 	}
-	/*
-		for _, spec := range card.ActivatedAbilitySpecs() {
-			// TODO: use better types
-			if spec.Zone == string(mtg.ZoneHand) || spec.Zone == string(mtg.ZoneGraveyard) {
-				continue
-			}
-			ability, err := BuildActivatedAbility(state, *spec, &permanent)
-			if err != nil {
-				return nil, fmt.Errorf("failed to build activated ability: %w", err)
-			}
-			permanent.activatedAbilities = append(permanent.activatedAbilities, ability)
-		}
-	*/
 	return permanent, nil
 }
 
@@ -165,15 +152,6 @@ func (p Permanent) Owner() string {
 func (p Permanent) Power() int {
 	return p.power
 }
-
-// RemoveSummoningSickness removes summoning sickness from the permanent. It
-// is a valid operation even if the permanent does not have summoning
-// sickness.
-/*
-func (p Permanent) RemoveSummoningSickness() {
-	p.summoningSickness = false
-}
-*/
 
 // RulesText returns the rules text of the permanent. The RulesText does not
 // impact the game logic.

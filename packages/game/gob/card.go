@@ -6,6 +6,7 @@ import (
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
+	"encoding/json"
 )
 
 // Card represents a card in the game. It contains all the information about
@@ -20,28 +21,22 @@ import (
 // is a copy of another card.
 type Card struct {
 	activatedAbilities []Ability
-	// activatedAbilitySpecs []definition.ActivatedAbilitySpec
-	definition definition.Card
-	cardTypes  []mtg.CardType
-	controller string
-	owner      string
-	colors     mtg.Colors
-	id         string
-	loyalty    int
-	manaCost   cost.ManaCost
-	name       string
-	power      int
-	rulesText  string
-	// spellAbility []Effect
-	spellAbility []definition.EffectSpec
-	// TODO: Maybe this should just be spell spec? sepll effect spec?
-	//spellAbilitySpec      definition.SpellAbilitySpec
-	staticAbilities []StaticAbility
-	//staticAbilitySpecs    []definition.StaticAbilitySpec
-	//triggeredAbilitySpecs []definition.TriggeredAbilitySpec
-	subtypes   []mtg.Subtype
-	supertypes []mtg.Supertype
-	toughness  int
+	definition         definition.Card
+	cardTypes          []mtg.CardType
+	controller         string
+	owner              string
+	colors             mtg.Colors
+	id                 string
+	loyalty            int
+	manaCost           cost.ManaCost
+	name               string
+	power              int
+	rulesText          string
+	spellAbility       []definition.EffectSpec
+	staticAbilities    []StaticAbility
+	subtypes           []mtg.Subtype
+	supertypes         []mtg.Supertype
+	toughness          int
 }
 
 func NewCard(id, name string) Card {
@@ -59,12 +54,6 @@ func NewCard(id, name string) Card {
 func (c Card) ActivatedAbilities() []Ability {
 	return c.activatedAbilities
 }
-
-/*
-func (c Card) ActivatedAbilitySpecs() []definition.ActivatedAbilitySpec {
-	return c.activatedAbilitySpecs
-}
-*/
 
 // CardTypes returns the card types of the card. A card can have multiple
 // types, such as "Creature" or "Artifact". This method returns a slice of
@@ -86,6 +75,24 @@ func (c Card) Controller() string {
 // TODO: Is this the best way to do this?
 func (c Card) Description() string {
 	return c.rulesText
+}
+
+func (c Card) GetStaticAbilityModifiers(staticKeyword mtg.StaticKeyword) (json.RawMessage, bool) {
+	for _, ability := range c.staticAbilities {
+		if ability.StaticKeyword() == staticKeyword {
+			return ability.Modifiers, true
+		}
+	}
+	return nil, false
+}
+
+func (c Card) GetStaticAbilityCost(staticKeyword mtg.StaticKeyword) (cost.Cost, bool) {
+	for _, ability := range c.staticAbilities {
+		if ability.StaticKeyword() == staticKeyword {
+			return ability.cost, true
+		}
+	}
+	return nil, false
 }
 
 // ID returns the ID of the card. The ID is a unique identifier for the card
@@ -115,12 +122,6 @@ func (c Card) ManaCost() cost.ManaCost {
 func (c Card) ManaValue() int {
 	return c.manaCost.Amount().Total()
 }
-
-/*
-func (c Card) ManaValue() int {
-	return c.ManaCost().ManaValue()
-}
-*/
 
 // Name returns the name of the card.
 func (c Card) Name() string {
@@ -159,11 +160,6 @@ func (c Card) StaticAbilities() []StaticAbility {
 func (c Card) StaticKeywords() []mtg.StaticKeyword {
 	var keywords []mtg.StaticKeyword
 	for _, ability := range c.staticAbilities {
-		/*
-			if ability == nil {
-				continue
-			}
-		*/
 		// TODO: Check this error or just use typed values all the way down.
 		keyword, _ := mtg.StringToStaticKeyword(ability.Name())
 		keywords = append(keywords, keyword)

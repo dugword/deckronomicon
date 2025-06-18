@@ -2,142 +2,124 @@ package actionparser
 
 import (
 	"deckronomicon/packages/choose"
-	"deckronomicon/packages/engine"
 	"deckronomicon/packages/engine/action"
-	"deckronomicon/packages/engine/effect"
-	"deckronomicon/packages/engine/target"
+	"deckronomicon/packages/engine/judge"
 	"deckronomicon/packages/game/gob"
-	"deckronomicon/packages/game/mana"
-	"deckronomicon/packages/judge"
+	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/has"
 	"deckronomicon/packages/state"
 	"fmt"
 )
 
-type CastSpellCommand struct {
-	CardInZone      gob.CardInZone
-	Player          state.Player
-	SpendMana       mana.Pool
-	Targets         map[string]target.TargetValue
-	AdditionalCosts []string
-}
-
-func (p *CastSpellCommand) IsComplete() bool {
-	return p.CardInZone.ID() == "" && p.Player.ID() != ""
-}
-
-func (p *CastSpellCommand) Build(
-	game state.Game,
-	player state.Player,
-) (engine.Action, error) {
-	return action.NewCastSpellAction(player, p.CardInZone, p.Targets), nil
-}
-
 func parseCastSpellCommand(
 	idOrName string,
-	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
 	game state.Game,
 	player state.Player,
-) (*CastSpellCommand, error) {
-	cards := judge.GetSpellsAvailableToCast(game, player)
-	var card gob.CardInZone
+	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
+) (action.CastSpellAction, error) {
+	ruling := judge.Ruling{Explain: true}
+	cards := judge.GetSpellsAvailableToCast(game, player, &ruling)
+	var cardInZone gob.CardInZone
 	var err error
 	if idOrName == "" {
-		card, err = getCardByChoice(cards, chooseFunc, player)
+		cardInZone, err = getCardByChoice(cards, chooseFunc, player)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get card by choice: %w", err)
+			return action.CastSpellAction{}, fmt.Errorf("failed to get card by choice: %w", err)
 		}
 	} else {
 		found, ok := query.Find(cards, query.Or(has.ID(idOrName), has.Name(idOrName)))
 		if !ok {
-			return nil, fmt.Errorf("no spell found with id or name %q", idOrName)
+			return action.CastSpellAction{}, fmt.Errorf("no spell found with id or name %q", idOrName)
 		}
-		card = found
+		cardInZone = found
 	}
-	targets, err := getTargetsForSpell(card, chooseFunc, game, player)
+	targetsForEffects, err := getTargetsForEffects(
+		cardInZone.Card(),
+		cardInZone.Card().SpellAbility(),
+		game,
+		chooseFunc,
+	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get targets for spell: %w", err)
+		return action.CastSpellAction{}, fmt.Errorf("failed to get targets for spell: %w", err)
 	}
-	return &CastSpellCommand{
-		CardInZone: card,
-		Player:     player,
-		Targets:    targets,
-	}, nil
+	// TODO: Pass in cost or something and only get cards that can be paid for.
+	splicableCards, err := judge.GetSplicableCards(game, player, cardInZone, &ruling)
+	if err != nil {
+		return action.CastSpellAction{}, fmt.Errorf("failed to get splicable cards: %w", err)
+	}
+	fmt.Println("Ruling for splice:", ruling.Why())
+	cardsToSplice, err := chooseSpliceCards(splicableCards, cardInZone.Card(), chooseFunc)
+	if err != nil {
+		return action.CastSpellAction{}, fmt.Errorf("failed to choose splice cards: %w", err)
+	}
+	var spliceCardIDs []string
+	for _, cardToSplice := range cardsToSplice {
+		spliceTargetsForEffects, err := getTargetsForEffects(
+			cardToSplice.Card(),
+			cardToSplice.Card().SpellAbility(),
+			game,
+			chooseFunc,
+		)
+		if err != nil {
+			return action.CastSpellAction{}, fmt.Errorf("failed to get targets for spell: %w", err)
+		}
+		for k, v := range spliceTargetsForEffects {
+			targetsForEffects[k] = v
+		}
+		spliceCardIDs = append(spliceCardIDs, cardToSplice.Card().ID())
+	}
+	withFlashback := false
+	if cardInZone.Zone() == mtg.ZoneGraveyard {
+		withFlashback = true
+	}
+	request := action.CastSpellRequest{
+		CardID:            cardInZone.Card().ID(),
+		TargetsForEffects: targetsForEffects,
+		SpliceCardIDs:     spliceCardIDs,
+		WithFlashback:     withFlashback,
+	}
+	return action.NewCastSpellAction(
+		player.ID(),
+		request,
+	), nil
 }
 
-func getTargetsForSpell(
-	card gob.CardInZone,
+func chooseSpliceCards(
+	splicableCards []gob.CardInZone,
+	card gob.Card,
 	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
-	game state.Game,
-	player state.Player,
-) (map[string]target.TargetValue, error) {
-	targets := map[string]target.TargetValue{}
-	for _, effectSpec := range card.Card().SpellAbility() {
-		efct, err := effect.Build(effectSpec)
-		if err != nil {
-			return nil, fmt.Errorf("effect %q not found: %w", effectSpec.Name, err)
-		}
-		switch targetSpec := efct.TargetSpec().(type) {
-		case nil, target.NoneTargetSpec:
-			targets[effectSpec.Name] = target.TargetValue{
-				TargetType: target.TargetTypeNone,
-			}
-		// TODO: Move these to functions
-		case target.PlayerTargetSpec:
-			prompt := choose.ChoicePrompt{
-				Message: "Choose a player to target",
-				Source:  CommandSource{"Cast a spell"},
-				ChoiceOpts: choose.ChooseOneOpts{
-					Choices: choose.NewChoices(game.Players()),
-				},
-			}
-			choiceResults, err := chooseFunc(prompt)
-			if err != nil {
-				return nil, fmt.Errorf("failed to get choice results: %w", err)
-			}
-			selected, ok := choiceResults.(choose.ChooseOneResults)
-			if !ok {
-				return nil, fmt.Errorf("expected a single choice result")
-			}
-			selectedPlayer, ok := selected.Choice.(state.Player)
-			if !ok {
-				return nil, fmt.Errorf("selected choice is not a player")
-			}
-			targets[effectSpec.Name] = target.TargetValue{
-				TargetType: target.TargetTypePlayer,
-				PlayerID:   selectedPlayer.ID(),
-			}
-		case target.SpellTargetSpec:
-			spells := game.Stack().FindAll(targetSpec.Predicate)
-			prompt := choose.ChoicePrompt{
-				Message: "Choose a spell to target",
-				Source:  CommandSource{"Target a spell"},
-				ChoiceOpts: choose.ChooseOneOpts{
-					Choices: choose.NewChoices(spells),
-				},
-			}
-			choiceResults, err := chooseFunc(prompt)
-			if err != nil {
-				return nil, fmt.Errorf("failed to get choice results: %w", err)
-			}
-			selected, ok := choiceResults.(choose.ChooseOneResults)
-			if !ok {
-				return nil, fmt.Errorf("expected a single choice result")
-			}
-			selectedSpell, ok := selected.Choice.(gob.Spell)
-			if !ok {
-				return nil, fmt.Errorf("selected choice is not a spell")
-			}
-			targets[effectSpec.Name] = target.TargetValue{
-				TargetType: target.TargetTypeSpell,
-				ObjectID:   selectedSpell.ID(),
-			}
-		default:
-			return nil, fmt.Errorf("unsupported target spec type %T", targetSpec)
-		}
+) ([]gob.CardInZone, error) {
+	var cardsInHandToSplice []gob.CardInZone
+	if len(splicableCards) == 0 {
+		return nil, nil // No splicable cards available
 	}
-	return targets, nil
+	splicePrompt := choose.ChoicePrompt{
+		Message:  "Choose cards to splice onto the spell",
+		Source:   card,
+		Optional: true,
+		ChoiceOpts: choose.ChooseManyOpts{
+			Choices: choose.NewChoices(splicableCards),
+			Min:     0,
+			Max:     len(splicableCards),
+		},
+	}
+	spliceResults, err := chooseFunc(splicePrompt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get splice choices: %w", err)
+	}
+	selected, ok := spliceResults.(choose.ChooseManyResults)
+	if !ok {
+		return nil, fmt.Errorf("expected a multiple choice result for splicing")
+	}
+	for _, choice := range selected.Choices {
+		card, ok := choice.(gob.CardInZone)
+		if !ok {
+			return nil, fmt.Errorf("selected choice is not a card in a zone")
+		}
+		cardsInHandToSplice = append(cardsInHandToSplice, card)
+	}
+	return cardsInHandToSplice, nil
 }
 
 func getCardByChoice(
@@ -146,9 +128,8 @@ func getCardByChoice(
 	player state.Player,
 ) (gob.CardInZone, error) {
 	prompt := choose.ChoicePrompt{
-		Message: "Choose a spell to cast",
-
-		Source:   CommandSource{"Cast a spell"},
+		Message:  "Choose a spell to cast",
+		Source:   player,
 		Optional: true,
 		ChoiceOpts: choose.ChooseOneOpts{
 			Choices: choose.NewChoices(cards),

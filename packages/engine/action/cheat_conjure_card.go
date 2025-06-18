@@ -19,16 +19,8 @@ func NewConjureCardCheatAction(player state.Player, cardName string) ConjureCard
 	}
 }
 
-func (a ConjureCardCheatAction) PlayerID() string {
-	return a.player.ID()
-}
-
 func (a ConjureCardCheatAction) Name() string {
 	return "Conjure Card"
-}
-
-func (a ConjureCardCheatAction) Description() string {
-	return "Conjure a card into your hand."
 }
 
 func (a ConjureCardCheatAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {

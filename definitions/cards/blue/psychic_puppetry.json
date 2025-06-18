@@ -2,6 +2,9 @@
   "CardTypes": [
     "Instant"
   ],
+   "SubTypes": [
+    "Arcane"
+  ],
   "Color": [
     "U"
   ],
@@ -20,9 +23,9 @@
   "StaticAbilities": [
     {
       "Name": "Splice",
+      "Cost": "{U}",
       "Modifiers": {
-        "Onto": "Arcane",
-        "Cost": "{U}"
+        "Subtype": "Arcane"
       }
     }
   ]

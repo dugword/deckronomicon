@@ -4,6 +4,7 @@ package definition
 // something else like raw card data or card definitions.
 
 import (
+	"deckronomicon/packages/game/mtg"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -34,8 +35,9 @@ type SpellAbilitySpec struct {
 
 // StaticAbility represents the specification of static ability.
 type StaticAbilitySpec struct {
-	Name      string          `json:"Name,omitempty"`
-	Modifiers json.RawMessage `json:"Modifiers,omitempty"`
+	Name      mtg.StaticKeyword `json:"Name,omitempty"`
+	Cost      string            `json:"Cost,omitempty"`
+	Modifiers json.RawMessage   `json:"Modifiers,omitempty"`
 }
 
 type TriggeredAbilitySpec struct {
@@ -46,7 +48,7 @@ type TriggeredAbilitySpec struct {
 // Card represents the underlying data structure for a card in the game.
 type Card struct {
 	ActivatedAbilitySpecs []ActivatedAbilitySpec `json:"ActivatedAbilities,omitempty"`
-	CardTypes             []string               `json:"CardTypes,omitempty"`
+	CardTypes             []mtg.CardType         `json:"CardTypes,omitempty"`
 	Colors                []string               `json:"Color,omitempty"`
 	Loyalty               int                    `json:"Loyalty,omitempty"`
 	ManaCost              string                 `json:"ManaCost,omitempty"`
@@ -56,8 +58,8 @@ type Card struct {
 	SpellAbilitySpec      SpellAbilitySpec       `json:"SpellAbility,omitempty"`
 	StaticAbilitySpecs    []StaticAbilitySpec    `json:"StaticAbilities,omitempty"`
 	TriggeredAbilitySpecs []TriggeredAbilitySpec `json:"TriggeredAbilities,omitempty"`
-	Subtypes              []string               `json:"Subtypes,omitempty"`
-	Supertypes            []string               `json:"Supertypes,omitempty"`
+	Subtypes              []mtg.Subtype          `json:"Subtypes,omitempty"`
+	Supertypes            []mtg.Supertype        `json:"Supertypes,omitempty"`
 	Toughness             int                    `json:"Toughness,omitempty"`
 }
 

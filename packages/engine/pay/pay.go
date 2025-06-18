@@ -1,4 +1,4 @@
-package action
+package pay
 
 import (
 	"deckronomicon/packages/engine/event"
@@ -8,73 +8,67 @@ import (
 	"fmt"
 )
 
-func PayCost(someCost cost.Cost, object query.Object, player state.Player) ([]event.GameEvent, error) {
+// TODO: Figure out how to avoid stuttering pay.PayCost
+func PayCost(someCost cost.Cost, object query.Object, player state.Player) []event.GameEvent {
 	switch c := someCost.(type) {
 	case cost.CompositeCost:
 		return payCompositeCost(c, object, player)
 	case cost.ManaCost:
-		return payManaCost(c, object, player)
+		return payManaCost(c, player)
 	case cost.TapThisCost:
 		return payTapCost(object, player)
 	case cost.DiscardThisCost:
 		return payDiscardCost(object, player)
 	case cost.LifeCost:
-		return payLifeCost(c, object, player)
+		return payLifeCost(c, player)
 	default:
-		return nil, fmt.Errorf("unsupported cost type: %T", c)
+		panic(fmt.Errorf("unsupported cost type: %T", c))
 	}
 }
 
-func payLifeCost(c cost.LifeCost, object query.Object, player state.Player) ([]event.GameEvent, error) {
+func payLifeCost(c cost.LifeCost, player state.Player) []event.GameEvent {
 	// Create an event to pay the life cost
 	return []event.GameEvent{
 		event.LoseLifeEvent{
 			PlayerID: player.ID(),
 			Amount:   c.Amount(),
 		},
-	}, nil
+	}
 }
 
-func payCompositeCost(c cost.CompositeCost, object query.Object, player state.Player) ([]event.GameEvent, error) {
+func payCompositeCost(c cost.CompositeCost, object query.Object, player state.Player) []event.GameEvent {
 	// Check if the player can pay all parts of the composite cost
 	var events []event.GameEvent
 	for _, subCost := range c.Costs() {
-		subEvents, err := PayCost(subCost, object, player)
-		if err != nil {
-			return nil, err
-		}
+		subEvents := PayCost(subCost, object, player)
 		events = append(events, subEvents...)
 	}
-	return events, nil
+	return events
 }
 
-func payManaCost(c cost.ManaCost, object query.Object, player state.Player) ([]event.GameEvent, error) {
-	// Check if the player has enough mana to pay the cost
-	if _, err := player.ManaPool().WithSpentFromManaAmount(c.Amount()); err != nil {
-		return nil, fmt.Errorf("failed to deduct mana from pool: %w", err)
-	}
+func payManaCost(c cost.ManaCost, player state.Player) []event.GameEvent {
 	return []event.GameEvent{event.SpendManaEvent{
 		PlayerID:   player.ID(),
 		ManaString: c.Amount().ManaString(),
-	}}, nil
+	}}
 }
 
-func payTapCost(object query.Object, player state.Player) ([]event.GameEvent, error) {
+func payTapCost(object query.Object, player state.Player) []event.GameEvent {
 	// Create an event to tap the permanent
 	return []event.GameEvent{
 		event.TapPermanentEvent{
 			PlayerID:    player.ID(),
 			PermanentID: object.ID(),
 		},
-	}, nil
+	}
 }
 
-func payDiscardCost(object query.Object, player state.Player) ([]event.GameEvent, error) {
+func payDiscardCost(object query.Object, player state.Player) []event.GameEvent {
 	// Create an event to discard the specified object
 	return []event.GameEvent{
 		event.DiscardCardEvent{
 			PlayerID: player.ID(),
 			CardID:   object.ID(),
 		},
-	}, nil
+	}
 }

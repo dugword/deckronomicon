@@ -3,88 +3,128 @@ package action
 import (
 	"deckronomicon/packages/engine/effect"
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/engine/judge"
+	"deckronomicon/packages/engine/pay"
 	"deckronomicon/packages/engine/resenv"
-	"deckronomicon/packages/engine/target"
 	"deckronomicon/packages/game/cost"
-	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/gob"
-	"deckronomicon/packages/judge"
+	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/target"
+	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/is"
 	"deckronomicon/packages/state"
 	"fmt"
 )
 
+type ActivateAbilityRequest struct {
+	AbilityID         string
+	SourceID          string
+	Zone              mtg.Zone
+	TargetsForEffects map[EffectTargetKey]target.TargetValue
+}
+
 type ActivateAbilityAction struct {
-	abilityOnObjectInZone gob.AbilityInZone
-	player                state.Player
+	abilityID         string
+	sourceID          string
+	zone              mtg.Zone
+	playerID          string
+	targetsForEffects map[EffectTargetKey]target.TargetValue
 }
 
-func NewActivateAbilityAction(player state.Player, abilityOnObjectInZone gob.AbilityInZone) ActivateAbilityAction {
+func NewActivateAbilityAction(
+	playerID string,
+	request ActivateAbilityRequest,
+) ActivateAbilityAction {
 	return ActivateAbilityAction{
-		abilityOnObjectInZone: abilityOnObjectInZone,
-		player:                player,
+		abilityID:         request.AbilityID,
+		sourceID:          request.SourceID,
+		zone:              request.Zone,
+		playerID:          playerID,
+		targetsForEffects: request.TargetsForEffects,
 	}
-}
-
-func (a ActivateAbilityAction) PlayerID() string {
-	return a.player.ID()
 }
 
 func (a ActivateAbilityAction) Name() string {
 	return "Activate Ability"
 }
 
-func (a ActivateAbilityAction) Description() string {
-	return "The active player activates an ability."
-}
-
 func (a ActivateAbilityAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
-	ability := a.abilityOnObjectInZone.Ability()
+	player, ok := game.GetPlayer(a.playerID)
+	if !ok {
+		return nil, fmt.Errorf("player %q not found in game", a.playerID)
+	}
+	ability, ok := getAbilityOnSourceInZone(
+		game,
+		player,
+		a.sourceID,
+		a.abilityID,
+		a.zone,
+	)
+	if !ok {
+		return nil, fmt.Errorf(
+			"player %q does not have ability %q on source %q in zone %q",
+			player.ID(),
+			a.abilityID,
+			a.sourceID,
+			a.zone,
+		)
+	}
+	source, ok := getAbilitySource(
+		game,
+		player,
+		a.zone,
+		ability.Source().ID(),
+	)
+	if !ok {
+		return nil, fmt.Errorf(
+			"source %q for ability %q not found in zone %q",
+			ability.Source().ID(),
+			ability.Name(),
+			a.zone,
+		)
+	}
 	ruling := judge.Ruling{Explain: true}
 	// TODO: Should it be abilityOnObjectInZone.Object() instead of Source()?
-	if !judge.CanActivateAbility(game, a.player, a.abilityOnObjectInZone.Source(), ability, &ruling) {
+	if !judge.CanActivateAbility(game, player, source, ability, &ruling) {
 		return nil, fmt.Errorf(
 			"player %q cannot activate ability %q on %q in %q: %v",
-			a.player.ID(),
+			a.playerID,
 			ability.Name(),
-			a.abilityOnObjectInZone.Source().Name(),
-			a.abilityOnObjectInZone.Zone(),
+			source.Name(),
+			a.zone,
 			ruling.Reasons,
 		)
 	}
 	events := []event.GameEvent{
 		event.ActivateAbilityEvent{
-			PlayerID:  a.player.ID(),
-			SourceID:  ability.Source().ID(),
+			PlayerID:  a.playerID,
+			SourceID:  source.ID(),
 			AbilityID: ability.Name(),
-			Zone:      a.abilityOnObjectInZone.Zone(),
+			Zone:      a.zone,
 		},
 	}
-	cst, err := cost.ParseCost(ability.Cost(), a.abilityOnObjectInZone.Ability().Source())
+	effectWithTargets, err := buildEffectWithTargets(ability.ID(), ability.EffectSpecs(), a.targetsForEffects)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse cost %q: %w", ability.Cost(), err)
+		return nil, fmt.Errorf("failed to build effect with targets: %w", err)
 	}
-	costEvents, err := PayCost(cst, ability.Source(), a.player)
-	if err != nil {
-		return nil, fmt.Errorf("failed to pay cost %q: %w", cst.Description(), err)
-	}
+	costEvents := pay.PayCost(ability.Cost(), source, player)
 	events = append(events, costEvents...)
 	// TODO: I think I need to do this on a per effect basis, like I think for
 	// chromatic star I get the mana fixing buy the draw a card effect still
 	// goes on the stack.
 	if ability.IsManaAbility() {
-		if permanent, ok := ability.Source().(gob.Permanent); ok {
+		if permanent, ok := source.(gob.Permanent); ok {
 			if permanent.Match(is.Land()) {
-				if cost.HasCostType(cst, cost.TapThisCost{}) {
+				if cost.HasCostType(ability.Cost(), cost.TapThisCost{}) {
 					events = append(events, event.LandTappedForManaEvent{
-						PlayerID: a.player.ID(),
+						PlayerID: a.playerID,
 						ObjectID: permanent.ID(),
 						Subtypes: permanent.Subtypes(),
 					})
 				}
 			}
 		}
-		manaEvents, err := buildManaAbilityEvents(game, a.player, ability.EffectSpecs())
+		manaEvents, err := buildManaAbilityEvents(game, player, effectWithTargets)
 		if err != nil {
 			return nil, fmt.Errorf("failed to build mana ability events: %w", err)
 		}
@@ -92,12 +132,12 @@ func (a ActivateAbilityAction) Complete(game state.Game, resEnv *resenv.ResEnv) 
 		return events, nil
 	}
 	events = append(events, event.PutAbilityOnStackEvent{
-		PlayerID:    a.player.ID(),
-		SourceID:    ability.Source().ID(),
-		AbilityID:   ability.ID(),
-		FromZone:    a.abilityOnObjectInZone.Zone(),
-		AbilityName: ability.Name(),
-		EffectSpecs: ability.EffectSpecs(),
+		PlayerID:          a.playerID,
+		SourceID:          source.ID(),
+		AbilityID:         ability.ID(),
+		FromZone:          a.zone,
+		AbilityName:       ability.Name(),
+		EffectWithTargets: effectWithTargets,
 	})
 	return events, nil
 }
@@ -105,19 +145,111 @@ func (a ActivateAbilityAction) Complete(game state.Game, resEnv *resenv.ResEnv) 
 func buildManaAbilityEvents(
 	game state.Game,
 	player state.Player,
-	effectSpecs []definition.EffectSpec,
+	// effectSpecs []definition.EffectSpec,
+	effectWithTargets []gob.EffectWithTarget,
 ) ([]event.GameEvent, error) {
 	var events []event.GameEvent
-	for _, effectSpec := range effectSpecs {
-		efct, err := effect.Build(effectSpec)
+	for _, effectWithTarget := range effectWithTargets {
+		fmt.Println("Building mana ability event for effect:", effectWithTarget.EffectSpec.Name, "with target:", effectWithTarget.Target)
+		efct, err := effect.Build(effectWithTarget.EffectSpec)
 		if err != nil {
-			return nil, fmt.Errorf("effect %q not found: %w", effectSpec.Name, err)
+			return nil, fmt.Errorf("effect %q not found: %w", effectWithTarget.EffectSpec.Name, err)
 		}
-		effectResults, err := efct.Resolve(game, player, nil, target.TargetValue{})
+		effectResults, err := efct.Resolve(game, player, nil, effectWithTarget.Target)
 		if err != nil {
-			return nil, fmt.Errorf("failed to apply effect %q: %w", effectSpec.Name, err)
+			return nil, fmt.Errorf("failed to apply effect %q: %w", effectWithTarget.EffectSpec.Name, err)
 		}
 		events = append(events, effectResults.Events...)
 	}
 	return events, nil
+}
+
+func getAbilityOnSourceInZone(
+	game state.Game,
+	player state.Player,
+	sourceID string,
+	abilityID string,
+	zone mtg.Zone,
+) (gob.Ability, bool) {
+	switch zone {
+	case mtg.ZoneBattlefield:
+		return getAbilityFromPermanent(game, sourceID, abilityID)
+	case mtg.ZoneHand, mtg.ZoneGraveyard, mtg.ZoneExile, mtg.ZoneLibrary:
+		return getAbilityFromCardInZone(game, player, sourceID, abilityID, zone)
+	default:
+		return gob.Ability{}, false
+	}
+}
+
+func getAbilityFromPermanent(
+	game state.Game,
+	sourceID string,
+	abilityID string,
+) (gob.Ability, bool) {
+	permanent, ok := game.Battlefield().Get(sourceID)
+	if !ok {
+		return gob.Ability{}, false
+	}
+	for _, ability := range permanent.ActivatedAbilities() {
+		if ability.ID() == abilityID {
+			return ability, true
+		}
+	}
+	return gob.Ability{}, false
+}
+
+func getAbilityFromCardInZone(
+	game state.Game,
+	player state.Player,
+	sourceID string,
+	abilityID string,
+	zone mtg.Zone,
+) (gob.Ability, bool) {
+	card, ok := player.GetCardFromZone(sourceID, zone)
+	if !ok {
+		return gob.Ability{}, false
+	}
+	for _, ability := range card.ActivatedAbilities() {
+		if ability.ID() == abilityID {
+			return ability, true
+		}
+	}
+	return gob.Ability{}, false
+}
+
+func getAbilitySource(
+	game state.Game,
+	player state.Player,
+	zone mtg.Zone,
+	sourceID string,
+) (query.Object, bool) {
+	switch zone {
+	case mtg.ZoneBattlefield:
+		return getAbilitySourceFromPermanent(game, sourceID)
+	default:
+		return getAbilitySourceFromCardInZone(player, sourceID, zone)
+	}
+}
+
+func getAbilitySourceFromPermanent(
+	game state.Game,
+	sourceID string,
+) (query.Object, bool) {
+	permanent, ok := game.Battlefield().Get(sourceID)
+	if !ok {
+		return nil, false
+	}
+	return permanent, true
+}
+
+func getAbilitySourceFromCardInZone(
+	player state.Player,
+	sourceID string,
+	zone mtg.Zone,
+) (query.Object, bool) {
+	card, ok := player.GetCardFromZone(sourceID, zone)
+	if !ok {
+		return nil, false
+	}
+	return card, true
 }
