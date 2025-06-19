@@ -1,5 +1,7 @@
 # Deckronomicon - Magic: The Gathering Simulator
 
+![deckronomicon-logo-burst small](https://github.com/user-attachments/assets/64e4353e-bba0-4636-b199-53de3d746a87)
+
 Join the Deckronomicon community on Discord: [Deckronomicon
 Discord](https://discord.gg/Jb7Q9w6K)
 
