@@ -1,5 +1,7 @@
 package choose
 
+// TODO: This should probably live under agent
+
 const (
 	ChoiceTypeChooseOne           ChoiceType = "ChooseOne"
 	ChoiceTypeChooseMany          ChoiceType = "ChooseMany"

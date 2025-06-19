@@ -1,253 +1,265 @@
 # Deckronomicon Architecture
 
-## Overview
+The Deckronomicon game engine is designed to simulate _Magic: The Gathering_
+games with a focus on deterministic, rules-accurate gameplay.
 
-Deckronomicon is a deterministic, auditable Magic: The Gathering game simulator and analysis engine. It supports both:
+The architecture is designed with an immutable event-driven state model, where
+all game state changes are triggered by events and processed through a pure
+functional reducer which returns a new game state. This allows for
+deterministic replayability and debugging, as well as a clear separation of
+concerns between the game engine, player agents, and game actions.
 
-- Interactive human play (via command-line interface)
-- Automated agent play (via Strategy JSON configurations)
+Player agent automation happens via a JSON/YAML configuration file which
+enables rule-based strategies to be defined and executed without modifiying
+the code of the engine.
 
-The architecture is designed to be:
+## Definitions
 
-- Modular
-- Deterministic (for reproducible simulations and ML training)
-- Replayable (full game logs can be replayed exactly)
-- Extensible (new cards, effects, agents easily added)
+Cards are defined using a declarative and composable JSON file which enables
+new cards to be implemented wihtout modifying the core engine code unless new
+game effects are required for the card.
 
----
+Card definitions are stored in the `definitions/cards` directory and are sorted
+into subdirectories by color-identity and lands.
 
-## Engine Lifecycle
+## Scenarios
 
-```plaintext
-GameEngine.RunGame
-    → Loop: RunTurn
-        → Loop: RunPhase
-            → Loop: RunStep
-                → Complete TurnBasedActions
-            → Priority Loop: RunPriority
-                → For each player:
-                    → PlayerAgent.GetNextAction
-                        → Action.Complete
-                            → If valid → Apply Events
-                            → If error → Reject Action → request new Action
-    → Game ends when win/loss/draw condition met
+Scenarios are defined in the `scenarios` directory. Each scenarios has its own
+subdirectory and must include these files:
+
+```sh
+setup.json
+player_deck.json
+player_strategy.json
+opponent_deck.json
+opponent_strategy.json
 ```
 
----
+A scenerio is a complete game setup that includes the player and opponent
+decks, strategies, and the initial game state.
 
-## Core Principles
+### Setup JSON
 
-✅ The GameEngine only accepts **fully-formed Actions**.  
-✅ The Engine **does not prompt** or fill in Action data.  
-✅ All rule enforcement is centralized via a pure, stateless **Judge** package.  
-✅ Action.Complete is atomic — either produces valid GameEvents or rejects the Action.  
-✅ Apply applies **all events atomically**, based on immutable state updates.  
-✅ Interactive and Automated agents use separate paths to build Actions.  
-✅ The stack is resolved separately via Spell.Resolve, which revalidates targets and applies the spell’s effects.
+The `setup.json` file defines
+the initial game state, including the starting life totals, starting hands,
+and any other initial game state information.
 
----
+### Deck JSON
 
-## PlayerAgent Responsibilities
+The `player_deck.json` and `opponent_deck.json` files define the decklists for
+the player and opponent. These files contain a list of card names and
+quantities, as well as a deck name.
 
-The PlayerAgent interface is responsible for proposing **complete Actions** to the Engine:
+### Strategy JSON
 
-```go
-type PlayerAgent interface {
-    GetNextAction(state GameState) (Action, error)
-}
+The `player_strategy.json` and `opponent_strategy.json` files define the
+strategy to be used by the player and opponent agents when run with an
+auto player agent.
+
+## Core Components
+
+### Engine
+
+The engine orchestrates the game lifecycle, managing the flow of turns,
+phases, and steps. It receives actions from player agents, ensures the
+requested actions are valid, and generates game events to apply changes to the
+game state. The engine is responsible for:
+
+- Running the main game loop
+- Processing turn-based actions
+- Handling player priority and actions
+- Validating and applying actions
+- Checking for triggered abilities and continuous effects.
+- Managing the game state and stack resolution
+- Recording all actions and events for reproducibility
+- Logging messages/metrics for engine debugging and observability
+
+#### Engine/Judge
+
+The Judge is a stateless package that enforces the rules of Magic: The
+Gathering. It validates actions proposed by player agents and ensures that
+the game state remains consistent with the rules. The Judge is responsible
+for:
+
+- Validating actions against the current game state
+- Enforcing game rules and interactions
+
+Additionally the Judge package provides utility functions for determining
+which actions are allowable, e.g. providing a list of valid targets for a
+spell, or providing a list of cards which can be played at a given time.
+
+#### Engine/Action
+
+The Action package defines the structure of actions that players can take
+during the game. Actions are generated by player agents and provided to the
+engine for processing. Each action is validated by the game engine, and then
+events for game state changes such as payment of costs, casting spells,
+activating abilities are generated and applied.
+
+Completing actions are atomic operations that either produce valid game events
+or reject the action if it is invalid. This ensures that the game state
+remains consistent and that all actions are fully formed before being applied.
+
+When an error is returned to the Player Agent in this way, the agent is
+expected to recover and propose a new action based on the current game state.
+
+#### Engine/Event
+
+The Event package defines the events that occur during the game. Events are
+generated by the engine in response to actions taken by players. Each event
+is immutable and represents a specific change to the game state or a
+notification of a game occurrence. Events are logged to the game record, and
+then applied to the game state through the engine/reducer package.
+
+Game events should be granular, composable, and reusable. Game events
+generally should either be "Game Signals" which declare a action or game
+occurance happend, such as "CastSpell", "BeginPrecombatMainPhase",
+"PermanentEnteredBattlerfield". Or they should be "Game Changes" which describe
+a singular game state change like "DrawCard", "LoseLife", "UntapPermanent".
+
+Triggered abilities will listen for Game Signals, and generate Game Change
+events. E.g. the triggered ability for "High Tide" will listen for a
+"LandTappedForMana" Game Signal, and generate a "AddMana" Game Change event.
+
+A game action will generate a collection of events that describe the impacts
+of completing the action. Usually these will begin with a "Game Signal"  event
+followed by a list of "Game Change" events. For example, resolving the spell
+"Preordain" from the stack will generate events like
+
+```js
+[
+    // Game Signal
+    "ResolveTopObjectOnStack",
+    // Game Changes
+    "PutCardOnTopOfLibrary",
+    "PutCardOnBottomOfLibrary",
+    "DrawCard",
+    "PutSpellInGraveyard",
+]
 ```
 
-- If the agent returns an incomplete Action, the Engine will reject it.
-- If Action.Complete returns an error, the Engine will request another Action.
+#### Engine/Reducer
 
----
+The Reducer package is responsible for applying events to the game state. It
+is a pure function that takes the current game state and an event, and returns
+a new game state with the event applied. This immutability allows for
+replayability, rollbacks, debugging, as well as a full game log of all
+actions, events and state changes for analytics.
 
-## Action Lifecycle
+#### Engine/Effect
 
-```plaintext
-Agent builds Action → Engine calls Action.Complete → Apply Events
-```
+Card effects are declared in the JSON card definitions and their
+implementations exist in the engine/effect package. Effects are reusable and
+modular, taking a set of parameters and applying the specified game changes.
+This allows for complex interactions to be defined in a declarative manner.
 
-### Action Interface
+### Game
 
-```go
-type Action interface {
-    Complete(state GameState) ([]GameEvent, error)
-    // Optional: String() for logging/debugging
-}
-```
+The Game components define the core game objects such as cards, spells,
+permanents, abilities, as well as game terms and concepts like CardType,
+Subtype, Zone, and Color. These components provide the foundational types used
+in the game engine. These data structures are primarily intended to be
+serializeable and descriptive, rather than functional implementations of game
+rules. The logic for how these objects interact is handled in the engine.
+Functions and methods on these objects are primarily for creating instances,
+helper methods for easy access of properties, and serialization.
 
-- **Complete:** Responsible for final validation and GameEvent creation.
-- Must use the Judge package to re-check legality.
-- Must handle "game state changed" gracefully (e.g. targets no longer legal).
+#### Game/GOB (Game Object)
 
----
+The gob package provides the core game object types used throughout the
+engine. This includes Card, Permanent, Spell, Ability, and other game objects.
 
-## Stack Resolution
+#### Game/MTG (Magic: The Gathering)
 
-When an Action puts a spell or ability on the stack:
+The mtg package provides constants and terminology specific to Magic: The
+Gathering. This includes card types, subtypes, colors, and other game terms.
 
-```plaintext
-Action.Complete → creates GameEvent_AddToStack
+### State
 
-GameEngine stack loop:
-    → Player passes priority
-    → Engine pops top of stack → calls Spell.Resolve
-        → Resolve re-checks targets using Judge
-        → If targets valid → Resolve returns GameEvents to Apply
-        → If targets invalid → spell/ability fizzles → no events → continue
-```
+The state package defines the immutable game state and player state. The game
+state is the top level object that contains all information about the current
+game, including the players, player zones, current turn, active player, game
+objects in play, and the stack.
 
-- Target invalidation causing a "fizzle" is not an error — it is correct Magic behavior.
-- Stack resolution is fully deterministic and auditable.
+All changes to the game state are made through events, which are applied in
+the engine/reducer package.
 
----
+### Player Agents
 
-## Judge Package
+Player agents are responsible for proposing actions to the engine based on the
+current game state. They can be human players interacting through a
+command-line interface, or automated agents that use rule-based strategies.
+The agent interface is designed to be flexible, allowing for different agents
+to be implemented without modifying the core engine code.
 
-The `judge` package contains all centralized rule enforcement logic:
+#### Automated Agents
 
-Example API:
+Automated agents are defined using JSON/YAML configuration files that specify
+the rules and strategies they should follow. These configurations allow for
+the creation of complex strategies without requiring changes to the engine
+code. The agent reads the game state and proposes complete actions to the
+engine.
 
-```go
-func CanPlayCard(state GameState, player PlayerID, card CardID) bool
-func CanPayCost(state GameState, player PlayerID, cost ManaCost, additionalCosts ...) bool
-func IsTargetStillValid(state GameState, target Target) bool
-func GetValidTargets(state GameState, player PlayerID, ability AbilityID) []Target
-func CanActivateAbility(state GameState, player PlayerID, ability AbilityID) bool
-```
+#### Auto/Strategy Parser
 
-Principles:
+The auto/strategy package provides a parser for the JSON/YAML strategy files.
 
-- Stateless and pure
-- Safe to call from Agents, Action.Complete, and Spell.Resolve
-- Single source of truth for Magic rule logic
+#### Interactive Agents
 
----
+The interactive agent is a command-line interface that allows human players to
+interact with the game. It prompts the player for actions based on the current
+game state and provides feedback on the game progress. The interactive agent
+is designed to for players to explore strategies before automating them with
+JSON/YAML configurations. Additionally the interactive agent can be used to
+test and debug new cards and effects in a live game environment.
 
-## Apply Behavior
+#### Dummy Agent
 
-The Engine applies GameEvents in an **atomic, immutable fashion**:
+The dummy agent is a simple automated agent that can be used for opponents
+when no opponent interaction is required. It automatically passes on all
+optional choices, and when choices are required it chooses the first option
+presented and the minimal number of choices required to progress the game.
 
-```plaintext
-Action.Complete → returns Events → Apply(Events) → GameState is updated
-```
+This agent will likely be replaced in the future with a pre-configured rule
+based agent with these same properties.
 
-- Apply must be all-or-nothing.
-- Apply must enforce hard game invariants (e.g. max hand size).
-- Apply must not perform additional rule checks — Action.Complete and Judge ensure legality.
-- Engine logs all applied Actions and Events for audit/replay.
+#### Agent/Choose
 
----
+The choose package provides a system for handling player choices in a
+structured manner. It allows for prompts to be presented to the player in a
+way that enables both human and automated agents to make decisions. It
+provides context for the choices, providing the source object/action requiring
+a choices, as well as a list of choices available to the player. The choice
+prompt defines an interface for choices options which an be implemented by
+concrete choice types. This allows for a flexible and extensible way providing
+a consistent interface to the player agent for making choices while providing
+a structured type enabling the engine to validate and process choices.
 
-## Agent Types
+### Query
 
-### Interactive Agent
+Game objects are defined with a concrete type for each object type; card,
+permanent, spell etc. However many of these objects share common properties
+which the game engine needs to query in a generic way. The query package
+provides a GameObject interface which all GameObjects implement, allowing the
+engine to query properties like color, card type, and other attributes without
+needing to know the specific type of the object. This allows for flexible
+and powerful querying of game objects in a type-safe manner.
 
-```plaintext
-User Input → Command Parser → Command → Action Builder → Action
-    → If incomplete → Agent prompts user for choices → completes Action
-    → Fully-formed Action → Engine
-```
+## Tools
 
-### Automated Agent
+In addition to the main game engine, Deckronomicon provides several tools to
+for managing and validating game definitions and data.
 
-```plaintext
-Strategy JSON → Strategy Engine → Action Builder → Fully-formed Action → Engine
-```
+### Tools/Fetch Card
 
-- Automated agents must submit fully-formed Actions — no interactive prompts allowed.
-- If an Action is rejected, Agent must propose a new Action.
+The fetch card tool is a command-line utility that retrieves card data from
+Scryfall and generates a JSON definitions for the card. It can be used to
+start the implementation of a new card. However additional work updating the
+JSON is required to implement the card's effects.
 
----
+### Tools/Validate Definitions
 
-## Strategy JSON Structure
-
-Example:
-
-```json
-{
-    "when": { ... },
-    "then": {
-        "action": "PlayCard",
-        "card": "Preordain",
-        "targets": [ ... ],
-        "pay": { ... },
-        "choices": [
-            {
-                "for": "ChooseMode",
-                "when": { ... },
-                "then": "Mode1"
-            }
-        ]
-    }
-}
-```
-
-- The `choices` section allows automated agents to fully resolve multi-step Actions.
-- If a Strategy tries an invalid Action, Agent must avoid retry loops (see below).
-
----
-
-## Automated Agent Retry Handling
-
-Automated agents must take care to avoid infinite retry loops if an Action is rejected:
-
-- Agents may track "last failed Action" and avoid repeating it in the same state.
-- Agents may use Judge helpers to pre-check legality before proposing Actions.
-- Agents may implement a "cooldown" or "backoff" for failed Actions.
-
----
-
-## Logging and Replay
-
-The Engine should log:
-
-- All Actions proposed by Agents.
-- Whether Actions were accepted or rejected.
-- All GameEvents applied.
-- Full GameState after each Apply.
-
-This enables:
-
-- Exact game replay for debugging.
-- Deterministic ML training datasets.
-- Full audit trail of simulation runs.
-
----
-
-## Summary
-
-Deckronomicon uses a clean, modular architecture with:
-
-✅ Immutable GameState  
-✅ Stateless Judge package  
-✅ Atomic Action → GameEvents → Apply pipeline  
-✅ Clear Agent / Engine contract  
-✅ Stack resolution matching MTG rules  
-✅ Deterministic logging and replayability  
-
-This architecture supports:
-
-- Accurate Magic simulation
-- Large-scale automated testing
-- ML-driven strategy tuning
-- Interactive play for experimentation and testing
-
----
-
-# Final Notes
-
-This architecture provides a solid foundation for further enhancements, such as:
-
-- More sophisticated Agent learning
-- Multi-player support
-- Comprehensive game rules coverage
-- UI integration (optional)
-
-Deckronomicon is designed to evolve while maintaining strong architectural clarity and determinism.
-
----
-
-# End of Document
-
+The validate definitions tool checks the JSON card definitions by loading each
+card in the definitions directory and builds their effects. Card effects are
+not built by the engine until the card is played, so this tool is useful for
+ensuring a card is correctly defined without having to play it in a game.
