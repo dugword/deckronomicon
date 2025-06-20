@@ -2,6 +2,7 @@ package effect
 
 import (
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/query"
@@ -43,6 +44,7 @@ func (e TapEffect) Resolve(
 	player state.Player,
 	source query.Object,
 	target target.TargetValue,
+	resEnv *resenv.ResEnv,
 ) (EffectResult, error) {
 	var events []event.GameEvent
 	return EffectResult{

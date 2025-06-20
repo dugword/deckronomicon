@@ -22,6 +22,6 @@ func (a CheatAction) Name() string {
 
 func (a CheatAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	return []event.GameEvent{event.CheatEnabledEvent{
-		Player: a.player.ID(),
+		PlayerID: a.player.ID(),
 	}}, nil
 }

@@ -10,7 +10,6 @@ package actionparser
 // TODO Use a expression tree parser like we do for the JSON parser
 
 import (
-	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine"
 	"deckronomicon/packages/engine/action"
 	"deckronomicon/packages/state"
@@ -19,9 +18,15 @@ import (
 	"strings"
 )
 
+// TODO: Think through having this return a request interface instead of an
+// action. The request interface would be a common interface for all requests
+// that can be built into an action.
+// Need to decide how request.Build() is different from NewAction()
+// Also need to decide if it validates and can return an error, or
+// if it just builds the action and the action is responsible for validation.
 func ParseInput(
 	input string,
-	choose func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
+	agent engine.PlayerAgent,
 	game state.Game,
 	player state.Player,
 ) (engine.Action, error) {
@@ -33,7 +38,11 @@ func ParseInput(
 	command = strings.ToLower(command)
 	switch command {
 	case "activate", "tap":
-		return parseActivateAbilityCommand(arg, game, player, choose)
+		request, err := parseActivateAbilityCommand(arg, game, player, agent)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse activate command: %w", err)
+		}
+		return request.Build(player.ID()), nil
 	case "cheat":
 		return action.NewCheatAction(player), nil
 	case "clear":
@@ -44,16 +53,20 @@ func ParseInput(
 		fmt.Println("Need to implement help command")
 		return nil, nil
 	case "pass", "next", "done":
-		return action.NewPassPriorityAction(player), nil
+		return action.NewPassPriorityAction(player.ID()), nil
 	case "play":
-		return parsePlayLandCommand(arg, game, player, choose)
+		return parsePlayLandCommand(arg, game, player, agent)
 	case "cast":
-		return parseCastSpellCommand(arg, game, player, choose)
+		request, err := parseCastSpellCommand(arg, game, player, agent)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse cast command: %w", err)
+		}
+		return request.Build(player.ID()), nil
 	case "view":
-		return parseViewCommand(arg, game, player, choose)
+		return parseViewCommand(arg, game, player, agent)
 	default:
 		if game.CheatsEnabled() {
-			return parseCheatCommand(command, arg, choose, game, player)
+			return parseCheatCommand(command, arg, game, player, agent)
 		}
 		return nil, fmt.Errorf("unknown command %q", command)
 	}
@@ -62,9 +75,9 @@ func ParseInput(
 func parseCheatCommand(
 	command string,
 	arg string,
-	choose func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
 	game state.Game,
 	player state.Player,
+	agent engine.PlayerAgent,
 ) (engine.Action, error) {
 	switch command {
 	case "addmana":
@@ -74,9 +87,11 @@ func parseCheatCommand(
 	case "draw":
 		return action.NewDrawCheatAction(player), nil
 	case "discard":
-		return parseDiscardCheatCommand(arg, game, player, choose)
+		return parseDiscardCheatCommand(arg, game, player, agent)
+	case "effect":
+		return parseEffectCheatCommand(arg, player)
 	case "find", "tutor":
-		return parseFindCardCheatCommand(arg, player, choose)
+		return parseFindCardCheatCommand(arg, player, agent)
 	case "landdrop":
 		return action.NewResetLandDropCheatAction(player), nil
 	case "peek":
@@ -84,7 +99,7 @@ func parseCheatCommand(
 	case "shuffle":
 		return action.NewShuffleCheatAction(player), nil
 	case "untap":
-		return parseUntapCheatCommand(arg, game, player, choose)
+		return parseUntapCheatCommand(arg, game, player, agent)
 	default:
 		return nil, fmt.Errorf("unknown cheat command %q", command)
 	}

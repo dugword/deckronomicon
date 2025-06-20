@@ -7,16 +7,14 @@
   ],
   "ManaCost": "{U}",
   "Name": "Gigadrowse",
-  "SpellAbility": {
-    "Effects": [
-      {
-        "Name": "Tap",
-        "Modifiers": {
-            "Target": "Permanent"
-        }
+  "Effects": [
+    {
+      "Name": "Tap",
+      "Modifiers": {
+        "Target": "Permanent"
       }
-    ]
-  },
+    }
+  ],
   "StaticAbilities": [
     {
       "Name": "Replicate",

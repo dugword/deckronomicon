@@ -7,12 +7,12 @@ import (
 )
 
 type PassPriorityAction struct {
-	player state.Player
+	playerID string
 }
 
-func NewPassPriorityAction(player state.Player) PassPriorityAction {
+func NewPassPriorityAction(playerID string) PassPriorityAction {
 	return PassPriorityAction{
-		player: player,
+		playerID: playerID,
 	}
 }
 
@@ -22,6 +22,6 @@ func (a PassPriorityAction) Name() string {
 
 func (a PassPriorityAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	return []event.GameEvent{event.PassPriorityEvent{
-		PlayerID: a.player.ID(),
+		PlayerID: a.playerID,
 	}}, nil
 }

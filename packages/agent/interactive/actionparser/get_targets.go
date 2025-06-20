@@ -2,6 +2,7 @@ package actionparser
 
 import (
 	"deckronomicon/packages/choose"
+	"deckronomicon/packages/engine"
 	"deckronomicon/packages/engine/action"
 	"deckronomicon/packages/engine/effect"
 	"deckronomicon/packages/game/definition"
@@ -19,7 +20,7 @@ func getTargetsForEffects(
 	object query.Object,
 	effectSpecs []definition.EffectSpec,
 	game state.Game,
-	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
+	agent engine.PlayerAgent,
 ) (map[action.EffectTargetKey]target.TargetValue, error) {
 	targetsForEffects := map[action.EffectTargetKey]target.TargetValue{}
 	for i, effectSpec := range effectSpecs {
@@ -33,7 +34,6 @@ func getTargetsForEffects(
 		}
 		switch targetSpec := efct.TargetSpec().(type) {
 		case nil, target.NoneTargetSpec:
-			fmt.Println("No target spec for effect", effectSpec.Name, "on object", object.Name())
 			targetsForEffects[effectTargetKey] = target.TargetValue{
 				TargetType: target.TargetTypeNone,
 			}
@@ -41,7 +41,7 @@ func getTargetsForEffects(
 			playerTarget, err := getPlayerTarget(
 				object,
 				game,
-				chooseFunc,
+				agent,
 			)
 			if err != nil {
 				return nil, fmt.Errorf("failed to get player target: %w", err)
@@ -52,7 +52,7 @@ func getTargetsForEffects(
 				targetSpec,
 				object,
 				game,
-				chooseFunc,
+				agent,
 			)
 			if err != nil {
 				return nil, fmt.Errorf("failed to get spell target: %w", err)
@@ -63,7 +63,7 @@ func getTargetsForEffects(
 				targetSpec,
 				object,
 				game,
-				chooseFunc,
+				agent,
 			)
 			if err != nil {
 				return nil, fmt.Errorf("failed to get permanent target: %w", err)
@@ -79,7 +79,7 @@ func getTargetsForEffects(
 func getPlayerTarget(
 	object query.Object,
 	game state.Game,
-	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
+	agent engine.PlayerAgent,
 ) (target.TargetValue, error) {
 	prompt := choose.ChoicePrompt{
 		Message: "Choose a player to target",
@@ -88,7 +88,7 @@ func getPlayerTarget(
 			Choices: choose.NewChoices(game.Players()),
 		},
 	}
-	choiceResults, err := chooseFunc(prompt)
+	choiceResults, err := agent.Choose(prompt)
 	if err != nil {
 		return target.TargetValue{}, fmt.Errorf("failed to get choice results: %w", err)
 	}
@@ -110,7 +110,7 @@ func getSpellTarget(
 	targetSpec target.SpellTargetSpec,
 	object query.Object,
 	game state.Game,
-	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
+	agent engine.PlayerAgent,
 ) (target.TargetValue, error) {
 	spells := game.Stack().FindAll(targetSpec.Predicate)
 	prompt := choose.ChoicePrompt{
@@ -120,7 +120,7 @@ func getSpellTarget(
 			Choices: choose.NewChoices(spells),
 		},
 	}
-	choiceResults, err := chooseFunc(prompt)
+	choiceResults, err := agent.Choose(prompt)
 	if err != nil {
 		return target.TargetValue{}, fmt.Errorf("failed to get choice results: %w", err)
 	}
@@ -142,7 +142,7 @@ func getPermanentTarget(
 	targetSpec target.PermanentTargetSpec,
 	object query.Object,
 	game state.Game,
-	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
+	agent engine.PlayerAgent,
 ) (target.TargetValue, error) {
 	permanents := game.Battlefield().GetAll()
 	prompt := choose.ChoicePrompt{
@@ -152,7 +152,7 @@ func getPermanentTarget(
 			Choices: choose.NewChoices(permanents),
 		},
 	}
-	choiceResults, err := chooseFunc(prompt)
+	choiceResults, err := agent.Choose(prompt)
 	if err != nil {
 		return target.TargetValue{}, fmt.Errorf("failed to get choice results: %w", err)
 	}

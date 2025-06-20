@@ -25,7 +25,11 @@ func (a ShuffleCheatAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]
 	if !game.CheatsEnabled() {
 		return nil, fmt.Errorf("no cheating you cheater")
 	}
-	shuffledCardsIDs := resEnv.RNG.ShuffleCardsIDs(a.player.Library().GetAll())
+	var cardIDs []string
+	for _, card := range a.player.Library().GetAll() {
+		cardIDs = append(cardIDs, card.ID())
+	}
+	shuffledCardsIDs := resEnv.RNG.ShuffleIDs(cardIDs)
 	return []event.GameEvent{
 		event.CheatShuffleDeckEvent{
 			PlayerID: a.player.ID(),

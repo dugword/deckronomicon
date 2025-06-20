@@ -47,23 +47,15 @@ func NewCardFromCardDefinition(id, playerID string, definition definition.Card) 
 		return Card{}, fmt.Errorf("failed to parse colors %s: %w", definition.Colors, err)
 	}
 	card.colors = cardColors
-	var ok bool
-	var abilityID int
-	for _, spec := range definition.ActivatedAbilitySpecs {
-		abilityID++
+
+	for i, spec := range definition.ActivatedAbilitySpecs {
 		speed := mtg.SpeedInstant
 		if spec.Speed != "" {
-			speed, err = mtg.StringToSpeed(spec.Speed)
-			if err != nil {
-				return Card{}, fmt.Errorf("failed to parse speed %q: %w", spec.Speed, err)
-			}
+			speed = spec.Speed
 		}
 		zone := mtg.ZoneBattlefield
 		if spec.Zone != "" {
-			zone, ok = mtg.StringToZone(spec.Zone)
-			if !ok {
-				return Card{}, fmt.Errorf("invalid zone%q", spec.Zone)
-			}
+			zone = spec.Zone
 		}
 		abilityCost, err := cost.ParseCost(spec.Cost)
 		if err != nil {
@@ -73,15 +65,14 @@ func NewCardFromCardDefinition(id, playerID string, definition definition.Card) 
 			cost:        abilityCost,
 			name:        spec.Name,
 			effectSpecs: spec.EffectSpecs,
-			id:          fmt.Sprintf("%s-%d", id, abilityID),
+			id:          fmt.Sprintf("%s-%d", id, i+1),
 			zone:        zone,
 			speed:       speed,
 			source:      card,
 		}
-
 		card.activatedAbilities = append(card.activatedAbilities, ability)
 	}
-	card.spellAbility = append(card.spellAbility, definition.SpellAbilitySpec.EffectSpecs...)
+	card.spellAbility = append(card.spellAbility, definition.SpellAbilitySpec...)
 	for _, spec := range definition.StaticAbilitySpecs {
 		staticCost, err := cost.ParseCost(spec.Cost)
 		if err != nil {
@@ -90,7 +81,7 @@ func NewCardFromCardDefinition(id, playerID string, definition definition.Card) 
 		card.staticAbilities = append(card.staticAbilities, StaticAbility{
 			name:      spec.Name,
 			cost:      staticCost,
-			Modifiers: spec.Modifiers,
+			modifiers: spec.Modifiers,
 		})
 	}
 	return card, nil

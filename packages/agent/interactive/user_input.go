@@ -93,8 +93,7 @@ func (a *Agent) ReadInputConfirm() (bool, error) {
 	return false, fmt.Errorf("invalid input: %s", accept)
 }
 
-func (a Agent) ReadInputNumber(max int) (int, error) {
-	input := a.ReadInput()
+func (a Agent) inputToNumber(input string, max int) (int, error) {
 	number, err := strconv.Atoi(input)
 	if err != nil {
 		return -1, fmt.Errorf("failed to parse number: %w", err)

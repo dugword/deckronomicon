@@ -18,7 +18,7 @@ type Resolvable interface {
 	Match(p query.Predicate) bool
 	Controller() string
 	Owner() string
-	// Targets() map[string]target.TargetValue
+	SourceID() string
 }
 
 type Stack struct {
@@ -48,12 +48,11 @@ func (s Stack) FindAll(predicate query.Predicate) []Resolvable {
 }
 
 func (s Stack) Get(id string) (Resolvable, bool) {
-	for _, resolvable := range s.resolvables {
-		if resolvable.ID() == id {
-			return resolvable, true
-		}
-	}
-	return nil, false
+	return query.Get(s.resolvables, id)
+}
+
+func (s Stack) GetTop() (Resolvable, bool) {
+	return query.GetTop(s.resolvables)
 }
 
 func (s Stack) GetAll() []Resolvable {

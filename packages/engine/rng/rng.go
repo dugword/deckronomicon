@@ -25,11 +25,8 @@ func (r *RNG) ShuffleCards(cards []gob.Card) []gob.Card {
 	return shuffled
 }
 
-func (r *RNG) ShuffleCardsIDs(cards []gob.Card) []string {
-	var shuffled []string
-	for _, card := range cards {
-		shuffled = append(shuffled, card.ID())
-	}
+func (r *RNG) ShuffleIDs(ids []string) []string {
+	shuffled := slices.Clone(ids)
 	for i := len(shuffled) - 1; i > 0; i-- {
 		j := r.rng.Intn(i + 1)
 		shuffled[i], shuffled[j] = shuffled[j], shuffled[i]

@@ -2,6 +2,7 @@ package actionparser
 
 import (
 	"deckronomicon/packages/choose"
+	"deckronomicon/packages/engine"
 	"deckronomicon/packages/engine/action"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/query"
@@ -14,13 +15,13 @@ func parseDiscardCheatCommand(
 	idOrName string,
 	game state.Game,
 	player state.Player,
-	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
+	agent engine.PlayerAgent,
 ) (action.DiscardCheatAction, error) {
 	cards := player.Hand().GetAll()
 	var card gob.Card
 	var err error
 	if idOrName == "" {
-		card, err = buildDiscardCommandByChoice(cards, player, chooseFunc)
+		card, err = buildDiscardCommandByChoice(cards, player, agent)
 		if err != nil {
 			return action.DiscardCheatAction{}, fmt.Errorf("failed to choose a card to discard: %w", err)
 		}
@@ -37,7 +38,7 @@ func parseDiscardCheatCommand(
 func buildDiscardCommandByChoice(
 	cards []gob.Card,
 	player state.Player,
-	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
+	agent engine.PlayerAgent,
 ) (gob.Card, error) {
 	prompt := choose.ChoicePrompt{
 		Message:  "Choose a card to discard",
@@ -47,7 +48,7 @@ func buildDiscardCommandByChoice(
 			Choices: choose.NewChoices(cards),
 		},
 	}
-	choiceResults, err := chooseFunc(prompt)
+	choiceResults, err := agent.Choose(prompt)
 	if err != nil {
 		return gob.Card{}, fmt.Errorf("failed to get choices: %w", err)
 	}

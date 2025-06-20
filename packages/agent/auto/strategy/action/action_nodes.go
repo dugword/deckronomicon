@@ -21,7 +21,7 @@ type PassPriorityActionNode struct {
 }
 
 func (n *PassPriorityActionNode) Resolve(ctx *evalstate.EvalState) (engine.Action, error) {
-	return action.NewPassPriorityAction(n.Player), nil
+	return action.NewPassPriorityAction(n.Player.ID()), nil
 }
 
 type ConcedeActionNode struct {

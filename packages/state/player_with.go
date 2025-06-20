@@ -154,13 +154,21 @@ func (p Player) WithSpellCastThisTurn() Player {
 	return p
 }
 
-func (p Player) WithShuffledLibrary(shuffledCardsIds []string) (Player, error) {
+func (p Player) WithShuffledLibrary(shuffledCardsIDs []string) (Player, error) {
+	cards := p.library.GetAll()
+	if len(cards) != len(shuffledCardsIDs) {
+		return p, fmt.Errorf(
+			"shuffledCardIDs %d does not match library size %d",
+			len(shuffledCardsIDs),
+			len(cards),
+		)
+	}
 	cardIDMap := map[string]gob.Card{}
-	for _, card := range p.library.GetAll() {
+	for _, card := range cards {
 		cardIDMap[card.ID()] = card
 	}
 	var redordered []gob.Card
-	for _, id := range shuffledCardsIds {
+	for _, id := range shuffledCardsIDs {
 		if card, ok := cardIDMap[id]; ok {
 			redordered = append(redordered, card)
 		} else {

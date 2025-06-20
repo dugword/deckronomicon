@@ -15,7 +15,6 @@ import (
 func (e *Engine) CheckTriggeredEffects(game state.Game, evnt event.GameEvent) ([]event.GameEvent, error) {
 	var triggeredEvents []event.GameEvent
 	for _, te := range game.TriggeredEffects() {
-		fmt.Println("Checking triggered effect (sourceName):", te.SourceName, "for event:", evnt.EventType())
 		if e.MatchesTrigger(te.Trigger, evnt, game, te.PlayerID) {
 			events, err := e.HandleTriggeredEffect(game, te.PlayerID, te, evnt)
 			if err != nil {
@@ -29,13 +28,11 @@ func (e *Engine) CheckTriggeredEffects(game state.Game, evnt event.GameEvent) ([
 				ID: te.ID,
 			})
 		}
-		fmt.Println("Removing triggered effect (sourceName):", te.SourceName, "for event:", evnt.EventType())
 	}
 	return triggeredEvents, nil
 }
 
 func (e *Engine) MatchesTrigger(trigger state.Trigger, evnt event.GameEvent, game state.Game, playerID string) bool {
-	fmt.Println("Matches!")
 	// TODO: This match logic should live in the trigger itself I think, otherwise this is going to get out of hand.
 	// Or maybe not because we have a generic "filter" in the trigger that is applied differently based on the event type.
 	// Maybe this needs to be applied in a dispatching reducer pattern like the apply events function.
@@ -57,16 +54,13 @@ func (e *Engine) MatchesTrigger(trigger state.Trigger, evnt event.GameEvent, gam
 		}
 		return true
 	case "BeginEndStep":
-		fmt.Println("Checking BeginEndStep trigger for player:", playerID)
 		BeginEndStepEvent, ok := evnt.(event.BeginEndStepEvent)
 		if !ok {
 			return false
 		}
-		fmt.Println("Was ok")
 		if BeginEndStepEvent.PlayerID != playerID {
 			return false
 		}
-		fmt.Println("All checks passed")
 		return true
 	}
 	return false
@@ -100,11 +94,7 @@ func (e *Engine) HandleTriggeredEffectOld(game state.Game, playerID string, te s
 
 func (e *Engine) HandleTriggeredEffect(game state.Game, playerID string, te state.TriggeredEffect, evnt event.GameEvent) ([]event.GameEvent, error) {
 	var events []event.GameEvent
-	player, ok := game.GetPlayer(playerID)
-	if !ok {
-		e.log.Error("Player not found for ID:", playerID)
-		return events, fmt.Errorf("player not found for ID: %s", playerID)
-	}
+	player := game.GetPlayer(playerID)
 	// TODO: This is redundante with the activate ability code and the resolve effect code.
 	// We should refactor this to use the same logic.
 	// I think what I am doing here though is the pattern to use for all abilities/effects.
@@ -116,7 +106,7 @@ func (e *Engine) HandleTriggeredEffect(game state.Game, playerID string, te stat
 			if err != nil {
 				return nil, fmt.Errorf("effect %q not found: %w", effectSpec.Name, err)
 			}
-			effectResults, err := efct.Resolve(game, player, nil, target.TargetValue{})
+			effectResults, err := efct.Resolve(game, player, nil, target.TargetValue{}, e.resEnv)
 			if err != nil {
 				return nil, fmt.Errorf("failed to apply effect %q: %w", effectSpec.Name, err)
 			}

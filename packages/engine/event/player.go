@@ -15,7 +15,6 @@ const (
 	EventTypeConcede            = "Concede"
 	EventTypeDeclareAttackers   = "DeclareAttackers"
 	EventTypeDeclareBlockers    = "DeclareBlockers"
-	EventTypePassPriority       = "PassPriority"
 	EventTypePlayLand           = "PlayLand"
 	EventTypeCycleCard          = "CycleCard"
 	EventTypeLandTappedForMana  = "LandTappedForMana"
@@ -96,15 +95,6 @@ type DeclareBlockersEvent struct {
 
 func (e DeclareBlockersEvent) EventType() string {
 	return EventTypeDeclareBlockers
-}
-
-type PassPriorityEvent struct {
-	PlayerBaseEvent
-	PlayerID string
-}
-
-func (e PassPriorityEvent) EventType() string {
-	return EventTypePassPriority
 }
 
 type PlayLandEvent struct {

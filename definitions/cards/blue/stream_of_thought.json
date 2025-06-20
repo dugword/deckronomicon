@@ -7,29 +7,25 @@
   ],
   "ManaCost": "{U}",
   "Name": "Stream of Thought",
-  "SpellAbility": {
-    "Effects": [
-      {
-        "Name": "Mill",
-        "Modifiers": {
-          "Target": "Player",
-          "Count": 4
-        }
-      },
-      {
-        "Name": "ShuffleFromGraveyard",
-        "Modifiers": {
-          "Count": 4
-        }
+  "Effects": [
+    {
+      "Name": "Mill",
+      "Modifiers": {
+        "Target": "Player",
+        "Count": 4
       }
-    ]
-  },
+    },
+    {
+      "Name": "ShuffleFromGraveyard",
+      "Modifiers": {
+        "Count": 4
+      }
+    }
+  ],
   "StaticAbilities": [
     {
       "Name": "Replicate",
-      "Modifiers": {
-        "Cost": "{2}{U}{U}"
-      }
+      "Cost": "{2}{U}{U}"
     }
   ],
   "RulesText": "Target player mills four cards. You shuffle up to four cards from your graveyard into your library.\nReplicate {2}{U}{U} (When you cast this spell, copy it for each time you paid its replicate cost. You may choose new targets for the copies.)"

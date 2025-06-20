@@ -23,6 +23,10 @@ type ActivateAbilityRequest struct {
 	TargetsForEffects map[EffectTargetKey]target.TargetValue
 }
 
+func (r ActivateAbilityRequest) Build(playerID string) ActivateAbilityAction {
+	return NewActivateAbilityAction(playerID, r)
+}
+
 type ActivateAbilityAction struct {
 	abilityID         string
 	sourceID          string
@@ -49,10 +53,7 @@ func (a ActivateAbilityAction) Name() string {
 }
 
 func (a ActivateAbilityAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
-	player, ok := game.GetPlayer(a.playerID)
-	if !ok {
-		return nil, fmt.Errorf("player %q not found in game", a.playerID)
-	}
+	player := game.GetPlayer(a.playerID)
 	ability, ok := getAbilityOnSourceInZone(
 		game,
 		player,
@@ -124,7 +125,7 @@ func (a ActivateAbilityAction) Complete(game state.Game, resEnv *resenv.ResEnv) 
 				}
 			}
 		}
-		manaEvents, err := buildManaAbilityEvents(game, player, effectWithTargets)
+		manaEvents, err := buildManaAbilityEvents(game, player, effectWithTargets, resEnv)
 		if err != nil {
 			return nil, fmt.Errorf("failed to build mana ability events: %w", err)
 		}
@@ -147,15 +148,15 @@ func buildManaAbilityEvents(
 	player state.Player,
 	// effectSpecs []definition.EffectSpec,
 	effectWithTargets []gob.EffectWithTarget,
+	resEnv *resenv.ResEnv,
 ) ([]event.GameEvent, error) {
 	var events []event.GameEvent
 	for _, effectWithTarget := range effectWithTargets {
-		fmt.Println("Building mana ability event for effect:", effectWithTarget.EffectSpec.Name, "with target:", effectWithTarget.Target)
 		efct, err := effect.Build(effectWithTarget.EffectSpec)
 		if err != nil {
 			return nil, fmt.Errorf("effect %q not found: %w", effectWithTarget.EffectSpec.Name, err)
 		}
-		effectResults, err := efct.Resolve(game, player, nil, effectWithTarget.Target)
+		effectResults, err := efct.Resolve(game, player, nil, effectWithTarget.Target, resEnv)
 		if err != nil {
 			return nil, fmt.Errorf("failed to apply effect %q: %w", effectWithTarget.EffectSpec.Name, err)
 		}

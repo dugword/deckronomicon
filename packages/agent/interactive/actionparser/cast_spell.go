@@ -2,6 +2,7 @@ package actionparser
 
 import (
 	"deckronomicon/packages/choose"
+	"deckronomicon/packages/engine"
 	"deckronomicon/packages/engine/action"
 	"deckronomicon/packages/engine/judge"
 	"deckronomicon/packages/game/gob"
@@ -16,21 +17,23 @@ func parseCastSpellCommand(
 	idOrName string,
 	game state.Game,
 	player state.Player,
-	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
-) (action.CastSpellAction, error) {
+	agent engine.PlayerAgent,
+) (action.CastSpellRequest, error) {
 	ruling := judge.Ruling{Explain: true}
 	cards := judge.GetSpellsAvailableToCast(game, player, &ruling)
 	var cardInZone gob.CardInZone
 	var err error
 	if idOrName == "" {
-		cardInZone, err = getCardByChoice(cards, chooseFunc, player)
+		cardInZone, err = getCardByChoice(cards, agent, player)
 		if err != nil {
-			return action.CastSpellAction{}, fmt.Errorf("failed to get card by choice: %w", err)
+			return action.CastSpellRequest{}, fmt.Errorf("failed to get card by choice: %w", err)
 		}
 	} else {
 		found, ok := query.Find(cards, query.Or(has.ID(idOrName), has.Name(idOrName)))
 		if !ok {
-			return action.CastSpellAction{}, fmt.Errorf("no spell found with id or name %q", idOrName)
+			return action.CastSpellRequest{}, fmt.Errorf(
+				"failed to find card found with id or name %q: %w", idOrName, ErrCardNotFound,
+			)
 		}
 		cardInZone = found
 	}
@@ -38,20 +41,19 @@ func parseCastSpellCommand(
 		cardInZone.Card(),
 		cardInZone.Card().SpellAbility(),
 		game,
-		chooseFunc,
+		agent,
 	)
 	if err != nil {
-		return action.CastSpellAction{}, fmt.Errorf("failed to get targets for spell: %w", err)
+		return action.CastSpellRequest{}, fmt.Errorf("failed to get targets for spell: %w", err)
 	}
 	// TODO: Pass in cost or something and only get cards that can be paid for.
 	splicableCards, err := judge.GetSplicableCards(game, player, cardInZone, &ruling)
 	if err != nil {
-		return action.CastSpellAction{}, fmt.Errorf("failed to get splicable cards: %w", err)
+		return action.CastSpellRequest{}, fmt.Errorf("failed to get splicable cards: %w", err)
 	}
-	fmt.Println("Ruling for splice:", ruling.Why())
-	cardsToSplice, err := chooseSpliceCards(splicableCards, cardInZone.Card(), chooseFunc)
+	cardsToSplice, err := chooseSpliceCards(splicableCards, cardInZone.Card(), agent)
 	if err != nil {
-		return action.CastSpellAction{}, fmt.Errorf("failed to choose splice cards: %w", err)
+		return action.CastSpellRequest{}, fmt.Errorf("failed to choose splice cards: %w", err)
 	}
 	var spliceCardIDs []string
 	for _, cardToSplice := range cardsToSplice {
@@ -59,36 +61,66 @@ func parseCastSpellCommand(
 			cardToSplice.Card(),
 			cardToSplice.Card().SpellAbility(),
 			game,
-			chooseFunc,
+			agent,
 		)
 		if err != nil {
-			return action.CastSpellAction{}, fmt.Errorf("failed to get targets for spell: %w", err)
+			return action.CastSpellRequest{}, fmt.Errorf("failed to get targets for spell: %w", err)
 		}
 		for k, v := range spliceTargetsForEffects {
 			targetsForEffects[k] = v
 		}
 		spliceCardIDs = append(spliceCardIDs, cardToSplice.Card().ID())
 	}
-	withFlashback := false
+	flashback := false
 	if cardInZone.Zone() == mtg.ZoneGraveyard {
-		withFlashback = true
+		flashback = true
+	}
+	replicateCount := 0
+	if judge.CanReplicateCard(game, player, cardInZone.Card(), &ruling) {
+		var err error
+		replicateCount, err = getReplicateCount(cardInZone.Card(), agent)
+		if err != nil {
+			return action.CastSpellRequest{}, fmt.Errorf("failed to get replicate count: %w", err)
+		}
 	}
 	request := action.CastSpellRequest{
 		CardID:            cardInZone.Card().ID(),
 		TargetsForEffects: targetsForEffects,
+		ReplicateCount:    replicateCount,
 		SpliceCardIDs:     spliceCardIDs,
-		WithFlashback:     withFlashback,
+		Flashback:         flashback,
 	}
-	return action.NewCastSpellAction(
-		player.ID(),
-		request,
-	), nil
+	return request, nil
+}
+
+func getReplicateCount(
+	card gob.Card,
+	agent engine.PlayerAgent,
+) (int, error) {
+	replicatePrompt := choose.ChoicePrompt{
+		Message:    "Choose how many times to replicate the spell",
+		Source:     card,
+		Optional:   true,
+		ChoiceOpts: choose.ChooseNumberOpts{},
+	}
+	replicateResults, err := agent.Choose(replicatePrompt)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get replicate count: %w", err)
+	}
+	selected, ok := replicateResults.(choose.ChooseNumberResults)
+	if !ok {
+		return 0, fmt.Errorf("expected a number choice result for replicate count")
+	}
+	if selected.Number < 0 {
+		return 0, fmt.Errorf("replicate count cannot be negative")
+	}
+	return selected.Number, nil
 }
 
 func chooseSpliceCards(
 	splicableCards []gob.CardInZone,
 	card gob.Card,
-	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
+	agent engine.PlayerAgent,
 ) ([]gob.CardInZone, error) {
 	var cardsInHandToSplice []gob.CardInZone
 	if len(splicableCards) == 0 {
@@ -104,7 +136,7 @@ func chooseSpliceCards(
 			Max:     len(splicableCards),
 		},
 	}
-	spliceResults, err := chooseFunc(splicePrompt)
+	spliceResults, err := agent.Choose(splicePrompt)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get splice choices: %w", err)
 	}
@@ -124,7 +156,7 @@ func chooseSpliceCards(
 
 func getCardByChoice(
 	cards []gob.CardInZone,
-	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
+	agent engine.PlayerAgent,
 	player state.Player,
 ) (gob.CardInZone, error) {
 	prompt := choose.ChoicePrompt{
@@ -135,13 +167,16 @@ func getCardByChoice(
 			Choices: choose.NewChoices(cards),
 		},
 	}
-	choiceResults, err := chooseFunc(prompt)
+	choiceResults, err := agent.Choose(prompt)
 	if err != nil {
 		return gob.CardInZone{}, fmt.Errorf("failed to get choices: %w", err)
 	}
 	selected, ok := choiceResults.(choose.ChooseOneResults)
 	if !ok {
-		return gob.CardInZone{}, fmt.Errorf("selected choice is not a card in a zone")
+		return gob.CardInZone{}, fmt.Errorf("expected ChooseOneResults, got %T", choiceResults)
+	}
+	if selected.Choice == nil {
+		return gob.CardInZone{}, fmt.Errorf("no card selected: %w", choose.ErrNoChoiceSelected)
 	}
 	card, ok := selected.Choice.(gob.CardInZone)
 	if !ok {

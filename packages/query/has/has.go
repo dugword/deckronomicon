@@ -47,6 +47,16 @@ func CardType(cardTypes ...mtg.CardType) query.Predicate {
 	}
 }
 
+func SourceID(sourceID string) query.Predicate {
+	return func(obj query.Object) bool {
+		stackObj, ok := obj.(query.StackObject)
+		if !ok {
+			return false
+		}
+		return stackObj.SourceID() == sourceID
+	}
+}
+
 // TODO support multiple colors
 func Color(color mtg.Color) query.Predicate {
 	return func(obj query.Object) bool {

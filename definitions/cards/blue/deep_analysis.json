@@ -7,17 +7,15 @@
   ],
   "ManaCost": "{3}{U}",
   "Name": "Deep Analysis",
-  "SpellAbility": {
-    "Effects": [
-      {
-        "Name": "Draw",
-        "Modifiers": {
-            "Count": 2,
-            "Target": "Player"
-          }
+  "Effects": [
+    {
+      "Name": "Draw",
+      "Modifiers": {
+        "Count": 2,
+        "Target": "Player"
       }
-    ]
-  },
+    }
+  ],
   "StaticAbilities": [
     {
       "Name": "Flashback",

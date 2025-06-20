@@ -7,21 +7,19 @@
   ],
   "ManaCost": "{U}",
   "Name": "Brainstorm",
-  "SpellAbility": {
-    "Effects": [
-      {
-        "Name": "Draw",
-        "Modifiers": {
-            "Count": 3
-        }
-      },
-      {
-        "Name": "PutBackOnTop",
-        "Modifiers": {
-            "Count": 2
-        }
+  "Effects": [
+    {
+      "Name": "Draw",
+      "Modifiers": {
+        "Count": 3
       }
-    ]
-  },
+    },
+    {
+      "Name": "PutBackOnTop",
+      "Modifiers": {
+        "Count": 2
+      }
+    }
+  ],
   "RulesText": "Draw three cards, then put two cards from your hand on top of your library in any order."
 }

@@ -3,6 +3,7 @@ package effect
 import (
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/game/target"
 
 	"deckronomicon/packages/game/definition"
@@ -42,6 +43,7 @@ func (e PutBackOnTopEffect) Resolve(
 	player state.Player,
 	source query.Object,
 	targets target.TargetValue,
+	resEnv *resenv.ResEnv,
 ) (EffectResult, error) {
 	if e.Count == 0 {
 		return EffectResult{}, fmt.Errorf("invalid required modifier %q for PutBackOnTop effect", "Count")

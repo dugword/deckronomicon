@@ -23,15 +23,17 @@ type ActivatedAbilitySpec struct {
 	EffectSpecs []EffectSpec `json:"Effects,omitempty"`
 	// TODO: This might need to be a slice if an ability is activatedable from
 	// multiple zones.
-	Speed string `json:"Speed,omitempty"`
-	Zone  string `json:"Zone,omitempty"`
+	Speed mtg.Speed `json:"Speed,omitempty"`
+	Zone  mtg.Zone  `json:"Zone,omitempty"`
 }
 
+/*
 type SpellAbilitySpec struct {
 	// Cost // TODO: AdditionalCosts?
 	EffectSpecs []EffectSpec `json:"Effects,omitempty"`
-	Zone        string       `json:"Zone,omitempty"`
+	// Zone        string       `json:"Zone,omitempty"`
 }
+*/
 
 // StaticAbility represents the specification of static ability.
 type StaticAbilitySpec struct {
@@ -55,7 +57,7 @@ type Card struct {
 	Name                  string                 `json:"Name,omitempty"`
 	Power                 int                    `json:"Power,omitempty"`
 	RulesText             string                 `json:"RulesText,omitempty"`
-	SpellAbilitySpec      SpellAbilitySpec       `json:"SpellAbility,omitempty"`
+	SpellAbilitySpec      []EffectSpec           `json:"Effects,omitempty"`
 	StaticAbilitySpecs    []StaticAbilitySpec    `json:"StaticAbilities,omitempty"`
 	TriggeredAbilitySpecs []TriggeredAbilitySpec `json:"TriggeredAbilities,omitempty"`
 	Subtypes              []mtg.Subtype          `json:"Subtypes,omitempty"`

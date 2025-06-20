@@ -7,16 +7,14 @@
   ],
   "ManaCost": "{3}{U}{U}",
   "Name": "Lorien Revealed",
-  "SpellAbility": {
-    "Effects": [
-      {
-        "Name": "Draw",
-        "Modifiers": {
-            "Count": 3
-          }
+  "Effects": [
+    {
+      "Name": "Draw",
+      "Modifiers": {
+        "Count": 3
       }
-    ]
-  },
+    }
+  ],
   "ActivatedAbilities": [
     {
       "Name": "Islandcycling",
@@ -25,7 +23,9 @@
         {
           "Name": "Search",
           "Modifiers": {
-            "Subtypes": ["Island"]
+            "Subtypes": [
+              "Island"
+            ]
           }
         }
       ],

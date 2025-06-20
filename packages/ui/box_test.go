@@ -36,7 +36,7 @@ func TestCreateBox(t *testing.T) {
 		Content: []string{"One", "Two"},
 	}
 	got := CreateBox(data)
-	if diff := cmp.Diff(got, want); diff != "" {
+	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("CreateBox() mismatch (-want +got):\n%s", diff)
 	}
 }
@@ -56,7 +56,7 @@ func TestCombineBoxesSideBySide(t *testing.T) {
 		left := CreateBox(BoxData{Title: "Left", Content: []string{"Line1", "Line3"}})
 		right := CreateBox(BoxData{Title: "Right", Content: []string{"Line2", "Line4"}})
 		got := CombineBoxesSideBySide(left, right)
-		if diff := cmp.Diff(got, want); diff != "" {
+		if diff := cmp.Diff(want, got); diff != "" {
 			t.Errorf("CombineBoxesSideBySide() mismatch (-want +got):\n%s", diff)
 		}
 	})
@@ -74,7 +74,7 @@ func TestCombineBoxesSideBySide(t *testing.T) {
 		left := CreateBox(BoxData{Title: "L", Content: []string{"A", "C"}})
 		right := CreateBox(BoxData{Title: "R", Content: []string{"B"}})
 		got := CombineBoxesSideBySide(left, right)
-		if diff := cmp.Diff(got, want); diff != "" {
+		if diff := cmp.Diff(want, got); diff != "" {
 			t.Errorf("CombineBoxesSideBySide() mismatch (-want +got):\n%s", diff)
 		}
 	})
@@ -93,7 +93,7 @@ func TestCombineBoxesSideBySide(t *testing.T) {
 		left := CreateBox(BoxData{Title: "L", Content: []string{"A"}})
 		right := CreateBox(BoxData{Title: "R", Content: []string{"B", "C"}})
 		got := CombineBoxesSideBySide(left, right)
-		if diff := cmp.Diff(got, want); diff != "" {
+		if diff := cmp.Diff(want, got); diff != "" {
 			t.Errorf("CombineBoxesSideBySide() mismatch (-want +got):\n%s", diff)
 		}
 	})

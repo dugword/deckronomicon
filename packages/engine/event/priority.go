@@ -4,6 +4,7 @@ const (
 	EventTypeAllPlayersPassedPriority = "AllPlayersPassedPriority"
 	EventTypeReceivePriorityEvent     = "ReceivePriorityEvent"
 	EventTypeResetPriorityPasses      = "ResetPriorityPasses"
+	EventTypePassPriority             = "PassPriority"
 )
 
 type PriorityEvent interface{ isPriorityEvent() }
@@ -35,4 +36,13 @@ type ResetPriorityPassesEvent struct {
 
 func (e ResetPriorityPassesEvent) EventType() string {
 	return EventTypeResetPriorityPasses
+}
+
+type PassPriorityEvent struct {
+	PriorityBaseEvent
+	PlayerID string
+}
+
+func (e PassPriorityEvent) EventType() string {
+	return EventTypePassPriority
 }

@@ -7,16 +7,17 @@
   ],
   "ManaCost": "{U}{U}",
   "Name": "Muddle the Mixture",
-  "SpellAbility": {
-    "Effects": [
-      {
-        "Name": "Counterspell",
-        "Modifiers": {
-          "CardTypes": ["Instant", "Sorcery"]
-        }
+  "Effects": [
+    {
+      "Name": "Counterspell",
+      "Modifiers": {
+        "CardTypes": [
+          "Instant",
+          "Sorcery"
+        ]
       }
-    ]
-  },
+    }
+  ],
   "ActivatedAbilities": [
     {
       "Name": "Transmute",
@@ -25,7 +26,9 @@
         {
           "Name": "Search",
           "Modifiers": {
-            "ManaValues": [2]
+            "ManaValues": [
+              2
+            ]
           }
         }
       ],

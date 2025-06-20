@@ -39,14 +39,6 @@ type Card struct {
 	toughness          int
 }
 
-func NewCard(id, name string) Card {
-	card := Card{
-		id:   id,
-		name: name,
-	}
-	return card
-}
-
 // ActivatedAbilities returns the activated abilities of the card available.
 // NOTE: These are the activated abilities of the card itself, not the
 // activated abilities of the permanent. A card can have activated abilities
@@ -80,7 +72,7 @@ func (c Card) Description() string {
 func (c Card) GetStaticAbilityModifiers(staticKeyword mtg.StaticKeyword) (json.RawMessage, bool) {
 	for _, ability := range c.staticAbilities {
 		if ability.StaticKeyword() == staticKeyword {
-			return ability.Modifiers, true
+			return ability.modifiers, true
 		}
 	}
 	return nil, false

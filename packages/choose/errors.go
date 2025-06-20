@@ -2,4 +2,6 @@ package choose
 
 import "errors"
 
-var ErrNoChoices = errors.New("no choices available")
+var ErrNoChoicesAvailable = errors.New("no choices available")
+
+var ErrNoChoiceSelected = errors.New("no choice selected")

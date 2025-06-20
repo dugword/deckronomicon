@@ -2,6 +2,7 @@ package effect
 
 import (
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
@@ -49,6 +50,7 @@ func (e CounterspellEffect) Resolve(
 	player state.Player,
 	source query.Object,
 	target target.TargetValue,
+	resEnv *resenv.ResEnv,
 ) (EffectResult, error) {
 	resolvable, ok := game.Stack().Find(has.ID(target.ObjectID))
 	if !ok {
@@ -65,17 +67,11 @@ func (e CounterspellEffect) Resolve(
 	if !ok {
 		return EffectResult{}, errors.New("choice is not a spell")
 	}
-	var events []event.GameEvent
-	if spell.Flashback() {
-		events = append(events, event.PutSpellInExileEvent{
-			PlayerID: player.ID(),
-			SpellID:  spell.ID(),
-		})
-	} else {
-		events = append(events, event.PutSpellInGraveyardEvent{
-			PlayerID: player.ID(),
-			SpellID:  spell.ID(),
-		})
+	events := []event.GameEvent{
+		event.RemoveSpellOrAbilityFromStackEvent{
+			PlayerID: spell.Owner(),
+			ObjectID: spell.ID(),
+		},
 	}
 	return EffectResult{
 		Events: events,

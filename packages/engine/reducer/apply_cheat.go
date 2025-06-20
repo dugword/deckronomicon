@@ -60,10 +60,7 @@ func applyConjureCardCheatEvent(game state.Game, evnt event.CheatConjureCardEven
 }
 
 func applyCheatPeekEvent(game state.Game, evnt event.CheatPeekEvent) (state.Game, error) {
-	player, ok := game.GetPlayer(evnt.PlayerID)
-	if !ok {
-		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
-	}
+	player := game.GetPlayer(evnt.PlayerID)
 	card := player.Library().Peek()
 	revealed := player.Revealed().Add(card)
 	game = game.WithUpdatedPlayer(player.WithRevealed(revealed))
@@ -74,10 +71,7 @@ func applyResetLandDropCheatEvent(
 	game state.Game,
 	evnt event.CheatResetLandDropEvent,
 ) (state.Game, error) {
-	player, ok := game.GetPlayer(evnt.PlayerID)
-	if !ok {
-		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
-	}
+	player := game.GetPlayer(evnt.PlayerID)
 	player = player.WithClearLandPlayedThisTurn()
 	game = game.WithUpdatedPlayer(player)
 	return game, nil

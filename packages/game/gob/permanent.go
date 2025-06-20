@@ -57,14 +57,12 @@ func NewPermanent(id string, card Card, playerID string) (Permanent, error) {
 	if card.Match(has.CardType(mtg.CardTypeCreature)) {
 		permanent.summoningSickness = true
 	}
-	var abilityID int
-	for _, a := range card.ActivatedAbilities() {
-		abilityID++
+	for i, a := range card.ActivatedAbilities() {
 		ability := Ability{
 			effectSpecs: a.EffectSpecs(),
 			name:        a.Name(),
 			cost:        a.Cost(),
-			id:          fmt.Sprintf("%s-%d", id, abilityID),
+			id:          fmt.Sprintf("%s-%d", id, i+1),
 			zone:        a.zone,
 			speed:       a.speed,
 			source:      permanent,

@@ -12,15 +12,29 @@ func applyPriorityEvent(game state.Game, priorityEvent event.PriorityEvent) (sta
 	switch evnt := priorityEvent.(type) {
 	case event.AllPlayersPassedPriorityEvent:
 		return game, nil
+	case event.PassPriorityEvent:
+		return applyPassPriorityEvent(game, evnt)
 	case event.ReceivePriorityEvent:
-		newGame := game.WithPlayerWithPriority(
-			evnt.PlayerID,
-		)
-		return newGame, nil
+		return game, nil
 	case event.ResetPriorityPassesEvent:
-		newGame := game.WithResetPriorityPasses()
-		return newGame, nil
+		return applyResetPriorityPassesEvent(game, evnt)
 	default:
 		return game, fmt.Errorf("unknown priority event type '%T'", evnt)
 	}
+}
+
+func applyPassPriorityEvent(
+	game state.Game,
+	evnt event.PassPriorityEvent,
+) (state.Game, error) {
+	game = game.WithPlayerPassedPriority(evnt.PlayerID)
+	return game, nil
+}
+
+func applyResetPriorityPassesEvent(
+	game state.Game,
+	_ event.ResetPriorityPassesEvent,
+) (state.Game, error) {
+	game = game.WithResetPriorityPasses()
+	return game, nil
 }

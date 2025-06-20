@@ -47,7 +47,7 @@ func (e AddManaEvent) EventType() string {
 
 type CheatEnabledEvent struct {
 	GameStateChangeBaseEvent
-	Player string // Player ID who enabled cheats
+	PlayerID string
 }
 
 func (e CheatEnabledEvent) EventType() string {
