@@ -31,16 +31,6 @@ func (g Game) WithPlayers(players []Player) Game {
 	return g
 }
 
-func (g Game) WithClearedPriority() Game {
-	g.playerWithPriority = ""
-	return g
-}
-
-func (g Game) WithPlayerWithPriority(playerID string) Game {
-	g.playerWithPriority = playerID
-	return g
-}
-
 func (g Game) WithActivePlayer(playerID string) Game {
 	var idx int
 	for i, p := range g.players {
@@ -116,6 +106,26 @@ func (g Game) WithPutSpellOnStack(
 		playerID,
 		effectWithTargets,
 		flashback,
+	)
+	if err != nil {
+		return game, err
+	}
+	stack := game.stack.AddTop(spell)
+	game = game.WithStack(stack)
+	return game, nil
+}
+
+func (g Game) WithPutCopiedSpellOnStack(
+	spell gob.Spell,
+	playerID string,
+	effectWithTargets []gob.EffectWithTarget,
+) (Game, error) {
+	id, game := g.GetNextID()
+	spell, err := gob.CopySpell(
+		id,
+		spell,
+		playerID,
+		effectWithTargets,
 	)
 	if err != nil {
 		return game, err

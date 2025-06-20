@@ -23,10 +23,7 @@ func applyRegisterTriggeredEffectEvent(
 	game state.Game,
 	evnt event.RegisterTriggeredEffectEvent,
 ) (state.Game, error) {
-	player, ok := game.GetPlayer(evnt.PlayerID)
-	if !ok {
-		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
-	}
+	player := game.GetPlayer(evnt.PlayerID)
 	game = game.WithRegisteredTriggeredEffect(
 		player.ID(),
 		evnt.SourceName,

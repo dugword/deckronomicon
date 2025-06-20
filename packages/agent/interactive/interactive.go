@@ -54,14 +54,8 @@ func (a *Agent) PlayerID() string {
 }
 
 func (a *Agent) ReportState(game state.Game) error {
-	player, ok := game.GetPlayer(a.playerID)
-	if !ok {
-		return fmt.Errorf("player %q not found", a.playerID)
-	}
-	opponent, ok := game.GetOpponent(a.playerID)
-	if !ok {
-		return fmt.Errorf("opponent for player %q not found", a.playerID)
-	}
+	player := game.GetPlayer(a.playerID)
+	opponent := game.GetOpponent(a.playerID)
 	a.uiBuffer.Update(
 		view.NewGameViewFromState(game),
 		view.NewPlayerViewFromState(player),
@@ -71,10 +65,7 @@ func (a *Agent) ReportState(game state.Game) error {
 }
 
 func (a *Agent) GetNextAction(game state.Game) (engine.Action, error) {
-	player, ok := game.GetPlayer(a.playerID)
-	if !ok {
-		return nil, fmt.Errorf("player %q not found", a.playerID)
-	}
+	player := game.GetPlayer(a.playerID)
 	for {
 		pass := true
 		if slices.Contains(a.stops, game.Step()) {
@@ -83,7 +74,7 @@ func (a *Agent) GetNextAction(game state.Game) (engine.Action, error) {
 			}
 		}
 		if pass {
-			return action.NewPassPriorityAction(player), nil
+			return action.NewPassPriorityAction(player.ID()), nil
 		}
 		// TODO Don't call this here, run update or something
 		// PrintCommands(s.CheatsEnabled)
@@ -99,7 +90,7 @@ func (a *Agent) GetNextAction(game state.Game) (engine.Action, error) {
 		input := a.ReadInput()
 		action, err := actionparser.ParseInput(
 			input,
-			a.Choose,
+			a,
 			game,
 			player,
 		)

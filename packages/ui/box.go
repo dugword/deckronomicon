@@ -33,7 +33,8 @@ func splitLines(text string, maxLength int) []string {
 // content are padded to the same width.
 func CreateBox(boxData BoxData) Box {
 	// TODO Configur the min wideth
-	minWidth := 22
+	// minWidth := 22
+	minWidth := 0
 	maxLength := len(boxData.Title)
 	for _, line := range boxData.Content {
 		if len(line) > maxLength {

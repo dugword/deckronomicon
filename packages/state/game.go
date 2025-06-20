@@ -10,14 +10,14 @@ package state
 
 import (
 	"deckronomicon/packages/game/mtg"
+	"fmt"
 	"strconv"
 )
 
 type Game struct {
-	id                    int
+	nextID                int
 	cheatsEnabled         bool
 	activePlayerIdx       int
-	playerWithPriority    string
 	playersPassedPriority map[string]bool
 	battlefield           Battlefield
 	phase                 mtg.Phase
@@ -73,7 +73,13 @@ func (g Game) ActivePlayerID() string {
 	return g.players[g.activePlayerIdx].ID()
 }
 
-func (g Game) AllPlayersPassedPriority() bool {
+func (g Game) DidPlayerPassPriority(playerID string) bool {
+	// TODO: Should I handle `ok` here?
+	// Should this live on player?
+	return g.playersPassedPriority[playerID]
+}
+
+func (g Game) DidAllPlayersPassPriority() bool {
 	for _, player := range g.players {
 		if !g.playersPassedPriority[player.id] {
 			return false
@@ -82,28 +88,22 @@ func (g Game) AllPlayersPassedPriority() bool {
 	return true
 }
 
-// TODO: Think about removing this and using GetPlayerID instead
-func (g Game) GetPlayer(id string) (Player, bool) {
+func (g Game) GetPlayer(id string) Player {
 	for _, player := range g.players {
 		if player.id == id {
-			return player, true
+			return player
 		}
 	}
-	return Player{}, false
+	panic(fmt.Sprintf("player %s not found in game", id))
 }
 
 // TODO: THIS WILL BREAK WITH MORE THAN 2 PLAYERS
-func (g Game) GetOpponent(id string) (Player, bool) {
+func (g Game) GetOpponent(id string) Player {
 	if len(g.players) > 2 {
 		panic("GetOpponent is not implemented for more than 2 players")
 	}
 	opponentID := g.NextPlayerID(id)
-	for _, player := range g.players {
-		if player.id == opponentID {
-			return player, true
-		}
-	}
-	return Player{}, false
+	return g.GetPlayer(opponentID)
 }
 
 func (g Game) NextPlayerID(currentPlayerID string) string {
@@ -117,22 +117,18 @@ func (g Game) NextPlayerID(currentPlayerID string) string {
 }
 
 func (g Game) PriorityPlayerID() string {
-	return g.playerWithPriority
+	priorityPlayer := g.ActivePlayerID()
+	if g.DidAllPlayersPassPriority() {
+		return priorityPlayer
+	}
+	for g.DidPlayerPassPriority(priorityPlayer) {
+		priorityPlayer = g.NextPlayerID(priorityPlayer)
+	}
+	return priorityPlayer
 }
 
 func (g Game) PlayerPassedPriority(id string) bool {
 	return g.playersPassedPriority[id]
-}
-
-func NewGame(config GameConfig) Game {
-	state := Game{
-		players: config.Players,
-	}
-	return state
-}
-
-type GameConfig struct {
-	Players []Player
 }
 
 func (g Game) IsGameOver() bool {
@@ -144,8 +140,8 @@ type GameStateSnapshot struct {
 }
 
 func (g Game) GetNextID() (id string, game Game) {
-	g.id++
-	return strconv.Itoa(g.id), g
+	g.nextID++
+	return strconv.Itoa(g.nextID), g
 }
 
 func (g Game) TriggeredEffects() []TriggeredEffect {

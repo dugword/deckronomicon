@@ -16,27 +16,41 @@ func applyStackEvent(game state.Game, stackEvent event.StackEvent) (state.Game, 
 		return game, nil
 	case event.PutAbilityOnStackEvent:
 		return applyPutAbilityOnStackEvent(game, evnt)
+	case event.PutCopiedSpellOnStackEvent:
+		return applyPutCopiedSpellOnStackEvent(game, evnt)
 	case event.PutSpellOnStackEvent:
 		return applyPutSpellOnStackEvent(game, evnt)
-	case event.RemoveAbilityFromStackEvent:
-		return applyRemoveAbilityFromStackEvent(game, evnt)
-	case event.PutSpellInExileEvent:
-		return applyPutSpellInZoneEvent(game, evnt.PlayerID, evnt.SpellID, mtg.ZoneExile)
-	case event.PutSpellInGraveyardEvent:
-		return applyPutSpellInZoneEvent(game, evnt.PlayerID, evnt.SpellID, mtg.ZoneGraveyard)
+	case event.RemoveSpellOrAbilityFromStackEvent:
+		return applyRemoveSpellOrAbilityFromStackEvent(game, evnt)
 	default:
 		return game, fmt.Errorf("unknown stack event type '%T'", evnt)
 	}
+}
+
+func applyPutCopiedSpellOnStackEvent(
+	game state.Game,
+	evnt event.PutCopiedSpellOnStackEvent,
+) (state.Game, error) {
+	resolvable, ok := game.Stack().Get(evnt.SpellID)
+	if !ok {
+		return game, fmt.Errorf("spell %q not found on stack", evnt.SpellID)
+	}
+	spell, ok := resolvable.(gob.Spell)
+	if !ok {
+		return game, fmt.Errorf("object %q is not a spell", resolvable.ID())
+	}
+	game, err := game.WithPutCopiedSpellOnStack(spell, evnt.PlayerID, evnt.EffectWithTargets)
+	if err != nil {
+		return game, fmt.Errorf("failed to put copy of spell %q on stack: %w", evnt.SpellID, err)
+	}
+	return game, nil
 }
 
 func applyPutSpellOnStackEvent(
 	game state.Game,
 	evnt event.PutSpellOnStackEvent,
 ) (state.Game, error) {
-	player, ok := game.GetPlayer(evnt.PlayerID)
-	if !ok {
-		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
-	}
+	player := game.GetPlayer(evnt.PlayerID)
 	card, player, ok := player.TakeCardFromZone(evnt.CardID, evnt.FromZone)
 	if !ok {
 		return game, fmt.Errorf("card %q not in zone %q", evnt.CardID, evnt.FromZone)
@@ -46,33 +60,6 @@ func applyPutSpellOnStackEvent(
 	if err != nil {
 		return game, fmt.Errorf("failed to put card %q on stack: %w", evnt.CardID, err)
 	}
-	return game, nil
-}
-
-func applyPutSpellInZoneEvent(
-	game state.Game,
-	playerID string,
-	spellID string,
-	zone mtg.Zone,
-) (state.Game, error) {
-	player, ok := game.GetPlayer(playerID)
-	if !ok {
-		return game, fmt.Errorf("player %q not found", playerID)
-	}
-	object, stack, ok := game.Stack().Take(spellID)
-	if !ok {
-		return game, fmt.Errorf("object %q not found on stack", spellID)
-	}
-	game = game.WithStack(stack)
-	spell, ok := object.(gob.Spell)
-	if !ok {
-		return game, fmt.Errorf("object %q is not a spell", object.ID())
-	}
-	player, ok = player.WithAddCardToZone(spell.Card(), zone)
-	if !ok {
-		return game, fmt.Errorf("failed to move card %q to %q", spell.Card().ID(), zone)
-	}
-	game = game.WithUpdatedPlayer(player)
 	return game, nil
 }
 
@@ -93,13 +80,29 @@ func applyPutAbilityOnStackEvent(
 	return game, nil
 }
 
-func applyRemoveAbilityFromStackEvent(
+func applyRemoveSpellOrAbilityFromStackEvent(
 	game state.Game,
-	evnt event.RemoveAbilityFromStackEvent,
+	evnt event.RemoveSpellOrAbilityFromStackEvent,
 ) (state.Game, error) {
-	_, stack, ok := game.Stack().Take(evnt.AbilityID)
+	player := game.GetPlayer(evnt.PlayerID)
+	resolvable, stack, ok := game.Stack().Take(evnt.ObjectID)
 	if !ok {
-		return game, fmt.Errorf("ability %q not found on stack", evnt.AbilityID)
+		return game, fmt.Errorf("object %q not found on stack", evnt.ObjectID)
+	}
+	switch obj := resolvable.(type) {
+	case gob.Spell:
+		if obj.IsCopy() {
+			break
+		}
+		zone := mtg.ZoneGraveyard
+		if obj.Flashback() {
+			zone = mtg.ZoneExile
+		}
+		player, ok = player.WithAddCardToZone(obj.Card(), zone)
+		if !ok {
+			return game, fmt.Errorf("failed to move card %q to %q", obj.Card().ID(), zone)
+		}
+		game = game.WithUpdatedPlayer(player)
 	}
 	game = game.WithStack(stack)
 	return game, nil

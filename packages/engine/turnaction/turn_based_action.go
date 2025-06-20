@@ -74,10 +74,7 @@ func (a DrawStartingHandAction) Complete(
 ) ([]event.GameEvent, error) {
 	// This action would typically involve the player drawing their starting hand.
 	// For now, we return an empty event as a placeholder.
-	player, ok := game.GetPlayer(a.PlayerID())
-	if !ok {
-		return nil, fmt.Errorf("player %q not found", a.PlayerID())
-	}
+	player := game.GetPlayer(a.PlayerID())
 	// Draw the starting hand, which is typically 7 cards, but can be
 	// different.
 	var drawEvents []event.GameEvent
@@ -387,10 +384,7 @@ func (a DiscardToHandSizeAction) Description() string {
 
 // TODO This should move to the player agent
 func (a DiscardToHandSizeAction) GetPrompt(game state.Game) (choose.ChoicePrompt, error) {
-	player, ok := game.GetPlayer(a.PlayerID())
-	if !ok {
-		return choose.ChoicePrompt{}, fmt.Errorf("player %q not found", a.PlayerID())
-	}
+	player := game.GetPlayer(a.PlayerID())
 	hand := player.Hand()
 	excess := hand.Size() - player.MaxHandSize()
 	if excess <= 0 {

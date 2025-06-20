@@ -30,10 +30,7 @@ func (a PlayLandAction) Name() string {
 }
 
 func (a PlayLandAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
-	player, ok := game.GetPlayer(a.playerID)
-	if !ok {
-		return nil, fmt.Errorf("player %q not found in game", a.playerID)
-	}
+	player := game.GetPlayer(a.playerID)
 	landToPlay, ok := player.GetCardFromZone(a.cardID, mtg.ZoneHand)
 	if !ok {
 		return nil, fmt.Errorf("player %q does not have card %q in hand", a.playerID, a.cardID)

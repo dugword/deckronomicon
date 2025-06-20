@@ -43,7 +43,7 @@ func validateCard(card definition.Card) []error {
 	if len(card.CardTypes) == 0 {
 		errs = append(errs, fmt.Errorf("at least one card type is required"))
 	}
-	for _, effectSpec := range card.SpellAbilitySpec.EffectSpecs {
+	for _, effectSpec := range card.SpellAbilitySpec {
 		if _, err := effect.Build(effectSpec); err != nil {
 			errs = append(errs, fmt.Errorf("invalid effect spec in card %q: %w", card.Name, err))
 			continue

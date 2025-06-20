@@ -47,6 +47,9 @@ func payCompositeCost(c cost.CompositeCost, object query.Object, player state.Pl
 }
 
 func payManaCost(c cost.ManaCost, player state.Player) []event.GameEvent {
+	if c.Amount().Total() == 0 {
+		return nil
+	}
 	return []event.GameEvent{event.SpendManaEvent{
 		PlayerID:   player.ID(),
 		ManaString: c.Amount().ManaString(),

@@ -166,6 +166,7 @@ func PlayerData(player view.Player) BoxData {
 	return BoxData{
 		Title: fmt.Sprintf("Status for %s", player.ID),
 		Content: []string{
+			fmt.Sprintf("Turn: %d", player.Turn),
 			fmt.Sprintf("Life: %d", player.Life),
 			fmt.Sprintf("Hand: %d cards", len(player.Hand)),
 			fmt.Sprintf("Library: %d cards", player.LibrarySize),

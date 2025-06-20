@@ -4,27 +4,48 @@ package engine
 
 import (
 	"deckronomicon/packages/configs"
+	"deckronomicon/packages/engine/effect"
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/engine/rng"
 	"deckronomicon/packages/engine/turnaction"
 	"deckronomicon/packages/game/definition"
-	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
-	"deckronomicon/packages/logger"
+	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/is"
 	"deckronomicon/packages/state"
 	"errors"
 	"fmt"
 )
 
+type Action interface {
+	Name() string
+	Complete(state.Game, *resenv.ResEnv) ([]event.GameEvent, error)
+}
+
+type Logger interface {
+	Debug(...any)
+	Debugf(format string, args ...any)
+	Info(...any)
+	Infof(format string, args ...any)
+	Warn(...any)
+	Warnf(format string, args ...any)
+	Error(...any)
+	Errorf(format string, args ...any)
+	Critical(...any)
+	Criticalf(format string, args ...any)
+}
+
+// TODO: I don't think this is the right place for this,
+// not sure if the action interface above is in the right place either
+var ErrInvalidUserAction = errors.New("invalid user action")
+
 type Engine struct {
 	agents      map[string]PlayerAgent
 	deckLists   map[string]configs.DeckList
 	game        state.Game
 	record      *GameRecord
-	rng         *rng.RNG
-	log         *logger.Logger
+	log         Logger
 	definitions map[string]definition.Card
 	resEnv      *resenv.ResEnv
 	// effectRegistry *effect.EffectRegistry
@@ -46,6 +67,7 @@ type EngineConfig struct {
 	// Cards are just strings for now, but will be a Card type later
 	DeckLists   map[string]configs.DeckList
 	Definitions map[string]definition.Card
+	Log         Logger
 }
 
 func NewEngine(config EngineConfig) *Engine {
@@ -54,19 +76,17 @@ func NewEngine(config EngineConfig) *Engine {
 		agents[id] = agent
 	}
 	rng := rng.NewRNG(config.Seed)
-	log := &logger.Logger{}
 	definitions := config.Definitions
 	return &Engine{
 		agents:    agents,
 		deckLists: config.DeckLists,
 		game:      state.Game{}.WithPlayers(config.Players),
-		log:       log,
+		log:       config.Log,
 		record:    NewGameRecord(config.Seed),
 		// rng:         rng,
 		definitions: definitions,
 		resEnv: &resenv.ResEnv{
 			RNG:         rng,
-			Log:         log,
 			Definitions: definitions,
 		},
 		//effectRegistry: effect.NewEffectRegistry(),
@@ -74,10 +94,6 @@ func NewEngine(config EngineConfig) *Engine {
 }
 
 func (e *Engine) RunGame() error {
-	e.log.IncludeContext = true
-	e.log.ContextFunc = func() any {
-		return nil
-	}
 	// TODO This shouldn't live here. It should be in the Apply reducers and managed via events.
 	// Or it needs to be created prior to the game starting and passed in.
 	for _, playerID := range e.game.PlayerIDsInTurnOrder() {
@@ -86,7 +102,7 @@ func (e *Engine) RunGame() error {
 		if !ok {
 			return fmt.Errorf("deck list for player %q not found", playerID)
 		}
-		newGame, deck, err := e.game.WithBuildDeck(
+		game, deck, err := e.game.WithBuildDeck(
 			deckList,
 			e.definitions,
 			playerID,
@@ -98,11 +114,8 @@ func (e *Engine) RunGame() error {
 				err,
 			)
 		}
-		e.game = newGame
-		player, ok := e.game.GetPlayer(playerID)
-		if !ok {
-			return fmt.Errorf("player %q not found", playerID)
-		}
+		e.game = game
+		player := e.game.GetPlayer(playerID)
 		newPlayer := player.WithLibrary(state.NewLibrary(deck))
 		e.game = e.game.WithUpdatedPlayer(newPlayer)
 	}
@@ -113,11 +126,12 @@ func (e *Engine) RunGame() error {
 	}
 	e.log.Debug("Shuffling decks")
 	for _, playerID := range e.game.PlayerIDsInTurnOrder() {
-		player, ok := e.game.GetPlayer(playerID)
-		if !ok {
-			return fmt.Errorf("player %q not found", playerID)
+		player := e.game.GetPlayer(playerID)
+		var cardIDs []string
+		for _, card := range player.Library().GetAll() {
+			cardIDs = append(cardIDs, card.ID())
 		}
-		shuffledCardsIDs := e.resEnv.RNG.ShuffleCardsIDs(player.Library().GetAll())
+		shuffledCardsIDs := e.resEnv.RNG.ShuffleIDs(cardIDs)
 		if err := e.ApplyEvent(event.ShuffleLibraryEvent{PlayerID: playerID, ShuffledCardsIDs: shuffledCardsIDs}); err != nil {
 			return fmt.Errorf("failed to shuffle decks for player %q: %w", playerID, err)
 		}
@@ -136,9 +150,8 @@ func (e *Engine) RunGame() error {
 	}
 	// resolve mulligans
 	for !e.game.IsGameOver() {
-		err := e.RunTurn()
-		if err != nil {
-			return err
+		if err := e.RunTurn(); err != nil {
+			return fmt.Errorf("failed to run turn: %w", err)
 		}
 	}
 	return nil
@@ -190,12 +203,9 @@ func (e *Engine) RunStep(step GameStep) error {
 	}
 	for _, action := range step.actions {
 		e.log.Debug("Completing action:", action.Name())
-		// TODO: This should be a separate event, not an action.
 		if err := e.CompleteTurnAction(action); err != nil {
 			return fmt.Errorf(
-				"failed to apply action %s: %w",
-				action.Name(),
-				err,
+				"failed to apply action %s: %w", action.Name(), err,
 			)
 		}
 	}
@@ -209,119 +219,138 @@ func (e *Engine) RunStep(step GameStep) error {
 }
 
 func (e *Engine) RunPriority() error {
-	priorityPlayerID := e.game.ActivePlayerID()
-	if err := e.ApplyEvent(
-		event.ReceivePriorityEvent{PlayerID: priorityPlayerID},
-	); err != nil {
-		return fmt.Errorf("failed to apply receive priority event: %w", err)
+	for {
+		if e.game.DidAllPlayersPassPriority() && e.game.Stack().Size() == 0 {
+			return nil
+		}
+		priorityPlayerID := e.game.PriorityPlayerID()
+		e.log.Debug("Running priority for player:", priorityPlayerID)
+		if err := e.ApplyEvent(
+			event.ReceivePriorityEvent{PlayerID: priorityPlayerID},
+		); err != nil {
+			return fmt.Errorf("failed to apply receive priority event: %w", err)
+		}
+		if err := e.RunPlayerActions(priorityPlayerID); err != nil {
+			return fmt.Errorf(
+				"failed to run player actions for %q: %w", priorityPlayerID, err,
+			)
+		}
+		spellOrAbility, ok := e.game.Stack().GetTop()
+		if !ok {
+			continue
+		}
+		if err := e.ResolveSpellOrAbility(spellOrAbility); err != nil {
+			return fmt.Errorf(
+				"failed to resolve spell or ability %q: %w", spellOrAbility.Name(), err,
+			)
+		}
+		if err := e.ApplyEvent(event.ResetPriorityPassesEvent{}); err != nil {
+			return fmt.Errorf("failed to reset priority passes: %w", err)
+		}
 	}
-	for !e.game.AllPlayersPassedPriority() {
-		priorityPlayerID = e.game.PriorityPlayerID()
-		agent := e.agents[priorityPlayerID]
-		action, err := agent.GetNextAction(e.game)
+}
+
+func (e *Engine) RunPlayerActions(playerID string) error {
+	for {
+		if e.game.DidPlayerPassPriority(playerID) {
+			return nil
+		}
+		e.log.Debugf("Running player actions for %q", playerID)
+		action, err := e.agents[playerID].GetNextAction(e.game)
 		if err != nil {
 			return fmt.Errorf(
-				"failed to get next action for player %q: %w",
-				priorityPlayerID,
-				err,
+				"failed to get next action for player %q: %w", playerID, err,
 			)
 		}
-		if err := e.CompleteAction(action); err != nil {
+		// TODO: I think I might be relying on the user to accurately provide
+		// the player ID in the action, which is not ideal.
+		evnts, err := action.Complete(e.game, e.resEnv)
+		if err != nil {
 			if errors.Is(err, ErrInvalidUserAction) {
-				e.log.Debugf("Error completing action for player %q: %s", priorityPlayerID, err)
+				e.log.Debugf("Invalid player action for %q: %s", playerID, err)
 				continue
 			}
 			return fmt.Errorf(
-				"failed to apply action for player %q: %w",
-				priorityPlayerID,
-				err,
+				"failed to complete action %q: %w", action.Name(), errors.Join(err, ErrInvalidUserAction),
 			)
 		}
-		if e.game.PlayerPassedPriority(priorityPlayerID) {
-			nextPlayerIDWithPriority := e.game.NextPlayerID(priorityPlayerID)
-			if err := e.ApplyEvent(event.ReceivePriorityEvent{
-				PlayerID: nextPlayerIDWithPriority,
-			}); err != nil {
-				return fmt.Errorf("failed to apply receive priority event: %w", err)
-			}
-		} else {
-			if err := e.ApplyEvent(event.ResetPriorityPassesEvent{}); err != nil {
-				return fmt.Errorf("failed to reset priority passes: %w", err)
+		for _, evnt := range evnts {
+			if err := e.ApplyEvent(evnt); err != nil {
+				return fmt.Errorf(
+					"failed to apply event %q: %w", evnt.EventType(), err,
+				)
 			}
 		}
-		if e.game.AllPlayersPassedPriority() {
-			if err := e.ApplyEvent(event.AllPlayersPassedPriorityEvent{}); err != nil {
-				return fmt.Errorf("failed to apply all players passed priority event: %w", err)
-			}
-			if e.game.Stack().Size() == 0 {
-				continue
-			}
-			// GetNextStackItem?
-			resolvable, _, ok := e.game.Stack().TakeTop()
-			if !ok {
-				return fmt.Errorf("failed to take top from stack: %w", err)
-			}
-			if err := e.ResolveResolvable(resolvable); err != nil {
-				return fmt.Errorf("failed to resolve resolvable: %w", err)
-			}
-			if err := e.ApplyEvent(event.ResetPriorityPassesEvent{}); err != nil {
-				return fmt.Errorf("failed to reset priority passes: %w", err)
-			}
+	}
+}
+
+func (e *Engine) ResolveSpellOrAbility(resolvable state.Resolvable) error {
+	e.log.Debugf("Resolving spell or ability %q <%s> for %q", resolvable.Name(), resolvable.ID(), resolvable.Controller())
+	e.ApplyEvent(event.ResolveTopObjectOnStackEvent{
+		Name: resolvable.Name(),
+		ID:   resolvable.ID(),
+	})
+	for _, effectWithTarget := range resolvable.EffectWithTargets() {
+		player := e.game.GetPlayer(resolvable.Controller())
+		e.log.Debug("Resolving effect:", effectWithTarget.EffectSpec.Name)
+		efct, err := effect.Build(effectWithTarget.EffectSpec)
+		if err != nil {
+			return fmt.Errorf("effect %q not found: %w", effectWithTarget.EffectSpec.Name, err)
+		}
+		effectResult, err := efct.Resolve(e.game, player, resolvable, effectWithTarget.Target, e.resEnv)
+		if err != nil {
+			return fmt.Errorf("failed to resolve effect %q: %w", efct.Name(), err)
+		}
+		if err := e.ResolveEffectResult(player.ID(), effectResult); err != nil {
+			return fmt.Errorf("failed to resolve effect result for effect %q: %w", efct.Name(), err)
+		}
+	}
+	if resolvable.Match(query.And(is.Spell(), is.PermanentCardType())) {
+		// TODO: Maybe permanents should have an effect that applies them to the battlefield
+		// instead of this being a special case.
+		if err := e.ApplyEvent(event.PutPermanentOnBattlefieldEvent{
+			PlayerID: resolvable.Owner(),
+			CardID:   resolvable.SourceID(),
+			FromZone: mtg.ZoneStack,
+		}); err != nil {
+			return fmt.Errorf("failed to apply event PutPermanentOnBattlefieldEvent: %w", err)
+		}
+	} else {
+		if err := e.ApplyEvent(event.RemoveSpellOrAbilityFromStackEvent{
+			PlayerID: resolvable.Owner(),
+			ObjectID: resolvable.ID(),
+		}); err != nil {
+			return fmt.Errorf("failed to apply event RemoveSpellOrAbilityFromStackEvent: %w", err)
 		}
 	}
 	return nil
 }
 
-func (e *Engine) ResolveResolvable(resolvable state.Resolvable) error {
-	player, ok := e.game.GetPlayer(resolvable.Controller())
-	if !ok {
-		return fmt.Errorf("player %q not found", resolvable.Controller())
-	}
-	events := []event.GameEvent{
-		event.ResolveTopObjectOnStackEvent{
-			Name: resolvable.Name(),
-			ID:   resolvable.ID(),
-		},
-	}
-	for _, effectWithTarget := range resolvable.EffectWithTargets() {
-		e.log.Debug("Resolving effect:", effectWithTarget.EffectSpec.Name)
-		effectEvents, err := e.ResolveEffect(e.game, player, resolvable, effectWithTarget.Target, effectWithTarget.EffectSpec)
-		if err != nil {
-			return fmt.Errorf("failed to resolve effect %q: %w", effectWithTarget.EffectSpec.Name, err)
-		}
-		events = append(events, effectEvents...)
-	}
-	if spell, ok := resolvable.(gob.Spell); ok {
-		if spell.Flashback() {
-			events = append(events, event.PutSpellInExileEvent{
-				PlayerID: spell.Owner(),
-				SpellID:  resolvable.ID(),
-			})
-		} else {
-			if spell.Match(is.Permanent()) {
-				events = append(events, event.PutPermanentOnBattlefieldEvent{
-					PlayerID: spell.Owner(),
-					CardID:   spell.ID(),
-					FromZone: mtg.ZoneStack,
-				})
-			} else {
-				events = append(events, event.PutSpellInGraveyardEvent{
-					PlayerID: spell.Owner(),
-					SpellID:  resolvable.ID(),
-				})
+func (e *Engine) ResolveEffectResult(
+	playerID string,
+	effectResult effect.EffectResult,
+) error {
+	agent := e.agents[playerID]
+	for {
+		e.log.Debugf("Resolving effect result for player %q", playerID)
+		for _, evnt := range effectResult.Events {
+			if err := e.ApplyEvent(evnt); err != nil {
+				return fmt.Errorf("failed to apply event %T: %w", evnt, err)
 			}
 		}
-	}
-	if ability, ok := resolvable.(gob.AbilityOnStack); ok {
-		events = append(events, event.RemoveAbilityFromStackEvent{
-			PlayerID:  ability.Owner(),
-			AbilityID: ability.ID(),
-		})
-	}
-	for _, evnt := range events {
-		if err := e.ApplyEvent(evnt); err != nil {
-			return fmt.Errorf("failed to apply event %T: %w", evnt, err)
+		if effectResult.ChoicePrompt.ChoiceOpts == nil {
+			return nil
+		}
+		choiceResults, err := agent.Choose(effectResult.ChoicePrompt)
+		if err != nil {
+			return fmt.Errorf("failed to get choice from player agent %q: %w", agent.PlayerID(), err)
+		}
+		if effectResult.ResumeFunc == nil {
+			return fmt.Errorf("missing resume function")
+		}
+		effectResult, err = effectResult.ResumeFunc(choiceResults)
+		if err != nil {
+			return fmt.Errorf("failed to resume effect result: %w", err)
 		}
 	}
-	return nil
 }

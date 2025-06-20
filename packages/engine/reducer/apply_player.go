@@ -30,8 +30,6 @@ func applyPlayerEvent(game state.Game, playerEvent event.PlayerEvent) (state.Gam
 		return game, nil
 	case event.LandTappedForManaEvent:
 		return game, nil
-	case event.PassPriorityEvent:
-		return applyPassPriorityEvent(game, evnt)
 	case event.PlayLandEvent:
 		return applyPlayLandEvent(game, evnt)
 	case event.ClearRevealedEvent:
@@ -45,26 +43,8 @@ func applyCastSpellEvent(
 	game state.Game,
 	event event.CastSpellEvent,
 ) (state.Game, error) {
-	player, ok := game.GetPlayer(event.PlayerID)
-	if !ok {
-		return game, fmt.Errorf("player %q not found", event.PlayerID)
-	}
+	player := game.GetPlayer(event.PlayerID)
 	player = player.WithSpellCastThisTurn()
-	game = game.WithUpdatedPlayer(player)
-	return game, nil
-}
-
-func applyPassPriorityEvent(
-	game state.Game,
-	evnt event.PassPriorityEvent,
-) (state.Game, error) {
-	player, ok := game.GetPlayer(evnt.PlayerID)
-	if !ok {
-		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
-	}
-	game = game.WithPlayerPassedPriority(
-		evnt.PlayerID,
-	)
 	game = game.WithUpdatedPlayer(player)
 	return game, nil
 }
@@ -73,10 +53,7 @@ func applyPlayLandEvent(
 	game state.Game,
 	evnt event.PlayLandEvent,
 ) (state.Game, error) {
-	player, ok := game.GetPlayer(evnt.PlayerID)
-	if !ok {
-		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
-	}
+	player := game.GetPlayer(evnt.PlayerID)
 	game = game.WithUpdatedPlayer(player.WithLandPlayedThisTurn())
 	return game, nil
 }
@@ -85,10 +62,7 @@ func applyClearRevealedEvent(
 	game state.Game,
 	evnt event.ClearRevealedEvent,
 ) (state.Game, error) {
-	player, ok := game.GetPlayer(evnt.PlayerID)
-	if !ok {
-		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
-	}
+	player := game.GetPlayer(evnt.PlayerID)
 	game = game.WithUpdatedPlayer(player.WithClearRevealed())
 	return game, nil
 }

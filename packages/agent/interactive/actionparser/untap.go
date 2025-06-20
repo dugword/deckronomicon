@@ -2,6 +2,7 @@ package actionparser
 
 import (
 	"deckronomicon/packages/choose"
+	"deckronomicon/packages/engine"
 	"deckronomicon/packages/engine/action"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/query"
@@ -15,7 +16,7 @@ func parseUntapCheatCommand(
 	idOrName string,
 	game state.Game,
 	player state.Player,
-	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
+	agent engine.PlayerAgent,
 ) (action.UntapCheatAction, error) {
 	permanents := game.Battlefield().FindAll(
 		query.And(has.Controller(player.ID()), is.Tapped()),
@@ -23,7 +24,7 @@ func parseUntapCheatCommand(
 	var permanent gob.Permanent
 	var err error
 	if idOrName == "" {
-		permanent, err = buildUntapCommandByChoice(permanents, player, chooseFunc)
+		permanent, err = buildUntapCommandByChoice(permanents, player, agent)
 		if err != nil {
 			return action.UntapCheatAction{}, fmt.Errorf("failed to choose a permanent to untap: %w", err)
 		}
@@ -40,7 +41,7 @@ func parseUntapCheatCommand(
 func buildUntapCommandByChoice(
 	permanents []gob.Permanent,
 	player state.Player,
-	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
+	agent engine.PlayerAgent,
 ) (gob.Permanent, error) {
 	prompt := choose.ChoicePrompt{
 		Message:  "Choose a permanent to untap",
@@ -50,7 +51,7 @@ func buildUntapCommandByChoice(
 			Choices: choose.NewChoices(permanents),
 		},
 	}
-	choiceResults, err := chooseFunc(prompt)
+	choiceResults, err := agent.Choose(prompt)
 	if err != nil {
 		return gob.Permanent{}, fmt.Errorf("failed to get choices: %w", err)
 	}

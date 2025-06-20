@@ -45,4 +45,6 @@ func init() {
 	Register("Mill", NewMillEffect)
 	Register("ShuffleFromGraveyard", NewShuffleFromGraveyardEffect)
 	Register("RegisterDelayedEffect", NewRegisterDelayedEffectEffect)
+	Register("Replicate", NewReplicateEffect)
+	Register("Target", NewTargetEffect)
 }

@@ -1,7 +1,10 @@
 package effect
 
 import (
+	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/game/definition"
+	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/state"
@@ -43,6 +46,24 @@ func (e MillEffect) Resolve(
 	player state.Player,
 	source query.Object,
 	target target.TargetValue,
+	resEnv *resenv.ResEnv,
 ) (EffectResult, error) {
-	return EffectResult{}, nil
+	targetPlayerID := player.ID()
+	if target.PlayerID != "" {
+		targetPlayerID = target.PlayerID
+	}
+	// TODO: This is getting a player from user input,
+	// That means this could fail if the player ID is invalid.
+	// We need to check that before proceeding.
+	targetPlayer := game.GetPlayer(targetPlayerID)
+	cards := targetPlayer.Library().GetN(e.Count)
+	var events []event.GameEvent
+	for _, card := range cards {
+		events = append(events, event.PutCardInGraveyardEvent{
+			PlayerID: targetPlayerID,
+			CardID:   card.ID(),
+			FromZone: mtg.ZoneLibrary,
+		})
+	}
+	return EffectResult{Events: events}, nil
 }

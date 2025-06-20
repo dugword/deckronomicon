@@ -2,6 +2,7 @@ package actionparser
 
 import (
 	"deckronomicon/packages/choose"
+	"deckronomicon/packages/engine"
 	"deckronomicon/packages/engine/action"
 	"deckronomicon/packages/engine/judge"
 	"deckronomicon/packages/game/gob"
@@ -15,14 +16,14 @@ func parsePlayLandCommand(
 	idOrName string,
 	game state.Game,
 	player state.Player,
-	choose func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
+	agent engine.PlayerAgent,
 ) (action.PlayLandAction, error) {
 	ruling := judge.Ruling{Explain: true}
 	cards := judge.GetLandsAvailableToPlay(game, player, &ruling)
 	var cardInZone gob.CardInZone
 	var err error
 	if idOrName == "" {
-		cardInZone, err = buildPlayLandCommandByChoice(cards, player, choose)
+		cardInZone, err = buildPlayLandCommandByChoice(cards, player, agent)
 		if err != nil {
 			return action.PlayLandAction{}, fmt.Errorf("failed to choose a land to play: %w", err)
 		}
@@ -42,7 +43,7 @@ func parsePlayLandCommand(
 func buildPlayLandCommandByChoice(
 	cards []gob.CardInZone,
 	player state.Player,
-	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
+	agent engine.PlayerAgent,
 ) (gob.CardInZone, error) {
 	prompt := choose.ChoicePrompt{
 		Message:  "Choose a land to play",
@@ -52,7 +53,7 @@ func buildPlayLandCommandByChoice(
 			Choices: choose.NewChoices(cards),
 		},
 	}
-	choiceResults, err := chooseFunc(prompt)
+	choiceResults, err := agent.Choose(prompt)
 	if err != nil {
 		return gob.CardInZone{}, fmt.Errorf("failed to get choices: %w", err)
 	}

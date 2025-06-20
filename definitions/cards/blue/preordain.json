@@ -7,21 +7,19 @@
   ],
   "ManaCost": "{U}",
   "Name": "Preordain",
-  "SpellAbility": {
-    "Effects": [
-      {
-        "Name": "Scry",
-        "Modifiers": {
-          "Count": 2
-        }
-      },
-      {
-        "Name": "Draw",
-        "Modifiers": {
-          "Count": 1
-        }
+  "Effects": [
+    {
+      "Name": "Scry",
+      "Modifiers": {
+        "Count": 2
       }
-    ]
-  },
+    },
+    {
+      "Name": "Draw",
+      "Modifiers": {
+        "Count": 1
+      }
+    }
+  ],
   "RulesText": "Scry 2, then draw a card. (To scry 2, look at the top two cards of your library, then put any number of them on the bottom and the rest on top in any order.)"
 }

@@ -7,17 +7,15 @@
   ],
   "ManaCost": "{U}",
   "Name": "High Tide",
-  "SpellAbility": {
-    "Effects": [
-      {
-        "Name": "AdditionalMana",
-        "Modifiers": {
-            "Subtype": "Island",
-            "Mana": "{U}",
-            "Duration": "EndOfTurn"
-          }
+  "Effects": [
+    {
+      "Name": "AdditionalMana",
+      "Modifiers": {
+        "Subtype": "Island",
+        "Mana": "{U}",
+        "Duration": "EndOfTurn"
       }
-    ]
-  },
+    }
+  ],
   "RulesText": "Until end of turn, whenever a player taps an Island for mana, that player adds an additional {U}."
 }

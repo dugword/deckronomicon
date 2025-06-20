@@ -2,6 +2,7 @@ package actionparser
 
 import (
 	"deckronomicon/packages/choose"
+	"deckronomicon/packages/engine"
 	"deckronomicon/packages/engine/action"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/query"
@@ -13,13 +14,13 @@ import (
 func parseFindCardCheatCommand(
 	idOrName string,
 	player state.Player,
-	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
+	agent engine.PlayerAgent,
 ) (action.FindCardCheatAction, error) {
 	cards := player.Library().GetAll()
 	var card gob.Card
 	var err error
 	if idOrName == "" {
-		card, err = buildFindCardCheatCommandByChoice(cards, player, chooseFunc)
+		card, err = buildFindCardCheatCommandByChoice(cards, player, agent)
 		if err != nil {
 			return action.FindCardCheatAction{}, fmt.Errorf("failed to choose a card to find: %w", err)
 		}
@@ -36,7 +37,7 @@ func parseFindCardCheatCommand(
 func buildFindCardCheatCommandByChoice(
 	cards []gob.Card,
 	player state.Player,
-	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
+	agent engine.PlayerAgent,
 ) (gob.Card, error) {
 	prompt := choose.ChoicePrompt{
 		Message:  "Choose a card to put into your hand",
@@ -46,7 +47,7 @@ func buildFindCardCheatCommandByChoice(
 			Choices: choose.NewChoices(cards),
 		},
 	}
-	choiceResults, err := chooseFunc(prompt)
+	choiceResults, err := agent.Choose(prompt)
 	if err != nil {
 		return gob.Card{}, fmt.Errorf("failed to get choices: %w", err)
 	}

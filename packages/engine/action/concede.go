@@ -4,7 +4,6 @@ import (
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/state"
-	"fmt"
 )
 
 type ConcedeAction struct {
@@ -21,11 +20,9 @@ func (a ConcedeAction) Name() string {
 	return "Concede"
 }
 
+// TODO: This only works for 2 player games.
 func (a ConcedeAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
-	opponent, ok := game.GetOpponent(a.player.ID())
-	if !ok {
-		return nil, fmt.Errorf("opponent for player %q not found", a.player.ID())
-	}
+	opponent := game.GetOpponent(a.player.ID())
 	return []event.GameEvent{
 		event.ConcedeEvent{PlayerID: a.player.ID()},
 		event.EndGameEvent{WinnerID: opponent.ID()},

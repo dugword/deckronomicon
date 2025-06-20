@@ -7,16 +7,18 @@
   ],
   "ManaCost": "{1}{U}",
   "Name": "Merchant Scroll",
-  "SpellAbility": {
-    "Effects": [
-      {
-        "Name": "Search",
-        "Modifiers": {
-            "CardTypes": ["Instant"],
-            "Colors": ["U"]
-        }
+  "Effects": [
+    {
+      "Name": "Search",
+      "Modifiers": {
+        "CardTypes": [
+          "Instant"
+        ],
+        "Colors": [
+          "U"
+        ]
       }
-    ]
-  },
+    }
+  ],
   "RulesText": "Search your library for a blue instant card, reveal that card, put it into your hand, then shuffle."
 }

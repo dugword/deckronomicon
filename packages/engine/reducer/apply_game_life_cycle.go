@@ -149,14 +149,10 @@ func applyEndStepEvent(
 	game state.Game,
 	endStepEvent event.EndStepEvent,
 ) (state.Game, error) {
-	game = game.WithClearedPriority().WithResetPriorityPasses()
+	game = game.WithResetPriorityPasses()
 	for _, playerID := range game.PlayerIDsInTurnOrder() {
-		player, ok := game.GetPlayer(playerID)
-		if !ok {
-			return game, fmt.Errorf("player %q not found", playerID)
-		}
+		player := game.GetPlayer(playerID)
 		player = player.WithEmptyManaPool()
-
 		game = game.WithUpdatedPlayer(player)
 	}
 	switch endStepEvent.(type) {
@@ -190,10 +186,7 @@ func applyEndStepEvent(
 
 func applyBeginTurnEvent(game state.Game, evnt event.BeginTurnEvent) (state.Game, error) {
 	// Reset player state for the new turn
-	player, ok := game.GetPlayer(evnt.PlayerID)
-	if !ok {
-		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
-	}
+	player := game.GetPlayer(evnt.PlayerID)
 	player = player.WithNextTurn()
 	game = game.WithUpdatedPlayer(player)
 	battlefield := game.Battlefield().RemoveSummoningSickness(evnt.PlayerID)
@@ -202,10 +195,7 @@ func applyBeginTurnEvent(game state.Game, evnt event.BeginTurnEvent) (state.Game
 }
 
 func applyEndTurnEvent(game state.Game, evnt event.EndTurnEvent) (state.Game, error) {
-	player, ok := game.GetPlayer(evnt.PlayerID)
-	if !ok {
-		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
-	}
+	player := game.GetPlayer(evnt.PlayerID)
 	player = player.WithClearSpellsCastsThisTurn()
 	player = player.WithClearLandPlayedThisTurn()
 	game = game.WithUpdatedPlayer(player)

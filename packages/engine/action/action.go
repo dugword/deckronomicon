@@ -1,11 +1,17 @@
 package action
 
 import (
+	"deckronomicon/packages/engine"
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/target"
 	"fmt"
 )
+
+type Request interface {
+	Build(playerID string) (engine.Action, error)
+	Name() string
+}
 
 type EffectTargetKey struct {
 	SourceID    string

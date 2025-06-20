@@ -7,24 +7,22 @@
   ],
   "ManaCost": "{1}{U}",
   "Name": "Hidden Strings",
-  "SpellAbility": {
-    "Effects": [
-      {
-        "Name": "TapOrUntap",
-        "Modifiers": {
-            "Target": "Permanent",
-            "Optional": true
-          }
-      },
-      {
-        "Name": "TapOrUntap",
-        "Modifiers": {
-          "Target": "Permanent",
-          "Optional": true
-        }
+  "Effects": [
+    {
+      "Name": "TapOrUntap",
+      "Modifiers": {
+        "Target": "Permanent",
+        "Optional": true
       }
-    ]
-  },
+    },
+    {
+      "Name": "TapOrUntap",
+      "Modifiers": {
+        "Target": "Permanent",
+        "Optional": true
+      }
+    }
+  ],
   "StaticAbilities": [
     {
       "Name": "Cipher"

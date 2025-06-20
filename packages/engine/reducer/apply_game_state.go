@@ -40,10 +40,7 @@ func applyGameStateChangeEvent(game state.Game, gameStateChangeEvent event.GameS
 	case event.PutPermanentOnBattlefieldEvent:
 		return applyPutPermanentOnBattlefieldEvent(game, evnt)
 	case event.RevealCardEvent:
-		player, ok := game.GetPlayer(evnt.PlayerID)
-		if !ok {
-			return game, fmt.Errorf("player %q not found", evnt.PlayerID)
-		}
+		player := game.GetPlayer(evnt.PlayerID)
 		card, ok := player.GetCardFromZone(evnt.CardID, evnt.FromZone)
 		if !ok {
 			return game, fmt.Errorf("card %q not found in zone %q", evnt.CardID, evnt.FromZone)
@@ -71,10 +68,7 @@ func applyGameStateChangeEvent(game state.Game, gameStateChangeEvent event.GameS
 	case event.ShuffleLibraryEvent:
 		return applyShuffleLibraryEvent(game, evnt)
 	case event.SpendManaEvent:
-		player, ok := game.GetPlayer(evnt.PlayerID)
-		if !ok {
-			return game, fmt.Errorf("player %q not found", evnt.PlayerID)
-		}
+		player := game.GetPlayer(evnt.PlayerID)
 		amount, err := mana.ParseManaString(evnt.ManaString)
 		if err != nil {
 			return game, fmt.Errorf("failed to parse mana string %q: %w", evnt.ManaString, err)
@@ -100,10 +94,7 @@ func applyAddManaEvent(
 	game state.Game,
 	addManaEvent event.AddManaEvent,
 ) (state.Game, error) {
-	player, ok := game.GetPlayer(addManaEvent.PlayerID)
-	if !ok {
-		return game, fmt.Errorf("player %q not found", addManaEvent.PlayerID)
-	}
+	player := game.GetPlayer(addManaEvent.PlayerID)
 	player = player.WithAddMana(addManaEvent.ManaType, addManaEvent.Amount)
 	game = game.WithUpdatedPlayer(player)
 	return game, nil
@@ -113,10 +104,7 @@ func applyDiscardCardEvent(
 	game state.Game,
 	event event.DiscardCardEvent,
 ) (state.Game, error) {
-	player, ok := game.GetPlayer(event.PlayerID)
-	if !ok {
-		return game, fmt.Errorf("player %q not found", event.PlayerID)
-	}
+	player := game.GetPlayer(event.PlayerID)
 	player, err := player.WithDiscardCard(event.CardID)
 	if err != nil {
 		return game, fmt.Errorf("failed to discard card %q: %w", event.CardID, err)
@@ -129,10 +117,7 @@ func applyDrawCardEvent(
 	game state.Game,
 	event event.DrawCardEvent,
 ) (state.Game, error) {
-	player, ok := game.GetPlayer(event.PlayerID)
-	if !ok {
-		return game, fmt.Errorf("player %q not found", event.PlayerID)
-	}
+	player := game.GetPlayer(event.PlayerID)
 	player, _, err := player.WithDrawCard()
 	if err != nil {
 		return game, fmt.Errorf("failed to draw card for %q: %w", player.ID(), err)
@@ -145,10 +130,7 @@ func applyGainLifeEvent(
 	game state.Game,
 	evnt event.GainLifeEvent,
 ) (state.Game, error) {
-	player, ok := game.GetPlayer(evnt.PlayerID)
-	if !ok {
-		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
-	}
+	player := game.GetPlayer(evnt.PlayerID)
 	player = player.WithGainLife(evnt.Amount)
 	game = game.WithUpdatedPlayer(player)
 	return game, nil
@@ -158,10 +140,7 @@ func applyeLoseLifeEvent(
 	game state.Game,
 	evnt event.LoseLifeEvent,
 ) (state.Game, error) {
-	player, ok := game.GetPlayer(evnt.PlayerID)
-	if !ok {
-		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
-	}
+	player := game.GetPlayer(evnt.PlayerID)
 	player = player.WithLoseLife(evnt.Amount)
 	game = game.WithUpdatedPlayer(player)
 	return game, nil
@@ -193,10 +172,7 @@ func applyPutCardInHandEvent(
 	game state.Game,
 	evnt event.PutCardInHandEvent,
 ) (state.Game, error) {
-	player, ok := game.GetPlayer(evnt.PlayerID)
-	if !ok {
-		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
-	}
+	player := game.GetPlayer(evnt.PlayerID)
 	card, player, ok := player.TakeCardFromZone(evnt.CardID, evnt.FromZone)
 	if !ok {
 		return game, fmt.Errorf("card %q not in zone %q", evnt.CardID, evnt.FromZone)
@@ -213,10 +189,7 @@ func applyPutCardInGraveyardEvent(
 	game state.Game,
 	evnt event.PutCardInGraveyardEvent,
 ) (state.Game, error) {
-	player, ok := game.GetPlayer(evnt.PlayerID)
-	if !ok {
-		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
-	}
+	player := game.GetPlayer(evnt.PlayerID)
 	card, player, ok := player.TakeCardFromZone(evnt.CardID, evnt.FromZone)
 	if !ok {
 		return game, fmt.Errorf("card %q not in zone %q", evnt.CardID, evnt.FromZone)
@@ -233,10 +206,7 @@ func applyPutCardOnBottomOfLibraryEvent(
 	game state.Game,
 	evnt event.PutCardOnBottomOfLibraryEvent,
 ) (state.Game, error) {
-	player, ok := game.GetPlayer(evnt.PlayerID)
-	if !ok {
-		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
-	}
+	player := game.GetPlayer(evnt.PlayerID)
 	card, player, ok := player.TakeCardFromZone(evnt.CardID, evnt.FromZone)
 	if !ok {
 		return game, fmt.Errorf("card %q not in zone %q", evnt.CardID, evnt.FromZone)
@@ -253,10 +223,7 @@ func applyPutCardOnTopOfLibraryEvent(
 	game state.Game,
 	evnt event.PutCardOnTopOfLibraryEvent,
 ) (state.Game, error) {
-	player, ok := game.GetPlayer(evnt.PlayerID)
-	if !ok {
-		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
-	}
+	player := game.GetPlayer(evnt.PlayerID)
 	card, player, ok := player.TakeCardFromZone(evnt.CardID, evnt.FromZone)
 	if !ok {
 		return game, fmt.Errorf("card %q not in zone %q", evnt.CardID, evnt.FromZone)
@@ -273,11 +240,24 @@ func applyPutPermanentOnBattlefieldEvent(
 	game state.Game,
 	evnt event.PutPermanentOnBattlefieldEvent,
 ) (state.Game, error) {
-	player, ok := game.GetPlayer(evnt.PlayerID)
-	if !ok {
-		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
-	}
-	if evnt.FromZone == mtg.ZoneStack {
+	player := game.GetPlayer(evnt.PlayerID)
+	switch evnt.FromZone {
+	case mtg.ZoneHand, mtg.ZoneLibrary, mtg.ZoneGraveyard, mtg.ZoneExile:
+		card, player, ok := player.TakeCardFromZone(evnt.CardID, evnt.FromZone)
+		if !ok {
+			return game, fmt.Errorf("card %q not in zone %q", evnt.CardID, evnt.FromZone)
+		}
+		game = game.WithUpdatedPlayer(player)
+		game, err := game.WithPutPermanentOnBattlefield(card, evnt.PlayerID)
+		if err != nil {
+			return game, fmt.Errorf("failed to put card %q on battlefield: %w", card.ID(), err)
+		}
+		return game, nil
+	// TODO: This probably needs to be handled differently.
+	// I think I want cards that are permanents to create spells
+	// that have a "put on battlefield" effect, and then
+	// this event should be used to resolve that effect.
+	case mtg.ZoneStack:
 		resolvable, stack, ok := game.Stack().Take(evnt.CardID)
 		if !ok {
 			return game, fmt.Errorf("card %q not found in stack", evnt.CardID)
@@ -293,17 +273,10 @@ func applyPutPermanentOnBattlefieldEvent(
 			return game, fmt.Errorf("failed to put card %q on battlefield: %w", card.ID(), err)
 		}
 		return game, nil
+	default:
+		return game, fmt.Errorf("invalid zone %q for putting permanent on battlefield", evnt.FromZone)
 	}
-	card, player, ok := player.TakeCardFromZone(evnt.CardID, evnt.FromZone)
-	if !ok {
-		return game, fmt.Errorf("card %q not in zone %q", evnt.CardID, evnt.FromZone)
-	}
-	game = game.WithUpdatedPlayer(player)
-	game, err := game.WithPutPermanentOnBattlefield(card, evnt.PlayerID)
-	if err != nil {
-		return game, fmt.Errorf("failed to put card %q on battlefield: %w", card.ID(), err)
-	}
-	return game, nil
+
 }
 
 // TODO: Not sure I like how this is handled, think through how I want to have
@@ -347,10 +320,7 @@ func applyShuffleLibraryEvent(
 	game state.Game,
 	evnt event.ShuffleLibraryEvent,
 ) (state.Game, error) {
-	player, ok := game.GetPlayer(evnt.PlayerID)
-	if !ok {
-		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
-	}
+	player := game.GetPlayer(evnt.PlayerID)
 	player, err := player.WithShuffledLibrary(evnt.ShuffledCardsIDs)
 	if err != nil {
 		return game, fmt.Errorf(

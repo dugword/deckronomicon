@@ -59,6 +59,10 @@ func (l Library) GetAll() []gob.Card {
 	return query.GetAll(l.cards)
 }
 
+func (l Library) GetN(n int) []gob.Card {
+	return query.GetN(l.cards, n)
+}
+
 func (l Library) Name() string {
 	return string(mtg.ZoneLibrary)
 }

@@ -49,10 +49,8 @@ func createPlayerAgent(
 		}
 	*/
 	case "Dummy":
-		playerAgent = dummy.NewAgent(
+		playerAgent = dummy.NewChooseMinimumAgent(
 			playerScenario.Name,
-			[]mtg.Step{mtg.StepPrecombatMain},
-			config.Verbose,
 		)
 		return playerAgent, nil
 	default:
@@ -147,6 +145,7 @@ func Run(
 		DeckLists:   deckLists,
 		Players:     players,
 		Seed:        seed,
+		Log:         logger,
 	}
 	engine := engine.NewEngine(engineConfig)
 	if err := engine.RunGame(); err != nil {
