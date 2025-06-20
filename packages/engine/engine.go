@@ -9,9 +9,9 @@ import (
 	"deckronomicon/packages/engine/rng"
 	"deckronomicon/packages/engine/turnaction"
 	"deckronomicon/packages/game/definition"
-	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/logger"
+	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/is"
 	"deckronomicon/packages/state"
 	"errors"
@@ -291,31 +291,16 @@ func (e *Engine) ResolveResolvable(resolvable state.Resolvable) error {
 		}
 		events = append(events, effectEvents...)
 	}
-	if spell, ok := resolvable.(gob.Spell); ok {
-		if spell.Flashback() {
-			events = append(events, event.PutSpellInExileEvent{
-				PlayerID: spell.Owner(),
-				SpellID:  resolvable.ID(),
-			})
-		} else {
-			if spell.Match(is.PermanentCardType()) {
-				events = append(events, event.PutPermanentOnBattlefieldEvent{
-					PlayerID: spell.Owner(),
-					CardID:   spell.ID(),
-					FromZone: mtg.ZoneStack,
-				})
-			} else {
-				events = append(events, event.PutSpellInGraveyardEvent{
-					PlayerID: spell.Owner(),
-					SpellID:  resolvable.ID(),
-				})
-			}
-		}
-	}
-	if ability, ok := resolvable.(gob.AbilityOnStack); ok {
-		events = append(events, event.RemoveAbilityFromStackEvent{
-			PlayerID:  ability.Owner(),
-			AbilityID: ability.ID(),
+	if resolvable.Match(query.And(is.Spell(), is.PermanentCardType())) {
+		events = append(events, event.PutPermanentOnBattlefieldEvent{
+			PlayerID: resolvable.Owner(),
+			CardID:   resolvable.SourceID(),
+			FromZone: mtg.ZoneStack,
+		})
+	} else {
+		events = append(events, event.RemoveSpellOrAbilityFromStackEvent{
+			PlayerID: resolvable.Owner(),
+			ObjectID: resolvable.ID(),
 		})
 	}
 	for _, evnt := range events {

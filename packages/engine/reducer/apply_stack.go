@@ -20,12 +20,8 @@ func applyStackEvent(game state.Game, stackEvent event.StackEvent) (state.Game, 
 		return applyPutCopiedSpellOnStackEvent(game, evnt)
 	case event.PutSpellOnStackEvent:
 		return applyPutSpellOnStackEvent(game, evnt)
-	case event.RemoveAbilityFromStackEvent:
-		return applyRemoveAbilityFromStackEvent(game, evnt)
-	case event.PutSpellInExileEvent:
-		return applyPutSpellInZoneEvent(game, evnt.PlayerID, evnt.SpellID, mtg.ZoneExile)
-	case event.PutSpellInGraveyardEvent:
-		return applyPutSpellInZoneEvent(game, evnt.PlayerID, evnt.SpellID, mtg.ZoneGraveyard)
+	case event.RemoveSpellOrAbilityFromStackEvent:
+		return applyRemoveSpellOrAbilityFromStackEvent(game, evnt)
 	default:
 		return game, fmt.Errorf("unknown stack event type '%T'", evnt)
 	}
@@ -70,33 +66,6 @@ func applyPutSpellOnStackEvent(
 	return game, nil
 }
 
-func applyPutSpellInZoneEvent(
-	game state.Game,
-	playerID string,
-	spellID string,
-	zone mtg.Zone,
-) (state.Game, error) {
-	player, ok := game.GetPlayer(playerID)
-	if !ok {
-		return game, fmt.Errorf("player %q not found", playerID)
-	}
-	object, stack, ok := game.Stack().Take(spellID)
-	if !ok {
-		return game, fmt.Errorf("object %q not found on stack", spellID)
-	}
-	game = game.WithStack(stack)
-	spell, ok := object.(gob.Spell)
-	if !ok {
-		return game, fmt.Errorf("object %q is not a spell", object.ID())
-	}
-	player, ok = player.WithAddCardToZone(spell.Card(), zone)
-	if !ok {
-		return game, fmt.Errorf("failed to move card %q to %q", spell.Card().ID(), zone)
-	}
-	game = game.WithUpdatedPlayer(player)
-	return game, nil
-}
-
 func applyPutAbilityOnStackEvent(
 	game state.Game,
 	evnt event.PutAbilityOnStackEvent,
@@ -114,13 +83,32 @@ func applyPutAbilityOnStackEvent(
 	return game, nil
 }
 
-func applyRemoveAbilityFromStackEvent(
+func applyRemoveSpellOrAbilityFromStackEvent(
 	game state.Game,
-	evnt event.RemoveAbilityFromStackEvent,
+	evnt event.RemoveSpellOrAbilityFromStackEvent,
 ) (state.Game, error) {
-	_, stack, ok := game.Stack().Take(evnt.AbilityID)
+	player, ok := game.GetPlayer(evnt.PlayerID)
 	if !ok {
-		return game, fmt.Errorf("ability %q not found on stack", evnt.AbilityID)
+		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
+	}
+	resolvable, stack, ok := game.Stack().Take(evnt.ObjectID)
+	if !ok {
+		return game, fmt.Errorf("object %q not found on stack", evnt.ObjectID)
+	}
+	switch obj := resolvable.(type) {
+	case gob.Spell:
+		if obj.IsCopy() {
+			break
+		}
+		zone := mtg.ZoneGraveyard
+		if obj.Flashback() {
+			zone = mtg.ZoneExile
+		}
+		player, ok = player.WithAddCardToZone(obj.Card(), zone)
+		if !ok {
+			return game, fmt.Errorf("failed to move card %q to %q", obj.Card().ID(), zone)
+		}
+		game = game.WithUpdatedPlayer(player)
 	}
 	game = game.WithStack(stack)
 	return game, nil

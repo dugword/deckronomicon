@@ -21,7 +21,7 @@ func (e *Engine) ResolveEffect(
 	if err != nil {
 		return nil, fmt.Errorf("effect %q not found: %w", effectSpec.Name, err)
 	}
-	effectResult, err := efct.Resolve(e.game, player, resolvable, target)
+	effectResult, err := efct.Resolve(e.game, player, resolvable, target, e.resEnv)
 	if err != nil {
 		return nil, fmt.Errorf("failed to apply effect %q: %w", effectSpec.Name, err)
 	}

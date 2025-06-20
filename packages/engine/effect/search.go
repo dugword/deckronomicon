@@ -3,6 +3,7 @@ package effect
 import (
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/game/target"
 	"encoding/json"
 
@@ -43,6 +44,7 @@ func (e SearchEffect) Resolve(
 	player state.Player,
 	source query.Object,
 	target target.TargetValue,
+	resEnv *resenv.ResEnv,
 ) (EffectResult, error) {
 	query, err := buildQuery(QueryOpts(e))
 	if err != nil {

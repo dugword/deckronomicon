@@ -124,7 +124,7 @@ func (a ActivateAbilityAction) Complete(game state.Game, resEnv *resenv.ResEnv) 
 				}
 			}
 		}
-		manaEvents, err := buildManaAbilityEvents(game, player, effectWithTargets)
+		manaEvents, err := buildManaAbilityEvents(game, player, effectWithTargets, resEnv)
 		if err != nil {
 			return nil, fmt.Errorf("failed to build mana ability events: %w", err)
 		}
@@ -147,6 +147,7 @@ func buildManaAbilityEvents(
 	player state.Player,
 	// effectSpecs []definition.EffectSpec,
 	effectWithTargets []gob.EffectWithTarget,
+	resEnv *resenv.ResEnv,
 ) ([]event.GameEvent, error) {
 	var events []event.GameEvent
 	for _, effectWithTarget := range effectWithTargets {
@@ -155,7 +156,7 @@ func buildManaAbilityEvents(
 		if err != nil {
 			return nil, fmt.Errorf("effect %q not found: %w", effectWithTarget.EffectSpec.Name, err)
 		}
-		effectResults, err := efct.Resolve(game, player, nil, effectWithTarget.Target)
+		effectResults, err := efct.Resolve(game, player, nil, effectWithTarget.Target, resEnv)
 		if err != nil {
 			return nil, fmt.Errorf("failed to apply effect %q: %w", effectWithTarget.EffectSpec.Name, err)
 		}

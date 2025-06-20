@@ -85,6 +85,12 @@ Draw the top card from your library.
 Discard a card from your hand. You must specify the card name or ID to
 discard: `discard <name|id>`
 
+### `effect`
+
+Apply a effect to the game. You must specify the effect name and any modifiers
+to apply:`effect <name> <modifier>`, e.g. `effect Scry {"Count": 2}` to scry
+two cards.
+
 #### `find` `tutor`
 
 Find a card in your library and put it into your hand. You will be prompted to

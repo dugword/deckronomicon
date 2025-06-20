@@ -3,6 +3,7 @@ package effect
 import (
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
@@ -45,6 +46,7 @@ func (e LookAndChooseEffect) Resolve(
 	player state.Player,
 	source query.Object,
 	target target.TargetValue,
+	resEnv *resenv.ResEnv,
 ) (EffectResult, error) {
 	if e.Look <= 0 {
 		return EffectResult{}, fmt.Errorf("invalid required modifier %q for Scry effect", "Count")

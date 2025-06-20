@@ -2,6 +2,7 @@ package effect
 
 import (
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
@@ -40,6 +41,7 @@ func (e ReplicateEffect) Resolve(
 	player state.Player,
 	source query.Object,
 	targetValue target.TargetValue,
+	resEnv *resenv.ResEnv,
 ) (EffectResult, error) {
 	fmt.Println("Looking for spells or abilities on the stack with sourceID:", targetValue.ObjectID)
 	for _, resolvable := range game.Stack().GetAll() {
@@ -70,13 +72,14 @@ func (e ReplicateEffect) Resolve(
 		// player for a new target for each effect.
 		effectWithNewTargets = append(effectWithNewTargets, effectWithTarget)
 	}
-	events := []event.GameEvent{
-		event.PutCopiedSpellOnStackEvent{
+	events := []event.GameEvent{}
+	for range e.Count {
+		events = append(events, event.PutCopiedSpellOnStackEvent{
 			PlayerID:          player.ID(),
 			SpellID:           spell.ID(),
 			EffectWithTargets: effectWithNewTargets,
 			FromZone:          mtg.ZoneHand,
-		},
+		})
 	}
 	return EffectResult{
 		Events: events,

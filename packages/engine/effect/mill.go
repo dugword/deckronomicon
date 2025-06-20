@@ -2,6 +2,7 @@ package effect
 
 import (
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/game/target"
@@ -45,6 +46,7 @@ func (e MillEffect) Resolve(
 	player state.Player,
 	source query.Object,
 	target target.TargetValue,
+	resEnv *resenv.ResEnv,
 ) (EffectResult, error) {
 	cards := player.Library().GetN(e.Count)
 	var events []event.GameEvent

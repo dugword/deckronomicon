@@ -2,6 +2,7 @@ package effect
 
 import (
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/query"
@@ -37,6 +38,7 @@ func (e RegisterDelayedEffectEffect) Resolve(
 	player state.Player,
 	source query.Object,
 	target target.TargetValue,
+	resEnv *resenv.ResEnv,
 ) (EffectResult, error) {
 	events := []event.GameEvent{
 		// TODO: add source to the event, or source name.

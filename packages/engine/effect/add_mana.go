@@ -2,6 +2,7 @@ package effect
 
 import (
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/mana"
 	"deckronomicon/packages/game/target"
@@ -36,6 +37,7 @@ func (e AddManaEffect) Resolve(
 	player state.Player,
 	source query.Object,
 	target target.TargetValue,
+	resEnv *resenv.ResEnv,
 ) (EffectResult, error) {
 	amount, err := mana.ParseManaString(e.Mana)
 	if err != nil {

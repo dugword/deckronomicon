@@ -75,6 +75,8 @@ func parseCheatCommand(
 		return action.NewDrawCheatAction(player), nil
 	case "discard":
 		return parseDiscardCheatCommand(arg, game, player, choose)
+	case "effect":
+		return parseEffectCheatCommand(arg, player)
 	case "find", "tutor":
 		return parseFindCardCheatCommand(arg, player, choose)
 	case "landdrop":

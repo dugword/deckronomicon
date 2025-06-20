@@ -116,7 +116,7 @@ func (e *Engine) HandleTriggeredEffect(game state.Game, playerID string, te stat
 			if err != nil {
 				return nil, fmt.Errorf("effect %q not found: %w", effectSpec.Name, err)
 			}
-			effectResults, err := efct.Resolve(game, player, nil, target.TargetValue{})
+			effectResults, err := efct.Resolve(game, player, nil, target.TargetValue{}, e.resEnv)
 			if err != nil {
 				return nil, fmt.Errorf("failed to apply effect %q: %w", effectSpec.Name, err)
 			}

@@ -6,14 +6,12 @@ import (
 )
 
 const (
-	EventTypeResolveTopObjectOnStack = "ResolveTopObjectOnStack"
-	EventTypePutSpellOnStack         = "PutSpellOnStack"
-	EventTypePutCopiedSpellOnStack   = "PutCopiedSpellOnStack"
-	EventTypePutSpellInGraveyard     = "PutSpellInGraveyard"
-	EventTypePutSpellInExile         = "PutSpellInExile"
-	EventTypePutAbilityOnStack       = "PutAbilityOnStack"
-	EventTypeRemoveAbilityFromStack  = "RemoveAbilityFromStack"
-	EventTypeSpellOrAbilityFizzles   = "SpellOrAbilityFizzles"
+	EventTypeResolveTopObjectOnStack       = "ResolveTopObjectOnStack"
+	EventTypePutSpellOnStack               = "PutSpellOnStack"
+	EventTypePutCopiedSpellOnStack         = "PutCopiedSpellOnStack"
+	EventTypePutAbilityOnStack             = "PutAbilityOnStack"
+	EventTypeRemoveSpellOrAbilityFromStack = "RemoveSpellOrAbilityFromStack"
+	EventTypeSpellOrAbilityFizzles         = "SpellOrAbilityFizzles"
 )
 
 type StackEvent interface{ isStackEvent() }
@@ -38,18 +36,10 @@ type PutSpellInExileEvent struct {
 	SpellID  string
 }
 
-func (e PutSpellInExileEvent) EventType() string {
-	return EventTypePutSpellInExile
-}
-
 type PutSpellInGraveyardEvent struct {
 	StackBaseEvent
 	PlayerID string
 	SpellID  string
-}
-
-func (e PutSpellInGraveyardEvent) EventType() string {
-	return EventTypePutSpellInGraveyard
 }
 
 type PutCopiedSpellOnStackEvent struct {
@@ -91,14 +81,14 @@ func (e PutAbilityOnStackEvent) EventType() string {
 	return EventTypePutAbilityOnStack
 }
 
-type RemoveAbilityFromStackEvent struct {
+type RemoveSpellOrAbilityFromStackEvent struct {
 	StackBaseEvent
-	PlayerID  string
-	AbilityID string
+	PlayerID string
+	ObjectID string
 }
 
-func (e RemoveAbilityFromStackEvent) EventType() string {
-	return EventTypeRemoveAbilityFromStack
+func (e RemoveSpellOrAbilityFromStackEvent) EventType() string {
+	return EventTypeRemoveSpellOrAbilityFromStack
 }
 
 type SpellOrAbilityFizzlesEvent struct {
