@@ -66,6 +66,8 @@ func (e CounterspellEffect) Resolve(
 		return EffectResult{}, errors.New("choice is not a spell")
 	}
 	var events []event.GameEvent
+	// TODO: It would be better to not have to check this here, or elsewhere that removes spells from the stack.
+	// This should be managed in a central location from a generic "remove from stack" function.
 	if spell.Flashback() {
 		events = append(events, event.PutSpellInExileEvent{
 			PlayerID: player.ID(),

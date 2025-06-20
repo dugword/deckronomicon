@@ -28,7 +28,9 @@ type CardObject interface {
 	ManaValue() int
 }
 
-type AbilityObject interface {
+type StackObject interface {
+	Object
+	SourceID() string
 }
 
 type PermanentObject interface {
@@ -121,4 +123,11 @@ func Get[T Object](objects []T, id string) (T, bool) {
 
 func GetAll[T Object](objects []T) []T {
 	return slices.Clone(objects)
+}
+
+func GetN[T Object](objects []T, n int) []T {
+	if n <= 0 || n > len(objects) {
+		return nil
+	}
+	return objects[:n]
 }

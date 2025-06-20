@@ -150,9 +150,23 @@ func (a *Agent) Choose(prompt choose.ChoicePrompt) (choose.ChoiceResults, error)
 		return choose.ChooseManyResults{Choices: choices}, err
 	case choose.MapChoicesToBucketsOpts:
 		return a.ChooseMapChoicesToBuckets(prompt.Message, opts, prompt.Source)
+	case choose.ChooseNumberOpts:
+		return a.ChooseNumber(prompt.Message, opts, prompt.Source)
 	default:
 		return nil, fmt.Errorf("unsupported choice type: %T", opts)
 	}
+}
+
+func (a *Agent) ChooseNumber(
+	message string,
+	opts choose.ChooseNumberOpts,
+	source choose.Source,
+) (choose.ChoiceResults, error) {
+	number, err := a.EnterNumber(message, source)
+	if err != nil {
+		return nil, fmt.Errorf("failed to enter number: %w", err)
+	}
+	return choose.ChooseNumberResults{Number: number}, nil
 }
 
 func (a *Agent) ChooseMapChoicesToBuckets(message string, opts choose.MapChoicesToBucketsOpts, source choose.Source) (choose.ChoiceResults, error) {

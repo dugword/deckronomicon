@@ -298,7 +298,7 @@ func (e *Engine) ResolveResolvable(resolvable state.Resolvable) error {
 				SpellID:  resolvable.ID(),
 			})
 		} else {
-			if spell.Match(is.Permanent()) {
+			if spell.Match(is.PermanentCardType()) {
 				events = append(events, event.PutPermanentOnBattlefieldEvent{
 					PlayerID: spell.Owner(),
 					CardID:   spell.ID(),

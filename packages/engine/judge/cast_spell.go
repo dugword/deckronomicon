@@ -27,13 +27,13 @@ func canCastSpell(
 		}
 		can = false
 	}
-	if !card.Match(is.Spell()) {
+	if !card.Match(is.Not(is.Land())) {
 		if ruling != nil && ruling.Explain {
 			ruling.Reasons = append(ruling.Reasons, "card is not a spell")
 		}
 		can = false
 	}
-	if card.Match(query.Or(is.Permanent(), has.CardType(mtg.CardTypeSorcery))) {
+	if card.Match(query.Or(is.PermanentCardType(), has.CardType(mtg.CardTypeSorcery))) {
 		if !CanPlaySorcerySpeed(game, player.ID(), ruling) {
 			if ruling != nil && ruling.Explain {
 				ruling.Reasons = append(ruling.Reasons, "spell cannot be played at instant speed")

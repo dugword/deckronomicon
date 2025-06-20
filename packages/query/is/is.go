@@ -7,32 +7,37 @@ import (
 	"slices"
 )
 
-func Land() query.Predicate {
-	var foos []query.CardObject
-	foos = append(foos, gob.Permanent{})
+func Spell() query.Predicate {
 	return func(obj query.Object) bool {
-		cardObj, ok := obj.(query.CardObject)
-		if !ok {
-			return false
-		}
-		return slices.Contains(cardObj.CardTypes(), mtg.CardTypeLand)
+		_, ok := obj.(gob.Spell)
+		return ok
 	}
 }
 
-// Spell returns true if the card is a spell. Spells are cards that are not lands.
-func Spell() query.Predicate {
+func AbilityOnStack() query.Predicate {
 	return func(obj query.Object) bool {
-		cardObj, ok := obj.(query.CardObject)
-		if !ok {
-			return false
-		}
-		return !slices.Contains(cardObj.CardTypes(), mtg.CardTypeLand)
+		_, ok := obj.(gob.AbilityOnStack)
+		return ok
+	}
+}
+
+func Card() query.Predicate {
+	return func(obj query.Object) bool {
+		_, ok := obj.(query.CardObject)
+		return ok
 	}
 }
 
 func Not(predicate query.Predicate) query.Predicate {
 	return func(obj query.Object) bool {
 		return !predicate(obj)
+	}
+}
+
+func Permanent() query.Predicate {
+	return func(obj query.Object) bool {
+		_, ok := obj.(gob.Permanent)
+		return ok
 	}
 }
 
@@ -49,7 +54,7 @@ func Tapped() query.Predicate {
 	}
 }
 
-func Permanent() query.Predicate {
+func PermanentCardType() query.Predicate {
 	return func(obj query.Object) bool {
 		cardObj, ok := obj.(query.CardObject)
 		if !ok {
@@ -61,5 +66,15 @@ func Permanent() query.Predicate {
 			}
 		}
 		return false
+	}
+}
+
+func Land() query.Predicate {
+	return func(obj query.Object) bool {
+		cardObj, ok := obj.(query.CardObject)
+		if !ok {
+			return false
+		}
+		return slices.Contains(cardObj.CardTypes(), mtg.CardTypeLand)
 	}
 }

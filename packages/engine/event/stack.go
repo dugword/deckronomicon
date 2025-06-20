@@ -8,6 +8,7 @@ import (
 const (
 	EventTypeResolveTopObjectOnStack = "ResolveTopObjectOnStack"
 	EventTypePutSpellOnStack         = "PutSpellOnStack"
+	EventTypePutCopiedSpellOnStack   = "PutCopiedSpellOnStack"
 	EventTypePutSpellInGraveyard     = "PutSpellInGraveyard"
 	EventTypePutSpellInExile         = "PutSpellInExile"
 	EventTypePutAbilityOnStack       = "PutAbilityOnStack"
@@ -49,6 +50,18 @@ type PutSpellInGraveyardEvent struct {
 
 func (e PutSpellInGraveyardEvent) EventType() string {
 	return EventTypePutSpellInGraveyard
+}
+
+type PutCopiedSpellOnStackEvent struct {
+	StackBaseEvent
+	PlayerID          string
+	SpellID           string
+	FromZone          mtg.Zone
+	EffectWithTargets []gob.EffectWithTarget
+}
+
+func (e PutCopiedSpellOnStackEvent) EventType() string {
+	return EventTypePutCopiedSpellOnStack
 }
 
 type PutSpellOnStackEvent struct {

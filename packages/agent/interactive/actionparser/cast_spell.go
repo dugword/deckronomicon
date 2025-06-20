@@ -48,7 +48,6 @@ func parseCastSpellCommand(
 	if err != nil {
 		return action.CastSpellAction{}, fmt.Errorf("failed to get splicable cards: %w", err)
 	}
-	fmt.Println("Ruling for splice:", ruling.Why())
 	cardsToSplice, err := chooseSpliceCards(splicableCards, cardInZone.Card(), chooseFunc)
 	if err != nil {
 		return action.CastSpellAction{}, fmt.Errorf("failed to choose splice cards: %w", err)
@@ -73,9 +72,18 @@ func parseCastSpellCommand(
 	if cardInZone.Zone() == mtg.ZoneGraveyard {
 		withFlashback = true
 	}
+	replicateCount := 0
+	if judge.CanReplicateCard(game, player, cardInZone.Card(), &ruling) {
+		var err error
+		replicateCount, err = getReplicateCount(cardInZone.Card(), chooseFunc)
+		if err != nil {
+			return action.CastSpellAction{}, fmt.Errorf("failed to get replicate count: %w", err)
+		}
+	}
 	request := action.CastSpellRequest{
 		CardID:            cardInZone.Card().ID(),
 		TargetsForEffects: targetsForEffects,
+		ReplicateCount:    replicateCount,
 		SpliceCardIDs:     spliceCardIDs,
 		WithFlashback:     withFlashback,
 	}
@@ -83,6 +91,30 @@ func parseCastSpellCommand(
 		player.ID(),
 		request,
 	), nil
+}
+
+func getReplicateCount(
+	card gob.Card,
+	chooseFunc func(prompt choose.ChoicePrompt) (choose.ChoiceResults, error),
+) (int, error) {
+	replicatePrompt := choose.ChoicePrompt{
+		Message:    "Choose how many times to replicate the spell",
+		Source:     card,
+		Optional:   true,
+		ChoiceOpts: choose.ChooseNumberOpts{},
+	}
+	replicateResults, err := chooseFunc(replicatePrompt)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get replicate count: %w", err)
+	}
+	selected, ok := replicateResults.(choose.ChooseNumberResults)
+	if !ok {
+		return 0, fmt.Errorf("expected a number choice result for replicate count")
+	}
+	if selected.Number < 0 {
+		return 0, fmt.Errorf("replicate count cannot be negative")
+	}
+	return selected.Number, nil
 }
 
 func chooseSpliceCards(

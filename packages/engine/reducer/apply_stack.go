@@ -16,6 +16,8 @@ func applyStackEvent(game state.Game, stackEvent event.StackEvent) (state.Game, 
 		return game, nil
 	case event.PutAbilityOnStackEvent:
 		return applyPutAbilityOnStackEvent(game, evnt)
+	case event.PutCopiedSpellOnStackEvent:
+		return applyPutCopiedSpellOnStackEvent(game, evnt)
 	case event.PutSpellOnStackEvent:
 		return applyPutSpellOnStackEvent(game, evnt)
 	case event.RemoveAbilityFromStackEvent:
@@ -27,6 +29,25 @@ func applyStackEvent(game state.Game, stackEvent event.StackEvent) (state.Game, 
 	default:
 		return game, fmt.Errorf("unknown stack event type '%T'", evnt)
 	}
+}
+
+func applyPutCopiedSpellOnStackEvent(
+	game state.Game,
+	evnt event.PutCopiedSpellOnStackEvent,
+) (state.Game, error) {
+	resolvable, ok := game.Stack().Get(evnt.SpellID)
+	if !ok {
+		return game, fmt.Errorf("spell %q not found on stack", evnt.SpellID)
+	}
+	spell, ok := resolvable.(gob.Spell)
+	if !ok {
+		return game, fmt.Errorf("object %q is not a spell", resolvable.ID())
+	}
+	game, err := game.WithPutCopiedSpellOnStack(spell, evnt.PlayerID, evnt.EffectWithTargets)
+	if err != nil {
+		return game, fmt.Errorf("failed to put copy of spell %q on stack: %w", evnt.SpellID, err)
+	}
+	return game, nil
 }
 
 func applyPutSpellOnStackEvent(

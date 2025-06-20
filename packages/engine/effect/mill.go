@@ -1,7 +1,9 @@
 package effect
 
 import (
+	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/game/definition"
+	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/state"
@@ -44,5 +46,14 @@ func (e MillEffect) Resolve(
 	source query.Object,
 	target target.TargetValue,
 ) (EffectResult, error) {
-	return EffectResult{}, nil
+	cards := player.Library().GetN(e.Count)
+	var events []event.GameEvent
+	for _, card := range cards {
+		events = append(events, event.PutCardInGraveyardEvent{
+			PlayerID: player.ID(),
+			CardID:   card.ID(),
+			FromZone: mtg.ZoneLibrary,
+		})
+	}
+	return EffectResult{Events: events}, nil
 }

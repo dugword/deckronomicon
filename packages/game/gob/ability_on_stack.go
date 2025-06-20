@@ -35,6 +35,10 @@ func (a AbilityOnStack) ID() string {
 	return a.id
 }
 
+func (a AbilityOnStack) SourceID() string {
+	return a.sourceID
+}
+
 func (a AbilityOnStack) Owner() string {
 
 	return a.owner

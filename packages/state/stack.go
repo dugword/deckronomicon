@@ -18,7 +18,7 @@ type Resolvable interface {
 	Match(p query.Predicate) bool
 	Controller() string
 	Owner() string
-	// Targets() map[string]target.TargetValue
+	SourceID() string
 }
 
 type Stack struct {

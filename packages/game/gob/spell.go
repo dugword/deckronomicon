@@ -4,6 +4,7 @@ import (
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
+	"fmt"
 )
 
 // Spell represents a spell object on the stack.
@@ -25,6 +26,27 @@ type Spell struct {
 	supertypes        []mtg.Supertype
 	toughness         int
 	flashback         bool
+	isCopy            bool
+}
+
+func CopySpell(
+	id string,
+	spell Spell,
+	playerID string,
+	effectWithTargets []EffectWithTarget,
+) (Spell, error) {
+	copiedSpell, err := NewSpell(
+		id,
+		spell.card,
+		playerID,
+		effectWithTargets,
+		spell.flashback,
+	)
+	if err != nil {
+		return Spell{}, fmt.Errorf("failed to create copied spell: %w", err)
+	}
+	copiedSpell.isCopy = true
+	return copiedSpell, nil
 }
 
 // NewSpell creates a new Spell instance from a Card.
@@ -132,6 +154,10 @@ func (s Spell) RulesText() string {
 	return s.rulesText
 }
 
+func (s Spell) SourceID() string {
+	return s.card.id
+}
+
 // StaticAbilities returns the static abilities of the spell
 func (s Spell) StaticAbilities() []StaticAbility {
 	return s.staticAbilities
@@ -162,4 +188,8 @@ func (s Spell) Supertypes() []mtg.Supertype {
 // Toughness returns the toughness of the spell.
 func (s Spell) Toughness() int {
 	return s.toughness
+}
+
+func (s Spell) IsCopy() bool {
+	return s.isCopy
 }

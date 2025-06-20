@@ -6,6 +6,12 @@ const (
 	ChoiceTypeChooseOne           ChoiceType = "ChooseOne"
 	ChoiceTypeChooseMany          ChoiceType = "ChooseMany"
 	ChoiceTypeMapChoicesToBuckets ChoiceType = "MapChoicesToBuckets"
+	ChoiceTypeChooseNumber        ChoiceType = "ChooseNumber"
+)
+
+const (
+	BucketTop    Bucket = "Top"
+	BucketBottom Bucket = "Bottom"
 )
 
 type ChoiceOpts interface {
@@ -32,11 +38,6 @@ func (o ChooseManyOpts) ChoiceType() ChoiceType {
 
 type Bucket string
 
-const (
-	BucketTop    Bucket = "Top"
-	BucketBottom Bucket = "Bottom"
-)
-
 type MapChoicesToBucketsOpts struct {
 	Buckets []Bucket
 	Choices []Choice
@@ -44,4 +45,13 @@ type MapChoicesToBucketsOpts struct {
 
 func (o MapChoicesToBucketsOpts) ChoiceType() ChoiceType {
 	return ChoiceTypeMapChoicesToBuckets
+}
+
+type ChooseNumberOpts struct {
+	Min int
+	Max int
+}
+
+func (o ChooseNumberOpts) ChoiceType() ChoiceType {
+	return ChoiceTypeChooseNumber
 }
