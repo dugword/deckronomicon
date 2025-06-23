@@ -2,17 +2,17 @@ package strategy
 
 import (
 	"deckronomicon/packages/agent/auto/strategy/action"
-	"deckronomicon/packages/agent/auto/strategy/condition"
+	"deckronomicon/packages/agent/auto/strategy/evaluator"
 	"deckronomicon/packages/state"
 )
 
 type Rule struct {
-	Name        string                  `json:"Name"`
-	Description string                  `json:"Description"`
-	RawWhen     map[string]any          `json:"When"`
-	When        condition.ConditionNode `json:"-"`
-	RawThen     map[string]any          `json:"Then"`
-	Then        action.ActionNode       `json:"-"`
+	Name        string              `json:"Name"`
+	Description string              `json:"Description"`
+	RawWhen     map[string]any      `json:"When"`
+	When        evaluator.Evaluator `json:"-"`
+	RawThen     map[string]any      `json:"Then"`
+	Then        action.ActionNode   `json:"-"`
 }
 
 type Strategy struct {

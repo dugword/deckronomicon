@@ -44,16 +44,16 @@ func ParseInput(
 		}
 		return request.Build(player.ID()), nil
 	case "cheat":
-		return action.NewCheatAction(player), nil
+		return action.NewCheatAction(), nil
 	case "clear":
-		return action.NewClearRevealedAction(player), nil
+		return action.NewClearRevealedAction(), nil
 	case "concede", "exit", "quit":
-		return action.NewConcedeAction(player), nil
+		return action.NewConcedeAction(), nil
 	case "help":
 		fmt.Println("Need to implement help command")
 		return nil, nil
 	case "pass", "next", "done":
-		return action.NewPassPriorityAction(player.ID()), nil
+		return action.NewPassPriorityAction(), nil
 	case "play":
 		return parsePlayLandCommand(arg, game, player, agent)
 	case "cast":
@@ -83,13 +83,13 @@ func parseCheatCommand(
 	case "addmana":
 		return parseAddManaCheatCommand(arg, player)
 	case "conjure":
-		return parseConjureCardCheatCommand(arg, player)
+		return parseConjureCardCheatCommand(arg)
 	case "draw":
-		return action.NewDrawCheatAction(player), nil
+		return action.NewDrawCheatAction(), nil
 	case "discard":
 		return parseDiscardCheatCommand(arg, game, player, agent)
 	case "effect":
-		return parseEffectCheatCommand(arg, player)
+		return parseEffectCheatCommand(arg)
 	case "find", "tutor":
 		return parseFindCardCheatCommand(arg, player, agent)
 	case "landdrop":

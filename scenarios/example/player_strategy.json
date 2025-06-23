@@ -52,7 +52,7 @@
         "Name": "Make Land Drop",
         "When": {
           "Step": "PrecombatMain",
-          "LandDrop": false,
+          "LandPlayedThisTurn": false,
           "InZone": {
             "Zone": "Hand",
             "Cards": [

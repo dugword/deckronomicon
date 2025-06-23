@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"deckronomicon/packages/agent/auto"
 	"deckronomicon/packages/agent/dummy"
 	"deckronomicon/packages/agent/interactive"
 	"deckronomicon/packages/configs"
@@ -37,17 +38,20 @@ func createPlayerAgent(
 			config.Verbose,
 		)
 		return playerAgent, nil
-	//case "Auto":
-	/*
+	case "Auto":
 		var err error
 		playerAgent, err = auto.NewRuleBasedAgent(
 			playerScenario.StrategyFile,
+			playerScenario.Name,
+			"./ui/term/display.tmpl", // TODO: Make this configurable.
 			config.Interactive,
+			[]mtg.Step{mtg.StepPrecombatMain},
+			config.Verbose,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create rule based agent: %w", err)
 		}
-	*/
+		return playerAgent, nil
 	case "Dummy":
 		playerAgent = dummy.NewChooseMinimumAgent(
 			playerScenario.Name,
@@ -151,6 +155,10 @@ func Run(
 	if err := engine.RunGame(); err != nil {
 		if errors.Is(err, mtg.ErrGameOver) {
 			logger.Info("Game over!")
+			var playerLostErr mtg.PlayerLostError
+			if errors.As(err, &playerLostErr) {
+				logger.Info(fmt.Sprintf("Game over reason: %s", playerLostErr.Reason))
+			}
 			return nil
 		}
 		return fmt.Errorf("failed to run the game: %w", err)

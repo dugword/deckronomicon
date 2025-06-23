@@ -120,6 +120,11 @@ func applyDrawCardEvent(
 	player := game.GetPlayer(event.PlayerID)
 	player, _, err := player.WithDrawCard()
 	if err != nil {
+		if err == mtg.ErrLibraryEmpty {
+			return game, mtg.PlayerLostError{
+				Reason: mtg.DeckedOut,
+			}
+		}
 		return game, fmt.Errorf("failed to draw card for %q: %w", player.ID(), err)
 	}
 	game = game.WithUpdatedPlayer(player)

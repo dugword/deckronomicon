@@ -28,13 +28,14 @@ func LoadPlayerFromConfig(config statetest.PlayerConfig) Player {
 		panic("failed to parse mana pool: " + err.Error())
 	}
 	return Player{
-		id:        config.ID,
-		life:      config.Life,
-		hand:      LoadHandFromConfig(config.ID, config.Hand),
-		library:   LoadLibraryFromConfig(config.ID, config.Library),
-		graveyard: LoadGraveyardFromConfig(config.ID, config.Graveyard),
-		exile:     LoadExileFromConfig(config.ID, config.Exile),
-		manaPool:  mana.NewManaPool().WithAddedAmount(manaAmount),
+		id:                 config.ID,
+		life:               config.Life,
+		landPlayedThisTurn: config.LandPlayedThisTurn,
+		hand:               LoadHandFromConfig(config.ID, config.Hand),
+		library:            LoadLibraryFromConfig(config.ID, config.Library),
+		graveyard:          LoadGraveyardFromConfig(config.ID, config.Graveyard),
+		exile:              LoadExileFromConfig(config.ID, config.Exile),
+		manaPool:           mana.NewManaPool().WithAddedAmount(manaAmount),
 	}
 }
 

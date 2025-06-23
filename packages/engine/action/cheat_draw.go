@@ -8,29 +8,26 @@ import (
 )
 
 type DrawCheatAction struct {
-	player state.Player
 }
 
-func NewDrawCheatAction(player state.Player) DrawCheatAction {
-	return DrawCheatAction{
-		player: player,
-	}
+func NewDrawCheatAction() DrawCheatAction {
+	return DrawCheatAction{}
 }
 
 func (a DrawCheatAction) Name() string {
 	return "Draw a Card"
 }
 
-func (a DrawCheatAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
+func (a DrawCheatAction) Complete(game state.Game, player state.Player, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	if !game.CheatsEnabled() {
 		return nil, fmt.Errorf("no cheating you cheater")
 	}
 	return []event.GameEvent{
 		event.CheatDrawEvent{
-			PlayerID: a.player.ID(),
+			PlayerID: player.ID(),
 		},
 		event.DrawCardEvent{
-			PlayerID: a.player.ID(),
+			PlayerID: player.ID(),
 		},
 	}, nil
 }

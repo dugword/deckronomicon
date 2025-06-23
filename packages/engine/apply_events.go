@@ -22,10 +22,7 @@ func (e *Engine) ApplyEvent(gameEvent event.GameEvent) error {
 	}
 	e.game = game
 	for _, agent := range e.agents {
-		if err := agent.ReportState(e.game); err != nil {
-			e.log.Critical("Failed to report state to agent:", err)
-			return fmt.Errorf("failed to report state to agent for %q: %w", agent.PlayerID(), err)
-		}
+		agent.ReportState(e.game)
 	}
 	triggeredEvents, err := e.CheckTriggeredEffects(e.game, gameEvent)
 	if err != nil {

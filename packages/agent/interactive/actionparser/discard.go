@@ -32,7 +32,7 @@ func parseDiscardCheatCommand(
 		}
 		card = found
 	}
-	return action.NewDiscardCheatAction(player, card), nil
+	return action.NewDiscardCheatAction(card), nil
 }
 
 func buildDiscardCommandByChoice(

@@ -23,8 +23,7 @@ func TestCastSpellActionComplete(t *testing.T) {
 		{
 			name: "with basic spell",
 			action: CastSpellAction{
-				playerID: playerID,
-				cardID:   "Test Card ID",
+				cardID: "Test Card ID",
 			},
 			want: []event.GameEvent{
 				event.CastSpellEvent{PlayerID: "Test Player", CardID: "Test Card ID", FromZone: mtg.ZoneHand},
@@ -34,8 +33,7 @@ func TestCastSpellActionComplete(t *testing.T) {
 		{
 			name: "with effects",
 			action: CastSpellAction{
-				playerID: playerID,
-				cardID:   "Card with Effects ID",
+				cardID: "Card with Effects ID",
 				targetsForEffects: map[EffectTargetKey]target.TargetValue{
 					{SourceID: "Card with Effects ID", EffectIndex: 0}: target.TargetValue{
 						ObjectID: "Target Object ID",
@@ -79,7 +77,6 @@ func TestCastSpellActionComplete(t *testing.T) {
 		{
 			name: "with flashback spell",
 			action: CastSpellAction{
-				playerID:  playerID,
 				cardID:    "Card with Flashback ID",
 				flashback: true,
 			},
@@ -91,8 +88,7 @@ func TestCastSpellActionComplete(t *testing.T) {
 		{
 			name: "with spell that has targets",
 			action: CastSpellAction{
-				playerID: playerID,
-				cardID:   "Card with Target ID",
+				cardID: "Card with Target ID",
 				targetsForEffects: map[EffectTargetKey]target.TargetValue{
 					{SourceID: "Card with Target ID", EffectIndex: 0}: target.TargetValue{
 						PlayerID: playerID,
@@ -125,7 +121,6 @@ func TestCastSpellActionComplete(t *testing.T) {
 		{
 			name: "with replicated spell",
 			action: CastSpellAction{
-				playerID:       playerID,
 				cardID:         "Card with Replicate ID",
 				replicateCount: 3,
 			},
@@ -155,7 +150,6 @@ func TestCastSpellActionComplete(t *testing.T) {
 		{
 			name: "with splice spell",
 			action: CastSpellAction{
-				playerID:      playerID,
 				cardID:        "Acane Card ID",
 				spliceCardIDs: []string{"Card with Splice ID"},
 			},
@@ -173,7 +167,8 @@ func TestCastSpellActionComplete(t *testing.T) {
 		game := newTestGame(playerID)
 		resEnv := resenv.ResEnv{}
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := tc.action.Complete(game, &resEnv)
+			player := game.GetPlayer(playerID)
+			got, err := tc.action.Complete(game, player, &resEnv)
 			if err != nil {
 				t.Fatalf("action.Complete(...); err = %v; want %v", err, nil)
 			}

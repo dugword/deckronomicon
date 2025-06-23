@@ -8,34 +8,31 @@ import (
 )
 
 type ShuffleCheatAction struct {
-	player state.Player
 }
 
 func NewShuffleCheatAction(player state.Player) ShuffleCheatAction {
-	return ShuffleCheatAction{
-		player: player,
-	}
+	return ShuffleCheatAction{}
 }
 
 func (a ShuffleCheatAction) Name() string {
 	return "Shuffle Deck"
 }
 
-func (a ShuffleCheatAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
+func (a ShuffleCheatAction) Complete(game state.Game, player state.Player, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	if !game.CheatsEnabled() {
 		return nil, fmt.Errorf("no cheating you cheater")
 	}
 	var cardIDs []string
-	for _, card := range a.player.Library().GetAll() {
+	for _, card := range player.Library().GetAll() {
 		cardIDs = append(cardIDs, card.ID())
 	}
 	shuffledCardsIDs := resEnv.RNG.ShuffleIDs(cardIDs)
 	return []event.GameEvent{
 		event.CheatShuffleDeckEvent{
-			PlayerID: a.player.ID(),
+			PlayerID: player.ID(),
 		},
 		event.ShuffleLibraryEvent{
-			PlayerID:         a.player.ID(),
+			PlayerID:         player.ID(),
 			ShuffledCardsIDs: shuffledCardsIDs,
 		},
 	}, nil

@@ -10,13 +10,11 @@ import (
 )
 
 type AddManaCheatAction struct {
-	Player     state.Player
 	ManaString string
 }
 
 func NewAddManaCheatAction(player state.Player, manaString string) AddManaCheatAction {
 	return AddManaCheatAction{
-		Player:     player,
 		ManaString: manaString,
 	}
 }
@@ -25,7 +23,7 @@ func (a AddManaCheatAction) Name() string {
 	return "CHEAT: Add Mana"
 }
 
-func (a AddManaCheatAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
+func (a AddManaCheatAction) Complete(game state.Game, player state.Player, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	if !game.CheatsEnabled() {
 		return nil, fmt.Errorf("no cheating you cheater")
 	}
@@ -41,19 +39,19 @@ func (a AddManaCheatAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]
 	}
 	events := []event.GameEvent{
 		event.CheatAddManaEvent{
-			Player: a.Player.ID(),
+			Player: player.ID(),
 		},
 	}
 	for color, n := range amount.Colors() {
 		events = append(events, event.AddManaEvent{
-			PlayerID: a.Player.ID(),
+			PlayerID: player.ID(),
 			ManaType: color,
 			Amount:   n,
 		})
 	}
 	if amount.Generic() > 0 {
 		events = append(events, event.AddManaEvent{
-			PlayerID: a.Player.ID(),
+			PlayerID: player.ID(),
 			Amount:   amount.Generic(),
 			ManaType: mana.Colorless,
 		})

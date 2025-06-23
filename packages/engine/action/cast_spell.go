@@ -15,6 +15,7 @@ import (
 	"fmt"
 )
 
+// TODO: Probably needs to include zone for cast from exile, graveyard, etc.
 type CastSpellRequest struct {
 	CardID            string
 	ReplicateCount    int
@@ -23,12 +24,11 @@ type CastSpellRequest struct {
 	Flashback         bool
 }
 
-func (r CastSpellRequest) Build(playerID string) CastSpellAction {
-	return NewCastSpellAction(playerID, r)
+func (r CastSpellRequest) Build(string) CastSpellAction {
+	return NewCastSpellAction(r)
 }
 
 type CastSpellAction struct {
-	playerID          string
 	cardID            string
 	replicateCount    int
 	targetsForEffects map[EffectTargetKey]target.TargetValue
@@ -37,11 +37,9 @@ type CastSpellAction struct {
 }
 
 func NewCastSpellAction(
-	playerID string,
 	request CastSpellRequest,
 ) CastSpellAction {
 	return CastSpellAction{
-		playerID:          playerID,
 		cardID:            request.CardID,
 		replicateCount:    request.ReplicateCount,
 		targetsForEffects: request.TargetsForEffects,
@@ -54,8 +52,7 @@ func (a CastSpellAction) Name() string {
 	return "Cast Spell"
 }
 
-func (a CastSpellAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
-	player := game.GetPlayer(a.playerID)
+func (a CastSpellAction) Complete(game state.Game, player state.Player, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	if a.flashback {
 		return a.castWithFlashback(game, player)
 	}
@@ -65,7 +62,7 @@ func (a CastSpellAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]eve
 func (a CastSpellAction) castWithFlashback(game state.Game, player state.Player) ([]event.GameEvent, error) {
 	cardToCast, ok := player.GetCardFromZone(a.cardID, mtg.ZoneGraveyard)
 	if !ok {
-		return nil, fmt.Errorf("player %q does not have card %q in graveyard", a.playerID, a.cardID)
+		return nil, fmt.Errorf("player %q does not have card %q in graveyard", player.ID(), a.cardID)
 	}
 	flashbackCost, ok := cardToCast.GetStaticAbilityCost(mtg.StaticKeywordFlashback)
 	if !ok {
@@ -81,7 +78,7 @@ func (a CastSpellAction) castWithFlashback(game state.Game, player state.Player)
 	) {
 		return nil, fmt.Errorf(
 			"player %q cannot cast card %q with flashback: %s",
-			a.playerID,
+			player.ID(),
 			cardToCast.ID(),
 			ruling.Why(),
 		)
@@ -94,12 +91,12 @@ func (a CastSpellAction) castWithFlashback(game state.Game, player state.Player)
 	events := append(
 		costEvents,
 		event.CastSpellEvent{
-			PlayerID: a.playerID,
+			PlayerID: player.ID(),
 			CardID:   cardToCast.ID(),
 			FromZone: mtg.ZoneGraveyard,
 		},
 		event.PutSpellOnStackEvent{
-			PlayerID:          a.playerID,
+			PlayerID:          player.ID(),
 			CardID:            cardToCast.ID(),
 			FromZone:          mtg.ZoneGraveyard,
 			EffectWithTargets: effectWithTargets,
@@ -112,7 +109,7 @@ func (a CastSpellAction) castWithFlashback(game state.Game, player state.Player)
 func (a CastSpellAction) castFromHand(game state.Game, player state.Player) ([]event.GameEvent, error) {
 	cardToCast, ok := player.GetCardFromZone(a.cardID, mtg.ZoneHand)
 	if !ok {
-		return nil, fmt.Errorf("player %q does not have card %q in hand", a.playerID, a.cardID)
+		return nil, fmt.Errorf("player %q does not have card %q in hand", player.ID(), a.cardID)
 	}
 	var totalCost cost.Cost = cardToCast.ManaCost()
 	effectWithTargets, err := buildEffectWithTargets(cardToCast.ID(), cardToCast.SpellAbility(), a.targetsForEffects)
@@ -141,7 +138,7 @@ func (a CastSpellAction) castFromHand(game state.Game, player state.Player) ([]e
 		) {
 			return nil, fmt.Errorf(
 				"player %q cannot replicate card %q",
-				a.playerID,
+				player.ID(),
 				cardToCast.ID(),
 			)
 		}
@@ -163,7 +160,7 @@ func (a CastSpellAction) castFromHand(game state.Game, player state.Player) ([]e
 	) {
 		return nil, fmt.Errorf(
 			"player %q cannot cast card %q from from hand: %s",
-			a.playerID,
+			player.ID(),
 			cardToCast.ID(),
 			ruling.Why(),
 		)
@@ -172,12 +169,12 @@ func (a CastSpellAction) castFromHand(game state.Game, player state.Player) ([]e
 	events := append(
 		costEvents,
 		event.CastSpellEvent{
-			PlayerID: a.playerID,
+			PlayerID: player.ID(),
 			CardID:   cardToCast.ID(),
 			FromZone: mtg.ZoneHand,
 		},
 		event.PutSpellOnStackEvent{
-			PlayerID:          a.playerID,
+			PlayerID:          player.ID(),
 			CardID:            cardToCast.ID(),
 			EffectWithTargets: effectWithTargets,
 			FromZone:          mtg.ZoneHand,
@@ -197,7 +194,7 @@ func (a CastSpellAction) castFromHand(game state.Game, player state.Player) ([]e
 		events = append(
 			events,
 			event.PutAbilityOnStackEvent{
-				PlayerID: a.playerID,
+				PlayerID: player.ID(),
 				// TODO: Maybe the engine needs to manage creating new IDs for game objects.
 				// There might be a case where the same card is cast multiple times in the same
 				// priority loop and we need to ensure that the IDs are unique.

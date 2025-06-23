@@ -35,26 +35,25 @@ func (p *StrategyParser) parseActionNode(raw any) action.ActionNode {
 func (p *StrategyParser) parsePlayAction(value any) action.ActionNode {
 	switch val := value.(type) {
 	case string:
-		// return &action.PlayCardActionNode{CardNames: []string{val}}
-		return &action.PlayCardActionNode{CardInZone: gob.CardInZone{}}
+		return &action.PlayLandCardActionNode{CardNames: []string{val}}
 	case []any:
-		var cards []string
+		var cardNames []string
 		for _, item := range val {
 			card, ok := item.(string)
 			if !ok {
 				p.errors.Add(fmt.Errorf("expected string in 'Play' action array, got %T", item))
 				return nil
 			}
-			cards = append(cards, card)
+			cardNames = append(cardNames, card)
 		}
-		return &action.PlayCardActionNode{CardInZone: gob.CardInZone{}}
+		return &action.PlayLandCardActionNode{CardNames: cardNames}
 	case map[string]any:
 		_, ok := val["Card"].(string)
 		if !ok {
 			p.errors.Add(fmt.Errorf("expected 'Card' key to be a string in 'Play' action, got %T", val["Card"]))
 			return nil
 		}
-		return &action.PlayCardActionNode{CardInZone: gob.CardInZone{}}
+		return &action.PlayLandCardActionNode{CardNames: []string{val["Card"].(string)}}
 	default:
 		p.errors.Add(fmt.Errorf("expected string or object for 'Play' action, got %T", value))
 		return nil

@@ -35,7 +35,7 @@ func parseUntapCheatCommand(
 		}
 		permanent = found
 	}
-	return action.NewUntapCheatAction(player, permanent), nil
+	return action.NewUntapCheatAction(permanent), nil
 }
 
 func buildUntapCommandByChoice(

@@ -41,7 +41,6 @@ func TestStreamOfThought(t *testing.T) {
 	player = player.WithAddMana(mana.Blue, 9)
 	game = game.WithUpdatedPlayer(player)
 	action := action.NewCastSpellAction(
-		playerID,
 		action.CastSpellRequest{
 			CardID: streamOfThoughtCard.ID(),
 			TargetsForEffects: map[action.EffectTargetKey]target.TargetValue{
@@ -56,7 +55,7 @@ func TestStreamOfThought(t *testing.T) {
 			},
 		},
 	)
-	events, err := action.Complete(game, &resEnv)
+	events, err := action.Complete(game, player, &resEnv)
 	if err != nil {
 		t.Fatalf("Failed to complete action: %v", err)
 	}

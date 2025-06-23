@@ -23,8 +23,8 @@ type ActivateAbilityRequest struct {
 	TargetsForEffects map[EffectTargetKey]target.TargetValue
 }
 
-func (r ActivateAbilityRequest) Build(playerID string) ActivateAbilityAction {
-	return NewActivateAbilityAction(playerID, r)
+func (r ActivateAbilityRequest) Build(string) ActivateAbilityAction {
+	return NewActivateAbilityAction(r)
 }
 
 type ActivateAbilityAction struct {
@@ -36,14 +36,12 @@ type ActivateAbilityAction struct {
 }
 
 func NewActivateAbilityAction(
-	playerID string,
 	request ActivateAbilityRequest,
 ) ActivateAbilityAction {
 	return ActivateAbilityAction{
 		abilityID:         request.AbilityID,
 		sourceID:          request.SourceID,
 		zone:              request.Zone,
-		playerID:          playerID,
 		targetsForEffects: request.TargetsForEffects,
 	}
 }
@@ -52,8 +50,7 @@ func (a ActivateAbilityAction) Name() string {
 	return "Activate Ability"
 }
 
-func (a ActivateAbilityAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
-	player := game.GetPlayer(a.playerID)
+func (a ActivateAbilityAction) Complete(game state.Game, player state.Player, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	ability, ok := getAbilityOnSourceInZone(
 		game,
 		player,

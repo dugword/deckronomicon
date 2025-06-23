@@ -14,14 +14,12 @@ type PlayLandRequest struct {
 }
 
 type PlayLandAction struct {
-	playerID string
-	cardID   string
+	cardID string
 }
 
-func NewPlayLandAction(player state.Player, request PlayLandRequest) PlayLandAction {
+func NewPlayLandAction(request PlayLandRequest) PlayLandAction {
 	return PlayLandAction{
-		playerID: player.ID(),
-		cardID:   request.CardID,
+		cardID: request.CardID,
 	}
 }
 
@@ -29,29 +27,28 @@ func (a PlayLandAction) Name() string {
 	return "Play Land"
 }
 
-func (a PlayLandAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
-	player := game.GetPlayer(a.playerID)
+func (a PlayLandAction) Complete(game state.Game, player state.Player, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	landToPlay, ok := player.GetCardFromZone(a.cardID, mtg.ZoneHand)
 	if !ok {
-		return nil, fmt.Errorf("player %q does not have card %q in hand", a.playerID, a.cardID)
+		return nil, fmt.Errorf("player %q does not have card %q in hand", player.ID(), a.cardID)
 	}
 	ruling := judge.Ruling{Explain: true}
 	if !judge.CanPlayLand(game, player, mtg.ZoneHand, landToPlay, &ruling) {
 		return nil, fmt.Errorf(
 			"player %q cannot play land %q, %s",
-			a.playerID,
+			player.ID(),
 			landToPlay.ID(),
 			ruling.Why(),
 		)
 	}
 	return []event.GameEvent{
 		event.PlayLandEvent{
-			PlayerID: a.playerID,
+			PlayerID: player.ID(),
 			CardID:   landToPlay.ID(),
 			Zone:     mtg.ZoneHand,
 		},
 		event.PutPermanentOnBattlefieldEvent{
-			PlayerID: a.playerID,
+			PlayerID: player.ID(),
 			CardID:   landToPlay.ID(),
 			FromZone: mtg.ZoneHand,
 		},

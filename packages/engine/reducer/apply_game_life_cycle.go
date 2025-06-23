@@ -142,6 +142,8 @@ func applyEndGameEvent(
 	evnt event.EndGameEvent,
 ) (state.Game, error) {
 	game = game.WithGameOver(evnt.WinnerID)
+	// TODO: Think about how to handle end of game
+	// and manage reporting game results.
 	return game, mtg.ErrGameOver
 }
 

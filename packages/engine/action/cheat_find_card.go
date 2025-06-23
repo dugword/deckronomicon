@@ -10,14 +10,12 @@ import (
 )
 
 type FindCardCheatAction struct {
-	player state.Player
-	card   gob.Card
+	card gob.Card
 }
 
-func NewFindCardCheatAction(player state.Player, card gob.Card) FindCardCheatAction {
+func NewFindCardCheatAction(card gob.Card) FindCardCheatAction {
 	return FindCardCheatAction{
-		player: player,
-		card:   card,
+		card: card,
 	}
 }
 
@@ -25,23 +23,23 @@ func (a FindCardCheatAction) Name() string {
 	return "Find Card"
 }
 
-func (a FindCardCheatAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
+func (a FindCardCheatAction) Complete(game state.Game, player state.Player, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	if !game.CheatsEnabled() {
 		return nil, fmt.Errorf("no cheating you cheater")
 	}
-	card, ok := a.player.Library().Get(a.card.ID())
+	card, ok := player.Library().Get(a.card.ID())
 	if !ok {
 		return nil, fmt.Errorf("card %q not found in library", a.card.ID())
 	}
 	return []event.GameEvent{
 		event.CheatFindCardEvent{
-			PlayerID: a.player.ID(),
+			PlayerID: player.ID(),
 			CardID:   a.card.ID(),
 		},
 		event.PutCardInHandEvent{
 			CardID:   card.ID(),
 			FromZone: mtg.ZoneLibrary,
-			PlayerID: a.player.ID(),
+			PlayerID: player.ID(),
 		},
 	}, nil
 }

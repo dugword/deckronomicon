@@ -6,22 +6,18 @@ import (
 	"deckronomicon/packages/state"
 )
 
-type PassPriorityAction struct {
-	playerID string
-}
+type PassPriorityAction struct{}
 
-func NewPassPriorityAction(playerID string) PassPriorityAction {
-	return PassPriorityAction{
-		playerID: playerID,
-	}
+func NewPassPriorityAction() PassPriorityAction {
+	return PassPriorityAction{}
 }
 
 func (a PassPriorityAction) Name() string {
 	return "Pass Priority"
 }
 
-func (a PassPriorityAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
+func (a PassPriorityAction) Complete(game state.Game, player state.Player, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	return []event.GameEvent{event.PassPriorityEvent{
-		PlayerID: a.playerID,
+		PlayerID: player.ID(),
 	}}, nil
 }

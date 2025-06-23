@@ -8,24 +8,21 @@ import (
 )
 
 type PeekCheatAction struct {
-	player state.Player
 }
 
 func NewPeekCheatAction(player state.Player) PeekCheatAction {
-	return PeekCheatAction{
-		player: player,
-	}
+	return PeekCheatAction{}
 }
 
 func (a PeekCheatAction) Name() string {
 	return "Peek at the top card of your deck"
 }
 
-func (a PeekCheatAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
+func (a PeekCheatAction) Complete(game state.Game, player state.Player, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	if !game.CheatsEnabled() {
 		return nil, fmt.Errorf("no cheating you cheater")
 	}
 	return []event.GameEvent{event.CheatPeekEvent{
-		PlayerID: a.player.ID(),
+		PlayerID: player.ID(),
 	}}, nil
 }
