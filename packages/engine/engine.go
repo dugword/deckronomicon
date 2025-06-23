@@ -20,7 +20,7 @@ import (
 
 type Action interface {
 	Name() string
-	Complete(state.Game, *resenv.ResEnv) ([]event.GameEvent, error)
+	Complete(state.Game, state.Player, *resenv.ResEnv) ([]event.GameEvent, error)
 }
 
 type Logger interface {
@@ -262,17 +262,23 @@ func (e *Engine) RunPlayerActions(playerID string) error {
 				"failed to get next action for player %q: %w", playerID, err,
 			)
 		}
-		// TODO: I think I might be relying on the user to accurately provide
-		// the player ID in the action, which is not ideal.
-		evnts, err := action.Complete(e.game, e.resEnv)
+		player := e.game.GetPlayer(playerID)
+		evnts, err := action.Complete(e.game, player, e.resEnv)
 		if err != nil {
+			// TODO: Actually return this error in action.Complete
+			// Right now I don't, and for now I'm going to ignore all errors...
 			if errors.Is(err, ErrInvalidUserAction) {
 				e.log.Debugf("Invalid player action for %q: %s", playerID, err)
 				continue
 			}
-			return fmt.Errorf(
-				"failed to complete action %q: %w", action.Name(), errors.Join(err, ErrInvalidUserAction),
-			)
+			e.log.Warnf("Hopefully this is just an invalid action, continue on everything for now: %s", err)
+			e.log.Debugf("Invalid player action for %q: %s", playerID, err)
+			continue
+			/*
+				return fmt.Errorf(
+					"failed to complete action %q: %w", action.Name(), errors.Join(err, ErrInvalidUserAction),
+				)
+			*/
 		}
 		for _, evnt := range evnts {
 			if err := e.ApplyEvent(evnt); err != nil {

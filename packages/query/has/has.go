@@ -28,22 +28,53 @@ func All(predicates ...query.Predicate) query.Predicate {
 	}
 }
 
-func CardType(cardTypes ...mtg.CardType) query.Predicate {
+func AnyCardType(cardTypes ...mtg.CardType) query.Predicate {
 	return func(obj query.Object) bool {
+		cardObj, ok := obj.(query.CardObject)
+		if !ok {
+			return false
+		}
 		for _, t := range cardTypes {
-			found := false
-			cardObj, ok := obj.(query.CardObject)
-			if !ok {
-				return false
-			}
 			if slices.Contains(cardObj.CardTypes(), t) {
-				found = true
+				return true
 			}
-			if !found {
+		}
+		return false
+	}
+}
+
+func CardType(cardType mtg.CardType) query.Predicate {
+	return func(obj query.Object) bool {
+		cardObj, ok := obj.(query.CardObject)
+		if !ok {
+			return false
+		}
+		return slices.Contains(cardObj.CardTypes(), cardType)
+	}
+}
+
+func AllCardTypes(cardTypes ...mtg.CardType) query.Predicate {
+	return func(obj query.Object) bool {
+		cardObj, ok := obj.(query.CardObject)
+		if !ok {
+			return false
+		}
+		for _, t := range cardTypes {
+			if !slices.Contains(cardObj.CardTypes(), t) {
 				return false
 			}
 		}
 		return true
+	}
+}
+
+func AnySourceID(sourceIDs ...string) query.Predicate {
+	return func(obj query.Object) bool {
+		stackObj, ok := obj.(query.StackObject)
+		if !ok {
+			return false
+		}
+		return slices.Contains(sourceIDs, stackObj.SourceID())
 	}
 }
 
@@ -57,7 +88,43 @@ func SourceID(sourceID string) query.Predicate {
 	}
 }
 
-// TODO support multiple colors
+func AnyColors(colors ...mtg.Color) query.Predicate {
+	return func(obj query.Object) bool {
+		cardObj, ok := obj.(query.CardObject)
+		if !ok {
+			return false
+		}
+		objColors := cardObj.Colors()
+		for _, color := range colors {
+			switch color {
+			case mtg.ColorBlack:
+				if objColors.Black {
+					return true
+				}
+			case mtg.ColorBlue:
+				if objColors.Blue {
+					return true
+				}
+			case mtg.ColorGreen:
+				if objColors.Green {
+					return true
+				}
+			case mtg.ColorRed:
+				if objColors.Red {
+					return true
+				}
+			case mtg.ColorWhite:
+				if objColors.White {
+					return true
+				}
+			default:
+				continue
+			}
+		}
+		return false
+	}
+}
+
 func Color(color mtg.Color) query.Predicate {
 	return func(obj query.Object) bool {
 		cardObj, ok := obj.(query.CardObject)
@@ -82,9 +149,58 @@ func Color(color mtg.Color) query.Predicate {
 	}
 }
 
+func AllColors(colors ...mtg.Color) query.Predicate {
+	return func(obj query.Object) bool {
+		cardObj, ok := obj.(query.CardObject)
+		if !ok {
+			return false
+		}
+		objColors := cardObj.Colors()
+		for _, color := range colors {
+			switch color {
+			case mtg.ColorBlack:
+				if !objColors.Black {
+					return false
+				}
+			case mtg.ColorBlue:
+				if !objColors.Blue {
+					return false
+				}
+			case mtg.ColorGreen:
+				if !objColors.Green {
+					return false
+				}
+			case mtg.ColorRed:
+				if !objColors.Red {
+					return false
+				}
+			case mtg.ColorWhite:
+				if !objColors.White {
+					return false
+				}
+			default:
+				continue
+			}
+		}
+		return true
+	}
+}
+
+func AnyControllerID(controllerIDs ...string) query.Predicate {
+	return func(obj query.Object) bool {
+		return slices.Contains(controllerIDs, obj.Controller())
+	}
+}
+
 func Controller(controllerID string) query.Predicate {
 	return func(obj query.Object) bool {
 		return obj.Controller() == controllerID
+	}
+}
+
+func AnyID(ids ...string) query.Predicate {
+	return func(obj query.Object) bool {
+		return slices.Contains(ids, obj.ID())
 	}
 }
 
@@ -94,9 +210,25 @@ func ID(id string) query.Predicate {
 	}
 }
 
+func AnyName(names ...string) query.Predicate {
+	return func(obj query.Object) bool {
+		return slices.Contains(names, obj.Name())
+	}
+}
+
 func Name(name string) query.Predicate {
 	return func(obj query.Object) bool {
 		return obj.Name() == name
+	}
+}
+
+func AnyManaValue(values ...int) query.Predicate {
+	return func(obj query.Object) bool {
+		cardObj, ok := obj.(query.CardObject)
+		if !ok {
+			return false
+		}
+		return slices.Contains(values, cardObj.ManaValue())
 	}
 }
 
@@ -110,7 +242,7 @@ func ManaValue(value int) query.Predicate {
 	}
 }
 
-func StaticKeyword(keywords ...mtg.StaticKeyword) query.Predicate {
+func AnyStaticKeyword(keywords ...mtg.StaticKeyword) query.Predicate {
 	return func(obj query.Object) bool {
 		for _, keyword := range keywords {
 			found := false
@@ -129,7 +261,36 @@ func StaticKeyword(keywords ...mtg.StaticKeyword) query.Predicate {
 	}
 }
 
-func Subtype(subtypes ...mtg.Subtype) query.Predicate {
+func StaticKeyword(keyword mtg.StaticKeyword) query.Predicate {
+	return func(obj query.Object) bool {
+		cardObj, ok := obj.(query.CardObject)
+		if !ok {
+			return false
+		}
+		return slices.Contains(cardObj.StaticKeywords(), keyword)
+	}
+}
+
+func AllStaticKeywords(keywords ...mtg.StaticKeyword) query.Predicate {
+	return func(obj query.Object) bool {
+		for _, keyword := range keywords {
+			found := false
+			cardObj, ok := obj.(query.CardObject)
+			if !ok {
+				return false
+			}
+			if slices.Contains(cardObj.StaticKeywords(), keyword) {
+				found = true
+			}
+			if !found {
+				return false
+			}
+		}
+		return true
+	}
+}
+
+func AnySubtype(subtypes ...mtg.Subtype) query.Predicate {
 	return func(obj query.Object) bool {
 		for _, subtype := range subtypes {
 			found := false
@@ -148,7 +309,65 @@ func Subtype(subtypes ...mtg.Subtype) query.Predicate {
 	}
 }
 
-func Supertype(supertypes ...mtg.Supertype) query.Predicate {
+func Subtype(subtype mtg.Subtype) query.Predicate {
+	return func(obj query.Object) bool {
+		cardObj, ok := obj.(query.CardObject)
+		if !ok {
+			return false
+		}
+		return slices.Contains(cardObj.Subtypes(), subtype)
+	}
+}
+
+func AllSubtypes(subtypes ...mtg.Subtype) query.Predicate {
+	return func(obj query.Object) bool {
+		for _, subtype := range subtypes {
+			found := false
+			cardObj, ok := obj.(query.CardObject)
+			if !ok {
+				return false
+			}
+			if slices.Contains(cardObj.Subtypes(), subtype) {
+				found = true
+			}
+			if !found {
+				return false
+			}
+		}
+		return true
+	}
+}
+
+func AnySupertype(supertypes ...mtg.Supertype) query.Predicate {
+	return func(obj query.Object) bool {
+		for _, supertype := range supertypes {
+			found := false
+			cardObj, ok := obj.(query.CardObject)
+			if !ok {
+				return false
+			}
+			if slices.Contains(cardObj.Supertypes(), supertype) {
+				found = true
+			}
+			if !found {
+				return false
+			}
+		}
+		return true
+	}
+}
+
+func Supertype(supertype mtg.Supertype) query.Predicate {
+	return func(obj query.Object) bool {
+		cardObj, ok := obj.(query.CardObject)
+		if !ok {
+			return false
+		}
+		return slices.Contains(cardObj.Supertypes(), supertype)
+	}
+}
+
+func AllSupertypes(supertypes ...mtg.Supertype) query.Predicate {
 	return func(obj query.Object) bool {
 		for _, supertype := range supertypes {
 			found := false

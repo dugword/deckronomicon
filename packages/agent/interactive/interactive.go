@@ -53,15 +53,14 @@ func (a *Agent) PlayerID() string {
 	return a.playerID
 }
 
-func (a *Agent) ReportState(game state.Game) error {
+func (a *Agent) ReportState(game state.Game) {
 	player := game.GetPlayer(a.playerID)
 	opponent := game.GetOpponent(a.playerID)
 	a.uiBuffer.Update(
 		view.NewGameViewFromState(game),
-		view.NewPlayerViewFromState(player),
-		view.NewPlayerViewFromState(opponent),
+		view.NewPlayerViewFromState(player, ""),
+		view.NewPlayerViewFromState(opponent, ""),
 	)
-	return nil
 }
 
 func (a *Agent) GetNextAction(game state.Game) (engine.Action, error) {
@@ -74,7 +73,7 @@ func (a *Agent) GetNextAction(game state.Game) (engine.Action, error) {
 			}
 		}
 		if pass {
-			return action.NewPassPriorityAction(player.ID()), nil
+			return action.NewPassPriorityAction(), nil
 		}
 		// TODO Don't call this here, run update or something
 		// PrintCommands(s.CheatsEnabled)

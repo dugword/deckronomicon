@@ -163,17 +163,22 @@ func StackData(Resolvable []view.Resolvable) BoxData {
 }
 
 func PlayerData(player view.Player) BoxData {
+	content := []string{}
+	if player.Mode != "" {
+		content = append(content, fmt.Sprintf("Mode: %s", player.Mode))
+	}
+	content = append(content,
+		fmt.Sprintf("Turn: %d", player.Turn),
+		fmt.Sprintf("Life: %d", player.Life),
+		fmt.Sprintf("Hand: %d cards", len(player.Hand)),
+		fmt.Sprintf("Library: %d cards", player.LibrarySize),
+		fmt.Sprintf("Graveyard: %d cards", len(player.Graveyard)),
+		fmt.Sprintf("Exile: %d cards", len(player.Exile)),
+		fmt.Sprintf("Mana Pool: %s", player.ManaPool),
+	)
 	return BoxData{
-		Title: fmt.Sprintf("Status for %s", player.ID),
-		Content: []string{
-			fmt.Sprintf("Turn: %d", player.Turn),
-			fmt.Sprintf("Life: %d", player.Life),
-			fmt.Sprintf("Hand: %d cards", len(player.Hand)),
-			fmt.Sprintf("Library: %d cards", player.LibrarySize),
-			fmt.Sprintf("Graveyard: %d cards", len(player.Graveyard)),
-			fmt.Sprintf("Exile: %d cards", len(player.Exile)),
-			fmt.Sprintf("Mana Pool: %s", player.ManaPool),
-		},
+		Title:   fmt.Sprintf("Status for %s", player.ID),
+		Content: content,
 	}
 }
 

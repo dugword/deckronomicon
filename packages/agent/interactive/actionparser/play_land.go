@@ -37,7 +37,7 @@ func parsePlayLandCommand(
 	request := action.PlayLandRequest{
 		CardID: cardInZone.Card().ID(),
 	}
-	return action.NewPlayLandAction(player, request), nil
+	return action.NewPlayLandAction(request), nil
 }
 
 func buildPlayLandCommandByChoice(

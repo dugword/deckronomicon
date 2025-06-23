@@ -46,6 +46,17 @@ type Permanent interface{}
 
 type Ability interface{}
 
+// TODO: I don't like this, but it is a quick way to convert
+// a slice of objects to a slice of Object
+// Need to update the strategy parser to not require this
+func NewQueryObjects[T Object](objects []T) []Object {
+	var queryObjects []Object
+	for _, obj := range objects {
+		queryObjects = append(queryObjects, obj)
+	}
+	return queryObjects
+}
+
 // TODO add a ToString method to Predicate so we can have a string
 // representation of the predicate for debugging purposes
 type Predicate func(obj Object) bool

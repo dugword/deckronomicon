@@ -12,5 +12,5 @@ func parseViewCommand(
 	player state.Player,
 	agent engine.PlayerAgent,
 ) (action.ViewAction, error) {
-	return action.NewViewAction(player, "", arg), nil
+	return action.NewViewAction("", arg), nil
 }

@@ -31,7 +31,7 @@ func parseFindCardCheatCommand(
 		}
 		card = found
 	}
-	return action.NewFindCardCheatAction(player, card), nil
+	return action.NewFindCardCheatAction(card), nil
 }
 
 func buildFindCardCheatCommandByChoice(

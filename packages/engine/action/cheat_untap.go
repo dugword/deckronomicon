@@ -9,13 +9,11 @@ import (
 )
 
 type UntapCheatAction struct {
-	player    state.Player
 	permanent gob.Permanent
 }
 
-func NewUntapCheatAction(player state.Player, permanent gob.Permanent) UntapCheatAction {
+func NewUntapCheatAction(permanent gob.Permanent) UntapCheatAction {
 	return UntapCheatAction{
-		player:    player,
 		permanent: permanent,
 	}
 }
@@ -24,16 +22,16 @@ func (a UntapCheatAction) Name() string {
 	return "Untap target permanent"
 }
 
-func (a UntapCheatAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
+func (a UntapCheatAction) Complete(game state.Game, player state.Player, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	if !game.CheatsEnabled() {
 		return nil, fmt.Errorf("no cheating you cheater")
 	}
 	return []event.GameEvent{
 		event.CheatUntapEvent{
-			PlayerID: a.player.ID(),
+			PlayerID: player.ID(),
 		},
 		event.UntapPermanentEvent{
-			PlayerID:    a.player.ID(),
+			PlayerID:    player.ID(),
 			PermanentID: a.permanent.ID(),
 		},
 	}, nil

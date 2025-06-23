@@ -9,14 +9,12 @@ import (
 )
 
 type DiscardCheatAction struct {
-	player state.Player
-	card   gob.Card
+	card gob.Card
 }
 
-func NewDiscardCheatAction(player state.Player, card gob.Card) DiscardCheatAction {
+func NewDiscardCheatAction(card gob.Card) DiscardCheatAction {
 	return DiscardCheatAction{
-		player: player,
-		card:   card,
+		card: card,
 	}
 }
 
@@ -24,16 +22,16 @@ func (a DiscardCheatAction) Name() string {
 	return "Discard a Card"
 }
 
-func (a DiscardCheatAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
+func (a DiscardCheatAction) Complete(game state.Game, player state.Player, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	if !game.CheatsEnabled() {
 		return nil, fmt.Errorf("no cheating you cheater")
 	}
 	return []event.GameEvent{
 		event.CheatDiscardEvent{
-			PlayerID: a.player.ID(),
+			PlayerID: player.ID(),
 		},
 		event.DiscardCardEvent{
-			PlayerID: a.player.ID(),
+			PlayerID: player.ID(),
 			CardID:   a.card.ID(),
 		},
 	}, nil

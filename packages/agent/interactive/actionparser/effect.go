@@ -2,14 +2,12 @@ package actionparser
 
 import (
 	"deckronomicon/packages/engine/action"
-	"deckronomicon/packages/state"
 	"fmt"
 	"strings"
 )
 
 func parseEffectCheatCommand(
 	input string,
-	player state.Player,
 ) (action.EffectCheatAction, error) {
 	if input == "" {
 		return action.EffectCheatAction{}, fmt.Errorf("effect command requires an effect name string")
@@ -20,5 +18,5 @@ func parseEffectCheatCommand(
 	}
 	effectName := parts[0]
 	modifiers := parts[1]
-	return action.NewEffectCheatAction(player, effectName, modifiers), nil
+	return action.NewEffectCheatAction(effectName, modifiers), nil
 }

@@ -26,26 +26,24 @@ type mockPlayerAgent struct {
 }
 
 type mockAction struct {
-	name     string
-	playerID string
+	name string
 }
 
 func (a mockAction) Name() string {
 	return a.name
 }
 
-func (a mockAction) Complete(state.Game, *resenv.ResEnv) ([]event.GameEvent, error) {
+func (a mockAction) Complete(game state.Game, player state.Player, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	return []event.GameEvent{
 		event.PassPriorityEvent{
-			PlayerID: a.playerID,
+			PlayerID: player.ID(),
 		},
 	}, nil
 }
 
 func (m *mockPlayerAgent) GetNextAction(state.Game) (Action, error) {
 	return &mockAction{
-		name:     "Mock Pass Priority Action",
-		playerID: m.playerID,
+		name: "Mock Pass Priority Action",
 	}, nil
 }
 

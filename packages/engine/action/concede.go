@@ -10,10 +10,8 @@ type ConcedeAction struct {
 	player state.Player
 }
 
-func NewConcedeAction(player state.Player) ConcedeAction {
-	return ConcedeAction{
-		player: player,
-	}
+func NewConcedeAction() ConcedeAction {
+	return ConcedeAction{}
 }
 
 func (a ConcedeAction) Name() string {
@@ -21,8 +19,8 @@ func (a ConcedeAction) Name() string {
 }
 
 // TODO: This only works for 2 player games.
-func (a ConcedeAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
-	opponent := game.GetOpponent(a.player.ID())
+func (a ConcedeAction) Complete(game state.Game, player state.Player, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
+	opponent := game.GetOpponent(player.ID())
 	return []event.GameEvent{
 		event.ConcedeEvent{PlayerID: a.player.ID()},
 		event.EndGameEvent{WinnerID: opponent.ID()},

@@ -12,14 +12,12 @@ import (
 )
 
 type EffectCheatAction struct {
-	Player     state.Player
 	EffectName string
 	Modifiers  string
 }
 
-func NewEffectCheatAction(player state.Player, effectName string, modifers string) EffectCheatAction {
+func NewEffectCheatAction(effectName string, modifers string) EffectCheatAction {
 	return EffectCheatAction{
-		Player:     player,
 		EffectName: effectName,
 		Modifiers:  modifers,
 	}
@@ -29,11 +27,10 @@ func (a EffectCheatAction) Name() string {
 	return fmt.Sprintf("CHEAT: %s", a.EffectName)
 }
 
-func (a EffectCheatAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
+func (a EffectCheatAction) Complete(game state.Game, player state.Player, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	if !game.CheatsEnabled() {
 		return nil, fmt.Errorf("no cheating you cheater")
 	}
-	player := game.GetPlayer(a.Player.ID())
 	if a.EffectName == "" {
 		return nil, fmt.Errorf("effect action is missing effect name")
 	}

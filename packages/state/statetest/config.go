@@ -26,13 +26,14 @@ type GameConfig struct {
 }
 
 type PlayerConfig struct {
-	ID        string
-	Life      int
-	Hand      HandConfig
-	Library   LibraryConfig
-	Graveyard GraveyardConfig
-	Exile     ExileConfig
-	ManaPool  string
+	ID                 string
+	Life               int
+	LandPlayedThisTurn bool
+	Hand               HandConfig
+	Library            LibraryConfig
+	Graveyard          GraveyardConfig
+	Exile              ExileConfig
+	ManaPool           string
 }
 
 type HandConfig struct {

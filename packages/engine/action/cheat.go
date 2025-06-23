@@ -7,21 +7,18 @@ import (
 )
 
 type CheatAction struct {
-	player state.Player
 }
 
-func NewCheatAction(player state.Player) CheatAction {
-	return CheatAction{
-		player: player,
-	}
+func NewCheatAction() CheatAction {
+	return CheatAction{}
 }
 
 func (a CheatAction) Name() string {
 	return "Enable Cheats"
 }
 
-func (a CheatAction) Complete(game state.Game, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
+func (a CheatAction) Complete(game state.Game, player state.Player, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	return []event.GameEvent{event.CheatEnabledEvent{
-		PlayerID: a.player.ID(),
+		PlayerID: player.ID(),
 	}}, nil
 }

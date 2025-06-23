@@ -52,7 +52,7 @@ func (a *ChooseProvided) PlayerID() string {
 }
 
 func (a *ChooseProvided) GetNextAction(game state.Game) (engine.Action, error) {
-	return action.NewPassPriorityAction(a.playerID), nil
+	return action.NewPassPriorityAction(), nil
 }
 
 func (a *ChooseProvided) Choose(prompt choose.ChoicePrompt) (choose.ChoiceResults, error) {
@@ -112,6 +112,4 @@ func (a *ChooseProvided) Choose(prompt choose.ChoicePrompt) (choose.ChoiceResult
 	}
 }
 
-func (a *ChooseProvided) ReportState(game state.Game) error {
-	return nil
-}
+func (a *ChooseProvided) ReportState(game state.Game) {}

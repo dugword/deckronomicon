@@ -90,7 +90,7 @@ func (p *StrategyParser) parseRule(rule Rule) Rule {
 	r.Description = rule.Description
 	r.Then = p.parseActionNode(rule.RawThen)
 	fmt.Println("Parsed action:", r.Then)
-	r.When = p.parseConditionNode(rule.RawWhen)
+	r.When = p.parseEvaluator(rule.RawWhen)
 	fmt.Println("Parsed condition:", r.When)
 	return r
 }

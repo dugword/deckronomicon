@@ -30,7 +30,7 @@ func (a *ChooseMinimumAgent) PlayerID() string {
 }
 
 func (a *ChooseMinimumAgent) GetNextAction(game state.Game) (engine.Action, error) {
-	return action.NewPassPriorityAction(a.playerID), nil
+	return action.NewPassPriorityAction(), nil
 }
 
 func (a *ChooseMinimumAgent) Choose(prompt choose.ChoicePrompt) (choose.ChoiceResults, error) {
@@ -61,6 +61,4 @@ func (a *ChooseMinimumAgent) Choose(prompt choose.ChoicePrompt) (choose.ChoiceRe
 	}
 }
 
-func (a *ChooseMinimumAgent) ReportState(game state.Game) error {
-	return nil
-}
+func (a *ChooseMinimumAgent) ReportState(game state.Game) {}
