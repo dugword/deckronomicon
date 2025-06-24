@@ -1,4 +1,4 @@
-package matcher
+package predicate
 
 import (
 	"deckronomicon/packages/game/gob"

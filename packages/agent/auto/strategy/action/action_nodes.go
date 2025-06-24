@@ -4,12 +4,13 @@ package action
 
 import (
 	"deckronomicon/packages/agent/auto/strategy/evalstate"
+	"deckronomicon/packages/agent/auto/strategy/predicate"
 	"deckronomicon/packages/engine"
 	"deckronomicon/packages/engine/action"
 	"deckronomicon/packages/engine/judge"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
-	"deckronomicon/packages/query/has"
+	"deckronomicon/packages/query"
 	"fmt"
 )
 
@@ -47,21 +48,32 @@ func (n *ActivateActionNode) Resolve(ctx *evalstate.EvalState) (engine.Action, e
 }
 
 type PlayLandCardActionNode struct {
-	CardNames []string
+	Cards predicate.Predicate
 }
 
 func (n *PlayLandCardActionNode) Resolve(ctx *evalstate.EvalState) (engine.Action, error) {
 	player := ctx.Game.GetPlayer(ctx.PlayerID)
-	card, ok := player.Hand().Find(has.AnyName(n.CardNames...))
-	if !ok {
-		return nil, fmt.Errorf("failed to find playable land card in hand: %v", n.CardNames)
+	found := n.Cards.Select(query.NewQueryObjects(player.Hand().GetAll()))
+	if len(found) == 0 {
+		return nil, fmt.Errorf("no land cards found in hand for player %s", player.ID())
 	}
+	var playable []gob.Card
 	ruling := judge.Ruling{Explain: true}
-	if !judge.CanPlayLand(ctx.Game, player, mtg.ZoneHand, card, &ruling) {
-		return nil, fmt.Errorf("cannot play land card %q <%s>: %s", card.Name(), card.ID(), ruling.Why())
+	for _, obj := range found {
+		card, ok := obj.(gob.Card)
+		if !ok {
+			return nil, fmt.Errorf("object %s is not a card", obj.ID())
+		}
+		if !judge.CanPlayLand(ctx.Game, player, mtg.ZoneHand, card, &ruling) {
+			continue
+		}
+		playable = append(playable, card)
+	}
+	if len(playable) == 0 {
+		return nil, fmt.Errorf("no playable land cards found in hand for player %s", player.ID())
 	}
 	request := action.PlayLandRequest{
-		CardID: card.ID(),
+		CardID: playable[0].ID(), // Assuming we play the first found land card
 	}
 	return action.NewPlayLandAction(request), nil
 }

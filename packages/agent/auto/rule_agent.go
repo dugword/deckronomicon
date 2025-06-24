@@ -104,9 +104,9 @@ func (a *RuleBasedAgent) GetNextAction(game state.Game) (engine.Action, error) {
 	ctx := evalstate.EvalState{
 		Game:     game,
 		PlayerID: a.playerID,
-		Groups:   a.strategy.Groups,
 		Mode:     a.mode,
 	}
+
 	for _, mode := range a.strategy.Modes {
 		if mode.Name == a.mode {
 			continue // Skip the current mode
@@ -124,6 +124,7 @@ func (a *RuleBasedAgent) GetNextAction(game state.Game) (engine.Action, error) {
 		}
 		matchedRule = rule.Name
 		var err error
+		fmt.Println("Matched rule:", matchedRule)
 		act, err = rule.Then.Resolve(&ctx)
 		if err != nil {
 			fmt.Printf("Error resolving action for rule %s: %v\n", rule.Name, err)

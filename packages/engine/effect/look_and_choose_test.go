@@ -46,7 +46,7 @@ func TestLookAndChooseEffectName(t *testing.T) {
 		Modifiers: map[string]any{
 			"Look":      5,
 			"Choose":    2,
-			"CardTypes": []string{"Sorcery", "Instant"},
+			"CardTypes": []any{"Sorcery", "Instant"},
 			"Rest":      "Graveyard",
 		},
 	})
@@ -70,9 +70,10 @@ func TestLookAndChooseEffect(t *testing.T) {
 			modifiers: map[string]any{
 				"Look":      5,
 				"Choose":    2,
-				"CardTypes": []string{"Sorcery", "Instant"},
+				"CardTypes": []any{"Sorcery", "Instant"},
 				"Rest":      "Graveyard",
 			},
+			// TODO: I think the maps make this non-deterministic
 			wantEvents: []event.GameEvent{
 				event.PutCardInGraveyardEvent{PlayerID: "Test Player", CardID: "Card 1 ID", FromZone: "Library"},
 				event.PutCardInGraveyardEvent{PlayerID: "Test Player", CardID: "Card 2 ID", FromZone: "Library"},

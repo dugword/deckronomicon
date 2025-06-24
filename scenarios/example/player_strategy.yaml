@@ -2,25 +2,25 @@ Name: Player Strategy
 Description: High Tide Combo Strategy
 Groups:
   Combo Piece:
-      - High Tide
-      - Psychic Puppetry
-  Land:
-      - Island
-      - Snow-Covered Island
+    - High Tide
+    - Psychic Puppetry
+  Island:
+    - Island
+    - Snow-Covered Island
   Cantrip:
-      - Preordain
-      - Brainstorm
-      - Ponder
+    - Preordain
+    - Brainstorm
+    - Ponder
   Draw Spell:
-      - Lorien Revealed
-      - Ideas Unbound
-      - Pieces of the Puzzle
+    - Lorien Revealed
+    - Ideas Unbound
+    - Pieces of the Puzzle
   Tutor:
-      - Merchant Scroll
-      - Muddle the Mixture
+    - Merchant Scroll
+    - Muddle the Mixture
   Arcane:
-      - Ideas Unbound
-      - Pieces of the Puzzle
+    - Ideas Unbound
+    - Pieces of the Puzzle
 
 Modes:
   - Name: Combo
@@ -53,17 +53,7 @@ Modes:
 
 Rules:
   Setup:
-    - Name: Make Land Drop
-      When:
-        Step: PrecombatMain
-        LandPlayedThisTurn: false
-        InZone:
-          Zone: Hand
-          Cards:
-            - $Land
-      Then:
-        Play:
-          - $Land
+    - Make Land Drop
 
     - Name: Look for Lands
       When:
@@ -72,12 +62,33 @@ Rules:
           Zone: Battlefield
           Cards:
             Subtype: Island
+      Then:
+        Play:
+          - $Island
 
   Combo:
+    - Make Land Drop
     - Name: Cast High Tide
       When:
         InZone:
           Zone: Hand
           Cards:
             - Black Lotus
-      Then: {}
+      Then:
+        Play:
+          - $Island
+
+  Panic:
+    - Make Land Drop
+
+  Payments:
+    - Name: Pay for spells
+      When:
+        InZone:
+          Zone: Battlefield
+          Cards:
+            Subtype: Island
+            Untapped: true
+      Then:
+        Play:
+          - $Island

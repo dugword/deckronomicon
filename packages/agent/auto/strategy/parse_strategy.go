@@ -10,11 +10,20 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type StrategyFile struct {
+	Name        string           `json:"Name,omitempty" yaml:"Name,omitempty"`
+	Description string           `json:"Description,omitempty" yaml:"Description,omitempty"`
+	Groups      map[string][]any `json:"Groups,omitempty" yaml:"Groups,omitempty"`
+	Modes       []map[string]any `json:"Modes,omitempty" yaml:"Modes,omitempty"`
+	Rules       map[string]any   `json:"Rules,omitempty" yaml:"Rules,omitempty"`
+}
+
 type StrategyParser struct {
 	errors         *ParseErrors
 	sourceFile     string
 	sourceFileType string // ".json", ".yaml"
 	groups         map[string][]any
+	rules          map[string]Rule
 }
 
 type ParseErrors struct {
@@ -47,34 +56,30 @@ func LoadStrategy(path string) (*Strategy, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file: %w", err)
 	}
-
 	// New Parser - TODO make this a construtor
 	parser := &StrategyParser{
 		errors:         &ParseErrors{},
 		sourceFile:     path,
 		sourceFileType: filepath.Ext(path),
 	}
-
 	// Maybe just pass in path?
 	strategy, err := parser.Parse(data)
 	if err != nil {
-		return nil, fmt.Errorf("errors encountered while parsing strategy: %s", parser.errors.Error())
+		return nil, fmt.Errorf("errors encountered while parsing strategy: %s, %w", parser.errors.Error(), err)
 	}
-
 	return strategy, nil
 }
 
 func (p *StrategyParser) Parse(data []byte) (*Strategy, error) {
-	var strategy Strategy
-
+	var strategyFile StrategyFile
 	switch p.sourceFileType {
 	case ".json":
-		if err := json.Unmarshal(data, &strategy); err != nil {
+		if err := json.Unmarshal(data, &strategyFile); err != nil {
 			p.errors.Add(fmt.Errorf("failed to unmarshal strategy JSON: %w", err))
 			return nil, p.errors
 		}
 	case ".yaml":
-		if err := yaml.Unmarshal(data, &strategy); err != nil {
+		if err := yaml.Unmarshal(data, &strategyFile); err != nil {
 			p.errors.Add(fmt.Errorf("failed to unmarshal strategy YAML: %w", err))
 			return nil, p.errors
 		}
@@ -82,32 +87,32 @@ func (p *StrategyParser) Parse(data []byte) (*Strategy, error) {
 		p.errors.Add(fmt.Errorf("unsupported file type: %s", p.sourceFileType))
 		return nil, p.errors
 	}
-	p.groups = strategy.Groups
-	var outRules []Rule
-	for _, mode := range strategy.Modes {
-		outRules = append(outRules, p.parseRule(mode))
+	p.groups = strategyFile.Groups
+	if err := p.ParseRuleFiles(); err != nil {
+		p.errors.Add(fmt.Errorf("failed to parse rule files: %w", err))
+		return nil, p.errors
 	}
-	strategy.Modes = outRules
-	for name, rules := range strategy.Rules {
-		var outRules []Rule
-		for _, rule := range rules {
-			outRules = append(outRules, p.parseRule(rule))
+	var strategy Strategy
+	var modes []Rule
+	for _, rawMode := range strategyFile.Modes {
+		mode, err := p.ParseModeNode(rawMode)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse mode: %w", err)
 		}
-		strategy.Rules[name] = outRules
+		modes = append(modes, mode)
 	}
-	if p.errors.HasErrors() {
-		return nil, fmt.Errorf("errors encountered while parsing strategy: %w", p.errors)
+	strategy.Modes = modes
+	strategy.Rules = map[string][]Rule{}
+	for name, rawRules := range strategyFile.Rules {
+		var rules []Rule
+		for _, rawRule := range rawRules.([]any) {
+			rule, err := p.ParseRuleNode(rawRule)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse rule in %s: %w", name, err)
+			}
+			rules = append(rules, rule)
+		}
+		strategy.Rules[name] = rules
 	}
 	return &strategy, nil
-}
-
-func (p *StrategyParser) parseRule(rule Rule) Rule {
-	var r Rule
-	r.Name = rule.Name
-	r.Description = rule.Description
-	r.Then = p.parseActionNode(rule.RawThen)
-	fmt.Println("Parsed action:", r.Then)
-	r.When = p.parseEvaluator(rule.RawWhen)
-	fmt.Println("Parsed condition:", r.When)
-	return r
 }

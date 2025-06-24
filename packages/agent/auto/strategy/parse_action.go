@@ -2,13 +2,19 @@ package strategy
 
 import (
 	"deckronomicon/packages/agent/auto/strategy/action"
+	"deckronomicon/packages/agent/auto/strategy/predicate"
 	"fmt"
-	"strings"
 )
 
 func (p *StrategyParser) parseActionNode(raw any) action.ActionNode {
 	switch val := raw.(type) {
 	case map[string]any:
+		// TODO: Make this check for 1, keeping zero ok for now
+		// for some testing
+		if len(val) > 1 {
+			p.errors.Add(fmt.Errorf("expected a single action key, got %d keys", len(val)))
+			return nil
+		}
 		for k, v := range val {
 			switch k {
 			case "Play", "Cast":
@@ -32,66 +38,27 @@ func (p *StrategyParser) parseActionNode(raw any) action.ActionNode {
 	}
 }
 
-func (p *StrategyParser) parseGroupThingy(input string) []string {
-	if !strings.HasPrefix(input, "$") {
-		fmt.Println("Missing prefix")
-		p.errors.Add(fmt.Errorf("group name must start with '$', got '%s'", input))
-		return nil
-	}
-	groupName := strings.TrimPrefix(input, "$")
-	group, ok := p.groups[groupName]
-	if !ok {
-		fmt.Println("Group not found", groupName)
-		p.errors.Add(fmt.Errorf("group '%s' not found", groupName))
-		return nil
-	}
-	var cardNames []string
-	for _, item := range group {
-		cardName, ok := item.(string)
-		if !ok {
-			fmt.Println("Expected string in group", groupName, "but got", item)
-			p.errors.Add(fmt.Errorf("expected string in group '%s', got %T", groupName, item))
-			return nil
-		}
-		cardNames = append(cardNames, cardName)
-	}
-	fmt.Println("HELLO FROM PARSE GROUP THINGY", cardNames)
-	return cardNames
-}
-
 func (p *StrategyParser) parsePlayAction(value any) action.ActionNode {
 	fmt.Println("Parsing Play action with value:", value)
 	switch val := value.(type) {
 	case string:
-		if strings.HasPrefix(val, "$") {
-			cardNames := p.parseGroupThingy(val)
-			return &action.PlayLandCardActionNode{CardNames: cardNames}
-		}
-		return &action.PlayLandCardActionNode{CardNames: []string{val}}
+		predicate := p.parsePredicate(val)
+		return &action.PlayLandCardActionNode{Cards: predicate}
 	case []any:
-		var cardNames []string
+		var predicates []predicate.Predicate
 		for _, item := range val {
-			card, ok := item.(string)
-			if !ok {
-				p.errors.Add(fmt.Errorf("expected string in 'Play' action array, got %T", item))
-				return nil
-			}
-			if strings.HasPrefix(card, "$") {
-				cardNamesFromGroup := p.parseGroupThingy(card)
-				if cardNamesFromGroup != nil {
-					cardNames = append(cardNames, cardNamesFromGroup...)
-				}
-			}
-			cardNames = append(cardNames, card)
+			predicate := p.parsePredicate(item)
+			predicates = append(predicates, predicate)
 		}
-		return &action.PlayLandCardActionNode{CardNames: cardNames}
+		return &action.PlayLandCardActionNode{Cards: &predicate.Or{Predicates: predicates}}
 	case map[string]any:
-		_, ok := val["Card"].(string)
+		cardName, ok := val["Card"].(string)
 		if !ok {
 			p.errors.Add(fmt.Errorf("expected 'Card' key to be a string in 'Play' action, got %T", val["Card"]))
 			return nil
 		}
-		return &action.PlayLandCardActionNode{CardNames: []string{val["Card"].(string)}}
+		predicate := p.parsePredicate(cardName)
+		return &action.PlayLandCardActionNode{Cards: predicate}
 	default:
 		p.errors.Add(fmt.Errorf("expected string or object for 'Play' action, got %T", value))
 		return nil

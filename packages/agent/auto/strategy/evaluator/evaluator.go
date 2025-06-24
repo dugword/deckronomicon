@@ -2,9 +2,7 @@ package evaluator
 
 import (
 	"deckronomicon/packages/agent/auto/strategy/evalstate"
-	"deckronomicon/packages/agent/auto/strategy/matcher"
 	"deckronomicon/packages/game/mtg"
-	"deckronomicon/packages/query"
 )
 
 type Evaluator interface {
@@ -80,34 +78,6 @@ type Mode struct {
 
 func (e *Mode) Evaluate(ctx *evalstate.EvalState) bool {
 	return ctx.Mode == e.Mode
-}
-
-type InZone struct {
-	Zone  mtg.Zone
-	Cards matcher.Matcher
-}
-
-func (e *InZone) Evaluate(ctx *evalstate.EvalState) bool {
-	player := ctx.Game.GetPlayer(ctx.PlayerID)
-	if e.Cards == nil {
-		return true
-	}
-	switch e.Zone {
-	case mtg.ZoneHand, mtg.ZoneGraveyard, mtg.ZoneLibrary, mtg.ZoneExile:
-		cards, ok := player.GetCardsInZone(e.Zone)
-		if !ok {
-			// TODO: Think through how to handle invalid cases
-			// Maybe something like the error record in the strategy
-			// parser, or the ruling passed into the judge methods.
-			return false
-		}
-		return e.Cards.Matches(query.NewQueryObjects(cards))
-	case mtg.ZoneBattlefield:
-		permanents := ctx.Game.Battlefield().GetAll()
-		return e.Cards.Matches(query.NewQueryObjects(permanents))
-	default:
-		return false
-	}
 }
 
 type PlayerStat struct {

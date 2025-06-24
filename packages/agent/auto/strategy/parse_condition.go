@@ -2,11 +2,9 @@ package strategy
 
 import (
 	"deckronomicon/packages/agent/auto/strategy/evaluator"
-	"deckronomicon/packages/agent/auto/strategy/matcher"
+	"deckronomicon/packages/agent/auto/strategy/node"
 	"deckronomicon/packages/game/mtg"
 	"fmt"
-
-	"strings"
 )
 
 func (p *StrategyParser) parseEvaluator(raw any) evaluator.Evaluator {
@@ -157,150 +155,8 @@ func (p *StrategyParser) parseInZoneEvaluator(value interface{}) evaluator.Evalu
 		p.errors.Add(fmt.Errorf("missing cards in 'InZone'"))
 		return nil
 	}
-	return &evaluator.InZone{
+	return &node.InZone{
 		Zone:  zone,
-		Cards: p.parseMatcher(cardsRaw),
+		Cards: p.parsePredicate(cardsRaw),
 	}
-}
-
-func (p *StrategyParser) parseMatcher(data any) matcher.Matcher {
-	switch node := data.(type) {
-	case string:
-		if strings.HasPrefix(node, "$") {
-			return p.parseGroupMatcher(node)
-		}
-		return &matcher.Name{Name: node}
-	case []any:
-		var matchers []matcher.Matcher
-		for _, item := range node {
-			matchers = append(matchers, p.parseMatcher(item))
-		}
-		return &matcher.And{Matchers: matchers}
-	case map[string]any:
-		/* // TODO Think about this
-		if len(node) != 1 {
-			// TODO: add context path to p.errors.
-			p.errors.Add(fmt.Errorf("expected exactly one key, got %d", len(node)))
-			return nil
-		}
-		*/
-		for key, val := range node {
-			var matchers []matcher.Matcher
-			switch key {
-			// todo move to a separate function
-			case "And", "All", "AllOf":
-				items, ok := val.([]any)
-				if !ok {
-					p.errors.Add(fmt.Errorf("expected list for 'and', got %T", val))
-					return nil
-				}
-				for _, item := range items {
-					matchers = append(matchers, p.parseMatcher(item))
-				}
-				matchers = append(matchers, &matcher.And{Matchers: matchers})
-				// todo move to a separate function
-			case "Or", "Any", "AnyOf":
-				items, ok := val.([]any)
-				if !ok {
-					p.errors.Add(fmt.Errorf("expected list for 'or', got %T", val))
-					return nil
-				}
-				for _, item := range items {
-					matchers = append(matchers, p.parseMatcher(item))
-				}
-				matchers = append(matchers, &matcher.Or{Matchers: matchers})
-			case "Not":
-				matchers = append(matchers, p.parseNotMatcher(val))
-			case "CardType":
-				matchers = append(matchers, p.parseCardTypeMatcher(val))
-			case "Subtype":
-				matchers = append(matchers, p.parseSubtypeMatcher(val))
-			case "Supertype":
-			case "Color":
-			case "ManaCost":
-			case "Power":
-			case "Toughness":
-			default:
-				p.errors.Add(fmt.Errorf("unknown key: %s", key))
-				return nil
-			}
-			if len(matchers) == 0 {
-				p.errors.Add(fmt.Errorf("no valid matchers found for key '%s'", key))
-				return nil
-			}
-			if len(matchers) == 1 {
-				return matchers[0]
-			}
-			return &matcher.And{Matchers: matchers}
-		}
-	default:
-		p.errors.Add(fmt.Errorf("unexpected type: %T", data))
-		return nil
-	}
-	// TODO handle the switch statement to always return so we don't have the compiler hit this
-	panic("unreachable")
-}
-
-func (p *StrategyParser) parseGroupMatcher(name string) matcher.Matcher {
-	if !strings.HasPrefix(name, "$") {
-		p.errors.Add(fmt.Errorf("group matcher must start with '$', got %s", name))
-		return nil
-	}
-	groupName := strings.TrimPrefix(name, "$")
-	if groupName == "" {
-		p.errors.Add(fmt.Errorf("group matcher name cannot be empty"))
-		return nil
-	}
-	group, ok := p.groups[groupName]
-	if !ok {
-		p.errors.Add(fmt.Errorf("group '%s' not found in definitions", groupName))
-		return nil
-	}
-	var matchers []matcher.Matcher
-	for _, item := range group {
-		matcher := p.parseMatcher(item)
-		if matcher != nil {
-			matchers = append(matchers, matcher)
-		}
-	}
-	if len(matchers) == 0 {
-		p.errors.Add(fmt.Errorf("no valid matchers found in group '%s'", groupName))
-		return nil
-	}
-	if len(matchers) == 1 {
-		return matchers[0]
-	}
-	return &matcher.Or{Matchers: matchers}
-}
-
-func (p *StrategyParser) parseNotMatcher(value any) matcher.Matcher {
-	return &matcher.Not{Matcher: p.parseMatcher(value)}
-}
-
-func (p *StrategyParser) parseCardTypeMatcher(value any) matcher.Matcher {
-	typeStr, ok := value.(string)
-	if !ok {
-		p.errors.Add(fmt.Errorf("expected string for 'CardType', got %T", value))
-		return nil
-	}
-	cardType, ok := mtg.StringToCardType(typeStr)
-	if !ok {
-		p.errors.Add(fmt.Errorf("invalid card type: %s", typeStr))
-		return nil
-	}
-	return &matcher.CardType{CardType: cardType}
-}
-
-func (p *StrategyParser) parseSubtypeMatcher(value any) matcher.Matcher {
-	typeStr, ok := value.(string)
-	if !ok {
-		p.errors.Add(fmt.Errorf("expected string for 'Subtype', got %T", value))
-		return nil
-	}
-	subtype, ok := mtg.StringToSubtype(typeStr)
-	if !ok {
-		p.errors.Add(fmt.Errorf("invalid subtype: %s", typeStr))
-		return nil
-	}
-	return &matcher.Subtype{Subtype: subtype}
 }
