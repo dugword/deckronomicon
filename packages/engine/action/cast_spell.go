@@ -11,7 +11,6 @@ import (
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/state"
-	"encoding/json"
 	"fmt"
 )
 
@@ -184,10 +183,10 @@ func (a CastSpellAction) castFromHand(game state.Game, player state.Player) ([]e
 		effectWithTargets := []gob.EffectWithTarget{{
 			EffectSpec: definition.EffectSpec{
 				Name:      string(mtg.StaticKeywordReplicate),
-				Modifiers: json.RawMessage(fmt.Sprintf(`{"Count": %d}`, a.replicateCount)),
+				Modifiers: map[string]any{"Count": a.replicateCount},
 			},
 			Target: target.TargetValue{
-				ObjectID: cardToCast.ID(),
+				TargetID: cardToCast.ID(),
 			},
 			SourceID: cardToCast.ID(),
 		}}

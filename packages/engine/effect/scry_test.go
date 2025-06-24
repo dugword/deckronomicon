@@ -10,8 +10,6 @@ import (
 	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/state"
 	"deckronomicon/packages/state/statetest"
-	"encoding/json"
-	"fmt"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -38,7 +36,7 @@ func scryTestGame(playerID string) state.Game {
 func TestScryEffectName(t *testing.T) {
 	scryEffect, err := NewScryEffect(definition.EffectSpec{
 		Name:      "Scry",
-		Modifiers: json.RawMessage(`{"Count": 4}`),
+		Modifiers: map[string]any{"Count": 4},
 	})
 	if err != nil {
 		t.Fatalf("NewScryEffect(EffectSpec); err = %v; want = %v", err, nil)
@@ -72,7 +70,7 @@ func TestScryEffect(t *testing.T) {
 			player := game.GetPlayer(playerID)
 			scryEffect, err := NewScryEffect(definition.EffectSpec{
 				Name:      "Scry",
-				Modifiers: json.RawMessage(fmt.Sprintf(`{"Count": %d}`, tc.count)),
+				Modifiers: map[string]any{"Count": tc.count},
 			})
 			if err != nil {
 				t.Fatalf("NewScryEffect(EffectSpec); err = %v; want = %v", err, nil)
@@ -98,9 +96,6 @@ func TestScryEffect(t *testing.T) {
 			}
 			// TODO: Rename to "Resume" no reason to have "Func" in the name
 			got, err := effectResult.ResumeFunc(chooseResults)
-			if err != nil {
-				t.Fatalf("effectResult.ResumeFunc(...) failed; err = %v; want = %v", err, nil)
-			}
 			if err != nil {
 				t.Fatalf("effectResult.ResumeFunc(...) failed; err = %v; want = %v", err, nil)
 			}

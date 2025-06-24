@@ -7,7 +7,7 @@ package actionparser
 // just requests to be sent to the game engine. THe game engine is responsible
 // for actually verifying things work according to the rules.
 
-// TODO Use a expression tree parser like we do for the JSON parser
+// TODO Use a expression tree parser like we do for the strategy parser
 
 import (
 	"deckronomicon/packages/engine"

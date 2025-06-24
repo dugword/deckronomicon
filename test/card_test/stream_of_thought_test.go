@@ -46,8 +46,7 @@ func TestStreamOfThought(t *testing.T) {
 			TargetsForEffects: map[action.EffectTargetKey]target.TargetValue{
 				{SourceID: "Stream of Thought ID", EffectIndex: 0}: {
 					TargetType: target.TargetTypePlayer,
-					// TODO: Maybe this could just be TargetID and we'd know based on the target type.
-					PlayerID: playerID,
+					TargetID:   playerID,
 				},
 				{SourceID: "Stream of Thought ID", EffectIndex: 1}: target.TargetValue{
 					TargetType: target.TargetTypeNone,

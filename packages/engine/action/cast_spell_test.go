@@ -7,7 +7,6 @@ import (
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/game/target"
-	"encoding/json"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -36,10 +35,10 @@ func TestCastSpellActionComplete(t *testing.T) {
 				cardID: "Card with Effects ID",
 				targetsForEffects: map[EffectTargetKey]target.TargetValue{
 					{SourceID: "Card with Effects ID", EffectIndex: 0}: target.TargetValue{
-						ObjectID: "Target Object ID",
+						TargetID: "Target Object ID",
 					},
 					{SourceID: "Card with Effects ID", EffectIndex: 1}: target.TargetValue{
-						PlayerID: "Target Player ID",
+						TargetID: "Target Player ID",
 					},
 				},
 			},
@@ -57,17 +56,17 @@ func TestCastSpellActionComplete(t *testing.T) {
 						{
 							EffectSpec: definition.EffectSpec{
 								Name:      "Effect 1",
-								Modifiers: json.RawMessage(`{"Target": "Permanent"}`),
+								Modifiers: map[string]any{"Target": "Permanent"},
 							},
-							Target:   target.TargetValue{ObjectID: "Target Object ID"},
+							Target:   target.TargetValue{TargetID: "Target Object ID"},
 							SourceID: "Card with Effects ID",
 						},
 						{
 							EffectSpec: definition.EffectSpec{
 								Name:      "Effect 2",
-								Modifiers: json.RawMessage(`{"Target": "Player"}`),
+								Modifiers: map[string]any{"Target": "Player"},
 							},
-							Target:   target.TargetValue{PlayerID: "Target Player ID"},
+							Target:   target.TargetValue{TargetID: "Target Player ID"},
 							SourceID: "Card with Effects ID",
 						},
 					},
@@ -91,7 +90,7 @@ func TestCastSpellActionComplete(t *testing.T) {
 				cardID: "Card with Target ID",
 				targetsForEffects: map[EffectTargetKey]target.TargetValue{
 					{SourceID: "Card with Target ID", EffectIndex: 0}: target.TargetValue{
-						PlayerID: playerID,
+						TargetID: playerID,
 					},
 				},
 			},
@@ -109,9 +108,9 @@ func TestCastSpellActionComplete(t *testing.T) {
 						{
 							EffectSpec: definition.EffectSpec{
 								Name:      "Target",
-								Modifiers: json.RawMessage(`{"Target": "Player"}`),
+								Modifiers: map[string]any{"Target": "Player"},
 							},
-							Target:   target.TargetValue{PlayerID: "Test Player"},
+							Target:   target.TargetValue{TargetID: "Test Player"},
 							SourceID: "Card with Target ID",
 						},
 					},
@@ -136,10 +135,10 @@ func TestCastSpellActionComplete(t *testing.T) {
 						{
 							EffectSpec: definition.EffectSpec{
 								Name:      string(mtg.StaticKeywordReplicate),
-								Modifiers: json.RawMessage(`{"Count": 3}`),
+								Modifiers: map[string]any{"Count": 3},
 							},
 							Target: target.TargetValue{
-								ObjectID: "Card with Replicate ID",
+								TargetID: "Card with Replicate ID",
 							},
 							SourceID: "Card with Replicate ID",
 						},

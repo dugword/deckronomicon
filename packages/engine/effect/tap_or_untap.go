@@ -7,7 +7,6 @@ import (
 	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/state"
-	"encoding/json"
 	"fmt"
 )
 
@@ -17,9 +16,14 @@ type TapOrUntapEffect struct {
 
 func NewTapOrUntapEffect(effectSpec definition.EffectSpec) (Effect, error) {
 	var tapOrUntapEffect TapOrUntapEffect
-	if err := json.Unmarshal(effectSpec.Modifiers, &tapOrUntapEffect); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal TapOrUntapEffectModifiers: %w", err)
+	targetStr, ok := effectSpec.Modifiers["Target"].(string)
+	if !ok {
+		return nil, fmt.Errorf("TapOrUntapEffect requires a 'Target' modifier of type string, got %T", effectSpec.Modifiers["Target"])
 	}
+	if targetStr != "" && targetStr != "Permanent" {
+		return nil, fmt.Errorf("TapOrUntapEffect requires a 'Target' modifier of either empty or 'Permanent', got %q", targetStr)
+	}
+	tapOrUntapEffect.Target = targetStr
 	return tapOrUntapEffect, nil
 }
 
@@ -50,7 +54,7 @@ func (e TapOrUntapEffect) Resolve(
 		Events: []event.GameEvent{
 			event.UntapPermanentEvent{
 				PlayerID:    player.ID(),
-				PermanentID: target.ObjectID,
+				PermanentID: target.TargetID,
 			},
 		},
 	}, nil

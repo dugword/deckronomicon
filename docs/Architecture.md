@@ -9,13 +9,13 @@ functional reducer which returns a new game state. This allows for
 deterministic replayability and debugging, as well as a clear separation of
 concerns between the game engine, player agents, and game actions.
 
-Player agent automation happens via a JSON/YAML configuration file which
+Player agent automation happens via a YAML configuration file which
 enables rule-based strategies to be defined and executed without modifiying
 the code of the engine.
 
 ## Definitions
 
-Cards are defined using a declarative and composable JSON file which enables
+Cards are defined using a declarative and composable YAML file which enables
 new cards to be implemented wihtout modifying the core engine code unless new
 game effects are required for the card.
 
@@ -28,31 +28,31 @@ Scenarios are defined in the `scenarios` directory. Each scenarios has its own
 subdirectory and must include these files:
 
 ```sh
-setup.json
-player_deck.json
-player_strategy.json
-opponent_deck.json
-opponent_strategy.json
+setup.yaml
+player_deck.yaml
+player_strategy.yaml
+opponent_deck.yaml
+opponent_strategy.yaml
 ```
 
 A scenerio is a complete game setup that includes the player and opponent
 decks, strategies, and the initial game state.
 
-### Setup JSON
+### Setup YAML
 
-The `setup.json` file defines
+The `setup.yaml` file defines
 the initial game state, including the starting life totals, starting hands,
 and any other initial game state information.
 
-### Deck JSON
+### Deck YAML
 
-The `player_deck.json` and `opponent_deck.json` files define the decklists for
+The `player_deck.yaml` and `opponent_deck.yaml` files define the decklists for
 the player and opponent. These files contain a list of card names and
 quantities, as well as a deck name.
 
-### Strategy JSON
+### Strategy YAML
 
-The `player_strategy.json` and `opponent_strategy.json` files define the
+The `player_strategy.yaml` and `opponent_strategy.yaml` files define the
 strategy to be used by the player and opponent agents when run with an
 auto player agent.
 
@@ -148,7 +148,7 @@ actions, events and state changes for analytics.
 
 #### Engine/Effect
 
-Card effects are declared in the JSON card definitions and their
+Card effects are declared in the YAML card definitions and their
 implementations exist in the engine/effect package. Effects are reusable and
 modular, taking a set of parameters and applying the specified game changes.
 This allows for complex interactions to be defined in a declarative manner.
@@ -194,7 +194,7 @@ to be implemented without modifying the core engine code.
 
 #### Automated Agents
 
-Automated agents are defined using JSON/YAML configuration files that specify
+Automated agents are defined using YAML configuration files that specify
 the rules and strategies they should follow. These configurations allow for
 the creation of complex strategies without requiring changes to the engine
 code. The agent reads the game state and proposes complete actions to the
@@ -202,7 +202,7 @@ engine.
 
 #### Auto/Strategy Parser
 
-The auto/strategy package provides a parser for the JSON/YAML strategy files.
+The auto/strategy package provides a parser for the YAML strategy files.
 
 #### Interactive Agents
 
@@ -210,7 +210,7 @@ The interactive agent is a command-line interface that allows human players to
 interact with the game. It prompts the player for actions based on the current
 game state and provides feedback on the game progress. The interactive agent
 is designed to for players to explore strategies before automating them with
-JSON/YAML configurations. Additionally the interactive agent can be used to
+YAML configurations. Additionally the interactive agent can be used to
 test and debug new cards and effects in a live game environment.
 
 #### Dummy Agent
@@ -253,13 +253,13 @@ for managing and validating game definitions and data.
 ### Tools/Fetch Card
 
 The fetch card tool is a command-line utility that retrieves card data from
-Scryfall and generates a JSON definitions for the card. It can be used to
+Scryfall and generates a YAML definitions for the card. It can be used to
 start the implementation of a new card. However additional work updating the
-JSON is required to implement the card's effects.
+YAML is required to implement the card's effects.
 
 ### Tools/Validate Definitions
 
-The validate definitions tool checks the JSON card definitions by loading each
+The validate definitions tool checks the YAML card definitions by loading each
 card in the definitions directory and builds their effects. Card effects are
 not built by the engine until the card is played, so this tool is useful for
 ensuring a card is correctly defined without having to play it in a game.

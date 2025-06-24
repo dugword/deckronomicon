@@ -1,0 +1,25 @@
+CardTypes:
+  - Instant
+Color:
+  - U
+ManaCost: '{U}{U}'
+Name: Muddle the Mixture
+Effects:
+  - Name: Counterspell
+    Modifiers:
+      CardTypes:
+        - Instant
+        - Sorcery
+ActivatedAbilities:
+  - Name: Transmute
+    Cost: '{1}{U}{U}, Discard this card'
+    Effects:
+      - Name: Search
+        Modifiers:
+          ManaValues:
+            - 2
+    Speed: Sorcery
+    Zone: Hand
+RulesText: |-
+  Counter target instant or sorcery spell.
+  Transmute {1}{U}{U} ({1}{U}{U}, Discard this card: Search your library for a card with the same mana value as this card, reveal it, put it into your hand, then shuffle. Transmute only as a sorcery.)

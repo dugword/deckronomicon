@@ -7,7 +7,6 @@ import (
 	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/state"
-	"encoding/json"
 	"fmt"
 )
 
@@ -17,8 +16,12 @@ type TapEffect struct {
 
 func NewTapEffect(effectSpec definition.EffectSpec) (Effect, error) {
 	var tapEffect TapEffect
-	if err := json.Unmarshal(effectSpec.Modifiers, &tapEffect); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal TapEffectModifiers: %w", err)
+	targetStr, ok := effectSpec.Modifiers["Target"].(string)
+	if !ok {
+		return nil, fmt.Errorf("TapEffect requires a 'Target' modifier of type string, got %T", effectSpec.Modifiers["Target"])
+	}
+	if targetStr != "" && targetStr != "Permanent" {
+		return nil, fmt.Errorf("TapEffect requires a 'Target' modifier of either empty or 'Permanent', got %q", targetStr)
 	}
 	return tapEffect, nil
 }

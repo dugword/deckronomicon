@@ -24,7 +24,7 @@ func TestApplyGameStateChangeEvent(t *testing.T) {
 			name: "with AddManaEvent",
 			evnt: event.AddManaEvent{
 				PlayerID: playerID,
-				ManaType: mana.Blue,
+				Color:    mana.Blue,
 				Amount:   2,
 			},
 			game: state.LoadGameFromConfig(statetest.GameConfig{

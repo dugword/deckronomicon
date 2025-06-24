@@ -1,0 +1,58 @@
+Name: Player Strategy
+Description: High Tide Combo Strategy
+Modes:
+  - Name: Combo
+    Description: Begin combo turn
+    When:
+      InHand:
+        And:
+          - High Tide
+          - Psychic Puppetry
+          - Or:
+              - High Tide
+              - Psychic Puppetry
+  - Name: Panic
+    Description: Emergency mode
+    When:
+      Mode: Combo
+      InZone:
+        Zone: Hand
+        Cards:
+          - Island
+  - Name: Win
+    Description: Winning the game
+    When:
+      InZone:
+        Zone: Hand
+        Cards:
+          - Black Lotus
+Rules:
+  Setup:
+    - Name: Make Land Drop
+      When:
+        Step: PrecombatMain
+        LandPlayedThisTurn: false
+        InZone:
+          Zone: Hand
+          Cards:
+            - Island
+            - Snow-Covered Island
+      Then:
+        Play:
+          - Island
+          - Snow-Covered Island
+    - Name: Look for Lands
+      When:
+        Step: PrecombatMain
+        InZone:
+          Zone: Battlefield
+          Cards:
+            Subtype: Island
+  Combo:
+    - Name: Cast High Tide
+      When:
+        InZone:
+          Zone: Hand
+          Cards:
+            - Black Lotus
+      Then: {}

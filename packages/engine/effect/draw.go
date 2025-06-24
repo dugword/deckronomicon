@@ -7,20 +7,29 @@ import (
 	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/state"
-	"encoding/json"
 	"fmt"
 )
 
 type DrawEffect struct {
-	Count  int    `json:"Count"`
-	Target string `json:"Target"`
+	Count  int
+	Target string
 }
 
 func NewDrawEffect(effectSpec definition.EffectSpec) (Effect, error) {
 	var drawEffect DrawEffect
-	if err := json.Unmarshal(effectSpec.Modifiers, &drawEffect); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal DrawEffectModifiers: %w", err)
+	count, ok := effectSpec.Modifiers["Count"].(int)
+	if !ok || count <= 0 {
+		return nil, fmt.Errorf("DrawEffect requires a 'Count' modifier of type int greater than 0, got %T", effectSpec.Modifiers["Count"])
 	}
+	drawEffect.Count = count
+	targetStr, ok := effectSpec.Modifiers["Target"].(string)
+	if ok && targetStr != "" && targetStr != "Player" {
+		return nil, fmt.Errorf("DrawEffect requires a 'Target' modifier to be empty or 'Player' got %T", effectSpec.Modifiers["Target"])
+	}
+	if targetStr != "" && targetStr != "Player" {
+		return nil, fmt.Errorf("DrawEffect requires a 'Target' modifier of either empty or 'Player', got %q", targetStr)
+	}
+	drawEffect.Target = targetStr
 	return drawEffect, nil
 }
 
@@ -51,7 +60,7 @@ func (e DrawEffect) Resolve(
 	case target.TargetTypeNone:
 		return e.resolveForPlayer(game, player.ID())
 	case target.TargetTypePlayer:
-		return e.resolveForPlayer(game, trgt.PlayerID)
+		return e.resolveForPlayer(game, trgt.TargetID)
 	default:
 		panic(fmt.Sprintf("unexpected target type %s for DrawEffect", trgt.TargetType))
 		return EffectResult{}, nil

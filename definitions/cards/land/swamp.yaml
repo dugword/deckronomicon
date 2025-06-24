@@ -1,0 +1,15 @@
+Name: Swamp
+CardTypes:
+  - Land
+Subtypes:
+  - Swamp
+Supertypes:
+  - Basic
+ActivatedAbilities:
+  - Name: Add {B} Mana
+    Cost: '{T}'
+    Effects:
+      - Name: AddMana
+        Modifiers:
+          Mana: '{B}'
+RulesText: '{T}: Add {B}.'

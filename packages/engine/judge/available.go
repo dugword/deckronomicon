@@ -6,7 +6,6 @@ import (
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query/has"
 	"deckronomicon/packages/state"
-	"encoding/json"
 	"fmt"
 )
 
@@ -116,22 +115,42 @@ func GetSplicableCards(
 		if ruling != nil && ruling.Explain {
 			ruling.Reasons = append(ruling.Reasons, fmt.Sprintf("[card %q]: ", card.Name()))
 		}
-		var spliceModifiers gob.SpliceModifiers
-		rawModifiers, ok := card.GetStaticAbilityModifiers(mtg.StaticKeywordSplice)
+		modifiers, ok := card.GetStaticAbilityModifiers(mtg.StaticKeywordSplice)
 		if !ok {
 			continue
 		}
-		if err := json.Unmarshal(rawModifiers, &spliceModifiers); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal splice modifiers for card %s: %w", card.Name(), err)
+		subtypeString, ok := modifiers["Subtype"].(string)
+		if !ok {
+			if ruling != nil && ruling.Explain {
+				ruling.Reasons = append(
+					ruling.Reasons,
+					fmt.Sprintf("cannot splice card %s onto %s: card does not have subtype", card.Name(), cardToCast.Card().Name()),
+				)
+			}
+			continue
 		}
-		if !cardToCast.Match(has.Subtype(spliceModifiers.Subtype)) {
+		subtype, ok := mtg.StringToSubtype(subtypeString)
+		if !ok {
+			if ruling != nil && ruling.Explain {
+				ruling.Reasons = append(
+					ruling.Reasons,
+					fmt.Sprintf("cannot splice card %s onto %s: card has invalid subtype %s",
+						card.Name(),
+						cardToCast.Card().Name(),
+						subtypeString,
+					),
+				)
+			}
+			continue
+		}
+		if !cardToCast.Match(has.Subtype(subtype)) {
 			if ruling != nil && ruling.Explain {
 				ruling.Reasons = append(
 					ruling.Reasons,
 					fmt.Sprintf("cannot splice card %s onto %s: card does not have subtype %s",
 						card.Name(),
 						cardToCast.Card().Name(),
-						spliceModifiers.Subtype,
+						subtype,
 					),
 				)
 			}

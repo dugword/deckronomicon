@@ -98,12 +98,16 @@ func permanentsToViewPermanents(permanents []gob.Permanent) []Permanent {
 }
 
 func NewPlayerViewFromState(player state.Player, mode string) Player {
+	manaPool := player.ManaPool().ManaString()
+	if manaPool == "" {
+		manaPool = "(empty)"
+	}
 	return Player{
 		ID:          player.ID(),
 		Life:        player.Life(),
 		Mode:        mode,
 		Turn:        player.Turn(),
-		ManaPool:    player.ManaPool().Describe(),
+		ManaPool:    manaPool,
 		Hand:        cardsToViewCards(player.Hand().GetAll()),
 		Graveyard:   cardsToViewCards(player.Graveyard().GetAll()),
 		Exile:       cardsToViewCards(player.Exile().GetAll()),

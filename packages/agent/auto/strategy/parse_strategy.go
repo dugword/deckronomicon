@@ -4,13 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 type StrategyParser struct {
-	errors      *ParseErrors
-	sourceFile  string
-	definitions map[string][]string
+	errors         *ParseErrors
+	sourceFile     string
+	sourceFileType string // ".json", ".yaml"
+	definitions    map[string][]string
 }
 
 type ParseErrors struct {
@@ -46,8 +50,9 @@ func LoadStrategy(path string) (*Strategy, error) {
 
 	// New Parser - TODO make this a construtor
 	parser := &StrategyParser{
-		errors:     &ParseErrors{},
-		sourceFile: path,
+		errors:         &ParseErrors{},
+		sourceFile:     path,
+		sourceFileType: filepath.Ext(path),
 	}
 
 	// Maybe just pass in path?
@@ -61,8 +66,20 @@ func LoadStrategy(path string) (*Strategy, error) {
 
 func (p *StrategyParser) Parse(data []byte) (*Strategy, error) {
 	var strategy Strategy
-	if err := json.Unmarshal(data, &strategy); err != nil {
-		p.errors.Add(fmt.Errorf("failed to unmarshal strategy JSON: %w", err))
+
+	switch p.sourceFileType {
+	case ".json":
+		if err := json.Unmarshal(data, &strategy); err != nil {
+			p.errors.Add(fmt.Errorf("failed to unmarshal strategy JSON: %w", err))
+			return nil, p.errors
+		}
+	case ".yaml":
+		if err := yaml.Unmarshal(data, &strategy); err != nil {
+			p.errors.Add(fmt.Errorf("failed to unmarshal strategy YAML: %w", err))
+			return nil, p.errors
+		}
+	default:
+		p.errors.Add(fmt.Errorf("unsupported file type: %s", p.sourceFileType))
 		return nil, p.errors
 	}
 	p.definitions = strategy.Definitions

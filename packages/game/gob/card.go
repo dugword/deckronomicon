@@ -6,7 +6,6 @@ import (
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
-	"encoding/json"
 )
 
 // Card represents a card in the game. It contains all the information about
@@ -69,7 +68,7 @@ func (c Card) Description() string {
 	return c.rulesText
 }
 
-func (c Card) GetStaticAbilityModifiers(staticKeyword mtg.StaticKeyword) (json.RawMessage, bool) {
+func (c Card) GetStaticAbilityModifiers(staticKeyword mtg.StaticKeyword) (map[string]any, bool) {
 	for _, ability := range c.staticAbilities {
 		if ability.StaticKeyword() == staticKeyword {
 			return ability.modifiers, true

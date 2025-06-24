@@ -31,7 +31,6 @@ type ActivateAbilityAction struct {
 	abilityID         string
 	sourceID          string
 	zone              mtg.Zone
-	playerID          string
 	targetsForEffects map[EffectTargetKey]target.TargetValue
 }
 
@@ -86,7 +85,7 @@ func (a ActivateAbilityAction) Complete(game state.Game, player state.Player, re
 	if !judge.CanActivateAbility(game, player, source, ability, &ruling) {
 		return nil, fmt.Errorf(
 			"player %q cannot activate ability %q on %q in %q: %v",
-			a.playerID,
+			player.ID(),
 			ability.Name(),
 			source.Name(),
 			a.zone,
@@ -95,7 +94,7 @@ func (a ActivateAbilityAction) Complete(game state.Game, player state.Player, re
 	}
 	events := []event.GameEvent{
 		event.ActivateAbilityEvent{
-			PlayerID:  a.playerID,
+			PlayerID:  player.ID(),
 			SourceID:  source.ID(),
 			AbilityID: ability.Name(),
 			Zone:      a.zone,
@@ -115,7 +114,7 @@ func (a ActivateAbilityAction) Complete(game state.Game, player state.Player, re
 			if permanent.Match(is.Land()) {
 				if cost.HasCostType(ability.Cost(), cost.TapThisCost{}) {
 					events = append(events, event.LandTappedForManaEvent{
-						PlayerID: a.playerID,
+						PlayerID: player.ID(),
 						ObjectID: permanent.ID(),
 						Subtypes: permanent.Subtypes(),
 					})
@@ -130,7 +129,7 @@ func (a ActivateAbilityAction) Complete(game state.Game, player state.Player, re
 		return events, nil
 	}
 	events = append(events, event.PutAbilityOnStackEvent{
-		PlayerID:          a.playerID,
+		PlayerID:          player.ID(),
 		SourceID:          source.ID(),
 		AbilityID:         ability.ID(),
 		FromZone:          a.zone,

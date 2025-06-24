@@ -8,21 +8,49 @@ import (
 	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/state"
-	"encoding/json"
 	"fmt"
 )
 
 type AdditionalManaEffect struct {
-	Subtype  mtg.Subtype  `json:"Subtype"`
-	Mana     string       `json:"Mana"`
-	Duration mtg.Duration `json:"Duration"`
+	Subtype  mtg.Subtype
+	Mana     string
+	Duration mtg.Duration
 }
 
 func NewAdditionalManaEffect(effectSpec definition.EffectSpec) (Effect, error) {
 	var additionalManaEffect AdditionalManaEffect
-	if err := json.Unmarshal(effectSpec.Modifiers, &additionalManaEffect); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal AdditionalManaEffect: %w", err)
+	subtypeString, ok := effectSpec.Modifiers["Subtype"].(string)
+	if !ok {
+		return nil, fmt.Errorf("AdditionalManaEffect requires a 'Subtype' modifier of type string, got %T", effectSpec.Modifiers["Subtype"])
 	}
+	subtype, ok := mtg.StringToSubtype(subtypeString)
+	if !ok {
+		return nil, fmt.Errorf("AdditionalManaEffect requires a valid 'Subtype' modifier, got %q", subtypeString)
+	}
+	if subtype == "" {
+		return nil, fmt.Errorf("AdditionalManaEffect requires a non-empty 'Subtype' modifier")
+	}
+	additionalManaEffect.Subtype = subtype
+	manaString, ok := effectSpec.Modifiers["Mana"].(string)
+	if !ok {
+		return nil, fmt.Errorf("AdditionalManaEffect requires a 'Mana' modifier of type string, got %T", effectSpec.Modifiers["Mana"])
+	}
+	if manaString == "" {
+		return nil, fmt.Errorf("AdditionalManaEffect requires a non-empty 'Mana' modifier")
+	}
+	additionalManaEffect.Mana = manaString
+	durationString, ok := effectSpec.Modifiers["Duration"].(string)
+	if !ok {
+		return nil, fmt.Errorf("AdditionalManaEffect requires a 'Duration' modifier of type mtg.Duration, got %T", effectSpec.Modifiers["Duration"])
+	}
+	duration, ok := mtg.StringToDuration(durationString)
+	if !ok {
+		return nil, fmt.Errorf("AdditionalManaEffect requires a valid 'Duration' modifier, got %q", durationString)
+	}
+	if duration == "" {
+		return nil, fmt.Errorf("AdditionalManaEffect requires a non-empty 'Duration' modifier")
+	}
+	additionalManaEffect.Duration = duration
 	return additionalManaEffect, nil
 }
 
@@ -53,7 +81,7 @@ func (e AdditionalManaEffect) Resolve(
 		EffectSpecs: []definition.EffectSpec{
 			{
 				Name:      "AddMana",
-				Modifiers: json.RawMessage(fmt.Sprintf(`{"Mana": "%s"}`, e.Mana)),
+				Modifiers: map[string]any{"Mana": e.Mana},
 			},
 		},
 	}

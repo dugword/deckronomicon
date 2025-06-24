@@ -34,9 +34,13 @@ func (a EffectCheatAction) Complete(game state.Game, player state.Player, resEnv
 	if a.EffectName == "" {
 		return nil, fmt.Errorf("effect action is missing effect name")
 	}
+	var modifiers map[string]any
+	if err := json.Unmarshal([]byte(a.Modifiers), &modifiers); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal modifiers for effect %q: %w", a.EffectName, err)
+	}
 	effectSpec := definition.EffectSpec{
 		Name:      a.EffectName,
-		Modifiers: json.RawMessage(a.Modifiers),
+		Modifiers: modifiers,
 	}
 	efct, err := effect.Build(effectSpec)
 	if err != nil {

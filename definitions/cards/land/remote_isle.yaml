@@ -1,0 +1,21 @@
+CardTypes:
+  - Land
+Name: Remote Isle
+ActivatedAbilities:
+  - Name: Add {U} Mana
+    Cost: '{T}'
+    Effects:
+      - Name: AddMana
+        Modifiers:
+          Mana: '{U}'
+  - Name: Cycling
+    Cost: '{2},Discard this card'
+    Effects:
+      - Name: Draw
+        Modifiers:
+          Cycle: true
+    Zone: Hand
+RulesText: |-
+  This land enters tapped.
+  {T}: Add {U}.
+  Cycling {2} ({2}, Discard this card: Draw a card.)

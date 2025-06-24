@@ -102,7 +102,7 @@ func getPlayerTarget(
 	}
 	return target.TargetValue{
 		TargetType: target.TargetTypePlayer,
-		PlayerID:   selectedPlayer.ID(),
+		TargetID:   selectedPlayer.ID(),
 	}, nil
 }
 
@@ -134,7 +134,7 @@ func getSpellTarget(
 	}
 	return target.TargetValue{
 		TargetType: target.TargetTypeSpell,
-		ObjectID:   selectedSpell.ID(),
+		TargetID:   selectedSpell.ID(),
 	}, nil
 }
 
@@ -166,6 +166,6 @@ func getPermanentTarget(
 	}
 	return target.TargetValue{
 		TargetType: target.TargetTypePermanent,
-		ObjectID:   selectedPermanent.ID(),
+		TargetID:   selectedPermanent.ID(),
 	}, nil
 }
