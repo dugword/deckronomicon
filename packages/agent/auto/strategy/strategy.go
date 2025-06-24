@@ -16,11 +16,12 @@ type Rule struct {
 }
 
 type Strategy struct {
-	Name        string              `json:"Name,omitempty" yaml:"Name,omitempty"`
-	Description string              `json:"Description,omitempty" yaml:"Description,omitempty"`
-	Definitions map[string][]string `json:"Definitions,omitempty" yaml:"Definitions,omitempty"`
-	Modes       []Rule              `json:"Modes,omitempty" yaml:"Modes,omitempty"`
-	Rules       map[string][]Rule   `json:"Rules,omitempty" yaml:"Rules,omitempty"`
+	Name        string `json:"Name,omitempty" yaml:"Name,omitempty"`
+	Description string `json:"Description,omitempty" yaml:"Description,omitempty"`
+	// TODO: Consider making map[string]any and letting groups be defined in the same way as conditions
+	Groups map[string][]any  `json:"Groups,omitempty" yaml:"Groups,omitempty"`
+	Modes  []Rule            `json:"Modes,omitempty" yaml:"Modes,omitempty"`
+	Rules  map[string][]Rule `json:"Rules,omitempty" yaml:"Rules,omitempty"`
 }
 
 type EvaluatorContext struct {

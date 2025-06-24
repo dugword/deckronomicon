@@ -14,7 +14,7 @@ type StrategyParser struct {
 	errors         *ParseErrors
 	sourceFile     string
 	sourceFileType string // ".json", ".yaml"
-	definitions    map[string][]string
+	groups         map[string][]any
 }
 
 type ParseErrors struct {
@@ -82,7 +82,7 @@ func (p *StrategyParser) Parse(data []byte) (*Strategy, error) {
 		p.errors.Add(fmt.Errorf("unsupported file type: %s", p.sourceFileType))
 		return nil, p.errors
 	}
-	p.definitions = strategy.Definitions
+	p.groups = strategy.Groups
 	var outRules []Rule
 	for _, mode := range strategy.Modes {
 		outRules = append(outRules, p.parseRule(mode))

@@ -1,5 +1,27 @@
 Name: Player Strategy
 Description: High Tide Combo Strategy
+Groups:
+  Combo Piece:
+      - High Tide
+      - Psychic Puppetry
+  Land:
+      - Island
+      - Snow-Covered Island
+  Cantrip:
+      - Preordain
+      - Brainstorm
+      - Ponder
+  Draw Spell:
+      - Lorien Revealed
+      - Ideas Unbound
+      - Pieces of the Puzzle
+  Tutor:
+      - Merchant Scroll
+      - Muddle the Mixture
+  Arcane:
+      - Ideas Unbound
+      - Pieces of the Puzzle
+
 Modes:
   - Name: Combo
     Description: Begin combo turn
@@ -11,6 +33,7 @@ Modes:
           - Or:
               - High Tide
               - Psychic Puppetry
+
   - Name: Panic
     Description: Emergency mode
     When:
@@ -19,6 +42,7 @@ Modes:
         Zone: Hand
         Cards:
           - Island
+
   - Name: Win
     Description: Winning the game
     When:
@@ -26,6 +50,7 @@ Modes:
         Zone: Hand
         Cards:
           - Black Lotus
+
 Rules:
   Setup:
     - Name: Make Land Drop
@@ -35,12 +60,11 @@ Rules:
         InZone:
           Zone: Hand
           Cards:
-            - Island
-            - Snow-Covered Island
+            - $Land
       Then:
         Play:
-          - Island
-          - Snow-Covered Island
+          - $Land
+
     - Name: Look for Lands
       When:
         Step: PrecombatMain
@@ -48,6 +72,7 @@ Rules:
           Zone: Battlefield
           Cards:
             Subtype: Island
+
   Combo:
     - Name: Cast High Tide
       When:

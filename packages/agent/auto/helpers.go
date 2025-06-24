@@ -25,23 +25,6 @@ func ZoneHasAll(zone engine.Zone, names []string) bool {
 }
 */
 
-func expandDefinitions(names []string, definitions map[string][]string) ([]string, error) {
-	var expanded []string
-	for _, name := range names {
-		if !strings.HasPrefix(name, "$") {
-			expanded = append(expanded, name)
-			continue
-		}
-		key := strings.TrimPrefix(name, "$")
-		values, ok := definitions[key]
-		if !ok {
-			return nil, fmt.Errorf("definition %s not found", key)
-		}
-		expanded = append(expanded, values...)
-	}
-	return expanded, nil
-}
-
 func parseStatShortcut(stat string, raw string) (string, string, int, error) {
 	ops := []string{"<=", ">=", "!=", "==", "<", ">"}
 	for _, op := range ops {

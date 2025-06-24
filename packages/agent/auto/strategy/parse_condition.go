@@ -5,6 +5,8 @@ import (
 	"deckronomicon/packages/agent/auto/strategy/matcher"
 	"deckronomicon/packages/game/mtg"
 	"fmt"
+
+	"strings"
 )
 
 func (p *StrategyParser) parseEvaluator(raw any) evaluator.Evaluator {
@@ -13,15 +15,15 @@ func (p *StrategyParser) parseEvaluator(raw any) evaluator.Evaluator {
 		var evaluators []evaluator.Evaluator
 		for k, v := range val {
 			switch k {
-			case "And":
+			case "And", "All", "AllOf":
 				evaluators = append(evaluators, p.parseLogicalEvaluator("And", v))
-			case "Or":
+			case "Or", "Any", "AnyOf":
 				evaluators = append(evaluators, p.parseLogicalEvaluator("Or", v))
 			case "Not":
 				evaluators = append(evaluators, p.parseNotEvaluator(v))
-			case "True":
+			case "True", "Yes":
 				evaluators = append(evaluators, &evaluator.True{})
-			case "False":
+			case "False", "No":
 				evaluators = append(evaluators, &evaluator.False{})
 			case "Step":
 				evaluators = append(evaluators, p.parseStepEvaluator(v))
@@ -164,6 +166,9 @@ func (p *StrategyParser) parseInZoneEvaluator(value interface{}) evaluator.Evalu
 func (p *StrategyParser) parseMatcher(data any) matcher.Matcher {
 	switch node := data.(type) {
 	case string:
+		if strings.HasPrefix(node, "$") {
+			return p.parseGroupMatcher(node)
+		}
 		return &matcher.Name{Name: node}
 	case []any:
 		var matchers []matcher.Matcher
@@ -172,43 +177,44 @@ func (p *StrategyParser) parseMatcher(data any) matcher.Matcher {
 		}
 		return &matcher.And{Matchers: matchers}
 	case map[string]any:
+		/* // TODO Think about this
 		if len(node) != 1 {
 			// TODO: add context path to p.errors.
 			p.errors.Add(fmt.Errorf("expected exactly one key, got %d", len(node)))
 			return nil
 		}
+		*/
 		for key, val := range node {
+			var matchers []matcher.Matcher
 			switch key {
 			// todo move to a separate function
-			case "And":
+			case "And", "All", "AllOf":
 				items, ok := val.([]any)
 				if !ok {
 					p.errors.Add(fmt.Errorf("expected list for 'and', got %T", val))
 					return nil
 				}
-				var matchers []matcher.Matcher
 				for _, item := range items {
 					matchers = append(matchers, p.parseMatcher(item))
 				}
-				return &matcher.And{Matchers: matchers}
+				matchers = append(matchers, &matcher.And{Matchers: matchers})
 				// todo move to a separate function
-			case "Or":
+			case "Or", "Any", "AnyOf":
 				items, ok := val.([]any)
 				if !ok {
 					p.errors.Add(fmt.Errorf("expected list for 'or', got %T", val))
 					return nil
 				}
-				var matchers []matcher.Matcher
 				for _, item := range items {
 					matchers = append(matchers, p.parseMatcher(item))
 				}
-				return &matcher.Or{Matchers: matchers}
+				matchers = append(matchers, &matcher.Or{Matchers: matchers})
 			case "Not":
-				return p.parseNotMatcher(val)
+				matchers = append(matchers, p.parseNotMatcher(val))
 			case "CardType":
-				return p.parseCardTypeMatcher(val)
+				matchers = append(matchers, p.parseCardTypeMatcher(val))
 			case "Subtype":
-				return p.parseSubtypeMatcher(val)
+				matchers = append(matchers, p.parseSubtypeMatcher(val))
 			case "Supertype":
 			case "Color":
 			case "ManaCost":
@@ -218,6 +224,14 @@ func (p *StrategyParser) parseMatcher(data any) matcher.Matcher {
 				p.errors.Add(fmt.Errorf("unknown key: %s", key))
 				return nil
 			}
+			if len(matchers) == 0 {
+				p.errors.Add(fmt.Errorf("no valid matchers found for key '%s'", key))
+				return nil
+			}
+			if len(matchers) == 1 {
+				return matchers[0]
+			}
+			return &matcher.And{Matchers: matchers}
 		}
 	default:
 		p.errors.Add(fmt.Errorf("unexpected type: %T", data))
@@ -225,6 +239,38 @@ func (p *StrategyParser) parseMatcher(data any) matcher.Matcher {
 	}
 	// TODO handle the switch statement to always return so we don't have the compiler hit this
 	panic("unreachable")
+}
+
+func (p *StrategyParser) parseGroupMatcher(name string) matcher.Matcher {
+	if !strings.HasPrefix(name, "$") {
+		p.errors.Add(fmt.Errorf("group matcher must start with '$', got %s", name))
+		return nil
+	}
+	groupName := strings.TrimPrefix(name, "$")
+	if groupName == "" {
+		p.errors.Add(fmt.Errorf("group matcher name cannot be empty"))
+		return nil
+	}
+	group, ok := p.groups[groupName]
+	if !ok {
+		p.errors.Add(fmt.Errorf("group '%s' not found in definitions", groupName))
+		return nil
+	}
+	var matchers []matcher.Matcher
+	for _, item := range group {
+		matcher := p.parseMatcher(item)
+		if matcher != nil {
+			matchers = append(matchers, matcher)
+		}
+	}
+	if len(matchers) == 0 {
+		p.errors.Add(fmt.Errorf("no valid matchers found in group '%s'", groupName))
+		return nil
+	}
+	if len(matchers) == 1 {
+		return matchers[0]
+	}
+	return &matcher.Or{Matchers: matchers}
 }
 
 func (p *StrategyParser) parseNotMatcher(value any) matcher.Matcher {

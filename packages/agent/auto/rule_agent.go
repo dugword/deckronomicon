@@ -102,10 +102,10 @@ func (a *RuleBasedAgent) Choose(prompt choose.ChoicePrompt) (choose.ChoiceResult
 
 func (a *RuleBasedAgent) GetNextAction(game state.Game) (engine.Action, error) {
 	ctx := evalstate.EvalState{
-		Game:        game,
-		PlayerID:    a.playerID,
-		Definitions: a.strategy.Definitions,
-		Mode:        a.mode,
+		Game:     game,
+		PlayerID: a.playerID,
+		Groups:   a.strategy.Groups,
+		Mode:     a.mode,
 	}
 	for _, mode := range a.strategy.Modes {
 		if mode.Name == a.mode {
