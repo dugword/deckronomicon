@@ -2,7 +2,7 @@ ScenarioName: Example Game Setup
 MaxTurns: 100
 OnThePlay: You
 Players:
-  - Agent: Interactive
+  - Agent: Auto
     Name: You
     DeckList: player_deck
     Strategy: player_strategy

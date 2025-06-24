@@ -3,8 +3,8 @@ package evalstate
 import "deckronomicon/packages/state"
 
 type EvalState struct {
-	Game        state.Game
-	PlayerID    string
-	Definitions map[string][]string
-	Mode        string
+	Game     state.Game
+	PlayerID string
+	Groups   map[string][]any
+	Mode     string
 }
