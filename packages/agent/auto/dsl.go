@@ -1,7 +1,7 @@
 package auto
 
 // These helper functions create strategy condition trees in Go code.
-// Great for testing or writing built-in behaviors without JSON.
+// Great for testing or writing built-in behaviors without YAML.
 
 /*
 func When(conds ...ConditionNode) ConditionNode {

@@ -1,0 +1,17 @@
+CardTypes:
+  - Sorcery
+Color:
+  - U
+ManaCost: '{3}{U}'
+Name: Deep Analysis
+Effects:
+  - Name: Draw
+    Modifiers:
+      Count: 2
+      Target: Player
+StaticAbilities:
+  - Name: Flashback
+    Cost: '{1}{U}, Pay 3 life'
+RulesText: |-
+  Target player draws two cards.
+  Flashback—{1}{U}, Pay 3 life. (You may cast this card from your graveyard for its flashback cost. Then exile it.)

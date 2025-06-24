@@ -35,7 +35,7 @@ func LoadPlayerFromConfig(config statetest.PlayerConfig) Player {
 		library:            LoadLibraryFromConfig(config.ID, config.Library),
 		graveyard:          LoadGraveyardFromConfig(config.ID, config.Graveyard),
 		exile:              LoadExileFromConfig(config.ID, config.Exile),
-		manaPool:           mana.NewManaPool().WithAddedAmount(manaAmount),
+		manaPool:           mana.Pool{}.WithAddedAmount(manaAmount),
 	}
 }
 

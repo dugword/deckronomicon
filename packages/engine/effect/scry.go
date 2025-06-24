@@ -11,7 +11,6 @@ import (
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/state"
-	"encoding/json"
 	"errors"
 	"fmt"
 )
@@ -22,9 +21,11 @@ type ScryEffect struct {
 
 func NewScryEffect(effectSpec definition.EffectSpec) (Effect, error) {
 	var scryEffect ScryEffect
-	if err := json.Unmarshal(effectSpec.Modifiers, &scryEffect); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal ScryEffectModifiers: %w", err)
+	count, ok := effectSpec.Modifiers["Count"].(int)
+	if !ok || count <= 0 {
+		return nil, fmt.Errorf("ScryEffect requires a 'Count' modifier of type int greater than 0, got %T", effectSpec.Modifiers["Count"])
 	}
+	scryEffect.Count = count
 	return scryEffect, nil
 }
 

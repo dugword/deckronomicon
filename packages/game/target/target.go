@@ -7,14 +7,9 @@ import "deckronomicon/packages/query"
 
 // TODO: This maybe should live in game/target
 
-// This could be a thing with json.RawMessage like the effects.
-// Then I could still have type safety with targets, and have different target types.
-// and still have it be JSON serializable.
-// TODO: Either these could be slice values, or I could have TargetValue be a slice.
 type TargetValue struct {
-	TargetType TargetType `json:"TargetType"`
-	PlayerID   string     `json:"PlayerID,omitempty"`
-	ObjectID   string     `json:"ObjectID,omitempty"`
+	TargetType TargetType
+	TargetID   string
 }
 
 type TargetSpec interface {

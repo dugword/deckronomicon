@@ -5,7 +5,6 @@ import (
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/game/target"
-	"encoding/json"
 
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/gob"
@@ -17,16 +16,53 @@ import (
 )
 
 type SearchEffect struct {
-	CardTypes  []mtg.CardType `json:"CardTypes,omitempty"`
-	Colors     []mtg.Color    `json:"Colors,omitempty"`
-	Subtypes   []mtg.Subtype  `json:"Subtypes,omitempty"`
-	ManaValues []int          `json:"ManaValues,omitempty"`
+	CardTypes  []mtg.CardType
+	Colors     []mtg.Color
+	Subtypes   []mtg.Subtype
+	ManaValues []int
 }
 
 func NewSearchEffect(effectSpec definition.EffectSpec) (Effect, error) {
 	var searchEffect SearchEffect
-	if err := json.Unmarshal(effectSpec.Modifiers, &searchEffect); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal SearchEffectModifiers: %w", err)
+	cardTypesRaw, ok := effectSpec.Modifiers["CardTypes"].([]any)
+	if ok {
+		for _, cardTypeRaw := range cardTypesRaw {
+			cardType, ok := mtg.StringToCardType(fmt.Sprintf("%v", cardTypeRaw))
+			if !ok {
+				return nil, fmt.Errorf("SearchEffect requires a 'CardTypes' modifier of type []mtg.CardType, got %T", cardTypeRaw)
+			}
+			searchEffect.CardTypes = append(searchEffect.CardTypes, cardType)
+		}
+	}
+	colorsRaw, ok := effectSpec.Modifiers["Colors"].([]any)
+	if ok {
+		for _, colorRaw := range colorsRaw {
+			color, ok := mtg.StringToColor(fmt.Sprintf("%v", colorRaw))
+			if !ok {
+				return nil, fmt.Errorf("SearchEffect requires a 'Colors' modifier of type []mtg.Color, got %T", colorRaw)
+			}
+			searchEffect.Colors = append(searchEffect.Colors, color)
+		}
+	}
+	subtypesRaw, ok := effectSpec.Modifiers["Subtypes"].([]any)
+	if ok {
+		for _, subtypeRaw := range subtypesRaw {
+			subtype, ok := mtg.StringToSubtype(fmt.Sprintf("%v", subtypeRaw))
+			if !ok {
+				return nil, fmt.Errorf("SearchEffect requires a 'Subtypes' modifier of type []mtg.Subtype, got %T", subtypeRaw)
+			}
+			searchEffect.Subtypes = append(searchEffect.Subtypes, subtype)
+		}
+	}
+	manaValuesRaw, ok := effectSpec.Modifiers["ManaValues"].([]any)
+	if ok {
+		for _, manaValueRaw := range manaValuesRaw {
+			manaValue, ok := manaValueRaw.(int)
+			if !ok {
+				return nil, fmt.Errorf("SearchEffect requires a 'ManaValues' modifier of type []int, got %T", manaValueRaw)
+			}
+			searchEffect.ManaValues = append(searchEffect.ManaValues, manaValue)
+		}
 	}
 	return searchEffect, nil
 }

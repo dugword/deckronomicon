@@ -73,7 +73,8 @@ func applyGameStateChangeEvent(game state.Game, gameStateChangeEvent event.GameS
 		if err != nil {
 			return game, fmt.Errorf("failed to parse mana string %q: %w", evnt.ManaString, err)
 		}
-		manaPool, err := player.ManaPool().WithSpentFromManaAmount(amount)
+		// TODO: Let the user choose which colors to spend by providing a list of colors.
+		manaPool, err := player.ManaPool().WithSpendFromManaAmount(amount, mana.Colors())
 		if err != nil {
 			return game, fmt.Errorf("failed to update mana pool for player %q: %w", player.ID(), err)
 		}
@@ -95,7 +96,7 @@ func applyAddManaEvent(
 	addManaEvent event.AddManaEvent,
 ) (state.Game, error) {
 	player := game.GetPlayer(addManaEvent.PlayerID)
-	player = player.WithAddMana(addManaEvent.ManaType, addManaEvent.Amount)
+	player = player.WithAddMana(addManaEvent.Color, addManaEvent.Amount)
 	game = game.WithUpdatedPlayer(player)
 	return game, nil
 }

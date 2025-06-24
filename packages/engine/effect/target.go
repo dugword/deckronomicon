@@ -7,7 +7,6 @@ import (
 	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/state"
-	"encoding/json"
 	"fmt"
 )
 
@@ -15,14 +14,16 @@ import (
 // effect is needed that targets a specific object.
 // However, it is an actual effect on "Indicate" :)
 type TargetEffect struct {
-	Target string `json:"Target"`
+	Target string
 }
 
 func NewTargetEffect(effectSpec definition.EffectSpec) (Effect, error) {
 	var targetEffect TargetEffect
-	if err := json.Unmarshal(effectSpec.Modifiers, &targetEffect); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal TargetEffectModifiers: %w", err)
+	targetStr, ok := effectSpec.Modifiers["Target"].(string)
+	if !ok {
+		return nil, fmt.Errorf("TargetEffect requires a 'Target' modifier of type string, got %T", effectSpec.Modifiers["Target"])
 	}
+	targetEffect.Target = targetStr
 	return targetEffect, nil
 }
 

@@ -37,7 +37,7 @@ func (e GameStateChangeBaseEvent) isGameStateChangeEvent() {}
 type AddManaEvent struct {
 	GameStateChangeBaseEvent
 	Amount   int
-	ManaType mana.ManaType
+	Color    mana.Color
 	PlayerID string
 }
 

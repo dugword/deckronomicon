@@ -1,0 +1,17 @@
+CardTypes:
+  - Instant
+Subtypes:
+  - Arcane
+Color:
+  - U
+ManaCost: '{1}{U}'
+Name: Psychic Puppetry
+Effects:
+  - Name: TapOrUntap
+    Modifiers:
+      Target: Permanent
+StaticAbilities:
+  - Name: Splice
+    Cost: '{U}'
+    Modifiers:
+      Subtype: Arcane

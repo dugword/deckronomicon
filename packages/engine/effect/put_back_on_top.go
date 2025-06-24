@@ -11,19 +11,19 @@ import (
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/state"
-	"encoding/json"
 	"errors"
 	"fmt"
 )
 
 type PutBackOnTopEffect struct {
-	Count int `json:"Count"`
+	Count int
 }
 
 func NewPutBackOnTopEffect(effectSpec definition.EffectSpec) (Effect, error) {
 	var putBackOnTopEffect PutBackOnTopEffect
-	if err := json.Unmarshal(effectSpec.Modifiers, &putBackOnTopEffect); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal PutBackOnTopEffectModifiers: %w", err)
+	count, ok := effectSpec.Modifiers["Count"].(int)
+	if !ok || count <= 0 {
+		return nil, fmt.Errorf("PutBackOnTopEffect requires a 'Count' modifier of type int greater than 0, got %T", effectSpec.Modifiers["Count"])
 	}
 	return putBackOnTopEffect, nil
 }

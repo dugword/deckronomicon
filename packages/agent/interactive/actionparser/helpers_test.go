@@ -6,7 +6,6 @@ import (
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/state"
 	"deckronomicon/packages/state/statetest"
-	"encoding/json"
 )
 
 func newTestGame(playerID string) state.Game {
@@ -30,15 +29,14 @@ func newTestGame(playerID string) state.Game {
 						Name: "Card with Splice",
 						StaticAbilities: []definition.StaticAbilitySpec{{
 							Name:      mtg.StaticKeywordSplice,
-							Modifiers: json.RawMessage(`{"Subtype": "Arcane"}`),
+							Modifiers: map[string]any{"Subtype": "Arcane"},
 						}},
 					},
 					{
 						ID:   "Card with Replicate ID",
 						Name: "Card with Replicate",
 						StaticAbilities: []definition.StaticAbilitySpec{{
-							Name:      mtg.StaticKeywordReplicate,
-							Modifiers: json.RawMessage(`{}`),
+							Name: mtg.StaticKeywordReplicate,
 						}},
 					},
 					{
@@ -46,7 +44,7 @@ func newTestGame(playerID string) state.Game {
 						Name: "Card with Target",
 						SpellAbility: []definition.EffectSpec{{
 							Name:      "Target",
-							Modifiers: json.RawMessage(`{"Target": "Player"}`),
+							Modifiers: map[string]any{"Target": "Player"},
 						}},
 					},
 					{
@@ -63,11 +61,11 @@ func newTestGame(playerID string) state.Game {
 						SpellAbility: []definition.EffectSpec{
 							{
 								Name:      "Effect 1",
-								Modifiers: json.RawMessage(`{"Target": "Permanent"}`),
+								Modifiers: map[string]any{"Target": "Permanent"},
 							},
 							{
 								Name:      "Effect 2",
-								Modifiers: json.RawMessage(`{"Target": "Player"}`),
+								Modifiers: map[string]any{"Target": "Player"},
 							},
 						},
 					},

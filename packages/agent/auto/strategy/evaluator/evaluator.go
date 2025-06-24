@@ -58,7 +58,7 @@ func (e *Not) Evaluate(ctx *evalstate.EvalState) bool {
 }
 
 type Step struct {
-	Step mtg.Step `json:"Step"`
+	Step mtg.Step
 }
 
 func (e *Step) Evaluate(ctx *evalstate.EvalState) bool {

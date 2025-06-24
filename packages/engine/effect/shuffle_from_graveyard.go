@@ -9,20 +9,21 @@ import (
 	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/state"
-	"encoding/json"
 	"errors"
 	"fmt"
 )
 
 type ShuffleFromGraveyardEffect struct {
-	Count int `json:"Count,omitempty"`
+	Count int
 }
 
 func NewShuffleFromGraveyardEffect(effectSpec definition.EffectSpec) (Effect, error) {
 	var shuffleFromGraveyardEffect ShuffleFromGraveyardEffect
-	if err := json.Unmarshal(effectSpec.Modifiers, &shuffleFromGraveyardEffect); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal ShuffleFromGraveyardEffect: %w", err)
+	count, ok := effectSpec.Modifiers["Count"].(int)
+	if !ok || count <= 0 {
+		return nil, fmt.Errorf("ShuffleFromGraveyardEffect requires a 'Count' modifier of type int greater than 0, got %T", effectSpec.Modifiers["Count"])
 	}
+	shuffleFromGraveyardEffect.Count = count
 	return shuffleFromGraveyardEffect, nil
 }
 

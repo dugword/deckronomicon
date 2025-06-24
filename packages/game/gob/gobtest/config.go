@@ -32,6 +32,7 @@ type PermanentConfig struct {
 type CardConfig struct {
 	ID                 string
 	Name               string
+	CardTypes          []mtg.CardType
 	Description        string
 	ManaCost           string
 	Loyalty            int

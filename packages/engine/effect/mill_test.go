@@ -10,7 +10,6 @@ import (
 	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/state"
 	"deckronomicon/packages/state/statetest"
-	"encoding/json"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -48,7 +47,7 @@ func millTestGame(playerID string) state.Game {
 func TestMillEffectName(t *testing.T) {
 	millEffect, err := NewMillEffect(definition.EffectSpec{
 		Name:      "Mill",
-		Modifiers: json.RawMessage(`{"Count": 4, "Target": "Player"}`),
+		Modifiers: map[string]any{"Count": 4, "Target": "Player"},
 	})
 	if err != nil {
 		t.Fatalf("NewMillEffect(EffectSpec); err = %v; want = %v", err, nil)
@@ -62,13 +61,13 @@ func TestMillEffect(t *testing.T) {
 	playerID := "Test Player"
 	testCases := []struct {
 		name        string
-		Modifers    string
+		Modifers    map[string]any
 		targetValue target.TargetValue
 		wantEvents  []event.GameEvent
 	}{
 		{
 			name:        "with count 1",
-			Modifers:    `{"Count": 1}`,
+			Modifers:    map[string]any{"Count": 1},
 			targetValue: target.TargetValue{},
 			wantEvents: []event.GameEvent{
 				event.PutCardInGraveyardEvent{PlayerID: playerID, CardID: "Card 1 ID", FromZone: mtg.ZoneLibrary},
@@ -76,10 +75,10 @@ func TestMillEffect(t *testing.T) {
 		},
 		{
 			name:     "with count 1 target player",
-			Modifers: `{"Count": 1, "Target": "Player"}`,
+			Modifers: map[string]any{"Count": 1, "Target": "Player"},
 			targetValue: target.TargetValue{
 				TargetType: target.TargetTypePlayer,
-				PlayerID:   "Test Opponent",
+				TargetID:   "Test Opponent",
 			},
 			wantEvents: []event.GameEvent{
 				event.PutCardInGraveyardEvent{PlayerID: "Test Opponent", CardID: "Opponent Card 1 ID", FromZone: mtg.ZoneLibrary},
@@ -87,10 +86,10 @@ func TestMillEffect(t *testing.T) {
 		},
 		{
 			name:     "with count 4 target player",
-			Modifers: `{"Count": 4, "Target": "Player"}`,
+			Modifers: map[string]any{"Count": 4, "Target": "Player"},
 			targetValue: target.TargetValue{
 				TargetType: target.TargetTypePlayer,
-				PlayerID:   playerID,
+				TargetID:   playerID,
 			},
 			wantEvents: []event.GameEvent{
 				event.PutCardInGraveyardEvent{PlayerID: playerID, CardID: "Card 1 ID", FromZone: mtg.ZoneLibrary},
@@ -101,7 +100,7 @@ func TestMillEffect(t *testing.T) {
 		},
 		{
 			name:        "with count higher than library size",
-			Modifers:    `{"Count": 10}`,
+			Modifers:    map[string]any{"Count": 10},
 			targetValue: target.TargetValue{},
 			wantEvents: []event.GameEvent{
 				event.PutCardInGraveyardEvent{PlayerID: playerID, CardID: "Card 1 ID", FromZone: mtg.ZoneLibrary},
@@ -119,7 +118,7 @@ func TestMillEffect(t *testing.T) {
 			player := game.GetPlayer(playerID)
 			millEffect, err := NewMillEffect(definition.EffectSpec{
 				Name:      "Mill",
-				Modifiers: json.RawMessage(tc.Modifers),
+				Modifiers: tc.Modifers,
 			})
 			if err != nil {
 				t.Fatalf("NewMillEffect(EffectSpec); err = %v; want = %v", err, nil)

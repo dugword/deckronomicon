@@ -8,20 +8,26 @@ import (
 	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/state"
-	"encoding/json"
 	"fmt"
 )
 
 type MillEffect struct {
-	Count  int    `json:"Count"`
-	Target string `json:"Target"`
+	Count  int
+	Target string
 }
 
 func NewMillEffect(effectSpec definition.EffectSpec) (Effect, error) {
 	var MillEffect MillEffect
-	if err := json.Unmarshal(effectSpec.Modifiers, &MillEffect); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal MillEffectModifiers: %w", err)
+	count, ok := effectSpec.Modifiers["Count"].(int)
+	if !ok || count <= 0 {
+		return nil, fmt.Errorf("MillEffect requires a 'Count' modifier of type int greater than 0, got %T", effectSpec.Modifiers["Count"])
 	}
+	MillEffect.Count = count
+	targetStr, ok := effectSpec.Modifiers["Target"].(string)
+	if ok && targetStr != "" && targetStr != "Player" {
+		return nil, fmt.Errorf("MillEffect requires a 'Target' modifier of either empty or 'Player', got %q", targetStr)
+	}
+	MillEffect.Target = targetStr
 	return MillEffect, nil
 }
 
@@ -49,8 +55,8 @@ func (e MillEffect) Resolve(
 	resEnv *resenv.ResEnv,
 ) (EffectResult, error) {
 	targetPlayerID := player.ID()
-	if target.PlayerID != "" {
-		targetPlayerID = target.PlayerID
+	if target.TargetID != "" {
+		targetPlayerID = target.TargetID
 	}
 	// TODO: This is getting a player from user input,
 	// That means this could fail if the player ID is invalid.

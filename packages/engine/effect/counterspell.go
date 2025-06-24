@@ -10,7 +10,6 @@ import (
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/has"
 	"deckronomicon/packages/state"
-	"encoding/json"
 	"errors"
 	"fmt"
 )
@@ -24,8 +23,45 @@ type CounterspellEffect struct {
 
 func NewCounterspellEffect(effectSpec definition.EffectSpec) (Effect, error) {
 	var counterspellEffect CounterspellEffect
-	if err := json.Unmarshal(effectSpec.Modifiers, &counterspellEffect); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal CounterspellEffect: %w", err)
+	cardTypesRaw, ok := effectSpec.Modifiers["CardTypes"].([]any)
+	if ok {
+		for _, cardTypeRaw := range cardTypesRaw {
+			cardType, ok := mtg.StringToCardType(fmt.Sprintf("%v", cardTypeRaw))
+			if !ok {
+				return nil, fmt.Errorf("CounterspellEffect requires a 'CardTypes' modifier of type []mtg.CardType, got %T", cardTypeRaw)
+			}
+			counterspellEffect.CardTypes = append(counterspellEffect.CardTypes, cardType)
+		}
+	}
+	colorsRaw, ok := effectSpec.Modifiers["Colors"].([]any)
+	if ok {
+		for _, colorRaw := range colorsRaw {
+			color, ok := mtg.StringToColor(fmt.Sprintf("%v", colorRaw))
+			if !ok {
+				return nil, fmt.Errorf("CounterspellEffect requires a 'Colors' modifier of type []mtg.Color, got %T", colorRaw)
+			}
+			counterspellEffect.Colors = append(counterspellEffect.Colors, color)
+		}
+	}
+	subtypesRaw, ok := effectSpec.Modifiers["Subtypes"].([]any)
+	if ok {
+		for _, subtypeRaw := range subtypesRaw {
+			subtype, ok := mtg.StringToSubtype(fmt.Sprintf("%v", subtypeRaw))
+			if !ok {
+				return nil, fmt.Errorf("CounterspellEffect requires a 'Subtypes' modifier of type []mtg.Subtype, got %T", subtypeRaw)
+			}
+			counterspellEffect.Subtypes = append(counterspellEffect.Subtypes, subtype)
+		}
+	}
+	manaValuesRaw, ok := effectSpec.Modifiers["ManaValues"].([]any)
+	if ok {
+		for _, manaValueRaw := range manaValuesRaw {
+			manaValue, ok := manaValueRaw.(int)
+			if !ok {
+				return nil, fmt.Errorf("CounterspellEffect requires a 'ManaValues' modifier of type []int, got %T", manaValueRaw)
+			}
+			counterspellEffect.ManaValues = append(counterspellEffect.ManaValues, manaValue)
+		}
 	}
 	return counterspellEffect, nil
 }
@@ -52,13 +88,13 @@ func (e CounterspellEffect) Resolve(
 	target target.TargetValue,
 	resEnv *resenv.ResEnv,
 ) (EffectResult, error) {
-	resolvable, ok := game.Stack().Find(has.ID(target.ObjectID))
+	resolvable, ok := game.Stack().Find(has.ID(target.TargetID))
 	if !ok {
 		return EffectResult{
 			Events: []event.GameEvent{
 				event.SpellOrAbilityFizzlesEvent{
 					PlayerID: player.ID(),
-					ObjectID: target.ObjectID,
+					ObjectID: target.TargetID,
 				},
 			},
 		}, nil

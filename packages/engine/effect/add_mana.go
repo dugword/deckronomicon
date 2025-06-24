@@ -8,19 +8,20 @@ import (
 	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/state"
-	"encoding/json"
 	"fmt"
 )
 
 type AddManaEffect struct {
-	Mana string `json:"Mana"`
+	Mana string
 }
 
 func NewAddManaEffect(effectSpec definition.EffectSpec) (Effect, error) {
 	var addManaEffect AddManaEffect
-	if err := json.Unmarshal(effectSpec.Modifiers, &addManaEffect); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal AddManaEffect: %w", err)
+	manaString, ok := effectSpec.Modifiers["Mana"].(string)
+	if !ok {
+		return nil, fmt.Errorf("AddManaEffect requires a 'Mana' modifier of type string, got %T", effectSpec.Modifiers["Mana"])
 	}
+	addManaEffect.Mana = manaString
 	return addManaEffect, nil
 }
 
@@ -43,19 +44,54 @@ func (e AddManaEffect) Resolve(
 	if err != nil {
 		return EffectResult{}, fmt.Errorf("failed to parse mana string %q: %w", e.Mana, err)
 	}
-
-	// Think through how to best handle this and how the events will be represented in JSON.
-	// I could have the mana struct pretty print to a string like "2{R}{G}" or and then reparse it when I apply the event.
-	// Or I could generate multiple events for each color of mana like I am doing here.
 	var events []event.GameEvent
-	for color, amount := range amount.Colors() {
-		if amount <= 0 {
-			continue // Skip colors with no mana
-		}
+	if amount.Generic() > 0 {
 		events = append(events, event.AddManaEvent{
 			PlayerID: player.ID(),
-			Amount:   amount,
-			ManaType: color,
+			Amount:   amount.Generic(),
+			Color:    mana.Colorless,
+		})
+	}
+	if amount.Colorless() > 0 {
+		events = append(events, event.AddManaEvent{
+			PlayerID: player.ID(),
+			Amount:   amount.Colorless(),
+			Color:    mana.Colorless,
+		})
+	}
+	if amount.White() > 0 {
+		events = append(events, event.AddManaEvent{
+			PlayerID: player.ID(),
+			Amount:   amount.White(),
+			Color:    mana.White,
+		})
+	}
+	if amount.Blue() > 0 {
+		events = append(events, event.AddManaEvent{
+			PlayerID: player.ID(),
+			Amount:   amount.Blue(),
+			Color:    mana.Blue,
+		})
+	}
+	if amount.Black() > 0 {
+		events = append(events, event.AddManaEvent{
+			PlayerID: player.ID(),
+			Amount:   amount.Black(),
+			Color:    mana.Black,
+		})
+	}
+	if amount.Red() > 0 {
+		events = append(events, event.AddManaEvent{
+			PlayerID: player.ID(),
+			Amount:   amount.Red(),
+			Color:    mana.Red,
+		})
+	}
+	if amount.Green() > 0 {
+		events = append(events, event.AddManaEvent{
+			PlayerID: player.ID(),
+			Amount:   amount.Green(),
+			Color:    mana.Green,
 		})
 	}
 	return EffectResult{

@@ -3,17 +3,16 @@ package gob
 import (
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/mtg"
-	"encoding/json"
 	"strings"
 )
 
 type StaticAbility struct {
 	name      mtg.StaticKeyword
 	cost      cost.Cost
-	modifiers json.RawMessage `json:"Modifiers,omitempty"`
+	modifiers map[string]any
 }
 
-func NewStaticAbility(name mtg.StaticKeyword, modifiers json.RawMessage) StaticAbility {
+func NewStaticAbility(name mtg.StaticKeyword, modifiers map[string]any) StaticAbility {
 	staticAbility := StaticAbility{
 		name:      name,
 		modifiers: modifiers,
@@ -33,8 +32,4 @@ func (a StaticAbility) StaticKeyword() mtg.StaticKeyword {
 func (a StaticAbility) Description() string {
 	var descriptions []string
 	return strings.Join(descriptions, ", ")
-}
-
-type SpliceModifiers struct {
-	Subtype mtg.Subtype `json:"Subtype,omitempty"`
 }

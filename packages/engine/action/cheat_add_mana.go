@@ -42,18 +42,53 @@ func (a AddManaCheatAction) Complete(game state.Game, player state.Player, resEn
 			Player: player.ID(),
 		},
 	}
-	for color, n := range amount.Colors() {
-		events = append(events, event.AddManaEvent{
-			PlayerID: player.ID(),
-			ManaType: color,
-			Amount:   n,
-		})
-	}
 	if amount.Generic() > 0 {
 		events = append(events, event.AddManaEvent{
 			PlayerID: player.ID(),
 			Amount:   amount.Generic(),
-			ManaType: mana.Colorless,
+			Color:    mana.Colorless,
+		})
+	}
+	if amount.Colorless() > 0 {
+		events = append(events, event.AddManaEvent{
+			PlayerID: player.ID(),
+			Amount:   amount.Colorless(),
+			Color:    mana.Colorless,
+		})
+	}
+	if amount.White() > 0 {
+		events = append(events, event.AddManaEvent{
+			PlayerID: player.ID(),
+			Amount:   amount.White(),
+			Color:    mana.White,
+		})
+	}
+	if amount.Blue() > 0 {
+		events = append(events, event.AddManaEvent{
+			PlayerID: player.ID(),
+			Amount:   amount.Blue(),
+			Color:    mana.Blue,
+		})
+	}
+	if amount.Black() > 0 {
+		events = append(events, event.AddManaEvent{
+			PlayerID: player.ID(),
+			Amount:   amount.Black(),
+			Color:    mana.Black,
+		})
+	}
+	if amount.Red() > 0 {
+		events = append(events, event.AddManaEvent{
+			PlayerID: player.ID(),
+			Amount:   amount.Red(),
+			Color:    mana.Red,
+		})
+	}
+	if amount.Green() > 0 {
+		events = append(events, event.AddManaEvent{
+			PlayerID: player.ID(),
+			Amount:   amount.Green(),
+			Color:    mana.Green,
 		})
 	}
 	return events, nil

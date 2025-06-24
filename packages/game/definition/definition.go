@@ -5,67 +5,57 @@ package definition
 
 import (
 	"deckronomicon/packages/game/mtg"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 type EffectSpec struct {
-	Name      string          `json:"Name,omitempty"`
-	Modifiers json.RawMessage `json:"Modifiers,omitempty"`
+	Name      string         `json:"Name,omitempty" yaml:"Name,omitempty"`
+	Modifiers map[string]any `json:"Modifiers,omitempty" yaml:"Modifiers,omitempty"`
 }
 
 type ActivatedAbilitySpec struct {
-	Name        string       `json:"Name,omitempty"`
-	Cost        string       `json:"Cost,omitempty"`
-	EffectSpecs []EffectSpec `json:"Effects,omitempty"`
-	// TODO: This might need to be a slice if an ability is activatedable from
-	// multiple zones.
-	Speed mtg.Speed `json:"Speed,omitempty"`
-	Zone  mtg.Zone  `json:"Zone,omitempty"`
+	Name        string       `json:"Name,omitempty" yaml:"Name,omitempty"`
+	Cost        string       `json:"Cost,omitempty" yaml:"Cost,omitempty"`
+	EffectSpecs []EffectSpec `json:"Effects,omitempty" yaml:"Effects,omitempty"`
+	Speed       mtg.Speed    `json:"Speed,omitempty" yaml:"Speed,omitempty"`
+	Zone        mtg.Zone     `json:"Zone,omitempty" yaml:"Zone,omitempty"`
 }
-
-/*
-type SpellAbilitySpec struct {
-	// Cost // TODO: AdditionalCosts?
-	EffectSpecs []EffectSpec `json:"Effects,omitempty"`
-	// Zone        string       `json:"Zone,omitempty"`
-}
-*/
 
 // StaticAbility represents the specification of static ability.
 type StaticAbilitySpec struct {
-	Name      mtg.StaticKeyword `json:"Name,omitempty"`
-	Cost      string            `json:"Cost,omitempty"`
-	Modifiers json.RawMessage   `json:"Modifiers,omitempty"`
+	Name      mtg.StaticKeyword `json:"Name,omitempty" yaml:"Name,omitempty"`
+	Cost      string            `json:"Cost,omitempty" yaml:"Cost,omitempty"`
+	Modifiers map[string]any    `json:"Modifiers,omitempty" yaml:"Modifiers,omitempty"`
 }
 
 type TriggeredAbilitySpec struct {
-	// Cost Cost // TODO: Additoonal Cost
-	EffectSpec []EffectSpec `json:"Effects,omitempty"`
+	EffectSpec []EffectSpec `json:"Effects,omitempty" yaml:"Effects,omitempty"`
 }
 
 // Card represents the underlying data structure for a card in the game.
 type Card struct {
-	ActivatedAbilitySpecs []ActivatedAbilitySpec `json:"ActivatedAbilities,omitempty"`
-	CardTypes             []mtg.CardType         `json:"CardTypes,omitempty"`
-	Colors                []string               `json:"Color,omitempty"`
-	Loyalty               int                    `json:"Loyalty,omitempty"`
-	ManaCost              string                 `json:"ManaCost,omitempty"`
-	Name                  string                 `json:"Name,omitempty"`
-	Power                 int                    `json:"Power,omitempty"`
-	RulesText             string                 `json:"RulesText,omitempty"`
-	SpellAbilitySpec      []EffectSpec           `json:"Effects,omitempty"`
-	StaticAbilitySpecs    []StaticAbilitySpec    `json:"StaticAbilities,omitempty"`
-	TriggeredAbilitySpecs []TriggeredAbilitySpec `json:"TriggeredAbilities,omitempty"`
-	Subtypes              []mtg.Subtype          `json:"Subtypes,omitempty"`
-	Supertypes            []mtg.Supertype        `json:"Supertypes,omitempty"`
-	Toughness             int                    `json:"Toughness,omitempty"`
+	ActivatedAbilitySpecs []ActivatedAbilitySpec `json:"ActivatedAbilities,omitempty" yaml:"ActivatedAbilities,omitempty"`
+	CardTypes             []mtg.CardType         `json:"CardTypes,omitempty" yaml:"CardTypes,omitempty"`
+	Colors                []string               `json:"Color,omitempty" yaml:"Color,omitempty"`
+	Loyalty               int                    `json:"Loyalty,omitempty" yaml:"Loyalty,omitempty"`
+	ManaCost              string                 `json:"ManaCost,omitempty" yaml:"ManaCost,omitempty"`
+	Name                  string                 `json:"Name,omitempty" yaml:"Name,omitempty"`
+	Power                 int                    `json:"Power,omitempty" yaml:"Power,omitempty"`
+	RulesText             string                 `json:"RulesText,omitempty" yaml:"RulesText,omitempty"`
+	SpellAbilitySpec      []EffectSpec           `json:"Effects,omitempty" yaml:"Effects,omitempty"`
+	StaticAbilitySpecs    []StaticAbilitySpec    `json:"StaticAbilities,omitempty" yaml:"StaticAbilities,omitempty"`
+	TriggeredAbilitySpecs []TriggeredAbilitySpec `json:"TriggeredAbilities,omitempty" yaml:"TriggeredAbilities,omitempty"`
+	Subtypes              []mtg.Subtype          `json:"Subtypes,omitempty" yaml:"Subtypes,omitempty"`
+	Supertypes            []mtg.Supertype        `json:"Supertypes,omitempty" yaml:"Supertypes,omitempty"`
+	Toughness             int                    `json:"Toughness,omitempty" yaml:"Toughness,omitempty"`
 }
 
-// LoadCardDefinitions walks the provided path and loads all JSON files into a map of
+// LoadCardDefinitions walks the provided path and loads all YAML files into a map of
 // card names to card data. It returns an error if any file cannot be read
 // or if there are duplicate card names.
 func LoadCardDefinitions(path string) (map[string]Card, error) {
@@ -74,7 +64,7 @@ func LoadCardDefinitions(path string) (map[string]Card, error) {
 		if err != nil {
 			return err
 		}
-		if info.IsDir() || !strings.HasSuffix(info.Name(), ".json") {
+		if info.IsDir() || !strings.HasSuffix(info.Name(), ".yaml") {
 			return nil
 		}
 		data, err := os.ReadFile(path)
@@ -82,7 +72,7 @@ func LoadCardDefinitions(path string) (map[string]Card, error) {
 			return fmt.Errorf("failed to read card file at %q: %w", path, err)
 		}
 		var card Card
-		if err := json.Unmarshal(data, &card); err != nil {
+		if err := yaml.Unmarshal(data, &card); err != nil {
 			return fmt.Errorf("failed to unmarshal card data in %q: %w", path, err)
 		}
 		if card.Name == "" {

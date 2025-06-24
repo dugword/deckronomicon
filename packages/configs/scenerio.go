@@ -1,20 +1,23 @@
 package configs
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"path"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
+// TODO: Dynamically check for yaml or json
+
 type DeckList struct {
-	Name  string `json:"Name"`
+	Name  string `json:"Name" yaml:"Name"`
 	Cards []struct {
-		Name  string `json:"Name"`
-		Count int    `json:"Count"`
-	} `json:"Cards"`
+		Name  string `json:"Name" yaml:"Name"`
+		Count int    `json:"Count" yaml:"Count"`
+	} `json:"Cards" yaml:"Cards"`
 }
 
 type Scenario struct {
@@ -37,30 +40,30 @@ type Player struct {
 }
 
 type Setup struct {
-	CheatsEnabled bool   `json:"CheatsEnabled"`
-	MaxTurns      int    `json:"MaxTurns"`
-	OnThePlay     string `json:"OnThePlay"`
+	CheatsEnabled bool   `json:"CheatsEnabled" yaml:"CheatsEnabled"`
+	MaxTurns      int    `json:"MaxTurns" yaml:"MaxTurns"`
+	OnThePlay     string `json:"OnThePlay" yaml:"OnThePlay"`
 	Players       []struct {
-		Agent        string   `json:"Agent"`
-		DeckList     string   `json:"DeckList"`
-		Name         string   `json:"Name"`
-		StartingHand []string `json:"StartingHand"`
-		StartingLife int      `json:"StartingLife"`
-		StartingMode string   `json:"StartingMode"`
-		Strategy     string   `json:"Strategy"`
-	} `json:"Players"`
-	ScenarioName string `json:"ScenarioName"`
+		Agent        string   `json:"Agent" yaml:"Agent"`
+		DeckList     string   `json:"DeckList" yaml:"DeckList"`
+		Name         string   `json:"Name" yaml:"Name"`
+		StartingHand []string `json:"StartingHand" yaml:"StartingHand"`
+		StartingLife int      `json:"StartingLife" yaml:"StartingLife"`
+		StartingMode string   `json:"StartingMode" yaml:"StartingMode"`
+		Strategy     string   `json:"Strategy" yaml:"Strategy"`
+	} `json:"Players" yaml:"Players"`
+	ScenarioName string `json:"ScenarioName" yaml:"ScenarioName"`
 }
 
 func LoadScenario(scenariosDir, scenario string) (*Scenario, error) {
 	scenarioPath := path.Join(scenariosDir, scenario)
-	setupFile := path.Join(scenarioPath, "setup.json")
+	setupFile := path.Join(scenarioPath, "setup.yaml")
 	setupData, err := os.ReadFile(setupFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read setup file %q: %w", setupFile, err)
 	}
 	var setup Setup
-	if err := json.Unmarshal(setupData, &setup); err != nil {
+	if err := yaml.Unmarshal(setupData, &setup); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal setup data %q: %w", setupFile, err)
 	}
 	if len(setup.Players) == 0 {
@@ -120,8 +123,8 @@ func LoadScenario(scenariosDir, scenario string) (*Scenario, error) {
 		}
 		if playerSetup.Strategy != "" {
 			fileName := playerSetup.Strategy
-			if !strings.HasSuffix(playerSetup.Strategy, ".json") {
-				fileName += ".json"
+			if !strings.HasSuffix(playerSetup.Strategy, ".yaml") {
+				fileName += ".yaml"
 			}
 			player.StrategyFile = path.Join(scenarioPath, fileName)
 		}
@@ -152,8 +155,8 @@ func LoadScenario(scenariosDir, scenario string) (*Scenario, error) {
 func LoadDeckList(scenarioPath, deckListFile string) (*DeckList, error) {
 	var deckList DeckList
 	fileName := deckListFile
-	if !strings.HasSuffix(deckListFile, ".json") {
-		fileName += ".json"
+	if !strings.HasSuffix(deckListFile, ".yaml") {
+		fileName += ".yaml"
 	}
 	deckListPath := path.Join(scenarioPath, fileName)
 	deckListData, err := os.ReadFile(deckListPath)
@@ -164,7 +167,7 @@ func LoadDeckList(scenarioPath, deckListFile string) (*DeckList, error) {
 			err,
 		)
 	}
-	if err := json.Unmarshal(deckListData, &deckList); err != nil {
+	if err := yaml.Unmarshal(deckListData, &deckList); err != nil {
 		return nil, fmt.Errorf(
 			"failed to unmarshal decklist %q: %w",
 			deckListPath,

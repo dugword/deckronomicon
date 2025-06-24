@@ -1,0 +1,13 @@
+CardTypes:
+  - Instant
+Color:
+  - U
+ManaCost: '{U}'
+Name: High Tide
+Effects:
+  - Name: AdditionalMana
+    Modifiers:
+      Subtype: Island
+      Mana: '{U}'
+      Duration: EndOfTurn
+RulesText: Until end of turn, whenever a player taps an Island for mana, that player adds an additional {U}.

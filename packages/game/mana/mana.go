@@ -2,193 +2,348 @@ package mana
 
 import (
 	"fmt"
-	"maps"
 	"regexp"
 	"strconv"
 	"strings"
 )
 
-type ManaType string
+type Color string
 
 // This might be beter as a const in mtg package
 const (
-	White     ManaType = "W"
-	Blue      ManaType = "U"
-	Black     ManaType = "B"
-	Red       ManaType = "R"
-	Green     ManaType = "G"
-	Colorless ManaType = "C"
+	White     Color = "W"
+	Blue      Color = "U"
+	Black     Color = "B"
+	Red       Color = "R"
+	Green     Color = "G"
+	Colorless Color = "C"
 )
 
-var AllManaTypes = []ManaType{
-	White,
-	Blue,
-	Black,
-	Red,
-	Green,
-	Colorless,
+func Colors() []Color {
+	return []Color{White,
+		Blue,
+		Black,
+		Red,
+		Green,
+		Colorless,
+	}
 }
 
-func (m ManaType) String() string {
-	return fmt.Sprintf("{%s}", string(m))
+func (c Color) String() string {
+	return fmt.Sprintf("{%s}", string(c))
 }
 
 type Pool struct {
-	mana map[ManaType]int
+	white     int
+	blue      int
+	black     int
+	red       int
+	green     int
+	colorless int
 }
 
-func (p Pool) Describe() string {
+func (p Pool) White() int {
+	return p.white
+}
+
+func (p Pool) Blue() int {
+	return p.blue
+}
+
+func (p Pool) Black() int {
+	return p.black
+}
+
+func (p Pool) Red() int {
+	return p.red
+}
+
+func (p Pool) Green() int {
+	return p.green
+}
+
+func (p Pool) Colorless() int {
+	return p.colorless
+}
+
+func (p Pool) ManaString() string {
 	descriptions := []string{}
-	for _, manaType := range AllManaTypes {
-		for range p.mana[manaType] {
-			descriptions = append(descriptions, manaType.String())
-		}
+	for range p.colorless {
+		descriptions = append(descriptions, Colorless.String())
 	}
-	if p.Total() == 0 {
-		return "(empty)"
+	for range p.white {
+		descriptions = append(descriptions, White.String())
+	}
+	for range p.blue {
+		descriptions = append(descriptions, Blue.String())
+	}
+	for range p.black {
+		descriptions = append(descriptions, Black.String())
+	}
+	for range p.red {
+		descriptions = append(descriptions, Red.String())
+	}
+	for range p.green {
+		descriptions = append(descriptions, Green.String())
 	}
 	return strings.Join(descriptions, "")
 }
 
-func NewManaPool() Pool {
-	m := Pool{
-		mana: map[ManaType]int{},
-	}
-	for _, manaType := range AllManaTypes {
-		m.mana[manaType] = 0
-	}
-	return m
-}
-
-// TODO: Is this the best way to manage mana pools?
 func (p Pool) Copy() Pool {
-	newPool := NewManaPool()
-	maps.Copy(newPool.mana, p.mana)
-	return newPool
+	return p
 }
 
 func (p Pool) Total() int {
 	total := 0
-	for _, amount := range p.mana {
-		total += amount
-	}
+	total += p.white
+	total += p.blue
+	total += p.black
+	total += p.red
+	total += p.green
+	total += p.colorless
 	return total
 }
 
 func (p Pool) WithAddedAmount(amount Amount) Pool {
-	newPool := NewManaPool()
-	maps.Copy(newPool.mana, p.mana)
-	newPool.mana[Colorless] += amount.generic
-	for mt, amt := range amount.colors {
-		newPool.mana[mt] += amt
-	}
-	return newPool
+	p.white += amount.white
+	p.blue += amount.blue
+	p.black += amount.black
+	p.red += amount.red
+	p.green += amount.green
+	p.colorless += amount.colorless
+	p.colorless += amount.generic
+	return p
 }
 
-func (p Pool) WithAddedMana(manaType ManaType, amount int) Pool {
-	newPool := NewManaPool()
-	maps.Copy(newPool.mana, p.mana)
-	newPool.mana[manaType] += amount
-	return newPool
+func (p Pool) WithAddedMana(color Color, amount int) Pool {
+	switch color {
+	case White:
+		p.white += amount
+	case Blue:
+		p.blue += amount
+	case Black:
+		p.black += amount
+	case Red:
+		p.red += amount
+	case Green:
+		p.green += amount
+	case Colorless:
+		p.colorless += amount
+	default:
+		panic(fmt.Sprintf("unknown color %s", color))
+	}
+	return p
 }
 
-// This auto pays for mana, spending colored mana first, then generic mana.
-// This needs to be made to be smarter or allow for users to specify how they want to pay of each color.
-// But this is a good start for now.
-func (p Pool) WithSpentFromManaAmount(amount Amount) (Pool, error) {
-	// First check if we can pay the colored part
-	for mt, required := range amount.colors {
-		if p.mana[mt] < required {
-			return p, fmt.Errorf("not enough %s mana", mt)
-		}
+func (p Pool) WithSpendFromManaAmount(amount Amount, colorsForGeneric []Color) (Pool, error) {
+	manaDeficit := []string{}
+	if amount.white > p.white {
+		whiteDeficit := amount.white - p.white
+		manaDeficit = append(manaDeficit, strings.Repeat(string(White), whiteDeficit))
 	}
-	availableForGeneric := p.Total() - colorSpecificUsed(amount)
-	if availableForGeneric < amount.generic {
-		return p, fmt.Errorf("not enough total mana to pay generic cost (%d required)", amount.generic)
+	p.white -= amount.white
+	if amount.blue > p.blue {
+		blueDeficit := amount.blue - p.blue
+		manaDeficit = append(manaDeficit, strings.Repeat(string(Blue), blueDeficit))
 	}
-	newPool := NewManaPool()
-	maps.Copy(newPool.mana, p.mana)
-	// Spend colored
-	for mt, required := range amount.colors {
-		newPool.mana[mt] -= required
+	p.blue -= amount.blue
+	if amount.black > p.black {
+		blackDeficit := amount.black - p.black
+		manaDeficit = append(manaDeficit, strings.Repeat(string(Black), blackDeficit))
+	}
+	p.black -= amount.black
+	if amount.red > p.red {
+		redDeficit := amount.red - p.red
+		manaDeficit = append(manaDeficit, strings.Repeat(string(Red), redDeficit))
+	}
+	p.red -= amount.red
+	if amount.green > p.green {
+		greenDeficit := amount.green - p.green
+		manaDeficit = append(manaDeficit, strings.Repeat(string(Green), greenDeficit))
+	}
+	p.green -= amount.green
+	if amount.colorless > p.colorless {
+		colorlessDeficit := amount.colorless - p.colorless
+		manaDeficit = append(manaDeficit, strings.Repeat(string(Colorless), colorlessDeficit))
+	}
+	p.colorless -= amount.colorless
+	if amount.generic > p.Total() {
+		genericDeficit := amount.generic - (p.Total())
+		manaDeficit = append(manaDeficit, fmt.Sprintf("{%d}", genericDeficit))
+	}
+	if len(manaDeficit) > 0 {
+		return p, fmt.Errorf("cannot pay %s", strings.Join(manaDeficit, ""))
 	}
 	// Spend generic
 	genericLeft := amount.generic
-	for genericLeft > 0 {
-		for _, mt := range AllManaTypes {
-			if newPool.mana[mt] > 0 {
-				newPool.mana[mt]--
-				genericLeft--
-				if genericLeft == 0 {
-					break
-				}
-			}
+	if p.white > 0 && genericLeft > 0 {
+		if genericLeft >= p.white {
+			genericLeft -= p.white
+			p.white = 0
+		} else {
+			p.white -= genericLeft
+			genericLeft = 0
 		}
 	}
-	return newPool, nil
+	for _, color := range colorsForGeneric {
+		p, genericLeft = SpendGenericManaByColor(p, genericLeft, color)
+	}
+	if genericLeft > 0 {
+		return p, fmt.Errorf("cannot pay {%d}", genericLeft)
+	}
+	return p, nil
 }
 
-// How much total mana is used that requires a color
-// This is a little bit of a hack, but it works for now
-func colorSpecificUsed(amount Amount) int {
-	used := 0
-	for _, required := range amount.colors {
-		used += required
+func SpendGenericManaByColor(p Pool, amount int, color Color) (Pool, int) {
+	if amount <= 0 {
+		return p, amount
 	}
-	return used
+	switch color {
+	case White:
+		if p.white > 0 && amount > 0 {
+			if amount >= p.white {
+				amount -= p.white
+				p.white = 0
+			} else {
+				p.white -= amount
+				amount = 0
+			}
+		}
+	case Blue:
+		if p.blue > 0 && amount > 0 {
+			if amount >= p.blue {
+				amount -= p.blue
+				p.blue = 0
+			} else {
+				p.blue -= amount
+				amount = 0
+			}
+		}
+	case Black:
+		if p.black > 0 && amount > 0 {
+			if amount >= p.black {
+				amount -= p.black
+				p.black = 0
+			} else {
+				p.black -= amount
+				amount = 0
+			}
+		}
+	case Red:
+		if p.red > 0 && amount > 0 {
+			if amount >= p.red {
+				amount -= p.red
+				p.red = 0
+			} else {
+				p.red -= amount
+				amount = 0
+			}
+		}
+	case Green:
+		if p.green > 0 && amount > 0 {
+			if amount >= p.green {
+				amount -= p.green
+				p.green = 0
+			} else {
+				p.green -= amount
+				amount = 0
+			}
+		}
+	case Colorless:
+		if p.colorless > 0 && amount > 0 {
+			if amount >= p.colorless {
+				amount -= p.colorless
+				p.colorless = 0
+			} else {
+				p.colorless -= amount
+				amount = 0
+			}
+		}
+	default:
+		panic(fmt.Sprintf("unknown color %s", color))
+	}
+	return p, amount
 }
 
 type Amount struct {
-	generic int
-	colors  map[ManaType]int
+	generic   int
+	white     int
+	blue      int
+	black     int
+	red       int
+	green     int
+	colorless int
 }
 
-func (a Amount) Total() int {
-	total := a.generic
-	for _, amount := range a.colors {
-		total += amount
-	}
-	return total
+func (a Amount) White() int {
+	return a.white
+}
+
+func (a Amount) Blue() int {
+	return a.blue
+}
+
+func (a Amount) Black() int {
+	return a.black
+}
+
+func (a Amount) Red() int {
+	return a.red
+}
+
+func (a Amount) Green() int {
+	return a.green
+}
+
+func (a Amount) Colorless() int {
+	return a.colorless
 }
 
 func (a Amount) Generic() int {
 	return a.generic
 }
 
-func (a Amount) Colors() map[ManaType]int {
-	newColors := map[ManaType]int{}
-	maps.Copy(newColors, a.colors)
-	return newColors
+func (a Amount) Total() int {
+	total := a.generic
+	total += a.white
+	total += a.blue
+	total += a.black
+	total += a.red
+	total += a.green
+	total += a.colorless
+	return total
 }
 
 func (a Amount) ManaString() string {
-	// TODO: colors might not be the right name, costs? Symbols?
-	var manaSymbols []string
-	if a.Generic() > 0 {
-		manaSymbols = append(manaSymbols, fmt.Sprintf("{%d}", a.Generic()))
+	descriptions := []string{}
+	if a.colorless > 0 {
+		descriptions = append(descriptions, fmt.Sprintf("{%d}", a.generic))
 	}
-	for _, color := range AllManaTypes {
-		if a.Colors()[color] > 0 {
-			for range a.Colors()[color] {
-				manaSymbols = append(manaSymbols, fmt.Sprintf("{%s}", color))
-			}
-		}
+	for range a.colorless {
+		descriptions = append(descriptions, Colorless.String())
 	}
-	return strings.Join(manaSymbols, "")
-}
-
-func NewAmount() Amount {
-	amount := Amount{
-		generic: 0,
-		colors:  map[ManaType]int{},
+	for range a.white {
+		descriptions = append(descriptions, White.String())
 	}
-	return amount
+	for range a.blue {
+		descriptions = append(descriptions, Blue.String())
+	}
+	for range a.black {
+		descriptions = append(descriptions, Black.String())
+	}
+	for range a.red {
+		descriptions = append(descriptions, Red.String())
+	}
+	for range a.green {
+		descriptions = append(descriptions, Green.String())
+	}
+	return strings.Join(descriptions, "")
 }
 
 var manaStringRegexp = regexp.MustCompile(`\{(\d+|[WUBRGC])\}`)
 
 func ParseManaString(manaString string) (Amount, error) {
-	amount := NewAmount()
+	amount := Amount{}
 	if manaString == "" {
 		return amount, nil
 	}
@@ -200,17 +355,17 @@ func ParseManaString(manaString string) (Amount, error) {
 		symbol := match[1]
 		switch symbol {
 		case "W":
-			amount.colors[White]++
+			amount.white++
 		case "U":
-			amount.colors[Blue]++
+			amount.blue++
 		case "B":
-			amount.colors[Black]++
+			amount.black++
 		case "R":
-			amount.colors[Red]++
+			amount.red++
 		case "G":
-			amount.colors[Green]++
+			amount.green++
 		case "C":
-			amount.colors[Colorless]++
+			amount.colorless++
 		default:
 			n, err := strconv.Atoi(symbol)
 			if err != nil {

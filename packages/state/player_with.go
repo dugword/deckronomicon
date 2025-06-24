@@ -7,8 +7,8 @@ import (
 	"fmt"
 )
 
-func (p Player) WithAddMana(manaType mana.ManaType, amount int) Player {
-	p.manaPool = p.manaPool.WithAddedMana(manaType, amount)
+func (p Player) WithAddMana(color mana.Color, amount int) Player {
+	p.manaPool = p.manaPool.WithAddedMana(color, amount)
 	return p
 }
 
@@ -34,7 +34,7 @@ func (p Player) WithManaPool(manaPool mana.Pool) Player {
 }
 
 func (p Player) WithEmptyManaPool() Player {
-	p.manaPool = mana.NewManaPool()
+	p.manaPool = mana.Pool{}
 	return p
 }
 

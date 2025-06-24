@@ -8,21 +8,27 @@ import (
 	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/state"
-	"encoding/json"
 	"errors"
 	"fmt"
 )
 
 type DiscardEffect struct {
-	Count  int    `json:"Count"`
-	Target string `json:"Target"`
+	Count  int
+	Target string
 }
 
 func NewDiscardEffect(effectSpec definition.EffectSpec) (Effect, error) {
 	var discardEffect DiscardEffect
-	if err := json.Unmarshal(effectSpec.Modifiers, &discardEffect); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal DiscardEffectModifiers: %w", err)
+	count, ok := effectSpec.Modifiers["Count"].(int)
+	if !ok || count <= 0 {
+		return nil, fmt.Errorf("DiscardEffect requires a 'Count' modifier of type int greater than 0, got %T", effectSpec.Modifiers["Count"])
 	}
+	discardEffect.Count = count
+	targetStr, ok := effectSpec.Modifiers["Target"].(string)
+	if ok && targetStr != "" && targetStr != "Player" {
+		return nil, fmt.Errorf("DiscardEffect requires a 'Target' modifier of either empty or 'Player', got %q", targetStr)
+	}
+	discardEffect.Target = targetStr
 	return discardEffect, nil
 }
 

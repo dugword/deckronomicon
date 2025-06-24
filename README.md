@@ -79,9 +79,9 @@ deterministic replays, post-game analysis, debugging, and strategy refinement.
 ### Configurable Rule-Based Strategy Automation
 
 Player automation is driven by a rule-based strategy system that allows for
-customizable and composable game plans. Strategies can be defined in JSON or
-YAML format, enabling users to specify a prioritized list of actions and
-choices for the player agent to follow during simulations.
+customizable and composable game plans. Strategies are defined in YAML,
+enabling users to specify a prioritized list of actions and choices for the
+player agent to follow during simulations.
 
 The rule-based system supports complex decision-making based on the current
 game state following a "When X Game State, Do Y Action" model. This allows for

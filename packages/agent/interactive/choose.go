@@ -212,7 +212,6 @@ func (a *Agent) chooseMapChoicesToBuckets(message string, opts choose.MapChoices
 		}
 		choices = remaining
 	}
-	// Handle unassigned cards → mama recommends putting them in last bucket by default!
 	lastBucket := opts.Buckets[len(opts.Buckets)-1]
 	for _, choice := range choices {
 		fmt.Printf("Warning: Card %s was not assigned, defaulting to %s.\n", choice.Name(), lastBucket)

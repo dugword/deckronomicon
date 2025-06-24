@@ -12,23 +12,64 @@ import (
 	"deckronomicon/packages/query/has"
 	"deckronomicon/packages/query/take"
 	"deckronomicon/packages/state"
-	"encoding/json"
 	"errors"
 	"fmt"
 )
 
 type LookAndChooseEffect struct {
-	Look      int            `json:"Look"`
-	Choose    int            `json:"Choose"`
-	CardTypes []mtg.CardType `json:"CardTypes"`
-	Rest      mtg.Zone       `json:"Rest"`
-	Order     string         `json:"Order"`
+	Look      int
+	Choose    int
+	CardTypes []mtg.CardType
+	Rest      mtg.Zone
+	Order     string
 }
 
 func NewLookAndChooseEffect(effectSpec definition.EffectSpec) (Effect, error) {
 	var lookAndChooseEffect LookAndChooseEffect
-	if err := json.Unmarshal(effectSpec.Modifiers, &lookAndChooseEffect); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal LookAndChooseEffectModifiers: %w", err)
+	look, ok := effectSpec.Modifiers["Look"].(int)
+	if !ok || look <= 0 {
+		return nil, fmt.Errorf("LookAndChooseEffect requires a 'Look' modifier of type int greater than 0, got %T", effectSpec.Modifiers["Look"])
+	}
+	lookAndChooseEffect.Look = look
+	choose, ok := effectSpec.Modifiers["Choose"].(int)
+	if !ok || choose <= 0 {
+		return nil, fmt.Errorf("LookAndChooseEffect requires a 'Choose' modifier of type int greater than 0, got %T", effectSpec.Modifiers["Choose"])
+	}
+	lookAndChooseEffect.Choose = choose
+	cardTypeVals, ok := effectSpec.Modifiers["CardTypes"].([]any)
+	if !ok || len(cardTypeVals) == 0 {
+		return nil, fmt.Errorf("LookAndChooseEffect requires a non-empty 'CardTypes' modifier of type []mtg.CardType, got %T", effectSpec.Modifiers["CardTypes"])
+	}
+	var cardTypes []mtg.CardType
+	for _, cardTypeVal := range cardTypeVals {
+		cardTypeString, ok := cardTypeVal.(string)
+		if !ok {
+			return nil, fmt.Errorf("LookAndChooseEffect requires 'CardTypes' modifier values to be of type string, got %T", cardTypeVal)
+		}
+		cardType, ok := mtg.StringToCardType(cardTypeString)
+		if !ok {
+			return nil, fmt.Errorf("LookAndChooseEffect requires valid 'CardTypes' modifier with values like 'Creature', 'Instant', etc., got %q", cardTypeString)
+		}
+		cardTypes = append(cardTypes, cardType)
+	}
+	lookAndChooseEffect.CardTypes = cardTypes
+	restString, ok := effectSpec.Modifiers["Rest"].(string)
+	if !ok {
+		return nil, fmt.Errorf("LookAndChooseEffect requires a 'Rest' modifier of type string, got %T", effectSpec.Modifiers["Rest"])
+	}
+	rest, ok := mtg.StringToZone(restString)
+	if !ok && (rest != mtg.ZoneLibrary && rest != mtg.ZoneGraveyard) {
+		return nil, fmt.Errorf("LookAndChooseEffect requires a 'Rest' modifier of type mtg.Zone with value 'Library' or 'Graveyard', got %T", effectSpec.Modifiers["Rest"])
+	}
+	lookAndChooseEffect.Rest = rest
+	order, ok := effectSpec.Modifiers["Order"].(string)
+	if ok && rest == mtg.ZoneLibrary && order != "Any" && order != "Random" {
+		return nil, fmt.Errorf("LookAndChooseEffect requires an 'Order' modifier of type string with value 'Any' or 'Random' when rest is Library, got %T", effectSpec.Modifiers["Order"])
+	}
+	lookAndChooseEffect.Order = order
+	// Validate that Look is greater than or equal to Choose
+	if lookAndChooseEffect.Look < lookAndChooseEffect.Choose {
+		return nil, fmt.Errorf("LookAndChooseEffect requires 'Look' (%d) to be greater than or equal to 'Choose' (%d)", lookAndChooseEffect.Look, lookAndChooseEffect.Choose)
 	}
 	return lookAndChooseEffect, nil
 }

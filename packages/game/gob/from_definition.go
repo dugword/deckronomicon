@@ -7,7 +7,7 @@ import (
 	"fmt"
 )
 
-// This reads the definition that comes from JSON files and validates all the types and stuff actuatlly
+// This reads the definition that comes from YAML files and validates all the types and stuff actuatlly
 // exist, casts them to the correct types, and then builds the card.
 
 // "deckronomicon/packages/game/core"
