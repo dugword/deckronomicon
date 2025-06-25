@@ -30,3 +30,10 @@ func CanPayCost(someCost cost.Cost, object query.Object, game state.Game, player
 	}
 	return canPay
 }
+
+func CanPotentiallyPayCost(someCost cost.Cost, object query.Object, game state.Game, player state.Player, ruling *Ruling) bool {
+	potentialManaPool := GetAvailableMana(game, player)
+	player = player.WithManaPool(potentialManaPool)
+	game = game.WithUpdatedPlayer(player)
+	return CanPayCost(someCost, object, game, player, ruling)
+}

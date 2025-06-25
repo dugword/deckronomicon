@@ -1,6 +1,7 @@
 package gob
 
 import (
+	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/query"
 	"fmt"
 )
@@ -12,14 +13,14 @@ type AbilityOnStack struct {
 	constroller       string
 	sourceID          string
 	abilityID         string
-	effectWithTargets []EffectWithTarget
+	effectWithTargets []target.EffectWithTarget
 }
 
 func (a AbilityOnStack) Description() string {
 	return fmt.Sprintf("Write a better description: %s", a.abilityID)
 }
 
-func (a AbilityOnStack) EffectWithTargets() []EffectWithTarget {
+func (a AbilityOnStack) EffectWithTargets() []target.EffectWithTarget {
 	return a.effectWithTargets
 }
 
@@ -52,7 +53,7 @@ func NewAbilityOnStack(id string,
 	sourceID string,
 	abilityID string,
 	abilityName string,
-	effectWithTargets []EffectWithTarget,
+	effectWithTargets []target.EffectWithTarget,
 ) AbilityOnStack {
 	abilityOnStack := AbilityOnStack{
 		id:                id,

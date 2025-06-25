@@ -4,7 +4,6 @@ import (
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/game/definition"
-	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/game/target"
 	"testing"
@@ -33,7 +32,7 @@ func TestCastSpellActionComplete(t *testing.T) {
 			name: "with effects",
 			action: CastSpellAction{
 				cardID: "Card with Effects ID",
-				targetsForEffects: map[EffectTargetKey]target.TargetValue{
+				targetsForEffects: map[target.EffectTargetKey]target.TargetValue{
 					{SourceID: "Card with Effects ID", EffectIndex: 0}: target.TargetValue{
 						TargetID: "Target Object ID",
 					},
@@ -52,7 +51,7 @@ func TestCastSpellActionComplete(t *testing.T) {
 					PlayerID: "Test Player",
 					CardID:   "Card with Effects ID",
 					FromZone: mtg.ZoneHand,
-					EffectWithTargets: []gob.EffectWithTarget{
+					EffectWithTargets: []target.EffectWithTarget{
 						{
 							EffectSpec: definition.EffectSpec{
 								Name:      "Effect 1",
@@ -88,7 +87,7 @@ func TestCastSpellActionComplete(t *testing.T) {
 			name: "with spell that has targets",
 			action: CastSpellAction{
 				cardID: "Card with Target ID",
-				targetsForEffects: map[EffectTargetKey]target.TargetValue{
+				targetsForEffects: map[target.EffectTargetKey]target.TargetValue{
 					{SourceID: "Card with Target ID", EffectIndex: 0}: target.TargetValue{
 						TargetID: playerID,
 					},
@@ -104,7 +103,7 @@ func TestCastSpellActionComplete(t *testing.T) {
 					PlayerID: "Test Player",
 					CardID:   "Card with Target ID",
 					FromZone: mtg.ZoneHand,
-					EffectWithTargets: []gob.EffectWithTarget{
+					EffectWithTargets: []target.EffectWithTarget{
 						{
 							EffectSpec: definition.EffectSpec{
 								Name:      "Target",
@@ -131,7 +130,7 @@ func TestCastSpellActionComplete(t *testing.T) {
 					SourceID:    "Card with Replicate ID",
 					FromZone:    "Hand",
 					AbilityName: "Replicate",
-					EffectWithTargets: []gob.EffectWithTarget{
+					EffectWithTargets: []target.EffectWithTarget{
 						{
 							EffectSpec: definition.EffectSpec{
 								Name:      string(mtg.StaticKeywordReplicate),

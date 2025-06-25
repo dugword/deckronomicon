@@ -3,6 +3,7 @@ package gob
 import (
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/query"
 	"fmt"
 )
@@ -20,7 +21,7 @@ type Spell struct {
 	name              string
 	power             int
 	rulesText         string
-	effectWithTargets []EffectWithTarget
+	effectWithTargets []target.EffectWithTarget
 	staticAbilities   []StaticAbility
 	subtypes          []mtg.Subtype
 	supertypes        []mtg.Supertype
@@ -33,7 +34,7 @@ func CopySpell(
 	id string,
 	spell Spell,
 	playerID string,
-	effectWithTargets []EffectWithTarget,
+	effectWithTargets []target.EffectWithTarget,
 ) (Spell, error) {
 	copiedSpell, err := NewSpell(
 		id,
@@ -54,7 +55,7 @@ func NewSpell(
 	id string,
 	card Card,
 	playerID string,
-	effectWithTargets []EffectWithTarget,
+	effectWithTargets []target.EffectWithTarget,
 	flashback bool,
 ) (Spell, error) {
 	spell := Spell{
@@ -98,7 +99,7 @@ func (s Spell) Controller() string {
 }
 
 // Effects returns the effects of the spell.
-func (s Spell) EffectWithTargets() []EffectWithTarget {
+func (s Spell) EffectWithTargets() []target.EffectWithTarget {
 	return s.effectWithTargets
 }
 

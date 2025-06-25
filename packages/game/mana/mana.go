@@ -33,6 +33,25 @@ func (c Color) String() string {
 	return fmt.Sprintf("{%s}", string(c))
 }
 
+func StringToColor(s string) (Color, bool) {
+	switch s {
+	case "W", "{W}":
+		return White, true
+	case "U", "{U}":
+		return Blue, true
+	case "B", "{B}":
+		return Black, true
+	case "R", "{R}":
+		return Red, true
+	case "G", "{G}":
+		return Green, true
+	case "C", "{C}":
+		return Colorless, true
+	default:
+		return "", false
+	}
+}
+
 type Pool struct {
 	white     int
 	blue      int
@@ -133,6 +152,83 @@ func (p Pool) WithAddedMana(color Color, amount int) Pool {
 		panic(fmt.Sprintf("unknown color %s", color))
 	}
 	return p
+}
+
+// WithPayDownFromAmount returns a new Pool with the specified amount of mana paid down.
+// It will spend as much mana as possible from the pool, and return the remaining amount
+// that could not be paid down.
+func (p Pool) WithPayDownFromAmount(amount Amount, colorsForGeneric []Color) (Pool, Amount) {
+	if amount.white > p.white {
+		amount.white -= p.white
+		p.white = 0
+	} else {
+		p.white -= amount.white
+		amount.white = 0
+	}
+	if amount.blue > p.blue {
+		amount.blue -= p.blue
+		p.blue = 0
+	} else {
+		p.blue -= amount.blue
+		amount.blue = 0
+	}
+	if amount.black > p.black {
+		amount.black -= p.black
+		p.black = 0
+	} else {
+		p.black -= amount.black
+		amount.black = 0
+	}
+	if amount.red > p.red {
+		amount.red -= p.red
+		p.red = 0
+	} else {
+		p.red -= amount.red
+		amount.red = 0
+	}
+	if amount.green > p.green {
+		amount.green -= p.green
+		p.green = 0
+	} else {
+		p.green -= amount.green
+		amount.green = 0
+	}
+	if amount.colorless > p.colorless {
+		amount.colorless -= p.colorless
+		p.colorless = 0
+	} else {
+		p.colorless -= amount.colorless
+		amount.colorless = 0
+	}
+	if amount.generic > p.Total() {
+		genericDeficit := amount.generic - (p.Total())
+		amount.generic = genericDeficit
+		p.white = 0
+		p.blue = 0
+		p.black = 0
+		p.red = 0
+		p.green = 0
+		p.colorless = 0
+	}
+	genericLeft := amount.generic
+	if p.white > 0 && genericLeft > 0 {
+		if genericLeft >= p.white {
+			genericLeft -= p.white
+			p.white = 0
+		} else {
+			p.white -= genericLeft
+			genericLeft = 0
+		}
+	}
+	for _, color := range colorsForGeneric {
+		p, genericLeft = SpendGenericManaByColor(p, genericLeft, color)
+	}
+	if genericLeft > 0 {
+		amount.generic = genericLeft
+	} else {
+		amount.generic = 0
+	}
+	return p, amount
 }
 
 func (p Pool) WithSpendFromManaAmount(amount Amount, colorsForGeneric []Color) (Pool, error) {
@@ -312,6 +408,17 @@ func (a Amount) Total() int {
 	total += a.green
 	total += a.colorless
 	return total
+}
+
+func (a Amount) WithAddedAmount(amount Amount) Amount {
+	a.white += amount.white
+	a.blue += amount.blue
+	a.black += amount.black
+	a.red += amount.red
+	a.green += amount.green
+	a.colorless += amount.colorless
+	a.generic += amount.generic
+	return a
 }
 
 func (a Amount) ManaString() string {

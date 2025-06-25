@@ -58,8 +58,8 @@ func (a *Agent) ReportState(game state.Game) {
 	opponent := game.GetOpponent(a.playerID)
 	a.uiBuffer.Update(
 		view.NewGameViewFromState(game),
-		view.NewPlayerViewFromState(player, ""),
-		view.NewPlayerViewFromState(opponent, ""),
+		view.NewPlayerViewFromState(game, player, ""),
+		view.NewPlayerViewFromState(game, opponent, ""),
 	)
 }
 

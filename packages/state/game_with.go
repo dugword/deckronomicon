@@ -4,6 +4,7 @@ import (
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/target"
 )
 
 func (g Game) WithCheatsEnabled(enabled bool) Game {
@@ -96,7 +97,7 @@ func (g Game) WithStack(stack Stack) Game {
 func (g Game) WithPutSpellOnStack(
 	card gob.Card,
 	playerID string,
-	effectWithTargets []gob.EffectWithTarget,
+	effectWithTargets []target.EffectWithTarget,
 	flashback bool,
 ) (Game, error) {
 	id, game := g.GetNextID()
@@ -118,7 +119,7 @@ func (g Game) WithPutSpellOnStack(
 func (g Game) WithPutCopiedSpellOnStack(
 	spell gob.Spell,
 	playerID string,
-	effectWithTargets []gob.EffectWithTarget,
+	effectWithTargets []target.EffectWithTarget,
 ) (Game, error) {
 	id, game := g.GetNextID()
 	spell, err := gob.CopySpell(
@@ -140,7 +141,7 @@ func (g Game) WithPutAbilityOnStack(
 	sourceID,
 	abilityID,
 	abilityName string,
-	effectWithTargets []gob.EffectWithTarget,
+	effectWithTargets []target.EffectWithTarget,
 	// effectSpecs []definition.EffectSpec,
 	// targets map[string]target.TargetValue,
 ) (Game, error) {

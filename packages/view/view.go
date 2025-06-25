@@ -1,6 +1,7 @@
 package view
 
 import (
+	"deckronomicon/packages/engine/judge"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/state"
@@ -21,7 +22,8 @@ type Player struct {
 	Turn int
 	// TODO: Change ManaPool to a more structured type
 	// and do the formatting in the UI.
-	ManaPool string
+	ManaPool          string
+	PotentialManaPool string // Potential mana pool for the next turn
 	// ManaPool    map[string]int
 	Hand        []Card
 	Graveyard   []Card
@@ -97,21 +99,26 @@ func permanentsToViewPermanents(permanents []gob.Permanent) []Permanent {
 	return viewPermanents
 }
 
-func NewPlayerViewFromState(player state.Player, mode string) Player {
+func NewPlayerViewFromState(game state.Game, player state.Player, mode string) Player {
 	manaPool := player.ManaPool().ManaString()
 	if manaPool == "" {
 		manaPool = "(empty)"
 	}
+	potentialManaPool := judge.GetAvailableMana(game, player).ManaString()
+	if potentialManaPool == "" {
+		potentialManaPool = "(empty)"
+	}
 	return Player{
-		ID:          player.ID(),
-		Life:        player.Life(),
-		Mode:        mode,
-		Turn:        player.Turn(),
-		ManaPool:    manaPool,
-		Hand:        cardsToViewCards(player.Hand().GetAll()),
-		Graveyard:   cardsToViewCards(player.Graveyard().GetAll()),
-		Exile:       cardsToViewCards(player.Exile().GetAll()),
-		Revealed:    cardsToViewCards(player.Revealed().GetAll()),
-		LibrarySize: player.Library().Size(),
+		ID:                player.ID(),
+		Life:              player.Life(),
+		Mode:              mode,
+		Turn:              player.Turn(),
+		ManaPool:          manaPool,
+		PotentialManaPool: potentialManaPool,
+		Hand:              cardsToViewCards(player.Hand().GetAll()),
+		Graveyard:         cardsToViewCards(player.Graveyard().GetAll()),
+		Exile:             cardsToViewCards(player.Exile().GetAll()),
+		Revealed:          cardsToViewCards(player.Revealed().GetAll()),
+		LibrarySize:       player.Library().Size(),
 	}
 }

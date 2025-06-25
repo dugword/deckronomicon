@@ -4,7 +4,6 @@ import (
 	"deckronomicon/packages/engine/effect"
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/game/definition"
-	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/state"
@@ -116,9 +115,9 @@ func (e *Engine) HandleTriggeredEffect(game state.Game, playerID string, te stat
 		}
 	}
 	// TODO: Get targets
-	var effectWithTargets []gob.EffectWithTarget
+	var effectWithTargets []target.EffectWithTarget
 	for _, effectSpec := range effectSpecs {
-		effectWithTargets = append(effectWithTargets, gob.EffectWithTarget{
+		effectWithTargets = append(effectWithTargets, target.EffectWithTarget{
 			EffectSpec: effectSpec,
 			Target: target.TargetValue{
 				TargetType: target.TargetTypeNone,

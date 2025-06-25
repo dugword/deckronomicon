@@ -43,7 +43,7 @@ func TestStreamOfThought(t *testing.T) {
 	action := action.NewCastSpellAction(
 		action.CastSpellRequest{
 			CardID: streamOfThoughtCard.ID(),
-			TargetsForEffects: map[action.EffectTargetKey]target.TargetValue{
+			TargetsForEffects: map[target.EffectTargetKey]target.TargetValue{
 				{SourceID: "Stream of Thought ID", EffectIndex: 0}: {
 					TargetType: target.TargetTypePlayer,
 					TargetID:   playerID,

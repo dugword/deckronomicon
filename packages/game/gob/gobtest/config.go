@@ -24,6 +24,7 @@ type PermanentConfig struct {
 	ActivatedAbilities []definition.ActivatedAbilitySpec
 	Card               CardConfig
 	Tapped             bool
+	CardTypes          []mtg.CardType
 }
 
 // This and definition.Card could be one in the same.

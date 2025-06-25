@@ -43,7 +43,7 @@ func Permanent() query.Predicate {
 
 func Tapped() query.Predicate {
 	return func(obj query.Object) bool {
-		permObj, ok := obj.(query.PermanentObject)
+		permObj, ok := obj.(gob.Permanent)
 		if !ok {
 			return false
 		}
@@ -76,5 +76,15 @@ func Land() query.Predicate {
 			return false
 		}
 		return slices.Contains(cardObj.CardTypes(), mtg.CardTypeLand)
+	}
+}
+
+func Untapped() query.Predicate {
+	return func(obj query.Object) bool {
+		permObj, ok := obj.(gob.Permanent)
+		if !ok {
+			return false
+		}
+		return !permObj.IsTapped()
 	}
 }

@@ -6,8 +6,8 @@ import (
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
-	"deckronomicon/packages/query/has"
 	"fmt"
+	"slices"
 )
 
 // Permanent represents a permanent card on the battlefield.
@@ -54,7 +54,7 @@ func NewPermanent(id string, card Card, playerID string) (Permanent, error) {
 		toughness:          card.Toughness(),
 		triggeredAbilities: []Ability{},
 	}
-	if card.Match(has.CardType(mtg.CardTypeCreature)) {
+	if slices.Contains(permanent.cardTypes, mtg.CardTypeCreature) {
 		permanent.summoningSickness = true
 	}
 	for i, a := range card.ActivatedAbilities() {

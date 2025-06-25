@@ -1,6 +1,8 @@
 package has
 
 import (
+	"deckronomicon/packages/game/gob"
+	"deckronomicon/packages/game/mana"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 	"slices"
@@ -383,5 +385,34 @@ func AllSupertypes(supertypes ...mtg.Supertype) query.Predicate {
 			}
 		}
 		return true
+	}
+}
+
+func HasManaAbility(manaColor mana.Color) query.Predicate {
+	return func(obj query.Object) bool {
+		permanent, ok := obj.(gob.Permanent)
+		if !ok {
+			return false
+		}
+		for _, ability := range permanent.ActivatedAbilities() {
+			for _, effectSpec := range ability.EffectSpecs() {
+				if effectSpec.Name != "AddMana" {
+					continue
+				}
+				for key, rawModifer := range effectSpec.Modifiers {
+					if key != "Mana" {
+						continue
+					}
+					color, ok := mana.StringToColor(rawModifer.(string))
+					if !ok {
+						continue
+					}
+					if color == manaColor {
+						return true
+					}
+				}
+			}
+		}
+		return false
 	}
 }

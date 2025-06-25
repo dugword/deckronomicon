@@ -1,7 +1,7 @@
 package action
 
 import (
-	"deckronomicon/packages/engine/effect"
+	buildmanaabilities "deckronomicon/packages/build_mana_abilities"
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/engine/judge"
 	"deckronomicon/packages/engine/pay"
@@ -20,7 +20,7 @@ type ActivateAbilityRequest struct {
 	AbilityID         string
 	SourceID          string
 	Zone              mtg.Zone
-	TargetsForEffects map[EffectTargetKey]target.TargetValue
+	TargetsForEffects map[target.EffectTargetKey]target.TargetValue
 }
 
 func (r ActivateAbilityRequest) Build(string) ActivateAbilityAction {
@@ -31,7 +31,7 @@ type ActivateAbilityAction struct {
 	abilityID         string
 	sourceID          string
 	zone              mtg.Zone
-	targetsForEffects map[EffectTargetKey]target.TargetValue
+	targetsForEffects map[target.EffectTargetKey]target.TargetValue
 }
 
 func NewActivateAbilityAction(
@@ -100,7 +100,7 @@ func (a ActivateAbilityAction) Complete(game state.Game, player state.Player, re
 			Zone:      a.zone,
 		},
 	}
-	effectWithTargets, err := buildEffectWithTargets(ability.ID(), ability.EffectSpecs(), a.targetsForEffects)
+	effectWithTargets, err := target.BuildEffectWithTargets(ability.ID(), ability.EffectSpecs(), a.targetsForEffects)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build effect with targets: %w", err)
 	}
@@ -121,7 +121,7 @@ func (a ActivateAbilityAction) Complete(game state.Game, player state.Player, re
 				}
 			}
 		}
-		manaEvents, err := buildManaAbilityEvents(game, player, effectWithTargets, resEnv)
+		manaEvents, err := buildmanaabilities.BuildManaAbilityEvents(game, player, effectWithTargets, resEnv)
 		if err != nil {
 			return nil, fmt.Errorf("failed to build mana ability events: %w", err)
 		}
@@ -136,28 +136,6 @@ func (a ActivateAbilityAction) Complete(game state.Game, player state.Player, re
 		AbilityName:       ability.Name(),
 		EffectWithTargets: effectWithTargets,
 	})
-	return events, nil
-}
-
-func buildManaAbilityEvents(
-	game state.Game,
-	player state.Player,
-	// effectSpecs []definition.EffectSpec,
-	effectWithTargets []gob.EffectWithTarget,
-	resEnv *resenv.ResEnv,
-) ([]event.GameEvent, error) {
-	var events []event.GameEvent
-	for _, effectWithTarget := range effectWithTargets {
-		efct, err := effect.Build(effectWithTarget.EffectSpec)
-		if err != nil {
-			return nil, fmt.Errorf("effect %q not found: %w", effectWithTarget.EffectSpec.Name, err)
-		}
-		effectResults, err := efct.Resolve(game, player, nil, effectWithTarget.Target, resEnv)
-		if err != nil {
-			return nil, fmt.Errorf("failed to apply effect %q: %w", effectWithTarget.EffectSpec.Name, err)
-		}
-		events = append(events, effectResults.Events...)
-	}
 	return events, nil
 }
 

@@ -175,6 +175,7 @@ func PlayerData(player view.Player) BoxData {
 		fmt.Sprintf("Graveyard: %d cards", len(player.Graveyard)),
 		fmt.Sprintf("Exile: %d cards", len(player.Exile)),
 		fmt.Sprintf("Mana Pool: %s", player.ManaPool),
+		fmt.Sprintf("Potential Mana Pool: %s", player.PotentialManaPool),
 	)
 	return BoxData{
 		Title:   fmt.Sprintf("Status for %s", player.ID),

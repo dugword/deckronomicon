@@ -71,12 +71,11 @@ func (e CounterspellEffect) Name() string {
 }
 
 func (e CounterspellEffect) TargetSpec() target.TargetSpec {
-	query, err := buildQuery(QueryOpts(e))
-	if err != nil {
-		panic(fmt.Errorf("failed to build query for Search effect: %w", err))
-	}
 	return target.SpellTargetSpec{
-		Predicate: query,
+		CardTypes:  e.CardTypes,
+		Colors:     e.Colors,
+		Subtypes:   e.Subtypes,
+		ManaValues: e.ManaValues,
 	}
 }
 

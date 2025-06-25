@@ -41,12 +41,20 @@ func canCastSpell(
 			can = false
 		}
 	}
-	if !CanPayCost(cost, card, game, player, ruling) {
+	if !CanPotentiallyPayCost(cost, card, game, player, ruling) {
 		if ruling != nil && ruling.Explain {
-			ruling.Reasons = append(ruling.Reasons, "cannot pay cost for spell: "+cost.Description())
+			ruling.Reasons = append(ruling.Reasons, "cannot potentially pay cost for spell: "+cost.Description())
 		}
 		can = false
 	}
+	/*
+		if !CanPayCost(cost, card, game, player, ruling) {
+			if ruling != nil && ruling.Explain {
+				ruling.Reasons = append(ruling.Reasons, "cannot pay cost for spell: "+cost.Description())
+			}
+			can = false
+		}
+	*/
 	return can
 }
 
