@@ -67,7 +67,7 @@ func TestParseCastSpellCommand(t *testing.T) {
 			}),
 			want: action.CastSpellRequest{
 				CardID: "Card with Target ID",
-				TargetsForEffects: map[action.EffectTargetKey]target.TargetValue{
+				TargetsForEffects: map[target.EffectTargetKey]target.TargetValue{
 					{SourceID: "Card with Target ID", EffectIndex: 0}: {
 						TargetType: target.TargetTypePlayer,
 						TargetID:   playerID,

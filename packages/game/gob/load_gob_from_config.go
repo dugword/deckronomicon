@@ -21,6 +21,7 @@ func LoadPermanentFromConfig(config gobtest.PermanentConfig) Permanent {
 		name:       config.Name,
 		card:       LoadCardFromConfig(config.Owner, config.Card),
 		tapped:     config.Tapped,
+		cardTypes:  config.CardTypes,
 	}
 	// TODO: this is redundant with code elsewhere, consider refactoring
 	// and making a NewAbility function.

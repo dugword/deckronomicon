@@ -1,8 +1,8 @@
 package event
 
 import (
-	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/target"
 )
 
 const (
@@ -47,7 +47,7 @@ type PutCopiedSpellOnStackEvent struct {
 	PlayerID          string
 	SpellID           string
 	FromZone          mtg.Zone
-	EffectWithTargets []gob.EffectWithTarget
+	EffectWithTargets []target.EffectWithTarget
 }
 
 func (e PutCopiedSpellOnStackEvent) EventType() string {
@@ -59,7 +59,7 @@ type PutSpellOnStackEvent struct {
 	PlayerID          string
 	CardID            string
 	FromZone          mtg.Zone
-	EffectWithTargets []gob.EffectWithTarget
+	EffectWithTargets []target.EffectWithTarget
 	Flashback         bool
 }
 
@@ -74,7 +74,7 @@ type PutAbilityOnStackEvent struct {
 	AbilityID         string
 	FromZone          mtg.Zone
 	AbilityName       string
-	EffectWithTargets []gob.EffectWithTarget
+	EffectWithTargets []target.EffectWithTarget
 }
 
 func (e PutAbilityOnStackEvent) EventType() string {

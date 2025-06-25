@@ -1,10 +1,16 @@
 package judge
 
 import (
+	"deckronomicon/packages/engine/effect"
+	"deckronomicon/packages/engine/reducer"
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/gob"
+	"deckronomicon/packages/game/mana"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/target"
+	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/has"
+	"deckronomicon/packages/query/is"
 	"deckronomicon/packages/state"
 	"fmt"
 )
@@ -189,4 +195,34 @@ func GetSplicableCards(
 		splicableCards = append(splicableCards, gob.NewCardInZone(card, mtg.ZoneHand))
 	}
 	return splicableCards, nil
+}
+
+// TODO: This needs some refinement, and checking for edge cases
+func GetAvailableMana(game state.Game, player state.Player) mana.Pool {
+	for _, untappedLands := range game.Battlefield().FindAll(
+		query.And(has.Controller(player.ID()), is.Land(), is.Untapped())) {
+		for _, ability := range untappedLands.ActivatedAbilities() {
+			if !ability.IsManaAbility() {
+				continue
+			}
+			for _, effectSpec := range ability.EffectSpecs() {
+				efct, err := effect.Build(effectSpec)
+				if err != nil {
+					panic(fmt.Errorf("effect %q not found: %w", effectSpec.Name, err))
+				}
+				effectResult, err := efct.Resolve(game, player, nil, target.TargetValue{}, nil)
+				if err != nil {
+					panic(fmt.Errorf("failed to resolve effect %q: %w", effectSpec.Name, err))
+				}
+				for _, event := range effectResult.Events {
+					game, err = reducer.ApplyEvent(game, event)
+					if err != nil {
+						panic(fmt.Errorf("failed to apply event %q: %w", event.EventType(), err))
+					}
+				}
+			}
+		}
+	}
+	player = game.GetPlayer(player.ID())
+	return player.ManaPool()
 }

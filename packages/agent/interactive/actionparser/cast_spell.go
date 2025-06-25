@@ -89,6 +89,7 @@ func parseCastSpellCommand(
 		ReplicateCount:    replicateCount,
 		SpliceCardIDs:     spliceCardIDs,
 		Flashback:         flashback,
+		AutoPayCost:       true, // WARNING: This is turned on for testing, it doesn't work properly yet.,
 	}
 	return request, nil
 }

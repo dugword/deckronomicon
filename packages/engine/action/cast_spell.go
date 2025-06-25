@@ -19,8 +19,10 @@ type CastSpellRequest struct {
 	CardID            string
 	ReplicateCount    int
 	SpliceCardIDs     []string
-	TargetsForEffects map[EffectTargetKey]target.TargetValue
+	TargetsForEffects map[target.EffectTargetKey]target.TargetValue
 	Flashback         bool
+	AutoPayCost       bool
+	Preactions        []ActivateAbilityRequest // Preactions to be executed before casting the spell
 }
 
 func (r CastSpellRequest) Build(string) CastSpellAction {
@@ -30,9 +32,11 @@ func (r CastSpellRequest) Build(string) CastSpellAction {
 type CastSpellAction struct {
 	cardID            string
 	replicateCount    int
-	targetsForEffects map[EffectTargetKey]target.TargetValue
+	targetsForEffects map[target.EffectTargetKey]target.TargetValue
 	spliceCardIDs     []string
 	flashback         bool
+	autoPayCost       bool
+	preactions        []ActivateAbilityRequest // Preactions to be executed before casting the spell
 }
 
 func NewCastSpellAction(
@@ -44,6 +48,8 @@ func NewCastSpellAction(
 		targetsForEffects: request.TargetsForEffects,
 		spliceCardIDs:     request.SpliceCardIDs,
 		flashback:         request.Flashback,
+		autoPayCost:       request.AutoPayCost,
+		preactions:        request.Preactions,
 	}
 }
 
@@ -82,7 +88,7 @@ func (a CastSpellAction) castWithFlashback(game state.Game, player state.Player)
 			ruling.Why(),
 		)
 	}
-	effectWithTargets, err := buildEffectWithTargets(cardToCast.ID(), cardToCast.SpellAbility(), a.targetsForEffects)
+	effectWithTargets, err := target.BuildEffectWithTargets(cardToCast.ID(), cardToCast.SpellAbility(), a.targetsForEffects)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +117,7 @@ func (a CastSpellAction) castFromHand(game state.Game, player state.Player) ([]e
 		return nil, fmt.Errorf("player %q does not have card %q in hand", player.ID(), a.cardID)
 	}
 	var totalCost cost.Cost = cardToCast.ManaCost()
-	effectWithTargets, err := buildEffectWithTargets(cardToCast.ID(), cardToCast.SpellAbility(), a.targetsForEffects)
+	effectWithTargets, err := target.BuildEffectWithTargets(cardToCast.ID(), cardToCast.SpellAbility(), a.targetsForEffects)
 	if err != nil {
 		return nil, err
 	}
@@ -149,24 +155,34 @@ func (a CastSpellAction) castFromHand(game state.Game, player state.Player) ([]e
 			totalCost = cost.CombineCosts(totalCost, replicateCost)
 		}
 	}
-	ruling := judge.Ruling{Explain: true}
-	if !judge.CanCastSpellFromHand(
-		game,
-		player,
-		cardToCast,
-		totalCost,
-		&ruling,
-	) {
-		return nil, fmt.Errorf(
-			"player %q cannot cast card %q from from hand: %s",
-			player.ID(),
-			cardToCast.ID(),
-			ruling.Why(),
-		)
+	fooCostEvents := []event.GameEvent{}
+	if a.autoPayCost {
+		autoPayEvents, err := pay.AutoPay(game, player.ID(), cardToCast, totalCost)
+		if err != nil {
+			return nil, fmt.Errorf("failed to auto pay cost: %w", err)
+		}
+		fooCostEvents = append(fooCostEvents, autoPayEvents...)
+	} else {
+		ruling := judge.Ruling{Explain: true}
+		if !judge.CanCastSpellFromHand(
+			game,
+			player,
+			cardToCast,
+			totalCost,
+			&ruling,
+		) {
+			return nil, fmt.Errorf(
+				"player %q cannot cast card %q from from hand: %s",
+				player.ID(),
+				cardToCast.ID(),
+				ruling.Why(),
+			)
+		}
+		costEvents := pay.PayCost(totalCost, cardToCast, player)
+		fooCostEvents = append(fooCostEvents, costEvents...)
 	}
-	costEvents := pay.PayCost(totalCost, cardToCast, player)
 	events := append(
-		costEvents,
+		fooCostEvents,
 		event.CastSpellEvent{
 			PlayerID: player.ID(),
 			CardID:   cardToCast.ID(),
@@ -180,7 +196,7 @@ func (a CastSpellAction) castFromHand(game state.Game, player state.Player) ([]e
 		},
 	)
 	if a.replicateCount > 0 {
-		effectWithTargets := []gob.EffectWithTarget{{
+		effectWithTargets := []target.EffectWithTarget{{
 			EffectSpec: definition.EffectSpec{
 				Name:      string(mtg.StaticKeywordReplicate),
 				Modifiers: map[string]any{"Count": a.replicateCount},
@@ -211,10 +227,10 @@ func buildSpliceEffectWithCards(
 	player state.Player,
 	cardToCast gob.Card,
 	spliceCardIDs []string,
-	targetsForEffects map[EffectTargetKey]target.TargetValue,
-) ([]gob.EffectWithTarget, []cost.Cost, error) {
+	targetsForEffects map[target.EffectTargetKey]target.TargetValue,
+) ([]target.EffectWithTarget, []cost.Cost, error) {
 	var spliceCosts []cost.Cost
-	var effectWithTargets []gob.EffectWithTarget
+	var effectWithTargets []target.EffectWithTarget
 	for _, spliceCardID := range spliceCardIDs {
 		spliceCard, ok := player.GetCardFromZone(spliceCardID, mtg.ZoneHand)
 		if !ok {
@@ -240,7 +256,7 @@ func buildSpliceEffectWithCards(
 			return nil, nil, fmt.Errorf("card %q does not have splice ability", spliceCardID)
 		}
 		spliceCosts = append(spliceCosts, staticAbilityCost)
-		effectWithSpliceTargets, err := buildEffectWithTargets(
+		effectWithSpliceTargets, err := target.BuildEffectWithTargets(
 			spliceCard.ID(),
 			spliceCard.SpellAbility(),
 			targetsForEffects,

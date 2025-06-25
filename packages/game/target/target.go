@@ -1,6 +1,6 @@
 package target
 
-import "deckronomicon/packages/query"
+import "deckronomicon/packages/game/mtg"
 
 // TODO Maybe target is its own package.
 // Could be a compound type like cost
@@ -60,7 +60,10 @@ func (t PermanentTargetSpec) TargetType() TargetType {
 }
 
 type SpellTargetSpec struct {
-	Predicate query.Predicate
+	CardTypes  []mtg.CardType
+	Colors     []mtg.Color
+	Subtypes   []mtg.Subtype
+	ManaValues []int
 }
 
 func (t SpellTargetSpec) Name() string {

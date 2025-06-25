@@ -8,7 +8,7 @@ import (
 // TODO: Have some way to stringify these interfaces for debugging purposes
 // query.Describe = "match (Creature or Enchantment) and (Blue or Red) and (ManaValue 3 or ManaValue 4)"
 
-// TODO Maybe break this into more specific interfaces
+// Cards, Permanents, Sp
 type Object interface {
 	Controller() string
 	Owner() string
@@ -18,6 +18,7 @@ type Object interface {
 	Name() string
 }
 
+// Cards, Permanents, and Spells are all CardObjects
 type CardObject interface {
 	Object
 	CardTypes() []mtg.CardType
@@ -32,19 +33,6 @@ type StackObject interface {
 	Object
 	SourceID() string
 }
-
-type PermanentObject interface {
-	CardObject
-	IsTapped() bool
-	HasSummoningSickness() bool
-	ManaValue() int
-}
-
-type Card interface{}
-
-type Permanent interface{}
-
-type Ability interface{}
 
 // TODO: I don't like this, but it is a quick way to convert
 // a slice of objects to a slice of Object

@@ -59,7 +59,7 @@ func (e ReplicateEffect) Resolve(
 	if !ok {
 		return EffectResult{}, fmt.Errorf("resolvable with ID %q is %T not a spell", targetValue.TargetID, resolvable)
 	}
-	var effectWithNewTargets []gob.EffectWithTarget
+	var effectWithNewTargets []target.EffectWithTarget
 	for _, effectWithTarget := range spell.EffectWithTargets() {
 		if effectWithTarget.Target.TargetType != target.TargetTypeNone {
 			effectWithNewTargets = append(effectWithNewTargets, effectWithTarget)

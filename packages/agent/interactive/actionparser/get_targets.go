@@ -3,7 +3,6 @@ package actionparser
 import (
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine"
-	"deckronomicon/packages/engine/action"
 	"deckronomicon/packages/engine/effect"
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/gob"
@@ -21,10 +20,10 @@ func getTargetsForEffects(
 	effectSpecs []definition.EffectSpec,
 	game state.Game,
 	agent engine.PlayerAgent,
-) (map[action.EffectTargetKey]target.TargetValue, error) {
-	targetsForEffects := map[action.EffectTargetKey]target.TargetValue{}
+) (map[target.EffectTargetKey]target.TargetValue, error) {
+	targetsForEffects := map[target.EffectTargetKey]target.TargetValue{}
 	for i, effectSpec := range effectSpecs {
-		effectTargetKey := action.EffectTargetKey{
+		effectTargetKey := target.EffectTargetKey{
 			SourceID:    object.ID(),
 			EffectIndex: i,
 		}
@@ -106,13 +105,19 @@ func getPlayerTarget(
 	}, nil
 }
 
+// TODO: Double check this works, I moved it from the counterspell effect
+// and it was not tested here.
 func getSpellTarget(
 	targetSpec target.SpellTargetSpec,
 	object query.Object,
 	game state.Game,
 	agent engine.PlayerAgent,
 ) (target.TargetValue, error) {
-	spells := game.Stack().FindAll(targetSpec.Predicate)
+	query, err := buildQuery(QueryOpts(targetSpec))
+	if err != nil {
+		panic(fmt.Errorf("failed to build query for Search effect: %w", err))
+	}
+	spells := game.Stack().FindAll(query)
 	prompt := choose.ChoicePrompt{
 		Message: "Choose a spell to target",
 		Source:  object,

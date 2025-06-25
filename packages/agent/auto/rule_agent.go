@@ -31,8 +31,8 @@ func (a *RuleBasedAgent) ReportState(game state.Game) {
 	opponent := game.GetOpponent(a.playerID)
 	a.uiBuffer.Update(
 		view.NewGameViewFromState(game),
-		view.NewPlayerViewFromState(player, a.mode),
-		view.NewPlayerViewFromState(opponent, ""),
+		view.NewPlayerViewFromState(game, player, a.mode),
+		view.NewPlayerViewFromState(game, opponent, ""),
 	)
 }
 
@@ -106,7 +106,6 @@ func (a *RuleBasedAgent) GetNextAction(game state.Game) (engine.Action, error) {
 		PlayerID: a.playerID,
 		Mode:     a.mode,
 	}
-
 	for _, mode := range a.strategy.Modes {
 		if mode.Name == a.mode {
 			continue // Skip the current mode
@@ -124,7 +123,6 @@ func (a *RuleBasedAgent) GetNextAction(game state.Game) (engine.Action, error) {
 		}
 		matchedRule = rule.Name
 		var err error
-		fmt.Println("Matched rule:", matchedRule)
 		act, err = rule.Then.Resolve(&ctx)
 		if err != nil {
 			fmt.Printf("Error resolving action for rule %s: %v\n", rule.Name, err)
