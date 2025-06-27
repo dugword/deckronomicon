@@ -4,7 +4,7 @@ Color:
   - U
 ManaCost: '{2}{U}'
 Name: Pieces of the Puzzle
-Effects:
+SpellAbility:
   - Name: LookAndChoose
     Modifiers:
       Look: 5

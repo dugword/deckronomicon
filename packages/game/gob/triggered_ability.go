@@ -1,30 +1,30 @@
 package gob
 
-/*
-func BuildReplicateAbility(card *Card, replicateCount int) *TriggeredAbility {
-	handler := func(state *GameState, player *Player) error {
-		for range replicateCount {
-			spell, err := NewSpell(card)
-			if err != nil {
-				return fmt.Errorf("failed to create spell from %s: %w", card.Name(), err)
-			}
-			state.Stack.Add(spell)
-		}
-		return nil
-	}
-	tags := []EffectTag{{Key: "Count", Value: strconv.Itoa(replicateCount)}}
-	description := fmt.Sprintf("Replicate %s %d times", card.Name(), replicateCount)
-	replicateAbility := TriggeredAbility{
-		name: "Replicate Trigger",
-		id:   GetNextID(),
-		Effects: []Effect{
-			{
-				Apply:       handler,
-				Tags:        tags,
-				Description: description,
-			},
-		},
-	}
-	return &replicateAbility
+import (
+	"deckronomicon/packages/game/effect"
+	"deckronomicon/packages/game/mtg"
+)
+
+type TriggeredAbility struct {
+	ID         string
+	SourceID   string
+	SourceName string
+	PlayerID   string
+	Duration   mtg.Duration
+	Effects    []effect.Effect
+	Trigger    Trigger
+	OneShot    bool
 }
-*/
+
+type Trigger struct {
+	EventType string
+	Filter    Filter
+}
+
+// todo this is common
+type Filter struct {
+	CardTypes  []mtg.CardType
+	Colors     []mtg.Color
+	Subtypes   []mtg.Subtype
+	ManaValues []int
+}

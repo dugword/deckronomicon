@@ -3,9 +3,9 @@ package evaluator_test
 import (
 	"deckronomicon/packages/agent/auto/strategy/evalstate"
 	"deckronomicon/packages/agent/auto/strategy/evaluator"
+	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/state"
-	"deckronomicon/packages/state/statetest"
 	"testing"
 )
 
@@ -178,8 +178,8 @@ func TestStep(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			ctx := evalstate.EvalState{
-				Game: state.LoadGameFromConfig(statetest.GameConfig{
-					Step: test.is,
+				Game: state.NewGameFromDefinition(definition.Game{
+					Step: string(test.is),
 				}),
 			}
 			got := test.when.Evaluate(&ctx)
@@ -225,8 +225,8 @@ func TestLandPlayedThisTurn(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			ctx := evalstate.EvalState{
-				Game: state.LoadGameFromConfig(statetest.GameConfig{
-					Players: []statetest.PlayerConfig{{
+				Game: state.NewGameFromDefinition(definition.Game{
+					Players: []definition.Player{{
 						LandPlayedThisTurn: test.is,
 					}},
 				}),

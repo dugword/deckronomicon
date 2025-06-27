@@ -6,7 +6,7 @@ Color:
   - U
 ManaCost: '{1}{U}'
 Name: Peer Through Depths
-Effects:
+SpellAbility:
   - Name: LookAndChoose
     Modifiers:
       Look: 5

@@ -3,9 +3,8 @@ package action
 import (
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/engine/resenv"
-	"deckronomicon/packages/game/definition"
+	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/mtg"
-	"deckronomicon/packages/game/target"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -32,12 +31,12 @@ func TestCastSpellActionComplete(t *testing.T) {
 			name: "with effects",
 			action: CastSpellAction{
 				cardID: "Card with Effects ID",
-				targetsForEffects: map[target.EffectTargetKey]target.TargetValue{
-					{SourceID: "Card with Effects ID", EffectIndex: 0}: target.TargetValue{
-						TargetID: "Target Object ID",
+				targetsForEffects: map[effect.EffectTargetKey]effect.Target{
+					{SourceID: "Card with Effects ID", EffectIndex: 0}: effect.Target{
+						ID: "Target Object ID",
 					},
-					{SourceID: "Card with Effects ID", EffectIndex: 1}: target.TargetValue{
-						TargetID: "Target Player ID",
+					{SourceID: "Card with Effects ID", EffectIndex: 1}: effect.Target{
+						ID: "Another Target Object ID",
 					},
 				},
 			},
@@ -51,21 +50,19 @@ func TestCastSpellActionComplete(t *testing.T) {
 					PlayerID: "Test Player",
 					CardID:   "Card with Effects ID",
 					FromZone: mtg.ZoneHand,
-					EffectWithTargets: []target.EffectWithTarget{
+					EffectWithTargets: []effect.EffectWithTarget{
 						{
-							EffectSpec: definition.EffectSpec{
-								Name:      "Effect 1",
-								Modifiers: map[string]any{"Target": "Permanent"},
+							Effect: effect.TargetEffect{
+								Target: "Permanent",
 							},
-							Target:   target.TargetValue{TargetID: "Target Object ID"},
+							Target:   effect.Target{ID: "Target Object ID"},
 							SourceID: "Card with Effects ID",
 						},
 						{
-							EffectSpec: definition.EffectSpec{
-								Name:      "Effect 2",
-								Modifiers: map[string]any{"Target": "Player"},
+							Effect: effect.TargetEffect{
+								Target: "Permanent",
 							},
-							Target:   target.TargetValue{TargetID: "Target Player ID"},
+							Target:   effect.Target{ID: "Another Target Object ID"},
 							SourceID: "Card with Effects ID",
 						},
 					},
@@ -87,9 +84,9 @@ func TestCastSpellActionComplete(t *testing.T) {
 			name: "with spell that has targets",
 			action: CastSpellAction{
 				cardID: "Card with Target ID",
-				targetsForEffects: map[target.EffectTargetKey]target.TargetValue{
-					{SourceID: "Card with Target ID", EffectIndex: 0}: target.TargetValue{
-						TargetID: playerID,
+				targetsForEffects: map[effect.EffectTargetKey]effect.Target{
+					{SourceID: "Card with Target ID", EffectIndex: 0}: effect.Target{
+						ID: playerID,
 					},
 				},
 			},
@@ -103,13 +100,12 @@ func TestCastSpellActionComplete(t *testing.T) {
 					PlayerID: "Test Player",
 					CardID:   "Card with Target ID",
 					FromZone: mtg.ZoneHand,
-					EffectWithTargets: []target.EffectWithTarget{
+					EffectWithTargets: []effect.EffectWithTarget{
 						{
-							EffectSpec: definition.EffectSpec{
-								Name:      "Target",
-								Modifiers: map[string]any{"Target": "Player"},
+							Effect: effect.TargetEffect{
+								Target: "Permanent",
 							},
-							Target:   target.TargetValue{TargetID: "Test Player"},
+							Target:   effect.Target{ID: "Test Player"},
 							SourceID: "Card with Target ID",
 						},
 					},
@@ -130,14 +126,13 @@ func TestCastSpellActionComplete(t *testing.T) {
 					SourceID:    "Card with Replicate ID",
 					FromZone:    "Hand",
 					AbilityName: "Replicate",
-					EffectWithTargets: []target.EffectWithTarget{
+					EffectWithTargets: []effect.EffectWithTarget{
 						{
-							EffectSpec: definition.EffectSpec{
-								Name:      string(mtg.StaticKeywordReplicate),
-								Modifiers: map[string]any{"Count": 3},
+							Effect: effect.Replicate{
+								Count: 3,
 							},
-							Target: target.TargetValue{
-								TargetID: "Card with Replicate ID",
+							Target: effect.Target{
+								ID: "Card with Replicate ID",
 							},
 							SourceID: "Card with Replicate ID",
 						},

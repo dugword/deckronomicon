@@ -1,9 +1,7 @@
 package add
 
-import (
-	"deckronomicon/packages/query"
-)
+import "deckronomicon/packages/game/gob"
 
-func Item[T query.Object](objects []T, objs ...T) (newObjects []T) {
+func Item[T gob.Object](objects []T, objs ...T) (newObjects []T) {
 	return append(objects[:], objs...)
 }

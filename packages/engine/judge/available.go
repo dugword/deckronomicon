@@ -1,13 +1,14 @@
 package judge
 
 import (
-	"deckronomicon/packages/engine/effect"
 	"deckronomicon/packages/engine/reducer"
+	"deckronomicon/packages/engine/resolver"
 	"deckronomicon/packages/game/cost"
+	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mana"
 	"deckronomicon/packages/game/mtg"
-	"deckronomicon/packages/game/target"
+	"deckronomicon/packages/game/staticability"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/has"
 	"deckronomicon/packages/query/is"
@@ -15,11 +16,12 @@ import (
 	"fmt"
 )
 
-// TODO: For function signatures think about when to use little > big vs big > little
-// e.g. game, playerID, zone, card vs card, zone playerID, game
+// TODO: I really like this idea,
+// It feels line with Get Available Cards to play, cast, activate
+func GetTargetsForEffect() bool {
+	return false
+}
 
-// TODO: This probably shouldn't be in Judge, maybe judge is just boolean functions
-// that return true or false, and this should be where it's used, like in the agent functions
 func GetLandsAvailableToPlay(game state.Game, player state.Player, ruling *Ruling) []gob.CardInZone {
 	var availableCards []gob.CardInZone
 	for _, card := range player.Hand().GetAll() {
@@ -56,7 +58,7 @@ func GetSpellsAvailableToCast(game state.Game, player state.Player, ruling *Ruli
 		if ruling != nil && ruling.Explain {
 			ruling.Reasons = append(ruling.Reasons, fmt.Sprintf("[card %q]: ", card.Name()))
 		}
-		flashbackCost, ok := card.GetStaticAbilityCost(mtg.StaticKeywordFlashback)
+		staticAbility, ok := card.StaticAbility(mtg.StaticKeywordFlashback)
 		if !ok {
 			if ruling != nil && ruling.Explain {
 				ruling.Reasons = append(
@@ -66,7 +68,17 @@ func GetSpellsAvailableToCast(game state.Game, player state.Player, ruling *Ruli
 			}
 			continue
 		}
-		if CanCastSpellWithFlashback(game, player, card, flashbackCost, ruling) {
+		flashbackAbility, ok := staticAbility.(staticability.Flashback)
+		if !ok {
+			if ruling != nil && ruling.Explain {
+				ruling.Reasons = append(
+					ruling.Reasons,
+					fmt.Sprintf("card %s does not have flashback ability", card.Name()),
+				)
+			}
+			continue
+		}
+		if CanCastSpellWithFlashback(game, player, card, flashbackAbility.Cost, ruling) {
 			availableCards = append(availableCards, gob.NewCardInZone(card, mtg.ZoneGraveyard))
 		}
 	}
@@ -121,55 +133,40 @@ func GetSplicableCards(
 		if ruling != nil && ruling.Explain {
 			ruling.Reasons = append(ruling.Reasons, fmt.Sprintf("[card %q]: ", card.Name()))
 		}
-		modifiers, ok := card.GetStaticAbilityModifiers(mtg.StaticKeywordSplice)
-		if !ok {
-			continue
-		}
-		subtypeString, ok := modifiers["Subtype"].(string)
+		spliceAbilityRaw, ok := card.StaticAbility(mtg.StaticKeywordSplice)
 		if !ok {
 			if ruling != nil && ruling.Explain {
 				ruling.Reasons = append(
 					ruling.Reasons,
-					fmt.Sprintf("cannot splice card %s onto %s: card does not have subtype", card.Name(), cardToCast.Card().Name()),
-				)
-			}
-			continue
-		}
-		subtype, ok := mtg.StringToSubtype(subtypeString)
-		if !ok {
-			if ruling != nil && ruling.Explain {
-				ruling.Reasons = append(
-					ruling.Reasons,
-					fmt.Sprintf("cannot splice card %s onto %s: card has invalid subtype %s",
+					fmt.Sprintf("cannot splice card %s onto %s: card does not have splice ability",
 						card.Name(),
 						cardToCast.Card().Name(),
-						subtypeString,
 					),
 				)
 			}
 			continue
 		}
-		if !cardToCast.Match(has.Subtype(subtype)) {
+		spliceAbility, ok := spliceAbilityRaw.(staticability.Splice)
+		if !ok {
+			if ruling != nil && ruling.Explain {
+				ruling.Reasons = append(
+					ruling.Reasons,
+					fmt.Sprintf("cannot splice card %s onto %s: splice ability is not a Splice ability",
+						card.Name(),
+						cardToCast.Card().Name(),
+					),
+				)
+			}
+			continue
+		}
+		if !cardToCast.Match(has.Subtype(spliceAbility.Subtype)) {
 			if ruling != nil && ruling.Explain {
 				ruling.Reasons = append(
 					ruling.Reasons,
 					fmt.Sprintf("cannot splice card %s onto %s: card does not have subtype %s",
 						card.Name(),
 						cardToCast.Card().Name(),
-						subtype,
-					),
-				)
-			}
-			continue
-		}
-		spliceCost, ok := card.GetStaticAbilityCost(mtg.StaticKeywordSplice)
-		if !ok {
-			if ruling != nil && ruling.Explain {
-				ruling.Reasons = append(
-					ruling.Reasons,
-					fmt.Sprintf("cannot splice card %s onto %s: card does not have a splice cost",
-						card.Name(),
-						cardToCast.Card().Name(),
+						spliceAbility.Subtype,
 					),
 				)
 			}
@@ -177,7 +174,7 @@ func GetSplicableCards(
 		}
 		totalCost := cost.CombineCosts(
 			cardToCast.Card().ManaCost(),
-			spliceCost,
+			spliceAbility.Cost,
 		)
 		if !CanPayCost(totalCost, card, game, player, ruling) {
 			if ruling != nil && ruling.Explain {
@@ -199,22 +196,22 @@ func GetSplicableCards(
 
 // TODO: This needs some refinement, and checking for edge cases
 func GetAvailableMana(game state.Game, player state.Player) mana.Pool {
-	for _, untappedLands := range game.Battlefield().FindAll(
+	for _, untappedLand := range game.Battlefield().FindAll(
 		query.And(has.Controller(player.ID()), is.Land(), is.Untapped())) {
-		for _, ability := range untappedLands.ActivatedAbilities() {
-			if !ability.IsManaAbility() {
+		for _, ability := range untappedLand.ActivatedAbilities() {
+			if !ability.Match(is.ManaAbility()) {
 				continue
 			}
-			for _, effectSpec := range ability.EffectSpecs() {
-				efct, err := effect.Build(effectSpec)
-				if err != nil {
-					panic(fmt.Errorf("effect %q not found: %w", effectSpec.Name, err))
+			for _, efct := range ability.Effects() {
+				addMana, ok := efct.(effect.AddMana)
+				if !ok {
+					continue
 				}
-				effectResult, err := efct.Resolve(game, player, nil, target.TargetValue{}, nil)
+				result, err := resolver.ResolveAddMana(game, player.ID(), addMana)
 				if err != nil {
-					panic(fmt.Errorf("failed to resolve effect %q: %w", effectSpec.Name, err))
+					panic(fmt.Errorf("failed to resolve add mana effect: %w", err))
 				}
-				for _, event := range effectResult.Events {
+				for _, event := range result.Events {
 					game, err = reducer.ApplyEvent(game, event)
 					if err != nil {
 						panic(fmt.Errorf("failed to apply event %q: %w", event.EventType(), err))

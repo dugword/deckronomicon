@@ -1,8 +1,8 @@
 package main
 
 import (
-	"deckronomicon/packages/engine/effect"
 	"deckronomicon/packages/game/definition"
+	"deckronomicon/packages/game/effect"
 	"errors"
 	"fmt"
 	"os"
@@ -27,7 +27,6 @@ func Run() error {
 			errs = append(errs, validationErrors...)
 		}
 	}
-
 	if len(errs) > 0 {
 		return errors.Join(errs...)
 	}
@@ -43,8 +42,8 @@ func validateCard(card definition.Card) []error {
 	if len(card.CardTypes) == 0 {
 		errs = append(errs, fmt.Errorf("at least one card type is required"))
 	}
-	for _, effectSpec := range card.SpellAbilitySpec {
-		if _, err := effect.Build(effectSpec); err != nil {
+	for _, effectDefinition := range card.SpellAbility {
+		if _, err := effect.New(effectDefinition); err != nil {
 			errs = append(errs, fmt.Errorf("invalid effect spec in card %q: %w", card.Name, err))
 			continue
 		}

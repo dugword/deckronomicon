@@ -3,40 +3,35 @@ package actionparser
 import (
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine"
-	"deckronomicon/packages/engine/effect"
-	"deckronomicon/packages/game/definition"
+	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/gob"
-	"deckronomicon/packages/game/target"
-	"deckronomicon/packages/query"
+	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/state"
 	"fmt"
 )
 
+// TODO: Move to judge
 // TODO: This probably should return 3 values instead of a map,
 // key, value, error
 // and then build the map in the caller.
 func getTargetsForEffects(
-	object query.Object,
-	effectSpecs []definition.EffectSpec,
+	object gob.Object,
+	Effects []effect.Effect,
 	game state.Game,
 	agent engine.PlayerAgent,
-) (map[target.EffectTargetKey]target.TargetValue, error) {
-	targetsForEffects := map[target.EffectTargetKey]target.TargetValue{}
-	for i, effectSpec := range effectSpecs {
-		effectTargetKey := target.EffectTargetKey{
+) (map[effect.EffectTargetKey]effect.Target, error) {
+	targetsForEffects := map[effect.EffectTargetKey]effect.Target{}
+	for i, efct := range Effects {
+		effectTargetKey := effect.EffectTargetKey{
 			SourceID:    object.ID(),
 			EffectIndex: i,
 		}
-		efct, err := effect.Build(effectSpec)
-		if err != nil {
-			return nil, fmt.Errorf("effect %q not found: %w", effectSpec.Name, err)
-		}
 		switch targetSpec := efct.TargetSpec().(type) {
-		case nil, target.NoneTargetSpec:
-			targetsForEffects[effectTargetKey] = target.TargetValue{
-				TargetType: target.TargetTypeNone,
+		case nil, effect.NoneTargetSpec:
+			targetsForEffects[effectTargetKey] = effect.Target{
+				Type: mtg.TargetTypeNone,
 			}
-		case target.PlayerTargetSpec:
+		case effect.PlayerTargetSpec:
 			playerTarget, err := getPlayerTarget(
 				object,
 				game,
@@ -46,7 +41,7 @@ func getTargetsForEffects(
 				return nil, fmt.Errorf("failed to get player target: %w", err)
 			}
 			targetsForEffects[effectTargetKey] = playerTarget
-		case target.SpellTargetSpec:
+		case effect.SpellTargetSpec:
 			spellTarget, err := getSpellTarget(
 				targetSpec,
 				object,
@@ -57,7 +52,7 @@ func getTargetsForEffects(
 				return nil, fmt.Errorf("failed to get spell target: %w", err)
 			}
 			targetsForEffects[effectTargetKey] = spellTarget
-		case target.PermanentTargetSpec:
+		case effect.PermanentTargetSpec:
 			permanentTarget, err := getPermanentTarget(
 				targetSpec,
 				object,
@@ -71,15 +66,16 @@ func getTargetsForEffects(
 		default:
 			return nil, fmt.Errorf("unsupported target spec type %T", targetSpec)
 		}
+
 	}
 	return targetsForEffects, nil
 }
 
 func getPlayerTarget(
-	object query.Object,
+	object gob.Object,
 	game state.Game,
 	agent engine.PlayerAgent,
-) (target.TargetValue, error) {
+) (effect.Target, error) {
 	prompt := choose.ChoicePrompt{
 		Message: "Choose a player to target",
 		Source:  object,
@@ -89,30 +85,30 @@ func getPlayerTarget(
 	}
 	choiceResults, err := agent.Choose(prompt)
 	if err != nil {
-		return target.TargetValue{}, fmt.Errorf("failed to get choice results: %w", err)
+		return effect.Target{}, fmt.Errorf("failed to get choice results: %w", err)
 	}
 	selected, ok := choiceResults.(choose.ChooseOneResults)
 	if !ok {
-		return target.TargetValue{}, fmt.Errorf("expected a single choice result")
+		return effect.Target{}, fmt.Errorf("expected a single choice result")
 	}
 	selectedPlayer, ok := selected.Choice.(state.Player)
 	if !ok {
-		return target.TargetValue{}, fmt.Errorf("selected choice is not a player")
+		return effect.Target{}, fmt.Errorf("selected choice is not a player")
 	}
-	return target.TargetValue{
-		TargetType: target.TargetTypePlayer,
-		TargetID:   selectedPlayer.ID(),
+	return effect.Target{
+		Type: mtg.TargetTypePlayer,
+		ID:   selectedPlayer.ID(),
 	}, nil
 }
 
 // TODO: Double check this works, I moved it from the counterspell effect
 // and it was not tested here.
 func getSpellTarget(
-	targetSpec target.SpellTargetSpec,
-	object query.Object,
+	targetSpec effect.SpellTargetSpec,
+	object gob.Object,
 	game state.Game,
 	agent engine.PlayerAgent,
-) (target.TargetValue, error) {
+) (effect.Target, error) {
 	query, err := buildQuery(QueryOpts(targetSpec))
 	if err != nil {
 		panic(fmt.Errorf("failed to build query for Search effect: %w", err))
@@ -127,28 +123,28 @@ func getSpellTarget(
 	}
 	choiceResults, err := agent.Choose(prompt)
 	if err != nil {
-		return target.TargetValue{}, fmt.Errorf("failed to get choice results: %w", err)
+		return effect.Target{}, fmt.Errorf("failed to get choice results: %w", err)
 	}
 	selected, ok := choiceResults.(choose.ChooseOneResults)
 	if !ok {
-		return target.TargetValue{}, fmt.Errorf("expected a single choice result")
+		return effect.Target{}, fmt.Errorf("expected a single choice result")
 	}
 	selectedSpell, ok := selected.Choice.(gob.Spell)
 	if !ok {
-		return target.TargetValue{}, fmt.Errorf("selected choice is not a spell")
+		return effect.Target{}, fmt.Errorf("selected choice is not a spell")
 	}
-	return target.TargetValue{
-		TargetType: target.TargetTypeSpell,
-		TargetID:   selectedSpell.ID(),
+	return effect.Target{
+		Type: mtg.TargetTypeSpell,
+		ID:   selectedSpell.ID(),
 	}, nil
 }
 
 func getPermanentTarget(
-	targetSpec target.PermanentTargetSpec,
-	object query.Object,
+	targetSpec effect.PermanentTargetSpec,
+	object gob.Object,
 	game state.Game,
 	agent engine.PlayerAgent,
-) (target.TargetValue, error) {
+) (effect.Target, error) {
 	permanents := game.Battlefield().GetAll()
 	prompt := choose.ChoicePrompt{
 		Message: "Choose a permanent to target",
@@ -159,18 +155,18 @@ func getPermanentTarget(
 	}
 	choiceResults, err := agent.Choose(prompt)
 	if err != nil {
-		return target.TargetValue{}, fmt.Errorf("failed to get choice results: %w", err)
+		return effect.Target{}, fmt.Errorf("failed to get choice results: %w", err)
 	}
 	selected, ok := choiceResults.(choose.ChooseOneResults)
 	if !ok {
-		return target.TargetValue{}, fmt.Errorf("expected a single choice result")
+		return effect.Target{}, fmt.Errorf("expected a single choice result")
 	}
 	selectedPermanent, ok := selected.Choice.(gob.Permanent)
 	if !ok {
-		return target.TargetValue{}, fmt.Errorf("selected choice is not a permanent")
+		return effect.Target{}, fmt.Errorf("selected choice is not a permanent")
 	}
-	return target.TargetValue{
-		TargetType: target.TargetTypePermanent,
-		TargetID:   selectedPermanent.ID(),
+	return effect.Target{
+		Type: mtg.TargetTypePermanent,
+		ID:   selectedPermanent.ID(),
 	}, nil
 }

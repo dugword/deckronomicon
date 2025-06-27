@@ -2,10 +2,9 @@ package reducer
 
 import (
 	"deckronomicon/packages/engine/event"
-	"deckronomicon/packages/game/gob/gobtest"
+	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/mana"
 	"deckronomicon/packages/state"
-	"deckronomicon/packages/state/statetest"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -27,11 +26,11 @@ func TestApplyGameStateChangeEvent(t *testing.T) {
 				Color:    mana.Blue,
 				Amount:   2,
 			},
-			game: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{ID: playerID}},
+			game: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{ID: playerID}},
 			}),
-			want: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{
+			want: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{
 					ID:       playerID,
 					ManaPool: "{U}{U}",
 				}},
@@ -42,12 +41,12 @@ func TestApplyGameStateChangeEvent(t *testing.T) {
 			evnt: event.CheatEnabledEvent{
 				PlayerID: playerID,
 			},
-			game: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{ID: playerID}},
+			game: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{ID: playerID}},
 			}),
-			want: state.LoadGameFromConfig(statetest.GameConfig{
+			want: state.NewGameFromDefinition(definition.Game{
 				CheatsEnabled: true,
-				Players: []statetest.PlayerConfig{{
+				Players: []definition.Player{{
 					ID: playerID,
 				}},
 			}),
@@ -58,19 +57,19 @@ func TestApplyGameStateChangeEvent(t *testing.T) {
 				PlayerID: playerID,
 				CardID:   "Discarded Card ID",
 			},
-			game: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{
+			game: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{
 					ID: playerID,
-					Hand: statetest.HandConfig{
-						Cards: []gobtest.CardConfig{{ID: "Discarded Card ID"}},
+					Hand: definition.Hand{
+						Cards: []definition.Card{{ID: "Discarded Card ID"}},
 					},
 				}},
 			}),
-			want: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{
+			want: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{
 					ID: playerID,
-					Graveyard: statetest.GraveyardConfig{
-						Cards: []gobtest.CardConfig{{ID: "Discarded Card ID"}},
+					Graveyard: definition.Graveyard{
+						Cards: []definition.Card{{ID: "Discarded Card ID"}},
 					},
 				}},
 			}),
@@ -80,19 +79,19 @@ func TestApplyGameStateChangeEvent(t *testing.T) {
 			evnt: event.DrawCardEvent{
 				PlayerID: playerID,
 			},
-			game: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{
+			game: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{
 					ID: playerID,
-					Library: statetest.LibraryConfig{
-						Cards: []gobtest.CardConfig{{ID: "Drawn Card ID"}},
+					Library: definition.Library{
+						Cards: []definition.Card{{ID: "Drawn Card ID"}},
 					},
 				}},
 			}),
-			want: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{
+			want: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{
 					ID: playerID,
-					Hand: statetest.HandConfig{
-						Cards: []gobtest.CardConfig{{ID: "Drawn Card ID"}},
+					Hand: definition.Hand{
+						Cards: []definition.Card{{ID: "Drawn Card ID"}},
 					},
 				}},
 			}),
@@ -103,11 +102,11 @@ func TestApplyGameStateChangeEvent(t *testing.T) {
 				PlayerID: playerID,
 				Amount:   5,
 			},
-			game: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{ID: playerID, Life: 10}},
+			game: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{ID: playerID, Life: 10}},
 			}),
-			want: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{ID: playerID, Life: 15}},
+			want: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{ID: playerID, Life: 15}},
 			}),
 		},
 		{
@@ -116,11 +115,11 @@ func TestApplyGameStateChangeEvent(t *testing.T) {
 				PlayerID: playerID,
 				Amount:   3,
 			},
-			game: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{ID: playerID, Life: 10}},
+			game: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{ID: playerID, Life: 10}},
 			}),
-			want: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{ID: playerID, Life: 7}},
+			want: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{ID: playerID, Life: 7}},
 			}),
 		},
 		{
@@ -130,19 +129,19 @@ func TestApplyGameStateChangeEvent(t *testing.T) {
 				CardID:   "Card ID to Hand",
 				FromZone: "Library",
 			},
-			game: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{
+			game: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{
 					ID: playerID,
-					Library: statetest.LibraryConfig{
-						Cards: []gobtest.CardConfig{{ID: "Card ID to Hand"}},
+					Library: definition.Library{
+						Cards: []definition.Card{{ID: "Card ID to Hand"}},
 					},
 				}},
 			}),
-			want: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{
+			want: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{
 					ID: playerID,
-					Hand: statetest.HandConfig{
-						Cards: []gobtest.CardConfig{{ID: "Card ID to Hand"}},
+					Hand: definition.Hand{
+						Cards: []definition.Card{{ID: "Card ID to Hand"}},
 					},
 				}},
 			}),
@@ -154,19 +153,19 @@ func TestApplyGameStateChangeEvent(t *testing.T) {
 				CardID:   "Card ID to Graveyard",
 				FromZone: "Hand",
 			},
-			game: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{
+			game: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{
 					ID: playerID,
-					Hand: statetest.HandConfig{
-						Cards: []gobtest.CardConfig{{ID: "Card ID to Graveyard"}},
+					Hand: definition.Hand{
+						Cards: []definition.Card{{ID: "Card ID to Graveyard"}},
 					},
 				}},
 			}),
-			want: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{
+			want: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{
 					ID: playerID,
-					Graveyard: statetest.GraveyardConfig{
-						Cards: []gobtest.CardConfig{{ID: "Card ID to Graveyard"}},
+					Graveyard: definition.Graveyard{
+						Cards: []definition.Card{{ID: "Card ID to Graveyard"}},
 					},
 				}},
 			}),
@@ -178,19 +177,19 @@ func TestApplyGameStateChangeEvent(t *testing.T) {
 				CardID:   "Card ID to Bottom of Library",
 				FromZone: "Hand",
 			},
-			game: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{
+			game: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{
 					ID: playerID,
-					Hand: statetest.HandConfig{
-						Cards: []gobtest.CardConfig{{ID: "Card ID to Bottom of Library"}},
+					Hand: definition.Hand{
+						Cards: []definition.Card{{ID: "Card ID to Bottom of Library"}},
 					},
 				}},
 			}),
-			want: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{
+			want: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{
 					ID: playerID,
-					Library: statetest.LibraryConfig{
-						Cards: []gobtest.CardConfig{{ID: "Card ID to Bottom of Library"}},
+					Library: definition.Library{
+						Cards: []definition.Card{{ID: "Card ID to Bottom of Library"}},
 					},
 				}},
 			}),
@@ -202,19 +201,19 @@ func TestApplyGameStateChangeEvent(t *testing.T) {
 				CardID:   "Card ID to Top of Library",
 				FromZone: "Hand",
 			},
-			game: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{
+			game: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{
 					ID: playerID,
-					Hand: statetest.HandConfig{
-						Cards: []gobtest.CardConfig{{ID: "Card ID to Top of Library"}},
+					Hand: definition.Hand{
+						Cards: []definition.Card{{ID: "Card ID to Top of Library"}},
 					},
 				}},
 			}),
-			want: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{
+			want: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{
 					ID: playerID,
-					Library: statetest.LibraryConfig{
-						Cards: []gobtest.CardConfig{{ID: "Card ID to Top of Library"}},
+					Library: definition.Library{
+						Cards: []definition.Card{{ID: "Card ID to Top of Library"}},
 					},
 				}},
 			}),
@@ -226,25 +225,27 @@ func TestApplyGameStateChangeEvent(t *testing.T) {
 				CardID:   "Card ID to Battlefield",
 				FromZone: "Hand",
 			},
-			game: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{
+			game: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{
 					ID: playerID,
-					Hand: statetest.HandConfig{
-						Cards: []gobtest.CardConfig{{ID: "Card ID to Battlefield"}},
+					Hand: definition.Hand{
+						Cards: []definition.Card{{ID: "Card ID to Battlefield"}},
 					},
 				}},
 			}),
-			want: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{
+			want: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{
 					ID: playerID,
 				}},
-				Battlefield: statetest.BattlefieldConfig{
-					Permanents: []gobtest.PermanentConfig{{
-						ID:         "1",
-						Controller: playerID,
-						Owner:      playerID,
-						Card:       gobtest.CardConfig{ID: "Card ID to Battlefield"},
-					}},
+				Battlefield: definition.Battlefield{
+					Permanents: []definition.Permanent{
+						{
+							ID:         "1",
+							Controller: playerID,
+							Owner:      playerID,
+							Card:       definition.Card{ID: "Card ID to Battlefield"},
+						},
+					},
 				},
 			}),
 		},
@@ -253,12 +254,12 @@ func TestApplyGameStateChangeEvent(t *testing.T) {
 			evnt: event.SetActivePlayerEvent{
 				PlayerID: playerID,
 			},
-			game: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{ID: playerID}},
+			game: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{ID: playerID}},
 			}),
-			want: state.LoadGameFromConfig(statetest.GameConfig{
-				ActivePlayerIdx: 0,
-				Players:         []statetest.PlayerConfig{{ID: playerID}},
+			want: state.NewGameFromDefinition(definition.Game{
+				ActivePlayerID: playerID,
+				Players:        []definition.Player{{ID: playerID}},
 			}),
 		},
 		{
@@ -273,11 +274,11 @@ func TestApplyGameStateChangeEvent(t *testing.T) {
 					"Card ID 2",
 				},
 			},
-			game: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{
+			game: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{
 					ID: playerID,
-					Library: statetest.LibraryConfig{
-						Cards: []gobtest.CardConfig{
+					Library: definition.Library{
+						Cards: []definition.Card{
 							{ID: "Card ID 1"},
 							{ID: "Card ID 2"},
 							{ID: "Card ID 3"},
@@ -287,11 +288,11 @@ func TestApplyGameStateChangeEvent(t *testing.T) {
 					},
 				}},
 			}),
-			want: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{
+			want: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{
 					ID: playerID,
-					Library: statetest.LibraryConfig{
-						Cards: []gobtest.CardConfig{
+					Library: definition.Library{
+						Cards: []definition.Card{
 							{ID: "Card ID 4"},
 							{ID: "Card ID 3"},
 							{ID: "Card ID 5"},
@@ -309,14 +310,14 @@ func TestApplyGameStateChangeEvent(t *testing.T) {
 				ManaString: "{U}{U}",
 			},
 
-			game: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{
+			game: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{
 					ID:       playerID,
 					ManaPool: "{U}{U}{U}",
 				}},
 			}),
-			want: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{
+			want: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{
 					ID:       playerID,
 					ManaPool: "{U}",
 				}},
@@ -328,20 +329,24 @@ func TestApplyGameStateChangeEvent(t *testing.T) {
 				PlayerID:    playerID,
 				PermanentID: "Permanent ID to Tap",
 			},
-			game: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{
+			game: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{
 					ID: playerID,
 				}},
-				Battlefield: statetest.BattlefieldConfig{
-					Permanents: []gobtest.PermanentConfig{{ID: "Permanent ID to Tap"}},
+				Battlefield: definition.Battlefield{
+					Permanents: []definition.Permanent{
+						{ID: "Permanent ID to Tap"},
+					},
 				},
 			}),
-			want: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{
+			want: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{
 					ID: playerID,
 				}},
-				Battlefield: statetest.BattlefieldConfig{
-					Permanents: []gobtest.PermanentConfig{{ID: "Permanent ID to Tap", Tapped: true}},
+				Battlefield: definition.Battlefield{
+					Permanents: []definition.Permanent{
+						{ID: "Permanent ID to Tap", Tapped: true},
+					},
 				},
 			}),
 		},
@@ -351,20 +356,24 @@ func TestApplyGameStateChangeEvent(t *testing.T) {
 				PlayerID:    playerID,
 				PermanentID: "Permanent ID to Untap",
 			},
-			game: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{
+			game: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{
 					ID: playerID,
 				}},
-				Battlefield: statetest.BattlefieldConfig{
-					Permanents: []gobtest.PermanentConfig{{ID: "Permanent ID to Untap", Tapped: true}},
+				Battlefield: definition.Battlefield{
+					Permanents: []definition.Permanent{
+						{ID: "Permanent ID to Untap", Tapped: true},
+					},
 				},
 			}),
-			want: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{
+			want: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{
 					ID: playerID,
 				}},
-				Battlefield: statetest.BattlefieldConfig{
-					Permanents: []gobtest.PermanentConfig{{ID: "Permanent ID to Untap", Tapped: false}},
+				Battlefield: definition.Battlefield{
+					Permanents: []definition.Permanent{
+						{ID: "Permanent ID to Untap", Tapped: false},
+					},
 				},
 			}),
 		},

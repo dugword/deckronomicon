@@ -4,10 +4,9 @@ import (
 	"deckronomicon/packages/agent/auto/strategy/evalstate"
 	"deckronomicon/packages/agent/auto/strategy/node"
 	"deckronomicon/packages/agent/auto/strategy/predicate"
-	"deckronomicon/packages/game/gob/gobtest"
+	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/state"
-	"deckronomicon/packages/state/statetest"
 	"testing"
 )
 
@@ -25,11 +24,11 @@ func TestInZone(t *testing.T) {
 				Cards: &predicate.Name{Name: "Island"},
 				Zone:  mtg.ZoneHand,
 			},
-			is: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{
+			is: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{
 					ID: playerID,
-					Hand: statetest.HandConfig{
-						Cards: []gobtest.CardConfig{{Name: "Island"}},
+					Hand: definition.Hand{
+						Cards: []definition.Card{{Name: "Island"}},
 					},
 				}},
 			}),
@@ -41,11 +40,11 @@ func TestInZone(t *testing.T) {
 				Cards: &predicate.Name{Name: "Island"},
 				Zone:  mtg.ZoneHand,
 			},
-			is: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{
+			is: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{
 					ID: playerID,
-					Hand: statetest.HandConfig{
-						Cards: []gobtest.CardConfig{{Name: "Swamp"}},
+					Hand: definition.Hand{
+						Cards: []definition.Card{{Name: "Swamp"}},
 					},
 				}},
 			}),
@@ -57,11 +56,11 @@ func TestInZone(t *testing.T) {
 				Cards: &predicate.Name{Name: "Island"},
 				Zone:  mtg.ZoneHand,
 			},
-			is: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{
+			is: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{
 					ID: playerID,
-					Hand: statetest.HandConfig{
-						Cards: []gobtest.CardConfig{
+					Hand: definition.Hand{
+						Cards: []definition.Card{
 							{Name: "Swamp"},
 							{Name: "Island"},
 						},

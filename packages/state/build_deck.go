@@ -19,20 +19,15 @@ func (g Game) WithBuildDeck(
 			cardDefinition, ok := cardDefinitions[entry.Name]
 			if !ok {
 				return Game{}, nil, fmt.Errorf(
-					"card %s not found in card definitions",
-					entry.Name,
+					"card %s not found in card definitions", entry.Name,
 				)
 			}
 			var id string
 			id, g = g.GetNextID()
-			c, err := gob.NewCardFromCardDefinition(id, playerID, cardDefinition)
-			if err != nil {
-				return Game{}, nil, fmt.Errorf(
-					"failed to create card %q: %w",
-					entry.Name,
-					err,
-				)
-			}
+			cardDefinition.ID = id
+			cardDefinition.Controller = playerID
+			cardDefinition.Owner = playerID
+			c := gob.NewCardFromDefinition(cardDefinition)
 			deck = append(deck, c)
 		}
 	}

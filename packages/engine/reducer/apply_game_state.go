@@ -52,19 +52,6 @@ func applyGameStateChangeEvent(game state.Game, gameStateChangeEvent event.GameS
 	case event.SetActivePlayerEvent:
 		game = game.WithActivePlayer(evnt.PlayerID)
 		return game, nil
-	//case event.ResolveManaAbilityEvent:
-	//return applyResolveManaAbilityEvent(game, evnt)
-	//case event.ShuffleDeckEvent:
-	//return game, fmt.Errorf("ShuffleDeckEvent not implemented")
-	/*
-		player, ok := game.GetPlayer(evnt.PlayerID)
-		if !ok {
-			return game, fmt.Errorf("player %q not found", evnt.PlayerID)
-		}
-		player = player.WithShuffleDeck(e.rng.DeckShuffler())
-		game := game.WithUpdatedPlayer(player)
-		return game, nil
-	*/
 	case event.ShuffleLibraryEvent:
 		return applyShuffleLibraryEvent(game, evnt)
 	case event.SpendManaEvent:
@@ -151,28 +138,6 @@ func applyeLoseLifeEvent(
 	game = game.WithUpdatedPlayer(player)
 	return game, nil
 }
-
-/*
-func  applyMoveCardEvent(
-	game state.Game,
-	evnt event.MoveCardEvent,
-) (state.Game, error) {
-	player, ok := game.GetPlayer(evnt.PlayerID)
-	if !ok {
-		return game, fmt.Errorf("player %q not found", evnt.PlayerID)
-	}
-	card, player, ok := player.TakeCardFromZone(evnt.CardID, evnt.FromZone)
-	if !ok {
-		return game, fmt.Errorf("card %q not in zone %q", evnt.CardID, evnt.FromZone)
-	}
-	player, ok = player.WithAddCardToZone(card, evnt.ToZone)
-	if !ok {
-		return game, fmt.Errorf("failed to move card %q to zone %q", evnt.CardID, evnt.ToZone)
-	}
-	game = game.WithUpdatedPlayer(player)
-	return game, nil
-}
-*/
 
 func applyPutCardInHandEvent(
 	game state.Game,
@@ -284,43 +249,6 @@ func applyPutPermanentOnBattlefieldEvent(
 	}
 
 }
-
-// TODO: Not sure I like how this is handled, think through how I want to have
-// events generated in the reducer.
-/*
-func applyResolveManaAbilityEvent(
-	game state.Game,
-	evnt event.ResolveManaAbilityEvent,
-) (state.Game, error) {
-	return game, fmt.Errorf("ResolveManaAbilityEvent not implemented")
-
-		player, ok := game.GetPlayer(evnt.PlayerID)
-		if !ok {
-			return game, fmt.Errorf("player %q not found", evnt.PlayerID)
-		}
-		var events []event.GameEvent
-		for _, effectSpec := range evnt.EffectSpecs {
-			efct, err := effect.Build(effectSpec)
-			if err != nil {
-				return game, fmt.Errorf("effect %q not found: %w", effectSpec.Name, err)
-			}
-			effectResults, err := efct.Resolve(game, player, nil, target.TargetValue{})
-			if err != nil {
-				return game, fmt.Errorf("failed to apply effect %q: %w", effectSpec.Name, err)
-			}
-			events = append(events, effectResults.Events...)
-		}
-		for _, evnt := range events {
-			var err error
-			game, err = ApplyEvent(game, evnt)
-			if err != nil {
-				return game, fmt.Errorf("failed to apply event %T: %w", evnt, err)
-			}
-		}
-		return game, nil
-
-}
-*/
 
 func applyShuffleLibraryEvent(
 	game state.Game,

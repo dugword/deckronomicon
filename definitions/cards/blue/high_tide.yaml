@@ -4,7 +4,7 @@ Color:
   - U
 ManaCost: '{U}'
 Name: High Tide
-Effects:
+SpellAbility:
   - Name: AdditionalMana
     Modifiers:
       Subtype: Island

@@ -1,7 +1,7 @@
 package state
 
 import (
-	"deckronomicon/packages/state/statetest"
+	"deckronomicon/packages/game/definition"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -83,15 +83,14 @@ func TestPriorityPlayerID(t *testing.T) {
 			want:                  player1,
 		},
 	}
-
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			playersPassedPriority := map[string]bool{}
 			for _, playerID := range tc.playersPassedPriority {
 				playersPassedPriority[playerID] = true
 			}
-			game := LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{
+			game := NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{
 					{ID: player1},
 					{ID: player2},
 					{ID: player3},

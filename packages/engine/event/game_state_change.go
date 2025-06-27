@@ -198,17 +198,6 @@ func (e SetActivePlayerEvent) EventType() string {
 	return EventTypeSetActivePlayer
 }
 
-/*
-type ShuffleDeckEvent struct {
-	GameStateChangeBaseEvent
-	PlayerID string
-}
-
-func (e ShuffleDeckEvent) EventType() string {
-	return EventTypeShuffleDeck
-}
-*/
-
 type ShuffleLibraryEvent struct {
 	GameStateChangeBaseEvent
 	PlayerID         string

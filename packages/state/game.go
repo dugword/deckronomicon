@@ -1,14 +1,7 @@
 package state
 
-// TODO: Document what kind of logic lives where.
-
-// I think the state should really just control the mechanics of movings
-// things around, not checking the game rules. Games rule enforcement should
-// happen in the engine
-
-// stuff like can cast might even need to be moved to the engine package
-
 import (
+	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
 	"fmt"
 	"strconv"
@@ -25,9 +18,8 @@ type Game struct {
 	players               []Player
 	stack                 Stack
 	winnerID              string
-	// TODO: Rename triggered abilities or something....
-	triggeredEffects  []TriggeredEffect
-	continuousEffects []ContinuousEffect
+	triggeredAbilities    []gob.TriggeredAbility
+	continuousEffects     []gob.ContinuousEffect
 }
 
 func (g Game) CheatsEnabled() bool {
@@ -74,8 +66,6 @@ func (g Game) ActivePlayerID() string {
 }
 
 func (g Game) DidPlayerPassPriority(playerID string) bool {
-	// TODO: Should I handle `ok` here?
-	// Should this live on player?
 	return g.playersPassedPriority[playerID]
 }
 
@@ -144,6 +134,6 @@ func (g Game) GetNextID() (id string, game Game) {
 	return strconv.Itoa(g.nextID), g
 }
 
-func (g Game) TriggeredEffects() []TriggeredEffect {
-	return g.triggeredEffects
+func (g Game) TriggeredAbilities() []gob.TriggeredAbility {
+	return g.triggeredAbilities
 }

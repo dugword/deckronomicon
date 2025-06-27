@@ -1,7 +1,5 @@
 package mtg
 
-// TODO This package name is gunna be confusing. rename it so we don't have
-// color := colors.color maybe put it in a core package or something
 import "fmt"
 
 // Color is a color in Magic: The Gathering.
@@ -42,7 +40,7 @@ type Colors struct {
 	White bool
 }
 
-// StringToColor converts a string to a Color.
+// StringToColor converts a string to a Colors.
 func StringsToColors(ss []string) (Colors, error) {
 	colors := Colors{}
 	for _, s := range ss {

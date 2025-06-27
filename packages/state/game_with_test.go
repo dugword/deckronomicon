@@ -1,7 +1,7 @@
 package state
 
 import (
-	"deckronomicon/packages/state/statetest"
+	"deckronomicon/packages/game/definition"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -9,7 +9,7 @@ import (
 
 func TestWithResetPriorityPasses(t *testing.T) {
 	got := Game{}.WithResetPriorityPasses()
-	want := LoadGameFromConfig(statetest.GameConfig{
+	want := NewGameFromDefinition(definition.Game{
 		PlayersPassedPriority: map[string]bool{},
 	})
 	if diff := cmp.Diff(want, got, AllowAllUnexported); diff != "" {
@@ -20,7 +20,7 @@ func TestWithResetPriorityPasses(t *testing.T) {
 func TestWithPlayerPassedPriority(t *testing.T) {
 	const playerID = "Test Player"
 	got := Game{}.WithPlayerPassedPriority(playerID)
-	want := LoadGameFromConfig(statetest.GameConfig{
+	want := NewGameFromDefinition(definition.Game{
 		PlayersPassedPriority: map[string]bool{
 			"Test Player": true,
 		},

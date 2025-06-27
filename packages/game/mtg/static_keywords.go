@@ -2,7 +2,6 @@ package mtg
 
 type StaticKeyword string
 
-// TODO Maybe have this just be "StaticKeywordAbsorb"
 const (
 	StaticKeywordAbsorb                StaticKeyword = "Absorb"
 	StaticKeywordAffinity              StaticKeyword = "Affinity"

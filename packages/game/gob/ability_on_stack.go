@@ -1,27 +1,35 @@
 package gob
 
 import (
-	"deckronomicon/packages/game/target"
+	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/query"
 	"fmt"
 )
 
 type AbilityOnStack struct {
+	abilityID         string
+	controller        string
+	effectWithTargets []effect.EffectWithTarget
 	id                string
 	name              string
 	owner             string
-	constroller       string
 	sourceID          string
-	abilityID         string
-	effectWithTargets []target.EffectWithTarget
+}
+
+func (a AbilityOnStack) Controller() string {
+	return a.controller
 }
 
 func (a AbilityOnStack) Description() string {
 	return fmt.Sprintf("Write a better description: %s", a.abilityID)
 }
 
-func (a AbilityOnStack) EffectWithTargets() []target.EffectWithTarget {
+func (a AbilityOnStack) EffectWithTargets() []effect.EffectWithTarget {
 	return a.effectWithTargets
+}
+
+func (a AbilityOnStack) ID() string {
+	return a.id
 }
 
 func (a AbilityOnStack) Name() string {
@@ -32,20 +40,13 @@ func (a AbilityOnStack) Match(predicate query.Predicate) bool {
 	return predicate(a)
 }
 
-func (a AbilityOnStack) ID() string {
-	return a.id
-}
-
-func (a AbilityOnStack) SourceID() string {
-	return a.sourceID
-}
-
 func (a AbilityOnStack) Owner() string {
 
 	return a.owner
 }
-func (a AbilityOnStack) Controller() string {
-	return a.constroller
+
+func (a AbilityOnStack) SourceID() string {
+	return a.sourceID
 }
 
 func NewAbilityOnStack(id string,
@@ -53,12 +54,12 @@ func NewAbilityOnStack(id string,
 	sourceID string,
 	abilityID string,
 	abilityName string,
-	effectWithTargets []target.EffectWithTarget,
+	effectWithTargets []effect.EffectWithTarget,
 ) AbilityOnStack {
 	abilityOnStack := AbilityOnStack{
 		id:                id,
 		owner:             playerID,
-		constroller:       playerID,
+		controller:        playerID,
 		sourceID:          sourceID,
 		abilityID:         abilityID,
 		name:              abilityName,

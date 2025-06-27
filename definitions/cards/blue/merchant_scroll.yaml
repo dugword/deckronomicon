@@ -4,7 +4,7 @@ Color:
   - U
 ManaCost: '{1}{U}'
 Name: Merchant Scroll
-Effects:
+SpellAbility:
   - Name: Search
     Modifiers:
       CardTypes:

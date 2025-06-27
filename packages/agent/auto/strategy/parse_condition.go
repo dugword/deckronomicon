@@ -90,8 +90,8 @@ func (p *StrategyParser) parseLogicalEvaluator(op string, value interface{}) eva
 func (p *StrategyParser) parseStepEvaluator(value interface{}) evaluator.Evaluator {
 	switch v := value.(type) {
 	case string:
-		step, err := mtg.StringToStep(v)
-		if err != nil {
+		step, ok := mtg.StringToStep(v)
+		if !ok {
 			p.errors.Add(fmt.Errorf("invalid step: %s", v))
 			return nil
 		}
@@ -101,12 +101,7 @@ func (p *StrategyParser) parseStepEvaluator(value interface{}) evaluator.Evaluat
 		if !ok {
 			p.errors.Add(fmt.Errorf("expected 'Step' to be a string, got %T", v["Step"]))
 		}
-		step, err := mtg.StringToStep(s)
-		if err != nil {
-			p.errors.Add(fmt.Errorf("invalid step: %s", v))
-			return nil
-		}
-		return &evaluator.Step{Step: step}
+		return p.parseStepEvaluator(s)
 	}
 	p.errors.Add(fmt.Errorf("step must be a string or an object with a 'Step' key"))
 	return nil

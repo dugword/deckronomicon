@@ -54,9 +54,6 @@ func (t CardType) IsSpell() bool {
 	return false
 }
 
-// TODO: Have all the StringTo* Functions return a bool indicating success
-// and remove the error return type this will  be consistent with the rest
-// of the codebase
 // StringToCardType converts a string to a CardType.
 func StringToCardType(s string) (CardType, bool) {
 	stringToCardType := map[string]CardType{

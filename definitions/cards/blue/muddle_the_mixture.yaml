@@ -4,7 +4,7 @@ Color:
   - U
 ManaCost: '{U}{U}'
 Name: Muddle the Mixture
-Effects:
+SpellAbility:
   - Name: Counterspell
     Modifiers:
       CardTypes:

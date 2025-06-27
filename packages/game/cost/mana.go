@@ -19,9 +19,6 @@ func ParseManaCost(costStr string) (ManaCost, error) {
 // TODO: Support X costs and other special cases.
 var manaPattern = regexp.MustCompile(`^(?:\{[0-9WUBRGC]+\})*$`)
 
-// isManaCost checks if the input string is a valid mana cost.
-// THIS IS ISMANACOST!
-// TODO
 func IsManaCost(input string) bool {
 	return manaPattern.MatchString(input)
 }
@@ -47,7 +44,6 @@ func (c ManaCost) ManaString() string {
 }
 
 // Description returns a string representation of the mana cost.
-// TODO Use a mana cost String method, this feels redundant.
 func (c ManaCost) Description() string {
 	return fmt.Sprintf("Pay %s", c.ManaString())
 }

@@ -1,6 +1,7 @@
 package has
 
 import (
+	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mana"
 	"deckronomicon/packages/game/mtg"
@@ -395,21 +396,17 @@ func HasManaAbility(manaColor mana.Color) query.Predicate {
 			return false
 		}
 		for _, ability := range permanent.ActivatedAbilities() {
-			for _, effectSpec := range ability.EffectSpecs() {
-				if effectSpec.Name != "AddMana" {
+			for _, efct := range ability.Effects() {
+				AddMana, ok := efct.(effect.AddMana)
+				if !ok {
 					continue
 				}
-				for key, rawModifer := range effectSpec.Modifiers {
-					if key != "Mana" {
-						continue
-					}
-					color, ok := mana.StringToColor(rawModifer.(string))
-					if !ok {
-						continue
-					}
-					if color == manaColor {
-						return true
-					}
+				amount, err := mana.ParseManaString(AddMana.Mana)
+				if err != nil {
+					continue
+				}
+				if amount.Has(manaColor) {
+					return true
 				}
 			}
 		}

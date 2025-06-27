@@ -1,8 +1,8 @@
 package predicate
 
 import (
+	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/gob"
-	"deckronomicon/packages/game/gob/gobtest"
 	"deckronomicon/packages/query"
 	"testing"
 )
@@ -35,10 +35,9 @@ func TestNameMatchCondition(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			playerID := "Test Player"
 			var objs []query.Object
 			for _, name := range test.is {
-				card := gob.LoadCardFromConfig(playerID, gobtest.CardConfig{Name: name})
+				card := gob.NewCardFromDefinition(definition.Card{Name: name})
 				objs = append(objs, card)
 			}
 			got := test.when.Matches(objs)

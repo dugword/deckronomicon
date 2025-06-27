@@ -36,7 +36,7 @@ func parseActivateAbilityCommand(
 	}
 	targetsForEffects, err := getTargetsForEffects(
 		abilityInZone.Ability(),
-		abilityInZone.Ability().EffectSpecs(),
+		abilityInZone.Ability().Effects(),
 		game,
 		agent,
 	)

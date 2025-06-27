@@ -21,16 +21,9 @@ func LoadCardDefinitions(path string) (map[string]Card, error) {
 		if info.IsDir() || !strings.HasSuffix(info.Name(), ".yaml") {
 			return nil
 		}
-		data, err := os.ReadFile(path)
+		card, err := LoadCardDefinition(path)
 		if err != nil {
-			return fmt.Errorf("failed to read card file at %q: %w", path, err)
-		}
-		var card Card
-		if err := yaml.Unmarshal(data, &card); err != nil {
-			return fmt.Errorf("failed to unmarshal card data in %q: %w", path, err)
-		}
-		if card.Name == "" {
-			return fmt.Errorf("card in %q is missing a name", path)
+			return err
 		}
 		if _, ok := definitions[card.Name]; ok {
 			return fmt.Errorf("duplicate card name detected in %q: %s", path, card.Name)
@@ -42,4 +35,19 @@ func LoadCardDefinitions(path string) (map[string]Card, error) {
 		return nil, fmt.Errorf("failed to load card definitions in %q: %w", path, err)
 	}
 	return definitions, nil
+}
+
+func LoadCardDefinition(path string) (Card, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return Card{}, fmt.Errorf("failed to read card file at %q: %w", path, err)
+	}
+	var card Card
+	if err := yaml.Unmarshal(data, &card); err != nil {
+		return Card{}, fmt.Errorf("failed to unmarshal card data in %q: %w", path, err)
+	}
+	if card.Name == "" {
+		return Card{}, fmt.Errorf("card in %q is missing a name", path)
+	}
+	return card, nil
 }

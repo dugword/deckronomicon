@@ -1,26 +1,15 @@
 package gob
 
 import (
-	// "deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/cost"
-	"deckronomicon/packages/game/definition"
+	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/staticability"
 	"deckronomicon/packages/query"
 )
 
-// Card represents a card in the game. It contains all the information about
-// the card, including its name, mana cost, power, toughness, and abilities.
-// The Card type is used to represent a card in the game and holds the specs
-// to create additional game state. The Card type is also used to represent a
-// card in the player's hand, graveyard, and library. The Card type is used to
-// create Spells on the stack and Permanents on the battlefield. The
-// underlying card data is preserved in the CardData struct, if card
-// attributes are ever overwritten via stickers or other effects. Each card in
-// a player's library is a unique instance of the Card type, even if the card
-// is a copy of another card.
 type Card struct {
 	activatedAbilities []Ability
-	definition         definition.Card
 	cardTypes          []mtg.CardType
 	controller         string
 	owner              string
@@ -31,30 +20,21 @@ type Card struct {
 	name               string
 	power              int
 	rulesText          string
-	spellAbility       []definition.EffectSpec
-	staticAbilities    []StaticAbility
+	spellAbility       []effect.Effect
+	staticAbilities    []staticability.StaticAbility
 	subtypes           []mtg.Subtype
 	supertypes         []mtg.Supertype
 	toughness          int
 }
 
-// ActivatedAbilities returns the activated abilities of the card available.
-// NOTE: These are the activated abilities of the card itself, not the
-// activated abilities of the permanent. A card can have activated abilities
-// that are not present on the permanent.
 func (c Card) ActivatedAbilities() []Ability {
-	return c.activatedAbilities
+	return c.activatedAbilities[:]
 }
 
-// CardTypes returns the card types of the card. A card can have multiple
-// types, such as "Creature" or "Artifact". This method returns a slice of
-// CardType representing the types of the card.
 func (c Card) CardTypes() []mtg.CardType {
 	return c.cardTypes
 }
 
-// Colors returns the colors of the card. A card can have multiple colors. This
-// method returns a Colors struct representing all colors the card is.
 func (c Card) Colors() mtg.Colors {
 	return c.colors
 }
@@ -63,33 +43,10 @@ func (c Card) Controller() string {
 	return c.controller
 }
 
-// TODO: Is this the best way to do this?
 func (c Card) Description() string {
 	return c.rulesText
 }
 
-func (c Card) GetStaticAbilityModifiers(staticKeyword mtg.StaticKeyword) (map[string]any, bool) {
-	for _, ability := range c.staticAbilities {
-		if ability.StaticKeyword() == staticKeyword {
-			return ability.modifiers, true
-		}
-	}
-	return nil, false
-}
-
-func (c Card) GetStaticAbilityCost(staticKeyword mtg.StaticKeyword) (cost.Cost, bool) {
-	for _, ability := range c.staticAbilities {
-		if ability.StaticKeyword() == staticKeyword {
-			return ability.cost, true
-		}
-	}
-	return nil, false
-}
-
-// ID returns the ID of the card. The ID is a unique identifier for the card
-// in the game and remamains the same as the card moves through zones. The ID
-// is unique per card instance, so two copies of the same card will have
-// different IDs.
 func (c Card) ID() string {
 	return c.id
 }
@@ -98,14 +55,10 @@ func (c Card) Match(predicate query.Predicate) bool {
 	return predicate(c)
 }
 
-// Loyalty returns the loyalty of the card. This is used for planeswalker
-// cards. As a card the Loyalty is the starting loyalty of the planeswalker,
-// not the current value of the permanent on the battlefield.
 func (c Card) Loyalty() int {
 	return c.loyalty
 }
 
-// ManaCost returns the mana cost of the card.
 func (c Card) ManaCost() cost.ManaCost {
 	return c.manaCost
 }
@@ -114,7 +67,6 @@ func (c Card) ManaValue() int {
 	return c.manaCost.Amount().Total()
 }
 
-// Name returns the name of the card.
 func (c Card) Name() string {
 	return c.name
 }
@@ -123,54 +75,48 @@ func (c Card) Owner() string {
 	return c.owner
 }
 
-// Power returns the power of the card. This is used for creature and vehicle
-// cards. As a card the Power is the starting power of the creature, not the
-// current value of the permanent on the battlefield.
 func (c Card) Power() int {
 	return c.power
 }
-
-// RulesText returns the rules text of the card. This is used for displaying
-// the rules text of the card in the game. The rules text is a string that
-// describes the abilities and effects of the card. It is not used for any in
-// game logic.
 func (c Card) RulesText() string {
 	return c.rulesText
 }
 
-func (c Card) SpellAbility() []definition.EffectSpec {
-	return c.spellAbility
+func (c Card) SpellAbility() []effect.Effect {
+	return c.spellAbility[:]
 }
 
-// StaticAbilities returns the static abilities of the card.
-func (c Card) StaticAbilities() []StaticAbility {
-	var abilities = append([]StaticAbility{}, c.staticAbilities...)
-	return abilities
+func (c Card) StaticAbilities() []staticability.StaticAbility {
+	return c.staticAbilities[:]
 }
 
 func (c Card) StaticKeywords() []mtg.StaticKeyword {
 	var keywords []mtg.StaticKeyword
 	for _, ability := range c.staticAbilities {
-		// TODO: Check this error or just use typed values all the way down.
-		keyword, _ := mtg.StringToStaticKeyword(ability.Name())
-		keywords = append(keywords, keyword)
+		if ability.StaticKeyword() != "" {
+			keywords = append(keywords, ability.StaticKeyword())
+		}
 	}
 	return keywords
 }
 
-// Subtypes returns the subtypes of the card.
+func (c Card) StaticAbility(keyword mtg.StaticKeyword) (staticability.StaticAbility, bool) {
+	for _, ability := range c.staticAbilities {
+		if ability.StaticKeyword() == keyword {
+			return ability, true
+		}
+	}
+	return nil, false
+}
+
 func (c Card) Subtypes() []mtg.Subtype {
 	return c.subtypes
 }
 
-// Supertypes returns the supertypes of the card.
 func (c Card) Supertypes() []mtg.Supertype {
 	return c.supertypes
 }
 
-// Toughness returns the toughness of the card. This is used for creature and
-// vehicle cards. As a card the Toughness is the starting toughness of the
-// creatue, not the current value of the permanent on the battlefield.
 func (c Card) Toughness() int {
 	return c.toughness
 }

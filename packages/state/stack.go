@@ -1,8 +1,8 @@
 package state
 
 import (
+	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/mtg"
-	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/add"
 	"deckronomicon/packages/query/has"
@@ -14,7 +14,7 @@ type Resolvable interface {
 	Description() string
 	ID() string
 	Name() string
-	EffectWithTargets() []target.EffectWithTarget
+	EffectWithTargets() []effect.EffectWithTarget
 	Match(p query.Predicate) bool
 	Controller() string
 	Owner() string

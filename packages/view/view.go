@@ -23,13 +23,12 @@ type Player struct {
 	// TODO: Change ManaPool to a more structured type
 	// and do the formatting in the UI.
 	ManaPool          string
-	PotentialManaPool string // Potential mana pool for the next turn
-	// ManaPool    map[string]int
-	Hand        []Card
-	Graveyard   []Card
-	Exile       []Card
-	Revealed    []Card
-	LibrarySize int
+	PotentialManaPool string
+	Hand              []Card
+	Graveyard         []Card
+	Exile             []Card
+	Revealed          []Card
+	LibrarySize       int
 }
 
 type Permanent struct {

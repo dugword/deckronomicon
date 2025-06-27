@@ -6,7 +6,7 @@ Color:
   - U
 ManaCost: '{1}{U}'
 Name: Psychic Puppetry
-Effects:
+SpellAbility:
   - Name: TapOrUntap
     Modifiers:
       Target: Permanent

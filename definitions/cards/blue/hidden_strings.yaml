@@ -4,7 +4,7 @@ Color:
   - U
 ManaCost: '{1}{U}'
 Name: Hidden Strings
-Effects:
+SpellAbility:
   - Name: TapOrUntap
     Modifiers:
       Target: Permanent

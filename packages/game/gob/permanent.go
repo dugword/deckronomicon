@@ -5,12 +5,12 @@ import (
 	// "deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/staticability"
 	"deckronomicon/packages/query"
 	"fmt"
 	"slices"
 )
 
-// Permanent represents a permanent card on the battlefield.
 type Permanent struct {
 	activatedAbilities []Ability
 	card               Card
@@ -24,7 +24,7 @@ type Permanent struct {
 	owner              string
 	power              int
 	rulesText          string
-	staticAbilities    []StaticAbility
+	staticAbilities    []staticability.StaticAbility
 	subtypes           []mtg.Subtype
 	summoningSickness  bool
 	supertypes         []mtg.Supertype
@@ -33,10 +33,8 @@ type Permanent struct {
 	triggeredAbilities []Ability
 }
 
-// NewPermanent creates a new Permanent instance from a Card.
 func NewPermanent(id string, card Card, playerID string) (Permanent, error) {
 	permanent := Permanent{
-		// TODO: Do I need to generate new IDs for the abilities?
 		card:               card,
 		cardTypes:          card.CardTypes(),
 		colors:             card.Colors(),
@@ -59,35 +57,30 @@ func NewPermanent(id string, card Card, playerID string) (Permanent, error) {
 	}
 	for i, a := range card.ActivatedAbilities() {
 		ability := Ability{
-			effectSpecs: a.EffectSpecs(),
-			name:        a.Name(),
-			cost:        a.Cost(),
-			id:          fmt.Sprintf("%s-%d", id, i+1),
-			zone:        a.zone,
-			speed:       a.speed,
-			source:      permanent,
+			effects: a.Effects(),
+			name:    a.Name(),
+			cost:    a.Cost(),
+			id:      fmt.Sprintf("%s-%d", id, i+1),
+			zone:    a.zone,
+			speed:   a.speed,
+			source:  permanent,
 		}
 		permanent.activatedAbilities = append(permanent.activatedAbilities, ability)
 	}
 	return permanent, nil
 }
 
-// ActivatedAbilities returns the activated abilities of the permanent.
 func (p Permanent) ActivatedAbilities() []Ability {
 	return p.activatedAbilities
 }
 
-// Card returns the card associated with the permanent.
 func (p Permanent) Card() Card {
 	return p.card
 }
-
-// CardTypes returns the card types of the permanent.
 func (p Permanent) CardTypes() []mtg.CardType {
 	return p.cardTypes
 }
 
-// Colors returns the colors of the permanent.
 func (p Permanent) Colors() mtg.Colors {
 	return p.colors
 }
@@ -104,12 +97,10 @@ func (p Permanent) ID() string {
 	return p.id
 }
 
-// IsTapped checks if the permanent is tapped.
 func (p Permanent) IsTapped() bool {
 	return p.tapped
 }
 
-// HasSummoningSickness checks if the permanent has summoning sickness.
 func (p Permanent) HasSummoningSickness() bool {
 	return p.summoningSickness
 }
@@ -119,12 +110,10 @@ func (p Permanent) RemoveSummoningSickness() Permanent {
 	return p
 }
 
-// Loyalty returns the loyalty of the permanent.
 func (p Permanent) Loyalty() int {
 	return p.loyalty
 }
 
-// ManCost returns the mana cost of the permanent.
 func (p Permanent) ManaCost() cost.ManaCost {
 	return p.manaCost
 }
@@ -137,7 +126,6 @@ func (per Permanent) Match(predicate query.Predicate) bool {
 	return predicate(per)
 }
 
-// Name returns the name of the permanent.
 func (p Permanent) Name() string {
 	return p.name
 }
@@ -146,41 +134,32 @@ func (p Permanent) Owner() string {
 	return p.owner
 }
 
-// Power returns the power of the permanent.
 func (p Permanent) Power() int {
 	return p.power
 }
 
-// RulesText returns the rules text of the permanent. The RulesText does not
-// impact the game logic.
 func (p Permanent) RulesText() string {
 	return p.rulesText
 }
 
-// StaticAbilities returns the static abilities of the permanent.
-func (p Permanent) StaticAbilities() []StaticAbility {
+func (p Permanent) StaticAbilities() []staticability.StaticAbility {
 	return p.staticAbilities
 }
 
-// StaticAbilities returns the static abilities of the permanent.
 func (p Permanent) StaticKeywords() []mtg.StaticKeyword {
 	var keywords []mtg.StaticKeyword
 	for _, ability := range p.staticAbilities {
-		keyword, ok := mtg.StringToStaticKeyword(ability.Name())
-		if !ok {
-			continue
+		if ability.StaticKeyword() != "" {
+			keywords = append(keywords, ability.StaticKeyword())
 		}
-		keywords = append(keywords, keyword)
 	}
 	return keywords
 }
 
-// Subtypes returns the subtypes of the permanent.
 func (p Permanent) Subtypes() []mtg.Subtype {
 	return p.subtypes
 }
 
-// Supertypes returns the supertypes of the permanent.
 func (p Permanent) Supertypes() []mtg.Supertype {
 	return p.supertypes
 }
@@ -197,12 +176,10 @@ func (p Permanent) Tap() (Permanent, error) {
 	return p, nil
 }
 
-// Toughness returns the toughness of the permanent.
 func (p Permanent) Toughness() int {
 	return p.toughness
 }
 
-// TriggeredAbilities returns the triggered abilities of the permanent.
 func (p Permanent) TriggeredAbilities() []Ability {
 	return p.triggeredAbilities
 }

@@ -5,7 +5,8 @@ import (
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine"
 	"deckronomicon/packages/engine/action"
-	"deckronomicon/packages/game/target"
+	"deckronomicon/packages/game/effect"
+	"deckronomicon/packages/game/mtg"
 	"errors"
 	"testing"
 
@@ -63,14 +64,14 @@ func TestParseCastSpellCommand(t *testing.T) {
 			name: "with selected card requiring target",
 			arg:  "Card with Target",
 			agent: dummy.NewChooseProvided("Test Player", dummy.ChooseProvidedConfig{
-				OneChoiceIDs: []string{"Test Player"},
+				OneChoiceIDs: []string{"Test Permanent ID"},
 			}),
 			want: action.CastSpellRequest{
 				CardID: "Card with Target ID",
-				TargetsForEffects: map[target.EffectTargetKey]target.TargetValue{
+				TargetsForEffects: map[effect.EffectTargetKey]effect.Target{
 					{SourceID: "Card with Target ID", EffectIndex: 0}: {
-						TargetType: target.TargetTypePlayer,
-						TargetID:   playerID,
+						Type: mtg.TargetTypePermanent,
+						ID:   "Test Permanent ID",
 					},
 				},
 			},

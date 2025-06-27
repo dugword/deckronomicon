@@ -1,6 +1,7 @@
 package is
 
 import (
+	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
@@ -86,5 +87,18 @@ func Untapped() query.Predicate {
 			return false
 		}
 		return !permObj.IsTapped()
+	}
+}
+
+func ManaAbility() query.Predicate {
+	return func(obj query.Object) bool {
+		if abilityObj, ok := obj.(gob.Ability); ok {
+			for _, efct := range abilityObj.Effects() {
+				if _, ok := efct.(effect.AddMana); ok {
+					return true
+				}
+			}
+		}
+		return false
 	}
 }

@@ -1,7 +1,5 @@
 package state
 
-// TODO: I think a lot of these methods should just be methods off of the View
-// interface.
 import (
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"

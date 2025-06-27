@@ -16,7 +16,7 @@ type Player struct {
 	library            Library
 	life               int
 	manaPool           mana.Pool
-	maxHandSize        int // TODO make this configurable
+	maxHandSize        int
 	spellsCastThisTurn int
 	turn               int
 	revealed           Revealed
@@ -139,9 +139,6 @@ func (p Player) ID() string {
 	return p.id
 }
 
-// TODO: Do I still need this view abstraction after the refactor?
-// Or since everything is read only and immutable, can I just return the
-// struct directly?
 func (p Player) Library() Library {
 	return p.library
 }

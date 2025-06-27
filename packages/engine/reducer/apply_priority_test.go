@@ -2,8 +2,8 @@ package reducer
 
 import (
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/state"
-	"deckronomicon/packages/state/statetest"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -29,16 +29,16 @@ func TestApplyPriorityEvent(t *testing.T) {
 			evnt: event.PassPriorityEvent{
 				PlayerID: playerID,
 			},
-			game: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{
+			game: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{
 					ID: playerID,
 				}},
 			}),
-			want: state.LoadGameFromConfig(statetest.GameConfig{
+			want: state.NewGameFromDefinition(definition.Game{
 				PlayersPassedPriority: map[string]bool{
 					playerID: true,
 				},
-				Players: []statetest.PlayerConfig{{
+				Players: []definition.Player{{
 					ID: playerID,
 				}},
 			}),
@@ -54,16 +54,16 @@ func TestApplyPriorityEvent(t *testing.T) {
 		{
 			name: "with ResetPriorityPassesEvent",
 			evnt: event.ResetPriorityPassesEvent{},
-			game: state.LoadGameFromConfig(statetest.GameConfig{
+			game: state.NewGameFromDefinition(definition.Game{
 				PlayersPassedPriority: map[string]bool{
 					playerID: true,
 				},
-				Players: []statetest.PlayerConfig{{
+				Players: []definition.Player{{
 					ID: playerID,
 				}},
 			}),
-			want: state.LoadGameFromConfig(statetest.GameConfig{
-				Players: []statetest.PlayerConfig{{
+			want: state.NewGameFromDefinition(definition.Game{
+				Players: []definition.Player{{
 					ID: playerID,
 				}},
 			}),

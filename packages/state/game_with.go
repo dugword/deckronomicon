@@ -1,10 +1,9 @@
 package state
 
 import (
-	"deckronomicon/packages/game/definition"
+	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
-	"deckronomicon/packages/game/target"
 )
 
 func (g Game) WithCheatsEnabled(enabled bool) Game {
@@ -77,7 +76,6 @@ func (g Game) WithBattlefield(battlefield Battlefield) Game {
 	return g
 }
 
-// TODO: Should the permanent be created here or in the apply reducer...
 func (g Game) WithPutPermanentOnBattlefield(card gob.Card, playerID string) (Game, error) {
 	id, game := g.GetNextID()
 	permanent, err := gob.NewPermanent(id, card, playerID)
@@ -97,7 +95,7 @@ func (g Game) WithStack(stack Stack) Game {
 func (g Game) WithPutSpellOnStack(
 	card gob.Card,
 	playerID string,
-	effectWithTargets []target.EffectWithTarget,
+	effectWithTargets []effect.EffectWithTarget,
 	flashback bool,
 ) (Game, error) {
 	id, game := g.GetNextID()
@@ -119,7 +117,7 @@ func (g Game) WithPutSpellOnStack(
 func (g Game) WithPutCopiedSpellOnStack(
 	spell gob.Spell,
 	playerID string,
-	effectWithTargets []target.EffectWithTarget,
+	effectWithTargets []effect.EffectWithTarget,
 ) (Game, error) {
 	id, game := g.GetNextID()
 	spell, err := gob.CopySpell(
@@ -141,9 +139,7 @@ func (g Game) WithPutAbilityOnStack(
 	sourceID,
 	abilityID,
 	abilityName string,
-	effectWithTargets []target.EffectWithTarget,
-	// effectSpecs []definition.EffectSpec,
-	// targets map[string]target.TargetValue,
+	effectWithTargets []effect.EffectWithTarget,
 ) (Game, error) {
 	id, game := g.GetNextID()
 	abilityOnStack := gob.NewAbilityOnStack(
@@ -153,45 +149,43 @@ func (g Game) WithPutAbilityOnStack(
 		abilityID,
 		abilityName,
 		effectWithTargets,
-		// effectSpecs,
-		// targets,
 	)
 	stack := game.stack.AddTop(abilityOnStack)
 	game = game.WithStack(stack)
 	return game, nil
 }
 
-func (g Game) WithRegisteredTriggeredEffect(
+func (g Game) WithRegisteredTriggeredAbility(
 	playerID string,
 	sourceName string,
 	sourceID string,
-	trigger Trigger,
-	effectSpecs []definition.EffectSpec,
+	trigger gob.Trigger,
+	effects []effect.Effect,
 	duration mtg.Duration,
 	oneShot bool,
 ) Game {
 	id, game := g.GetNextID()
-	triggeredEffect := TriggeredEffect{
+	triggeredEffect := gob.TriggeredAbility{
 		ID:         id,
 		SourceID:   sourceID,
 		SourceName: sourceName,
 		PlayerID:   playerID,
 		Trigger:    trigger,
-		Effect:     effectSpecs,
+		Effects:    effects,
 		Duration:   duration,
 		OneShot:    oneShot,
 	}
-	game.triggeredEffects = append(game.triggeredEffects[:], triggeredEffect)
+	game.triggeredAbilities = append(game.triggeredAbilities[:], triggeredEffect)
 	return game
 }
 
-func (g Game) WithRemoveTriggeredEffect(triggeredEffectID string) Game {
-	var newTriggeredEffects []TriggeredEffect
-	for _, te := range g.triggeredEffects {
-		if te.ID != triggeredEffectID {
-			newTriggeredEffects = append(newTriggeredEffects, te)
+func (g Game) WithRemoveTriggeredAbility(triggeredAbilityID string) Game {
+	var newTriggeredAbilities []gob.TriggeredAbility
+	for _, triggeredAbility := range g.triggeredAbilities {
+		if triggeredAbility.ID != triggeredAbilityID {
+			newTriggeredAbilities = append(newTriggeredAbilities, triggeredAbility)
 		}
 	}
-	g.triggeredEffects = newTriggeredEffects
+	g.triggeredAbilities = newTriggeredAbilities
 	return g
 }
