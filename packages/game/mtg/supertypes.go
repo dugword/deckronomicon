@@ -1,7 +1,5 @@
 package mtg
 
-import "fmt"
-
 type Supertype string
 
 const (
@@ -12,7 +10,7 @@ const (
 )
 
 // StringToSupertype converts a string to a Supertype.
-func StringToSupertype(s string) (Supertype, error) {
+func StringToSupertype(s string) (Supertype, bool) {
 	stringToSupertype := map[string]Supertype{
 		"Basic":     SupertypeBasic,
 		"Legendary": SupertypeLegendary,
@@ -21,7 +19,7 @@ func StringToSupertype(s string) (Supertype, error) {
 	}
 	supertype, ok := stringToSupertype[s]
 	if !ok {
-		return "", fmt.Errorf("unknown Supertype %q", s)
+		return "", false
 	}
-	return supertype, nil
+	return supertype, true
 }

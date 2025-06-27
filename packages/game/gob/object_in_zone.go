@@ -15,7 +15,7 @@ type AbilityInZone struct {
 	ability Ability
 }
 
-func NewAbilityInZone(ability Ability, object query.Object, zone mtg.Zone) AbilityInZone {
+func NewAbilityInZone(ability Ability, object Object, zone mtg.Zone) AbilityInZone {
 	return AbilityInZone{
 		zone:    zone,
 		ability: ability,
@@ -54,7 +54,7 @@ func (a AbilityInZone) Owner() string {
 	return a.ability.Owner()
 }
 
-func (a AbilityInZone) Source() query.Object {
+func (a AbilityInZone) Source() Object {
 	return a.ability.Source()
 }
 
@@ -98,11 +98,11 @@ func (c CardInZone) Card() Card {
 }
 
 type ObjectInZone struct {
-	object query.Object
+	object Object
 	zone   mtg.Zone
 }
 
-func NewObjectInZone(object query.Object, zone mtg.Zone) ObjectInZone {
+func NewObjectInZone(object Object, zone mtg.Zone) ObjectInZone {
 	return ObjectInZone{
 		object: object,
 		zone:   zone,

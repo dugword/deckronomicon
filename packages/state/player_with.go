@@ -12,17 +12,6 @@ func (p Player) WithAddMana(color mana.Color, amount int) Player {
 	return p
 }
 
-/*
-func (p Player) WithShuffleDeck(
-	deckShuffler func([]gob.Card) []gob.Card,
-) Player {
-	// Shuffle the library
-	cards := deckShuffler(p.library.GetAll())
-	p.library.cards = cards
-	return p
-}
-*/
-
 func (p Player) WithNextTurn() Player {
 	p.turn++
 	return p

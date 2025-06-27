@@ -4,16 +4,15 @@ Subtypes:
   - Arcane
 Color:
   - U
-ManaCost: '{U}{U}'
+ManaCost: "{U}{U}"
 Name: Ideas Unbound
-Effects:
+SpellAbility:
   - Name: Draw
     Modifiers:
       Count: 3
-  - Name: RegisterDelayedEffect
+  - Name: RegisterDelayedTriggeredAbility
     Modifiers:
-      Trigger:
-        EventType: BeginEndStep
+      EventType: BeginEndStep
       Effects:
         - Name: Discard
           Modifiers:

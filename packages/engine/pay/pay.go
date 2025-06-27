@@ -3,13 +3,12 @@ package pay
 import (
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/game/cost"
-	"deckronomicon/packages/query"
+	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/state"
 	"fmt"
 )
 
-// TODO: Figure out how to avoid stuttering pay.PayCost
-func PayCost(someCost cost.Cost, object query.Object, player state.Player) []event.GameEvent {
+func Cost(someCost cost.Cost, object gob.Object, player state.Player) []event.GameEvent {
 	switch c := someCost.(type) {
 	case cost.CompositeCost:
 		return payCompositeCost(c, object, player)
@@ -36,11 +35,11 @@ func payLifeCost(c cost.LifeCost, player state.Player) []event.GameEvent {
 	}
 }
 
-func payCompositeCost(c cost.CompositeCost, object query.Object, player state.Player) []event.GameEvent {
+func payCompositeCost(c cost.CompositeCost, object gob.Object, player state.Player) []event.GameEvent {
 	// Check if the player can pay all parts of the composite cost
 	var events []event.GameEvent
 	for _, subCost := range c.Costs() {
-		subEvents := PayCost(subCost, object, player)
+		subEvents := Cost(subCost, object, player)
 		events = append(events, subEvents...)
 	}
 	return events
@@ -56,7 +55,7 @@ func payManaCost(c cost.ManaCost, player state.Player) []event.GameEvent {
 	}}
 }
 
-func payTapCost(object query.Object, player state.Player) []event.GameEvent {
+func payTapCost(object gob.Object, player state.Player) []event.GameEvent {
 	// Create an event to tap the permanent
 	return []event.GameEvent{
 		event.TapPermanentEvent{
@@ -66,7 +65,7 @@ func payTapCost(object query.Object, player state.Player) []event.GameEvent {
 	}
 }
 
-func payDiscardCost(object query.Object, player state.Player) []event.GameEvent {
+func payDiscardCost(object gob.Object, player state.Player) []event.GameEvent {
 	// Create an event to discard the specified object
 	return []event.GameEvent{
 		event.DiscardCardEvent{

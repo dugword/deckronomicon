@@ -21,7 +21,6 @@ func (r *Ruling) Why() string {
 	return "reasons: " + strings.Join(r.Reasons, ", ")
 }
 
-// TODO should this live on engine?
 func CanPlaySorcerySpeed(game state.Game, playerID string, ruling *Ruling) bool {
 	can := true
 	if !game.IsStackEmtpy() {

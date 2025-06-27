@@ -2,7 +2,7 @@ package actionparser
 
 import (
 	"deckronomicon/packages/engine/action"
-	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/mana"
 	"deckronomicon/packages/state"
 	"fmt"
 )
@@ -14,8 +14,8 @@ func parseAddManaCheatCommand(
 	if manaString == "" {
 		return action.AddManaCheatAction{}, fmt.Errorf("add mana command requires a mana string")
 	}
-	if !mtg.IsMana(manaString) {
-		return action.AddManaCheatAction{}, fmt.Errorf("string %q is not a valid mana string", manaString)
+	if _, err := mana.ParseManaString(manaString); err != nil {
+		return action.AddManaCheatAction{}, fmt.Errorf("invalid mana string %q: %w", manaString, err)
 	}
 	return action.NewAddManaCheatAction(player, manaString), nil
 }

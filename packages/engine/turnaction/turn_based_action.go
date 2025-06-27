@@ -405,8 +405,6 @@ func (a DiscardToHandSizeAction) GetPrompt(game state.Game) (choose.ChoicePrompt
 	}, nil
 }
 
-// TODO: Handle this better - not sure that turn based actions should be actions.
-// Getting no choices back making this not run is also not ideal.
 func (a DiscardToHandSizeAction) Complete(
 	game state.Game,
 	choiceResults choose.ChoiceResults,

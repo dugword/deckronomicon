@@ -26,7 +26,6 @@ type ScryfallCard struct {
 	TypeLine      string   `json:"type_line"`
 }
 
-// TODO Better name that doesn't conflict with the game package
 type CardImport struct {
 	ActivatedAbilities []string `json:"ActivatedAbilities,omitempty"`
 	CardTypes          []string `json:"CardTypes,omitempty"`
@@ -166,7 +165,7 @@ func colorFromIdentity(c string) string {
 }
 
 func parseTypes(typeLine string) (cardTypes, subtypes, supertypes []string) {
-	// TODO: use the maps from constants.go
+	// TODO: use the definitions in mtg.
 	knownSupertypes := map[string]bool{
 		"Basic":     true,
 		"Legendary": true,

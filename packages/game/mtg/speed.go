@@ -1,7 +1,5 @@
 package mtg
 
-import "fmt"
-
 type Speed string
 
 const (
@@ -9,13 +7,13 @@ const (
 	SpeedSorcery Speed = "Sorcery"
 )
 
-func StringToSpeed(s string) (Speed, error) {
+func StringToSpeed(s string) (Speed, bool) {
 	switch s {
 	case "Instant":
-		return SpeedInstant, nil
+		return SpeedInstant, true
 	case "Sorcery":
-		return SpeedSorcery, nil
+		return SpeedSorcery, true
 	default:
-		return "", fmt.Errorf("unknown Speed %q", s)
+		return "", false
 	}
 }

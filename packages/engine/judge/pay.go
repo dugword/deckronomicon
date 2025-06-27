@@ -4,7 +4,7 @@ import (
 	"deckronomicon/packages/engine/pay"
 	"deckronomicon/packages/engine/reducer"
 	"deckronomicon/packages/game/cost"
-	"deckronomicon/packages/query"
+	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/state"
 )
 
@@ -12,8 +12,8 @@ import (
 // E.g. is it an error because the player doesn't have enough mana,
 // or is it an error because of some broken game state?
 // TODO: Pass in ruling here and log which costs could not be paid
-func CanPayCost(someCost cost.Cost, object query.Object, game state.Game, player state.Player, ruling *Ruling) bool {
-	costEvents := pay.PayCost(someCost, object, player)
+func CanPayCost(someCost cost.Cost, object gob.Object, game state.Game, player state.Player, ruling *Ruling) bool {
+	costEvents := pay.Cost(someCost, object, player)
 	canPay := true
 	for _, costEvent := range costEvents {
 		var err error
@@ -31,7 +31,7 @@ func CanPayCost(someCost cost.Cost, object query.Object, game state.Game, player
 	return canPay
 }
 
-func CanPotentiallyPayCost(someCost cost.Cost, object query.Object, game state.Game, player state.Player, ruling *Ruling) bool {
+func CanPotentiallyPayCost(someCost cost.Cost, object gob.Object, game state.Game, player state.Player, ruling *Ruling) bool {
 	potentialManaPool := GetAvailableMana(game, player)
 	player = player.WithManaPool(potentialManaPool)
 	game = game.WithUpdatedPlayer(player)

@@ -3,14 +3,13 @@ package judge
 import (
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
-	"deckronomicon/packages/query"
 	"deckronomicon/packages/state"
 )
 
 func CanActivateAbility(
 	game state.Game,
 	player state.Player,
-	object query.Object,
+	object gob.Object,
 	ability gob.Ability,
 	ruling *Ruling,
 ) bool {

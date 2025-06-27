@@ -4,7 +4,7 @@ Color:
   - U
 ManaCost: '{3}{U}{U}'
 Name: Lorien Revealed
-Effects:
+SpellAbility:
   - Name: Draw
     Modifiers:
       Count: 3

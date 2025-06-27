@@ -7,7 +7,6 @@ import (
 
 // Errors for game logic and actions.
 
-// TODO I don't like this name, come up with something better
 var ErrAlreadyTapped = errors.New("object already tapped")
 
 // Sentinel error
@@ -16,8 +15,6 @@ var ErrGameOver = errors.New("game over")
 
 var ErrInvalidZone = errors.New("invalid zone")
 
-// TODO find up with a better name for an error that indicates the land has
-// already been played
 var ErrLandAlreadyPlayed = errors.New("land has already been played this turn")
 
 // PlayerLostReason provides detailed cause for game loss

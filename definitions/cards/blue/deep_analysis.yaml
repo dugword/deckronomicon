@@ -4,7 +4,7 @@ Color:
   - U
 ManaCost: '{3}{U}'
 Name: Deep Analysis
-Effects:
+SpellAbility:
   - Name: Draw
     Modifiers:
       Count: 2

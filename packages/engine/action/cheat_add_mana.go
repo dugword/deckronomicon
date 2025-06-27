@@ -4,7 +4,6 @@ import (
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/game/mana"
-	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/state"
 	"fmt"
 )
@@ -29,9 +28,6 @@ func (a AddManaCheatAction) Complete(game state.Game, player state.Player, resEn
 	}
 	if a.ManaString == "" {
 		return nil, fmt.Errorf("add mana action is missing mana string")
-	}
-	if !mtg.IsMana(a.ManaString) {
-		return nil, fmt.Errorf("string %q is not a valid mana string", a.ManaString)
 	}
 	amount, err := mana.ParseManaString(a.ManaString)
 	if err != nil {

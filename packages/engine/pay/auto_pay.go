@@ -1,19 +1,20 @@
 package pay
 
 import (
-	buildmanaabilities "deckronomicon/packages/build_mana_abilities"
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/engine/reducer"
+	"deckronomicon/packages/engine/resolver"
 	"deckronomicon/packages/game/cost"
+	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mana"
 	"deckronomicon/packages/game/mtg"
-	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/has"
 	"deckronomicon/packages/query/is"
 	"deckronomicon/packages/state"
 	"errors"
+	"fmt"
 )
 
 // WARNING: THIS IS BROKEN AND WILL NOT WORK AS EXPECTED
@@ -32,7 +33,7 @@ import (
 // If it successfully pays the cost, it returns the events generated during the process.
 
 // TODO: Come up with a strategy for when to pass player and when to pass playerID
-func AutoPay(game state.Game, playerID string, object query.Object, cost cost.Cost) ([]event.GameEvent, error) {
+func AutoPay(game state.Game, playerID string, object gob.Object, cost cost.Cost) ([]event.GameEvent, error) {
 	var events []event.GameEvent
 	var err error
 	player := game.GetPlayer(playerID)
@@ -175,7 +176,7 @@ func TapLandsAndSeeWhatHappens(
 	player := game.GetPlayer(playerID)
 	for _, land := range lands {
 		for _, ability := range land.ActivatedAbilities() {
-			if !ability.IsManaAbility() {
+			if !ability.Match(is.ManaAbility()) {
 				continue
 			}
 			events := []event.GameEvent{
@@ -186,30 +187,23 @@ func TapLandsAndSeeWhatHappens(
 					Zone:      mtg.ZoneBattlefield,
 				},
 			}
-			for _, effectSpec := range ability.EffectSpecs() {
-				costEvents := PayCost(ability.Cost(), land, player)
+			for _, efct := range ability.Effects() {
+				addManaEffect, ok := efct.(effect.AddMana)
+				if !ok {
+					continue
+				}
+				costEvents := Cost(ability.Cost(), land, player)
 				events = append(events, costEvents...)
 				events = append(events, event.LandTappedForManaEvent{
 					PlayerID: player.ID(),
 					ObjectID: land.ID(),
 					Subtypes: land.Subtypes(),
 				})
-				effectWithTarget := []target.EffectWithTarget{{
-					EffectSpec: effectSpec,
-					Target: target.TargetValue{
-						TargetType: target.TargetTypeNone,
-					},
-				}}
-				manaEvents, err := buildmanaabilities.BuildManaAbilityEvents(
-					game,
-					player,
-					effectWithTarget,
-					nil,
-				)
+				result, err := resolver.ResolveAddMana(game, player.ID(), addManaEffect)
 				if err != nil {
-					return game, nil, err
+					return game, nil, fmt.Errorf("failed to resolve add mana effect: %w", err)
 				}
-				events = append(events, manaEvents...)
+				events = append(events, result.Events...)
 				for _, event := range events {
 					game, err = reducer.ApplyEvent(game, event)
 					if err != nil {

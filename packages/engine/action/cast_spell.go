@@ -6,10 +6,10 @@ import (
 	"deckronomicon/packages/engine/pay"
 	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/game/cost"
-	"deckronomicon/packages/game/definition"
+	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
-	"deckronomicon/packages/game/target"
+	"deckronomicon/packages/game/staticability"
 	"deckronomicon/packages/state"
 	"fmt"
 )
@@ -19,7 +19,7 @@ type CastSpellRequest struct {
 	CardID            string
 	ReplicateCount    int
 	SpliceCardIDs     []string
-	TargetsForEffects map[target.EffectTargetKey]target.TargetValue
+	TargetsForEffects map[effect.EffectTargetKey]effect.Target
 	Flashback         bool
 	AutoPayCost       bool
 	Preactions        []ActivateAbilityRequest // Preactions to be executed before casting the spell
@@ -32,7 +32,7 @@ func (r CastSpellRequest) Build(string) CastSpellAction {
 type CastSpellAction struct {
 	cardID            string
 	replicateCount    int
-	targetsForEffects map[target.EffectTargetKey]target.TargetValue
+	targetsForEffects map[effect.EffectTargetKey]effect.Target
 	spliceCardIDs     []string
 	flashback         bool
 	autoPayCost       bool
@@ -69,16 +69,20 @@ func (a CastSpellAction) castWithFlashback(game state.Game, player state.Player)
 	if !ok {
 		return nil, fmt.Errorf("player %q does not have card %q in graveyard", player.ID(), a.cardID)
 	}
-	flashbackCost, ok := cardToCast.GetStaticAbilityCost(mtg.StaticKeywordFlashback)
+	staticAbility, ok := cardToCast.StaticAbility(mtg.StaticKeywordFlashback)
 	if !ok {
-		return nil, fmt.Errorf("card %q does not have flashback", cardToCast.ID())
+		return nil, fmt.Errorf("card %q does not have flashback ability", cardToCast.ID())
+	}
+	flashback, ok := staticAbility.(staticability.Flashback)
+	if !ok {
+		return nil, fmt.Errorf("card %q does not have flashback ability", cardToCast.ID())
 	}
 	ruling := judge.Ruling{Explain: true}
 	if !judge.CanCastSpellWithFlashback(
 		game,
 		player,
 		cardToCast,
-		flashbackCost,
+		flashback.Cost,
 		&ruling,
 	) {
 		return nil, fmt.Errorf(
@@ -88,11 +92,11 @@ func (a CastSpellAction) castWithFlashback(game state.Game, player state.Player)
 			ruling.Why(),
 		)
 	}
-	effectWithTargets, err := target.BuildEffectWithTargets(cardToCast.ID(), cardToCast.SpellAbility(), a.targetsForEffects)
+	effectWithTargets, err := effect.BuildEffectWithTargets(cardToCast.ID(), cardToCast.SpellAbility(), a.targetsForEffects)
 	if err != nil {
 		return nil, err
 	}
-	costEvents := pay.PayCost(flashbackCost, cardToCast, player)
+	costEvents := pay.Cost(flashback.Cost, cardToCast, player)
 	events := append(
 		costEvents,
 		event.CastSpellEvent{
@@ -117,7 +121,7 @@ func (a CastSpellAction) castFromHand(game state.Game, player state.Player) ([]e
 		return nil, fmt.Errorf("player %q does not have card %q in hand", player.ID(), a.cardID)
 	}
 	var totalCost cost.Cost = cardToCast.ManaCost()
-	effectWithTargets, err := target.BuildEffectWithTargets(cardToCast.ID(), cardToCast.SpellAbility(), a.targetsForEffects)
+	effectWithTargets, err := effect.BuildEffectWithTargets(cardToCast.ID(), cardToCast.SpellAbility(), a.targetsForEffects)
 	if err != nil {
 		return nil, err
 	}
@@ -147,42 +151,36 @@ func (a CastSpellAction) castFromHand(game state.Game, player state.Player) ([]e
 				cardToCast.ID(),
 			)
 		}
-		replicateCost, ok := cardToCast.GetStaticAbilityCost(mtg.StaticKeywordReplicate)
+		staticAbility, ok := cardToCast.StaticAbility(mtg.StaticKeywordReplicate)
+		if !ok {
+			return nil, fmt.Errorf("card %q does not have replicate ability", cardToCast.ID())
+		}
+		replicate, ok := staticAbility.(staticability.Replicate)
 		if !ok {
 			return nil, fmt.Errorf("card %q does not have replicate ability", cardToCast.ID())
 		}
 		for range a.replicateCount {
-			totalCost = cost.CombineCosts(totalCost, replicateCost)
+			totalCost = cost.CombineCosts(totalCost, replicate.Cost)
 		}
 	}
-	fooCostEvents := []event.GameEvent{}
-	if a.autoPayCost {
-		autoPayEvents, err := pay.AutoPay(game, player.ID(), cardToCast, totalCost)
-		if err != nil {
-			return nil, fmt.Errorf("failed to auto pay cost: %w", err)
-		}
-		fooCostEvents = append(fooCostEvents, autoPayEvents...)
-	} else {
-		ruling := judge.Ruling{Explain: true}
-		if !judge.CanCastSpellFromHand(
-			game,
-			player,
-			cardToCast,
-			totalCost,
-			&ruling,
-		) {
-			return nil, fmt.Errorf(
-				"player %q cannot cast card %q from from hand: %s",
-				player.ID(),
-				cardToCast.ID(),
-				ruling.Why(),
-			)
-		}
-		costEvents := pay.PayCost(totalCost, cardToCast, player)
-		fooCostEvents = append(fooCostEvents, costEvents...)
+	ruling := judge.Ruling{Explain: true}
+	if !judge.CanCastSpellFromHand(
+		game,
+		player,
+		cardToCast,
+		totalCost,
+		&ruling,
+	) {
+		return nil, fmt.Errorf(
+			"player %q cannot cast card %q from from hand: %s",
+			player.ID(),
+			cardToCast.ID(),
+			ruling.Why(),
+		)
 	}
+	costEvents := pay.Cost(totalCost, cardToCast, player)
 	events := append(
-		fooCostEvents,
+		costEvents,
 		event.CastSpellEvent{
 			PlayerID: player.ID(),
 			CardID:   cardToCast.ID(),
@@ -196,23 +194,17 @@ func (a CastSpellAction) castFromHand(game state.Game, player state.Player) ([]e
 		},
 	)
 	if a.replicateCount > 0 {
-		effectWithTargets := []target.EffectWithTarget{{
-			EffectSpec: definition.EffectSpec{
-				Name:      string(mtg.StaticKeywordReplicate),
-				Modifiers: map[string]any{"Count": a.replicateCount},
-			},
-			Target: target.TargetValue{
-				TargetID: cardToCast.ID(),
+		effectWithTargets := []effect.EffectWithTarget{{
+			Effect: effect.Replicate{Count: a.replicateCount},
+			Target: effect.Target{
+				ID: cardToCast.ID(),
 			},
 			SourceID: cardToCast.ID(),
 		}}
 		events = append(
 			events,
 			event.PutAbilityOnStackEvent{
-				PlayerID: player.ID(),
-				// TODO: Maybe the engine needs to manage creating new IDs for game objects.
-				// There might be a case where the same card is cast multiple times in the same
-				// priority loop and we need to ensure that the IDs are unique.
+				PlayerID:          player.ID(),
 				SourceID:          cardToCast.ID(),
 				FromZone:          mtg.ZoneHand,
 				AbilityName:       string(mtg.StaticKeywordReplicate),
@@ -227,10 +219,10 @@ func buildSpliceEffectWithCards(
 	player state.Player,
 	cardToCast gob.Card,
 	spliceCardIDs []string,
-	targetsForEffects map[target.EffectTargetKey]target.TargetValue,
-) ([]target.EffectWithTarget, []cost.Cost, error) {
+	targetsForEffects map[effect.EffectTargetKey]effect.Target,
+) ([]effect.EffectWithTarget, []cost.Cost, error) {
 	var spliceCosts []cost.Cost
-	var effectWithTargets []target.EffectWithTarget
+	var effectWithTargets []effect.EffectWithTarget
 	for _, spliceCardID := range spliceCardIDs {
 		spliceCard, ok := player.GetCardFromZone(spliceCardID, mtg.ZoneHand)
 		if !ok {
@@ -251,12 +243,16 @@ func buildSpliceEffectWithCards(
 				ruling.Why(),
 			)
 		}
-		staticAbilityCost, ok := spliceCard.GetStaticAbilityCost(mtg.StaticKeywordSplice)
+		staticAbility, ok := spliceCard.StaticAbility(mtg.StaticKeywordSplice)
 		if !ok {
 			return nil, nil, fmt.Errorf("card %q does not have splice ability", spliceCardID)
 		}
-		spliceCosts = append(spliceCosts, staticAbilityCost)
-		effectWithSpliceTargets, err := target.BuildEffectWithTargets(
+		spliceAbility, ok := staticAbility.(staticability.Splice)
+		if !ok {
+			return nil, nil, fmt.Errorf("card %q does not have splice ability", spliceCardID)
+		}
+		spliceCosts = append(spliceCosts, spliceAbility.Cost)
+		effectWithSpliceTargets, err := effect.BuildEffectWithTargets(
 			spliceCard.ID(),
 			spliceCard.SpellAbility(),
 			targetsForEffects,

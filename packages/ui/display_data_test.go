@@ -113,8 +113,8 @@ func TestPlayerData(t *testing.T) {
 	if box.Title != "Status for p1" {
 		t.Errorf("expected title 'Status for p1', got %q", box.Title)
 	}
-	if len(box.Content) != 7 {
-		t.Errorf("expected 7 lines, got %d", len(box.Content))
+	if len(box.Content) != 8 {
+		t.Errorf("expected 8 lines, got %d", len(box.Content))
 	}
 	if got := box.Content[0]; got != "Turn: 0" {
 		t.Errorf("expected first line 'Turn: 0', got %q", got)

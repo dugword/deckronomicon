@@ -5,8 +5,8 @@ import (
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine"
 	"deckronomicon/packages/engine/action"
+	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/mtg"
-	"deckronomicon/packages/game/target"
 	"errors"
 	"testing"
 
@@ -29,7 +29,7 @@ func TestParseActivateAbilityCommand(t *testing.T) {
 				AbilityID:         "Card with Ability ID-1",
 				SourceID:          "Card with Ability ID",
 				Zone:              mtg.ZoneHand,
-				TargetsForEffects: map[target.EffectTargetKey]target.TargetValue{},
+				TargetsForEffects: map[effect.EffectTargetKey]effect.Target{},
 			},
 		},
 		{
@@ -39,7 +39,7 @@ func TestParseActivateAbilityCommand(t *testing.T) {
 				AbilityID:         "Card with Ability ID-1",
 				SourceID:          "Card with Ability ID",
 				Zone:              mtg.ZoneHand,
-				TargetsForEffects: map[target.EffectTargetKey]target.TargetValue{},
+				TargetsForEffects: map[effect.EffectTargetKey]effect.Target{},
 			},
 		},
 		{
@@ -49,7 +49,7 @@ func TestParseActivateAbilityCommand(t *testing.T) {
 				AbilityID:         "Test Permanent ID-1",
 				SourceID:          "Test Permanent ID",
 				Zone:              mtg.ZoneBattlefield,
-				TargetsForEffects: map[target.EffectTargetKey]target.TargetValue{},
+				TargetsForEffects: map[effect.EffectTargetKey]effect.Target{},
 			},
 		},
 		{
@@ -59,7 +59,7 @@ func TestParseActivateAbilityCommand(t *testing.T) {
 				AbilityID:         "Test Permanent ID-1",
 				SourceID:          "Test Permanent ID",
 				Zone:              mtg.ZoneBattlefield,
-				TargetsForEffects: map[target.EffectTargetKey]target.TargetValue{},
+				TargetsForEffects: map[effect.EffectTargetKey]effect.Target{},
 			},
 		},
 	}

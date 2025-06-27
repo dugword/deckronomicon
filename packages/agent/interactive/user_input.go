@@ -67,16 +67,6 @@ func (a *Agent) ReadInput() string {
 	}
 	input := strings.TrimSpace(a.scanner.Text())
 	return input
-	/*
-		switch len(parts) {
-		case 0:
-			return "", ""
-		case 1:
-			return parts[0], ""
-		default:
-			return parts[0], strings.Join(parts[1:], " ")
-		}
-	*/
 }
 
 // ReadInputConfirm reads input from the interactive console and returns a

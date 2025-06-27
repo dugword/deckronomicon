@@ -4,9 +4,9 @@ package engine
 
 import (
 	"deckronomicon/packages/configs"
-	"deckronomicon/packages/engine/effect"
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/engine/resenv"
+	"deckronomicon/packages/engine/resolver"
 	"deckronomicon/packages/engine/rng"
 	"deckronomicon/packages/engine/turnaction"
 	"deckronomicon/packages/game/definition"
@@ -48,23 +48,12 @@ type Engine struct {
 	log         Logger
 	definitions map[string]definition.Card
 	resEnv      *resenv.ResEnv
-	// effectRegistry *effect.EffectRegistry
 }
-
-/*
-type ResolutionEnvironment struct {
-	RNG         *RNG
-	Log         *logger.Logger
-	Definitions map[string]definition.Card
-	//effectRegistry *effect.EffectRegistry
-}
-*/
 
 type EngineConfig struct {
-	Players []state.Player
-	Agents  map[string]PlayerAgent
-	Seed    int64
-	// Cards are just strings for now, but will be a Card type later
+	Players     []state.Player
+	Agents      map[string]PlayerAgent
+	Seed        int64
 	DeckLists   map[string]configs.DeckList
 	Definitions map[string]definition.Card
 	Log         Logger
@@ -78,18 +67,16 @@ func NewEngine(config EngineConfig) *Engine {
 	rng := rng.NewRNG(config.Seed)
 	definitions := config.Definitions
 	return &Engine{
-		agents:    agents,
-		deckLists: config.DeckLists,
-		game:      state.Game{}.WithPlayers(config.Players),
-		log:       config.Log,
-		record:    NewGameRecord(config.Seed),
-		// rng:         rng,
+		agents:      agents,
+		deckLists:   config.DeckLists,
+		game:        state.Game{}.WithPlayers(config.Players),
+		log:         config.Log,
+		record:      NewGameRecord(config.Seed),
 		definitions: definitions,
 		resEnv: &resenv.ResEnv{
 			RNG:         rng,
 			Definitions: definitions,
 		},
-		//effectRegistry: effect.NewEffectRegistry(),
 	}
 }
 
@@ -298,17 +285,13 @@ func (e *Engine) ResolveSpellOrAbility(resolvable state.Resolvable) error {
 	})
 	for _, effectWithTarget := range resolvable.EffectWithTargets() {
 		player := e.game.GetPlayer(resolvable.Controller())
-		e.log.Debug("Resolving effect:", effectWithTarget.EffectSpec.Name)
-		efct, err := effect.Build(effectWithTarget.EffectSpec)
+		e.log.Debugf("Resolving effect: %T", effectWithTarget.Effect)
+		effectResult, err := resolver.Resolve(e.game, player.ID(), resolvable, effectWithTarget, e.resEnv)
 		if err != nil {
-			return fmt.Errorf("effect %q not found: %w", effectWithTarget.EffectSpec.Name, err)
-		}
-		effectResult, err := efct.Resolve(e.game, player, resolvable, effectWithTarget.Target, e.resEnv)
-		if err != nil {
-			return fmt.Errorf("failed to resolve effect %q: %w", efct.Name(), err)
+			return fmt.Errorf("failed to resolve effect %q: %w", effectWithTarget.Effect.Name(), err)
 		}
 		if err := e.ResolveEffectResult(player.ID(), effectResult); err != nil {
-			return fmt.Errorf("failed to resolve effect result for effect %q: %w", efct.Name(), err)
+			return fmt.Errorf("failed to resolve effect result for effect %q: %w", effectWithTarget.Effect.Name(), err)
 		}
 	}
 	if resolvable.Match(query.And(is.Spell(), is.PermanentCardType())) {
@@ -334,27 +317,27 @@ func (e *Engine) ResolveSpellOrAbility(resolvable state.Resolvable) error {
 
 func (e *Engine) ResolveEffectResult(
 	playerID string,
-	effectResult effect.EffectResult,
+	result resolver.Result,
 ) error {
 	agent := e.agents[playerID]
 	for {
 		e.log.Debugf("Resolving effect result for player %q", playerID)
-		for _, evnt := range effectResult.Events {
+		for _, evnt := range result.Events {
 			if err := e.ApplyEvent(evnt); err != nil {
 				return fmt.Errorf("failed to apply event %T: %w", evnt, err)
 			}
 		}
-		if effectResult.ChoicePrompt.ChoiceOpts == nil {
+		if result.ChoicePrompt.ChoiceOpts == nil {
 			return nil
 		}
-		choiceResults, err := agent.Choose(effectResult.ChoicePrompt)
+		choiceResults, err := agent.Choose(result.ChoicePrompt)
 		if err != nil {
 			return fmt.Errorf("failed to get choice from player agent %q: %w", agent.PlayerID(), err)
 		}
-		if effectResult.ResumeFunc == nil {
+		if result.Resume == nil {
 			return fmt.Errorf("missing resume function")
 		}
-		effectResult, err = effectResult.ResumeFunc(choiceResults)
+		result, err = result.Resume(choiceResults)
 		if err != nil {
 			return fmt.Errorf("failed to resume effect result: %w", err)
 		}

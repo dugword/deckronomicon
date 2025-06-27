@@ -1,16 +1,15 @@
 package action
 
 import (
-	buildmanaabilities "deckronomicon/packages/build_mana_abilities"
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/engine/judge"
 	"deckronomicon/packages/engine/pay"
 	"deckronomicon/packages/engine/resenv"
+	"deckronomicon/packages/engine/resolver"
 	"deckronomicon/packages/game/cost"
+	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
-	"deckronomicon/packages/game/target"
-	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/is"
 	"deckronomicon/packages/state"
 	"fmt"
@@ -20,7 +19,7 @@ type ActivateAbilityRequest struct {
 	AbilityID         string
 	SourceID          string
 	Zone              mtg.Zone
-	TargetsForEffects map[target.EffectTargetKey]target.TargetValue
+	TargetsForEffects map[effect.EffectTargetKey]effect.Target
 }
 
 func (r ActivateAbilityRequest) Build(string) ActivateAbilityAction {
@@ -31,7 +30,7 @@ type ActivateAbilityAction struct {
 	abilityID         string
 	sourceID          string
 	zone              mtg.Zone
-	targetsForEffects map[target.EffectTargetKey]target.TargetValue
+	targetsForEffects map[effect.EffectTargetKey]effect.Target
 }
 
 func NewActivateAbilityAction(
@@ -100,42 +99,46 @@ func (a ActivateAbilityAction) Complete(game state.Game, player state.Player, re
 			Zone:      a.zone,
 		},
 	}
-	effectWithTargets, err := target.BuildEffectWithTargets(ability.ID(), ability.EffectSpecs(), a.targetsForEffects)
+	effectWithTargets, err := effect.BuildEffectWithTargets(ability.ID(), ability.Effects(), a.targetsForEffects)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build effect with targets: %w", err)
 	}
-	costEvents := pay.PayCost(ability.Cost(), source, player)
+	costEvents := pay.Cost(ability.Cost(), source, player)
 	events = append(events, costEvents...)
-	// TODO: I think I need to do this on a per effect basis, like I think for
-	// chromatic star I get the mana fixing buy the draw a card effect still
-	// goes on the stack.
-	if ability.IsManaAbility() {
-		if permanent, ok := source.(gob.Permanent); ok {
-			if permanent.Match(is.Land()) {
-				if cost.HasCostType(ability.Cost(), cost.TapThisCost{}) {
-					events = append(events, event.LandTappedForManaEvent{
-						PlayerID: player.ID(),
-						ObjectID: permanent.ID(),
-						Subtypes: permanent.Subtypes(),
-					})
-				}
+	var nonAddManaEffectsWithTargets []effect.EffectWithTarget
+	for _, effectWithTarget := range effectWithTargets {
+		addManaEffect, ok := effectWithTarget.Effect.(effect.AddMana)
+		if !ok {
+			nonAddManaEffectsWithTargets = append(nonAddManaEffectsWithTargets, effectWithTarget)
+			continue
+		}
+		if source.Match(is.Land()) && cost.HasCostType(ability.Cost(), cost.TapThisCost{}) {
+			land, ok := source.(gob.Permanent)
+			if !ok {
+				return nil, fmt.Errorf("source %q is not a permanent", source.ID())
 			}
+			events = append(events, event.LandTappedForManaEvent{
+				PlayerID: player.ID(),
+				ObjectID: land.ID(),
+				Subtypes: land.Subtypes(),
+			})
 		}
-		manaEvents, err := buildmanaabilities.BuildManaAbilityEvents(game, player, effectWithTargets, resEnv)
+		result, err := resolver.ResolveAddMana(game, player.ID(), addManaEffect)
 		if err != nil {
-			return nil, fmt.Errorf("failed to build mana ability events: %w", err)
+			return nil, fmt.Errorf("failed to resolve add mana effect: %w", err)
 		}
-		events = append(events, manaEvents...)
-		return events, nil
+		events = append(events, result.Events...)
 	}
-	events = append(events, event.PutAbilityOnStackEvent{
-		PlayerID:          player.ID(),
-		SourceID:          source.ID(),
-		AbilityID:         ability.ID(),
-		FromZone:          a.zone,
-		AbilityName:       ability.Name(),
-		EffectWithTargets: effectWithTargets,
-	})
+	if len(nonAddManaEffectsWithTargets) > 0 {
+		events = append(events, event.PutAbilityOnStackEvent{
+			PlayerID:          player.ID(),
+			SourceID:          source.ID(),
+			AbilityID:         ability.ID(),
+			FromZone:          a.zone,
+			AbilityName:       ability.Name(),
+			EffectWithTargets: nonAddManaEffectsWithTargets,
+		})
+	}
 	return events, nil
 }
 
@@ -197,7 +200,7 @@ func getAbilitySource(
 	player state.Player,
 	zone mtg.Zone,
 	sourceID string,
-) (query.Object, bool) {
+) (gob.Object, bool) {
 	switch zone {
 	case mtg.ZoneBattlefield:
 		return getAbilitySourceFromPermanent(game, sourceID)
@@ -209,7 +212,7 @@ func getAbilitySource(
 func getAbilitySourceFromPermanent(
 	game state.Game,
 	sourceID string,
-) (query.Object, bool) {
+) (gob.Object, bool) {
 	permanent, ok := game.Battlefield().Get(sourceID)
 	if !ok {
 		return nil, false
@@ -221,7 +224,7 @@ func getAbilitySourceFromCardInZone(
 	player state.Player,
 	sourceID string,
 	zone mtg.Zone,
-) (query.Object, bool) {
+) (gob.Object, bool) {
 	card, ok := player.GetCardFromZone(sourceID, zone)
 	if !ok {
 		return nil, false

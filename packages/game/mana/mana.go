@@ -371,6 +371,25 @@ type Amount struct {
 	colorless int
 }
 
+func (a Amount) Has(color Color) bool {
+	switch color {
+	case White:
+		return a.white > 0
+	case Blue:
+		return a.blue > 0
+	case Black:
+		return a.black > 0
+	case Red:
+		return a.red > 0
+	case Green:
+		return a.green > 0
+	case Colorless:
+		return a.colorless > 0
+	default:
+		panic(fmt.Sprintf("unknown color %s", color))
+	}
+}
+
 func (a Amount) White() int {
 	return a.white
 }

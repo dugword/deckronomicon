@@ -140,7 +140,7 @@ func (c CompositeCost) Description() string {
 // that action can then use to provide the cost when the action is executed. Kinda like how we do with command
 // parsing with a "IsComplete" method that returns true when the cost is fully specified.
 
-func ParseCost(costString string) (Cost, error) {
+func Parse(costString string) (Cost, error) {
 	parts := strings.Split(costString, ",")
 	var costs []Cost
 	for _, part := range parts {
