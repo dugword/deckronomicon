@@ -11,6 +11,7 @@ type Config struct {
 	Interactive  bool
 	Scenario     string
 	ScenariosDir string
+	AutoPay      bool
 	Verbose      bool
 }
 
@@ -33,6 +34,7 @@ func LoadConfig(args []string, getenv func(string) string) (Config, error) {
 	interactive := flags.Bool("interactive", false, "run as interactive mode")
 	scenario := flags.String("scenario", "example", "scenario to run")
 	scenariosDir := flags.String("scenarios", "scenarios", "scenarios directory")
+	autoPay := flags.Bool("autopay", false, "automatically pay costs when possible")
 	verbose := flags.Bool("verbose", config.Verbose, "verbose output")
 	if err := flags.Parse(args[1:]); err != nil {
 		return Config{}, err
@@ -42,6 +44,7 @@ func LoadConfig(args []string, getenv func(string) string) (Config, error) {
 	config.Interactive = *interactive
 	config.Scenario = *scenario
 	config.ScenariosDir = *scenariosDir
+	config.AutoPay = *autoPay
 	config.Verbose = *verbose
 	return config, nil
 }

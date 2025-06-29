@@ -8,7 +8,7 @@ import (
 )
 
 func (p Player) WithAddMana(color mana.Color, amount int) Player {
-	p.manaPool = p.manaPool.WithAddedMana(color, amount)
+	p.manaPool = p.manaPool.WithAddMana(amount, color)
 	return p
 }
 

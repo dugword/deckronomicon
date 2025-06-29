@@ -5,6 +5,7 @@ import (
 	"deckronomicon/packages/engine/reducer"
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/gob"
+	"deckronomicon/packages/game/mana"
 	"deckronomicon/packages/state"
 )
 
@@ -13,17 +14,48 @@ import (
 // or is it an error because of some broken game state?
 // TODO: Pass in ruling here and log which costs could not be paid
 func CanPayCost(someCost cost.Cost, object gob.Object, game state.Game, player state.Player, ruling *Ruling) bool {
-	costEvents := pay.Cost(someCost, object, player)
+	costEvents := pay.Cost(someCost, object, player.ID())
 	canPay := true
 	for _, costEvent := range costEvents {
 		var err error
-		game, err = reducer.ApplyEvent(game, costEvent)
+		game, err = reducer.ApplyEventAndTriggers(game, costEvent)
 		if err != nil {
 			if ruling != nil && ruling.Explain {
 				// TODO: Find some way to tie this to the specific cost event
 				// Maybe each event needs to have a reason for why it's being applied.
 				// E.g. the LoseLifeEvent could have a reason like "paying cost for spell X"
 				ruling.Reasons = append(ruling.Reasons, "unable to pay cost requiring "+costEvent.EventType())
+			}
+			canPay = false
+		}
+	}
+	return canPay
+}
+
+func CanPayCostAutomatically(
+	someCost cost.Cost,
+	object gob.Object,
+	game state.Game,
+	playerID string,
+	colors []mana.Color,
+	ruling *Ruling,
+) bool {
+	canPay := true
+	// TODO: events no longer includes paying costs, this is just the activation of mana sources
+	// still need to call the pay function to get the events
+	events, err := pay.AutoActivateManaSources(game, someCost, object, playerID, colors)
+	if err != nil {
+		if ruling != nil && ruling.Explain {
+			ruling.Reasons = append(ruling.Reasons, "unable to pay cost automatically: "+err.Error())
+		}
+		canPay = false
+		return canPay
+	}
+	for _, event := range events {
+		game, err = reducer.ApplyEventAndTriggers(game, event)
+		if err != nil {
+			if ruling != nil && ruling.Explain {
+				ruling.Reasons = append(ruling.Reasons, "unable to apply event for cost: "+event.EventType())
 			}
 			canPay = false
 		}

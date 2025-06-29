@@ -3,6 +3,7 @@ package judge
 import (
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/gob"
+	"deckronomicon/packages/game/mana"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/has"
@@ -18,6 +19,8 @@ func canCastSpell(
 	zone mtg.Zone,
 	card gob.Card,
 	cost cost.Cost,
+	autoPayCost bool,
+	autoPayColors []mana.Color,
 	ruling *Ruling,
 ) bool {
 	can := true
@@ -41,17 +44,20 @@ func canCastSpell(
 			can = false
 		}
 	}
-	if !CanPotentiallyPayCost(cost, card, game, player, ruling) {
-		if ruling != nil && ruling.Explain {
-			ruling.Reasons = append(ruling.Reasons, "cannot potentially pay cost for spell: "+cost.Description())
+	if autoPayCost {
+		if !CanPayCostAutomatically(cost, card, game, player.ID(), autoPayColors, ruling) {
+			if ruling != nil && ruling.Explain {
+				ruling.Reasons = append(ruling.Reasons, "cannot pay cost for spell: "+cost.Description())
+			}
+			can = false
 		}
-		can = false
-	}
-	if !CanPayCost(cost, card, game, player, ruling) {
-		if ruling != nil && ruling.Explain {
-			ruling.Reasons = append(ruling.Reasons, "cannot pay cost for spell: "+cost.Description())
+	} else {
+		if !CanPayCost(cost, card, game, player, ruling) {
+			if ruling != nil && ruling.Explain {
+				ruling.Reasons = append(ruling.Reasons, "cannot pay cost for spell: "+cost.Description())
+			}
+			can = false
 		}
-		can = false
 	}
 	return can
 }
@@ -61,6 +67,8 @@ func CanCastSpellWithFlashback(
 	player state.Player,
 	card gob.Card,
 	cost cost.Cost,
+	autoPayCost bool,
+	autoPayColors []mana.Color,
 	ruling *Ruling,
 ) bool {
 	can := true
@@ -71,7 +79,7 @@ func CanCastSpellWithFlashback(
 		}
 		return can
 	}
-	if !canCastSpell(game, player, mtg.ZoneGraveyard, card, cost, ruling) {
+	if !canCastSpell(game, player, mtg.ZoneGraveyard, card, cost, autoPayCost, autoPayColors, ruling) {
 		if ruling != nil && ruling.Explain {
 			ruling.Reasons = append(ruling.Reasons, "cannot cast spell from graveyard")
 		}
@@ -85,10 +93,12 @@ func CanCastSpellFromHand(
 	player state.Player,
 	card gob.Card,
 	cost cost.Cost,
+	autoPayCost bool,
+	autoPayColors []mana.Color,
 	ruling *Ruling,
 ) bool {
 	can := true
-	if !canCastSpell(game, player, mtg.ZoneHand, card, cost, ruling) {
+	if !canCastSpell(game, player, mtg.ZoneHand, card, cost, autoPayCost, autoPayColors, ruling) {
 		if ruling != nil && ruling.Explain {
 			ruling.Reasons = append(ruling.Reasons, "cannot cast spell from hand")
 		}

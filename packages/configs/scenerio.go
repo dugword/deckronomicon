@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"deckronomicon/packages/game/mana"
 	"errors"
 	"fmt"
 	"os"
@@ -30,13 +31,15 @@ type Scenario struct {
 }
 
 type Player struct {
-	AgentType    string
-	DeckList     DeckList
-	Name         string
-	StartingHand []string
-	StartingLife int
-	StartingMode string
-	StrategyFile string
+	AgentType               string
+	AutoPay                 bool
+	AutoPayColorsForGeneric []mana.Color // Colors to prioritize when auto-paying costs, if applicable
+	DeckList                DeckList
+	Name                    string
+	StartingHand            []string
+	StartingLife            int
+	StartingMode            string
+	StrategyFile            string
 }
 
 type Setup struct {
@@ -44,13 +47,15 @@ type Setup struct {
 	MaxTurns      int    `json:"MaxTurns" yaml:"MaxTurns"`
 	OnThePlay     string `json:"OnThePlay" yaml:"OnThePlay"`
 	Players       []struct {
-		Agent        string   `json:"Agent" yaml:"Agent"`
-		DeckList     string   `json:"DeckList" yaml:"DeckList"`
-		Name         string   `json:"Name" yaml:"Name"`
-		StartingHand []string `json:"StartingHand" yaml:"StartingHand"`
-		StartingLife int      `json:"StartingLife" yaml:"StartingLife"`
-		StartingMode string   `json:"StartingMode" yaml:"StartingMode"`
-		Strategy     string   `json:"Strategy" yaml:"Strategy"`
+		Agent                   string   `json:"Agent" yaml:"Agent"`
+		AutoPay                 bool     `json:"AutoPay" yaml:"AutoPay"`
+		AutoPayColorsForGeneric []string `json:"AutoPayColorsForGeneric" yaml:"AutoPayColorsForGeneric"`
+		DeckList                string   `json:"DeckList" yaml:"DeckList"`
+		Name                    string   `json:"Name" yaml:"Name"`
+		StartingHand            []string `json:"StartingHand" yaml:"StartingHand"`
+		StartingLife            int      `json:"StartingLife" yaml:"StartingLife"`
+		StartingMode            string   `json:"StartingMode" yaml:"StartingMode"`
+		Strategy                string   `json:"Strategy" yaml:"Strategy"`
 	} `json:"Players" yaml:"Players"`
 	ScenarioName string `json:"ScenarioName" yaml:"ScenarioName"`
 }
@@ -101,13 +106,26 @@ func LoadScenario(scenariosDir, scenario string) (*Scenario, error) {
 		if setup.OnThePlay == setup.Players[i].Name {
 			isOnThePlaySet = true
 		}
+		var AutoPayColors []mana.Color
+		for _, c := range playerSetup.AutoPayColorsForGeneric {
+			color, ok := mana.StringToColor(c)
+			if !ok {
+				return nil, fmt.Errorf("invalid autopay color %q for player %q", c, playerSetup.Name)
+			}
+			AutoPayColors = append(AutoPayColors, color)
+		}
+		if len(AutoPayColors) == 0 {
+			AutoPayColors = mana.Colors()
+		}
 		var player = Player{
-			AgentType:    playerSetup.Agent,
-			Name:         playerSetup.Name,
-			StartingHand: playerSetup.StartingHand,
-			StartingLife: playerSetup.StartingLife,
-			StartingMode: playerSetup.StartingMode,
-			StrategyFile: playerSetup.Strategy,
+			AgentType:               playerSetup.Agent,
+			AutoPay:                 playerSetup.AutoPay,
+			AutoPayColorsForGeneric: AutoPayColors,
+			Name:                    playerSetup.Name,
+			StartingHand:            playerSetup.StartingHand,
+			StartingLife:            playerSetup.StartingLife,
+			StartingMode:            playerSetup.StartingMode,
+			StrategyFile:            playerSetup.Strategy,
 		}
 		if player.AgentType == "" {
 			player.AgentType = "Dummy"

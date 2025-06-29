@@ -1,6 +1,8 @@
 package judge
 
 import (
+	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/engine/pay"
 	"deckronomicon/packages/engine/reducer"
 	"deckronomicon/packages/engine/resolver"
 	"deckronomicon/packages/game/cost"
@@ -44,13 +46,13 @@ func GetLandsAvailableToPlay(game state.Game, player state.Player, ruling *Rulin
 	return availableCards
 }
 
-func GetSpellsAvailableToCast(game state.Game, player state.Player, ruling *Ruling) []gob.CardInZone {
+func GetSpellsAvailableToCast(game state.Game, player state.Player, autoPayCost bool, autoPayColors []mana.Color, ruling *Ruling) []gob.CardInZone {
 	var availableCards []gob.CardInZone
 	for _, card := range player.Hand().GetAll() {
 		if ruling != nil && ruling.Explain {
 			ruling.Reasons = append(ruling.Reasons, fmt.Sprintf("[card %q]: ", card.Name()))
 		}
-		if CanCastSpellFromHand(game, player, card, card.ManaCost(), ruling) {
+		if CanCastSpellFromHand(game, player, card, card.ManaCost(), autoPayCost, autoPayColors, ruling) {
 			availableCards = append(availableCards, gob.NewCardInZone(card, mtg.ZoneHand))
 		}
 	}
@@ -78,7 +80,7 @@ func GetSpellsAvailableToCast(game state.Game, player state.Player, ruling *Ruli
 			}
 			continue
 		}
-		if CanCastSpellWithFlashback(game, player, card, flashbackAbility.Cost, ruling) {
+		if CanCastSpellWithFlashback(game, player, card, flashbackAbility.Cost, autoPayCost, autoPayColors, ruling) {
 			availableCards = append(availableCards, gob.NewCardInZone(card, mtg.ZoneGraveyard))
 		}
 	}
@@ -172,7 +174,7 @@ func GetSplicableCards(
 			}
 			continue
 		}
-		totalCost := cost.CombineCosts(
+		totalCost := cost.NewComposite(
 			cardToCast.Card().ManaCost(),
 			spliceAbility.Cost,
 		)
@@ -194,13 +196,39 @@ func GetSplicableCards(
 	return splicableCards, nil
 }
 
-// TODO: This needs some refinement, and checking for edge cases
+// TODO: Redundate with pay automatic activation
 func GetAvailableMana(game state.Game, player state.Player) mana.Pool {
 	for _, untappedLand := range game.Battlefield().FindAll(
 		query.And(has.Controller(player.ID()), is.Land(), is.Untapped())) {
 		for _, ability := range untappedLand.ActivatedAbilities() {
 			if !ability.Match(is.ManaAbility()) {
 				continue
+			}
+			events := []event.GameEvent{
+				event.ActivateAbilityEvent{
+					PlayerID:  player.ID(),
+					SourceID:  untappedLand.ID(),
+					AbilityID: ability.Name(),
+					Zone:      mtg.ZoneBattlefield,
+				},
+			}
+			costEvents := pay.Cost(
+				ability.Cost(),
+				untappedLand,
+				player.ID(),
+			)
+			events = append(events, costEvents...)
+			events = append(events, event.LandTappedForManaEvent{
+				PlayerID: player.ID(),
+				ObjectID: untappedLand.ID(),
+				Subtypes: untappedLand.Subtypes(),
+			})
+			for _, event := range events {
+				var err error
+				game, err = reducer.ApplyEventAndTriggers(game, event)
+				if err != nil {
+					panic(fmt.Errorf("failed to apply event %q: %w", event.EventType(), err))
+				}
 			}
 			for _, efct := range ability.Effects() {
 				addMana, ok := efct.(effect.AddMana)
@@ -212,11 +240,12 @@ func GetAvailableMana(game state.Game, player state.Player) mana.Pool {
 					panic(fmt.Errorf("failed to resolve add mana effect: %w", err))
 				}
 				for _, event := range result.Events {
-					game, err = reducer.ApplyEvent(game, event)
+					game, err = reducer.ApplyEventAndTriggers(game, event)
 					if err != nil {
 						panic(fmt.Errorf("failed to apply event %q: %w", event.EventType(), err))
 					}
 				}
+				events = append(events, result.Events...)
 			}
 		}
 	}

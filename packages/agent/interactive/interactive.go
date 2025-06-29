@@ -10,6 +10,7 @@ import (
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine"
 	"deckronomicon/packages/engine/action"
+	"deckronomicon/packages/game/mana"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/state"
 	"deckronomicon/packages/ui"
@@ -21,14 +22,16 @@ import (
 // InteractivePlayerAgent implements the PlayerAgent interface for interactive
 // play.
 type Agent struct {
-	uiBuffer   *ui.Buffer
-	scanner    *bufio.Scanner
-	playerID   string
-	inputError string
-	prompt     string
-	stops      []mtg.Step
-	verbose    bool
-	message    []string
+	uiBuffer      *ui.Buffer
+	scanner       *bufio.Scanner
+	playerID      string
+	inputError    string
+	prompt        string
+	stops         []mtg.Step
+	verbose       bool
+	message       []string
+	autopay       bool
+	autopayColors []mana.Color
 }
 
 func NewAgent(
@@ -36,15 +39,19 @@ func NewAgent(
 	playerID string,
 	stops []mtg.Step,
 	displayFile string,
+	autopay bool,
+	autopayColors []mana.Color,
 	verbose bool,
 ) *Agent {
 	agent := Agent{
-		playerID: playerID,
-		prompt:   ">> ",
-		scanner:  scanner,
-		stops:    stops,
-		uiBuffer: ui.NewBuffer(displayFile),
-		verbose:  verbose,
+		playerID:      playerID,
+		prompt:        ">> ",
+		scanner:       scanner,
+		stops:         stops,
+		uiBuffer:      ui.NewBuffer(displayFile),
+		verbose:       verbose,
+		autopay:       autopay,
+		autopayColors: autopayColors,
 	}
 	return &agent
 }
@@ -92,6 +99,8 @@ func (a *Agent) GetNextAction(game state.Game) (engine.Action, error) {
 			a,
 			game,
 			player,
+			a.autopay,
+			a.autopayColors,
 		)
 		if err != nil {
 			a.inputError = err.Error()
