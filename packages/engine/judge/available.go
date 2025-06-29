@@ -44,13 +44,13 @@ func GetLandsAvailableToPlay(game state.Game, player state.Player, ruling *Rulin
 	return availableCards
 }
 
-func GetSpellsAvailableToCast(game state.Game, player state.Player, ruling *Ruling) []gob.CardInZone {
+func GetSpellsAvailableToCast(game state.Game, player state.Player, autoPayCost bool, autoPayColors []mana.Color, ruling *Ruling) []gob.CardInZone {
 	var availableCards []gob.CardInZone
 	for _, card := range player.Hand().GetAll() {
 		if ruling != nil && ruling.Explain {
 			ruling.Reasons = append(ruling.Reasons, fmt.Sprintf("[card %q]: ", card.Name()))
 		}
-		if CanCastSpellFromHand(game, player, card, card.ManaCost(), ruling) {
+		if CanCastSpellFromHand(game, player, card, card.ManaCost(), autoPayCost, autoPayColors, ruling) {
 			availableCards = append(availableCards, gob.NewCardInZone(card, mtg.ZoneHand))
 		}
 	}
@@ -78,7 +78,7 @@ func GetSpellsAvailableToCast(game state.Game, player state.Player, ruling *Ruli
 			}
 			continue
 		}
-		if CanCastSpellWithFlashback(game, player, card, flashbackAbility.Cost, ruling) {
+		if CanCastSpellWithFlashback(game, player, card, flashbackAbility.Cost, autoPayCost, autoPayColors, ruling) {
 			availableCards = append(availableCards, gob.NewCardInZone(card, mtg.ZoneGraveyard))
 		}
 	}
@@ -172,7 +172,7 @@ func GetSplicableCards(
 			}
 			continue
 		}
-		totalCost := cost.CombineCosts(
+		totalCost := cost.NewComposite(
 			cardToCast.Card().ManaCost(),
 			spliceAbility.Cost,
 		)

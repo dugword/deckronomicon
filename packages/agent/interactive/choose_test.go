@@ -313,6 +313,8 @@ func TestChoose(t *testing.T) {
 				"Test Player",
 				[]mtg.Step{},
 				"./testdata/display.tmpl",
+				false, // No autopay for these tests
+				nil,   // No autopay for these tests
 				false,
 			)
 			tc.choicePrompt.Source = mockSource{}

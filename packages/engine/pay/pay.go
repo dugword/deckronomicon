@@ -4,72 +4,67 @@ import (
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/gob"
-	"deckronomicon/packages/state"
 	"fmt"
 )
 
-func Cost(someCost cost.Cost, object gob.Object, player state.Player) []event.GameEvent {
+func Cost(someCost cost.Cost, object gob.Object, playerID string) []event.GameEvent {
 	switch c := someCost.(type) {
 	case cost.CompositeCost:
-		return payCompositeCost(c, object, player)
+		return payCompositeCost(c, object, playerID)
 	case cost.ManaCost:
-		return payManaCost(c, player)
+		return payManaCost(c, playerID)
 	case cost.TapThisCost:
-		return payTapCost(object, player)
+		return payTapCost(object, playerID)
 	case cost.DiscardThisCost:
-		return payDiscardCost(object, player)
+		return payDiscardCost(object, playerID)
 	case cost.LifeCost:
-		return payLifeCost(c, player)
+		return payLifeCost(c, playerID)
 	default:
 		panic(fmt.Errorf("unsupported cost type: %T", c))
 	}
 }
 
-func payLifeCost(c cost.LifeCost, player state.Player) []event.GameEvent {
-	// Create an event to pay the life cost
-	return []event.GameEvent{
-		event.LoseLifeEvent{
-			PlayerID: player.ID(),
-			Amount:   c.Amount(),
-		},
-	}
-}
-
-func payCompositeCost(c cost.CompositeCost, object gob.Object, player state.Player) []event.GameEvent {
-	// Check if the player can pay all parts of the composite cost
+func payCompositeCost(c cost.CompositeCost, object gob.Object, playerID string) []event.GameEvent {
 	var events []event.GameEvent
 	for _, subCost := range c.Costs() {
-		subEvents := Cost(subCost, object, player)
+		subEvents := Cost(subCost, object, playerID)
 		events = append(events, subEvents...)
 	}
 	return events
 }
 
-func payManaCost(c cost.ManaCost, player state.Player) []event.GameEvent {
+func payLifeCost(c cost.LifeCost, playerID string) []event.GameEvent {
+	return []event.GameEvent{
+		event.LoseLifeEvent{
+			PlayerID: playerID,
+			Amount:   c.Amount(),
+		},
+	}
+}
+
+func payManaCost(c cost.ManaCost, playerID string) []event.GameEvent {
 	if c.Amount().Total() == 0 {
 		return nil
 	}
 	return []event.GameEvent{event.SpendManaEvent{
-		PlayerID:   player.ID(),
+		PlayerID:   playerID,
 		ManaString: c.Amount().ManaString(),
 	}}
 }
 
-func payTapCost(object gob.Object, player state.Player) []event.GameEvent {
-	// Create an event to tap the permanent
+func payTapCost(object gob.Object, playerID string) []event.GameEvent {
 	return []event.GameEvent{
 		event.TapPermanentEvent{
-			PlayerID:    player.ID(),
+			PlayerID:    playerID,
 			PermanentID: object.ID(),
 		},
 	}
 }
 
-func payDiscardCost(object gob.Object, player state.Player) []event.GameEvent {
-	// Create an event to discard the specified object
+func payDiscardCost(object gob.Object, playerID string) []event.GameEvent {
 	return []event.GameEvent{
 		event.DiscardCardEvent{
-			PlayerID: player.ID(),
+			PlayerID: playerID,
 			CardID:   object.ID(),
 		},
 	}

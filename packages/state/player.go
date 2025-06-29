@@ -40,7 +40,7 @@ func NewPlayer(id string, life int) Player {
 		graveyard:   NewGraveyard(),
 		hand:        NewHand(),
 		id:          id,
-		library:     NewLibrary([]gob.Card{}), // Start with an empty library
+		library:     NewLibrary([]gob.Card{}),
 		life:        life,
 		manaPool:    mana.Pool{},
 		maxHandSize: 7,

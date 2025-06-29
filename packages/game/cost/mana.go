@@ -3,34 +3,10 @@ package cost
 import (
 	"deckronomicon/packages/game/mana"
 	"fmt"
-	"regexp"
 )
-
-// ParseManaCost parses a mana cost string and returns a ManaCost.
-func ParseManaCost(costStr string) (ManaCost, error) {
-	amount, err := mana.ParseManaString(costStr)
-	if err != nil {
-		return ManaCost{}, fmt.Errorf("failed to parse mana cost %q: %w", costStr, err)
-	}
-	return NewManaCost(amount), nil
-}
-
-// ManaPattern is a regex pattern that matches valid mana costs.
-// TODO: Support X costs and other special cases.
-var manaPattern = regexp.MustCompile(`^(?:\{[0-9WUBRGC]+\})*$`)
-
-func IsManaCost(input string) bool {
-	return manaPattern.MatchString(input)
-}
 
 type ManaCost struct {
 	amount mana.Amount
-}
-
-func NewManaCost(amount mana.Amount) ManaCost {
-	return ManaCost{
-		amount: amount,
-	}
 }
 
 func (c ManaCost) isCost() {}

@@ -52,7 +52,7 @@ func NewPlayerFromDefinition(definition definition.Player) Player {
 		library:            Library{cards: NewCardsFromDefinitions(definition.Library.Cards)},
 		graveyard:          Graveyard{cards: NewCardsFromDefinitions(definition.Graveyard.Cards)},
 		exile:              Exile{cards: NewCardsFromDefinitions(definition.Exile.Cards)},
-		manaPool:           mana.Pool{}.WithAddedAmount(manaAmount),
+		manaPool:           mana.Pool{}.WithAddAmount(manaAmount),
 	}
 }
 

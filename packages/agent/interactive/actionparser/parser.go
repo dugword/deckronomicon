@@ -12,6 +12,7 @@ package actionparser
 import (
 	"deckronomicon/packages/engine"
 	"deckronomicon/packages/engine/action"
+	"deckronomicon/packages/game/mana"
 	"deckronomicon/packages/state"
 	"errors"
 	"fmt"
@@ -29,6 +30,8 @@ func ParseInput(
 	agent engine.PlayerAgent,
 	game state.Game,
 	player state.Player,
+	autoPay bool,
+	autoPayColors []mana.Color,
 ) (engine.Action, error) {
 	parts := strings.Fields(input)
 	if len(parts) == 0 {
@@ -57,7 +60,7 @@ func ParseInput(
 	case "play":
 		return parsePlayLandCommand(arg, game, player, agent)
 	case "cast":
-		request, err := parseCastSpellCommand(arg, game, player, agent)
+		request, err := parseCastSpellCommand(arg, game, player, agent, autoPay, autoPayColors)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse cast command: %w", err)
 		}
