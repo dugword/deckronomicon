@@ -103,7 +103,7 @@ func (a ActivateAbilityAction) Complete(game state.Game, player state.Player, re
 	if err != nil {
 		return nil, fmt.Errorf("failed to build effect with targets: %w", err)
 	}
-	costEvents := pay.Cost(ability.Cost(), source, player)
+	costEvents := pay.Cost(ability.Cost(), source, player.ID())
 	events = append(events, costEvents...)
 	var nonAddManaEffectsWithTargets []effect.EffectWithTarget
 	for _, effectWithTarget := range effectWithTargets {
@@ -112,7 +112,7 @@ func (a ActivateAbilityAction) Complete(game state.Game, player state.Player, re
 			nonAddManaEffectsWithTargets = append(nonAddManaEffectsWithTargets, effectWithTarget)
 			continue
 		}
-		if source.Match(is.Land()) && cost.HasCostType(ability.Cost(), cost.TapThisCost{}) {
+		if source.Match(is.Land()) && cost.HasType(ability.Cost(), cost.TapThisCost{}) {
 			land, ok := source.(gob.Permanent)
 			if !ok {
 				return nil, fmt.Errorf("source %q is not a permanent", source.ID())

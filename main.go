@@ -30,11 +30,17 @@ func createPlayerAgent(
 	switch playerScenario.AgentType {
 	case "Interactive":
 		scanner := bufio.NewScanner(stdin)
+		autoPay := playerScenario.AutoPay
+		if config.AutoPay {
+			autoPay = config.AutoPay
+		}
 		playerAgent = interactive.NewAgent(
 			scanner,
 			playerScenario.Name,
 			[]mtg.Step{mtg.StepUpkeep, mtg.StepPrecombatMain},
-			"./ui/term/display.tmpl", // TODO: Make this configurable.g
+			"./ui/term/display.tmpl", // TODO: Make this configurable.
+			autoPay,
+			playerScenario.AutoPayColorsForGeneric,
 			config.Verbose,
 		)
 		return playerAgent, nil

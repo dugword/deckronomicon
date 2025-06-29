@@ -6,6 +6,7 @@ import (
 	"deckronomicon/packages/engine/action"
 	"deckronomicon/packages/engine/judge"
 	"deckronomicon/packages/game/gob"
+	"deckronomicon/packages/game/mana"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/has"
@@ -18,9 +19,11 @@ func parseCastSpellCommand(
 	game state.Game,
 	player state.Player,
 	agent engine.PlayerAgent,
+	autoPayCost bool,
+	autoPayColors []mana.Color, // Colors to prioritize when auto-paying costs, if applicable
 ) (action.CastSpellRequest, error) {
 	ruling := judge.Ruling{Explain: true}
-	cards := judge.GetSpellsAvailableToCast(game, player, &ruling)
+	cards := judge.GetSpellsAvailableToCast(game, player, autoPayCost, autoPayColors, &ruling)
 	var cardInZone gob.CardInZone
 	var err error
 	if idOrName == "" {
@@ -47,6 +50,7 @@ func parseCastSpellCommand(
 		return action.CastSpellRequest{}, fmt.Errorf("failed to get targets for spell: %w", err)
 	}
 	// TODO: Pass in cost or something and only get cards that can be paid for.
+	// TODO: Handle autoPayCost and autoPayColors properly.
 	splicableCards, err := judge.GetSplicableCards(game, player, cardInZone, &ruling)
 	if err != nil {
 		return action.CastSpellRequest{}, fmt.Errorf("failed to get splicable cards: %w", err)
@@ -89,7 +93,8 @@ func parseCastSpellCommand(
 		ReplicateCount:    replicateCount,
 		SpliceCardIDs:     spliceCardIDs,
 		Flashback:         flashback,
-		AutoPayCost:       false, // WARNING: This is turned on for testing, it doesn't work properly yet.,
+		AutoPayCost:       autoPayCost, // WARNING: This is turned on for testing, it doesn't work properly yet.,
+		AutoPayColors:     autoPayColors,
 	}
 	return request, nil
 }

@@ -61,9 +61,9 @@ func applyGameStateChangeEvent(game state.Game, gameStateChangeEvent event.GameS
 			return game, fmt.Errorf("failed to parse mana string %q: %w", evnt.ManaString, err)
 		}
 		// TODO: Let the user choose which colors to spend by providing a list of colors.
-		manaPool, err := player.ManaPool().WithSpendFromManaAmount(amount, mana.Colors())
-		if err != nil {
-			return game, fmt.Errorf("failed to update mana pool for player %q: %w", player.ID(), err)
+		manaPool, remaining := player.ManaPool().WithSpendAmount(amount, mana.Colors())
+		if remaining.Total() > 0 {
+			return game, fmt.Errorf("failed to spend mana amount %q for player %q has deficit %q", amount.ManaString(), player.ID(), remaining.ManaString())
 		}
 		player = player.WithManaPool(manaPool)
 		game = game.WithUpdatedPlayer(player)
