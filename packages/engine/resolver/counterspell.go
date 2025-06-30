@@ -4,6 +4,7 @@ import (
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/gob"
+	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/query/has"
 	"deckronomicon/packages/state"
 	"errors"
@@ -13,7 +14,7 @@ func ResolveCounterspell(
 	game state.Game,
 	playerID string,
 	counterspell effect.Counterspell,
-	target effect.Target,
+	target target.Target,
 ) (Result, error) {
 	resolvable, ok := game.Stack().Find(has.ID(target.ID))
 	if !ok {

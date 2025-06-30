@@ -1,9 +1,9 @@
+Name: Gigadrowse
 CardTypes:
   - Instant
 Color:
   - U
 ManaCost: '{U}'
-Name: Gigadrowse
 SpellAbility:
   - Name: Tap
     Modifiers:

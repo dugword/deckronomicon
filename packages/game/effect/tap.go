@@ -2,6 +2,7 @@ package effect
 
 import (
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/target"
 	"fmt"
 )
 
@@ -23,12 +24,12 @@ func (t Tap) Name() string {
 	return "Tap"
 }
 
-func (e Tap) TargetSpec() TargetSpec {
+func (e Tap) TargetSpec() target.TargetSpec {
 	switch e.Target {
 	case mtg.TargetTypePermanent:
-		return PermanentTargetSpec{}
+		return target.PermanentTargetSpec{}
 	default:
 		panic(fmt.Sprintf("unknown target spec %q for TapEffect", e.Target))
-		return NoneTargetSpec{}
+		return target.NoneTargetSpec{}
 	}
 }

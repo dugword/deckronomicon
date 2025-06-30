@@ -1,6 +1,9 @@
 package effect
 
-import "fmt"
+import (
+	"deckronomicon/packages/game/target"
+	"fmt"
+)
 
 type AddMana struct {
 	Mana string
@@ -19,6 +22,6 @@ func NewAddMana(modifiers map[string]any) (AddMana, error) {
 }
 
 // Move this to not the resolver, but the effect description like with the modifiers
-func (e AddMana) TargetSpec() TargetSpec {
-	return NoneTargetSpec{}
+func (e AddMana) TargetSpec() target.TargetSpec {
+	return target.NoneTargetSpec{}
 }

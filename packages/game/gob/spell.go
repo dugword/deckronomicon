@@ -19,7 +19,7 @@ type Spell struct {
 	id                string
 	isCopy            bool
 	loyalty           int
-	manaCost          cost.ManaCost
+	manaCost          cost.Mana
 	name              string
 	owner             string
 	power             int
@@ -119,7 +119,7 @@ func (s Spell) Loyalty() int {
 	return s.loyalty
 }
 
-func (s Spell) ManaCost() cost.ManaCost {
+func (s Spell) ManaCost() cost.Mana {
 	return s.manaCost
 }
 

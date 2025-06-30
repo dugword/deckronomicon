@@ -1,5 +1,7 @@
 package effect
 
+import "deckronomicon/packages/game/target"
+
 type Replicate struct {
 	Count int `json:"Count,omitempty"`
 }
@@ -18,6 +20,6 @@ func (e Replicate) Name() string {
 	return "Replicate"
 }
 
-func (e Replicate) TargetSpec() TargetSpec {
-	return NoneTargetSpec{}
+func (e Replicate) TargetSpec() target.TargetSpec {
+	return target.NoneTargetSpec{}
 }

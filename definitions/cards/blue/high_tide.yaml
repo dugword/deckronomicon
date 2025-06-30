@@ -1,9 +1,9 @@
+Name: High Tide
 CardTypes:
   - Instant
 Color:
   - U
 ManaCost: '{U}'
-Name: High Tide
 SpellAbility:
   - Name: AdditionalMana
     Modifiers:

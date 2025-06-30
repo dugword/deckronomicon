@@ -14,7 +14,13 @@ import (
 // or is it an error because of some broken game state?
 // TODO: Pass in ruling here and log which costs could not be paid
 func CanPayCost(someCost cost.Cost, object gob.Object, game state.Game, player state.Player, ruling *Ruling) bool {
-	costEvents := pay.Cost(someCost, object, player.ID())
+	costEvents, err := pay.Cost(someCost, object, player.ID())
+	if err != nil {
+		if ruling != nil && ruling.Explain {
+			ruling.Reasons = append(ruling.Reasons, "unable to pay cost: "+err.Error())
+		}
+		return false
+	}
 	canPay := true
 	for _, costEvent := range costEvents {
 		var err error

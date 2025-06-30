@@ -1,5 +1,7 @@
 package effect
 
+import "deckronomicon/packages/game/target"
+
 type ShuffleFromGraveyard struct {
 	Count int
 }
@@ -18,6 +20,6 @@ func (e ShuffleFromGraveyard) Name() string {
 	return "ShuffleFromGraveyard"
 }
 
-func (e ShuffleFromGraveyard) TargetSpec() TargetSpec {
-	return NoneTargetSpec{}
+func (e ShuffleFromGraveyard) TargetSpec() target.TargetSpec {
+	return target.NoneTargetSpec{}
 }

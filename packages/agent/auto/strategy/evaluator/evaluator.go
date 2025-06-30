@@ -60,6 +60,12 @@ type Step struct {
 }
 
 func (e *Step) Evaluate(ctx *evalstate.EvalState) bool {
+	// TODO: Have this check for player turn be more explicit
+	// TODO: Maybe have an "ActivePlayerStep" or
+	// a flag to indicate we should also check the opponent's step
+	if ctx.Game.ActivePlayerID() != ctx.PlayerID {
+		return false
+	}
 	return ctx.Game.Step() == e.Step
 }
 

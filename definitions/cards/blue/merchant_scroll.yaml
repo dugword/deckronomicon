@@ -1,9 +1,9 @@
+Name: Merchant Scroll
 CardTypes:
   - Sorcery
 Color:
   - U
 ManaCost: '{1}{U}'
-Name: Merchant Scroll
 SpellAbility:
   - Name: Search
     Modifiers:

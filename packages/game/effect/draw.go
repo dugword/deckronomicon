@@ -2,6 +2,7 @@ package effect
 
 import (
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/target"
 	"fmt"
 )
 
@@ -29,14 +30,14 @@ func NewDraw(modifiers map[string]any) (Draw, error) {
 	}, nil
 }
 
-func (e Draw) TargetSpec() TargetSpec {
+func (e Draw) TargetSpec() target.TargetSpec {
 	switch e.Target {
 	case "", mtg.TargetTypeNone:
-		return NoneTargetSpec{}
+		return target.NoneTargetSpec{}
 	case mtg.TargetTypePlayer:
-		return PlayerTargetSpec{}
+		return target.PlayerTargetSpec{}
 	default:
 		panic(fmt.Sprintf("unknown target spec %q for DrawEffect", e.Target))
-		return NoneTargetSpec{}
+		return target.NoneTargetSpec{}
 	}
 }

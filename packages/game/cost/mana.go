@@ -5,21 +5,21 @@ import (
 	"fmt"
 )
 
-type ManaCost struct {
+type Mana struct {
 	amount mana.Amount
 }
 
-func (c ManaCost) isCost() {}
+func (c Mana) isCost() {}
 
-func (c ManaCost) Amount() mana.Amount {
+func (c Mana) Amount() mana.Amount {
 	return c.amount
 }
 
-func (c ManaCost) ManaString() string {
+func (c Mana) ManaString() string {
 	return c.amount.ManaString()
 }
 
 // Description returns a string representation of the mana cost.
-func (c ManaCost) Description() string {
+func (c Mana) Description() string {
 	return fmt.Sprintf("Pay %s", c.ManaString())
 }

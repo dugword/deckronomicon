@@ -1,9 +1,9 @@
+Name: Deep Analysis
 CardTypes:
   - Sorcery
 Color:
   - U
 ManaCost: '{3}{U}'
-Name: Deep Analysis
 SpellAbility:
   - Name: Draw
     Modifiers:

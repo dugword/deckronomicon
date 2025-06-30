@@ -1,18 +1,30 @@
 package cost
 
+import "deckronomicon/packages/game/target"
+
 type Cost interface {
 	isCost()
 	Description() string
 }
 
+// TODO: I think I like this pattern a lot,
+// Are there other places I can use this?
+// Object With Zone? Effect With Target?
+type CostWithTarget interface {
+	Cost
+	Target() target.Target
+	WithTarget(target target.Target) CostWithTarget
+	TargetSpec() target.TargetSpec
+}
+
 // Has checks if the cost has a specific cost type. E.g.
-// Has(cost, ManaCost{}) returns true if the cost has a mana cost.
-// or Has(cost, TapThisCost{}) returns true if the cost has a tap this cost.
+// Has(cost, Mana{}) returns true if the cost has a mana cost.
+// or Has(cost, TapThis{}) returns true if the cost has a tap this cost.
 // If the cost is a composite cost, it checks if any of the sub-costs match the cost type.
 func HasType(cost Cost, costType Cost) bool {
 	switch c := cost.(type) {
-	case CompositeCost:
-		_, ok := costType.(CompositeCost)
+	case Composite:
+		_, ok := costType.(Composite)
 		if ok {
 			return true
 		}
@@ -21,17 +33,20 @@ func HasType(cost Cost, costType Cost) bool {
 				return true
 			}
 		}
-	case DiscardThisCost:
-		_, ok := costType.(DiscardThisCost)
+	case DiscardThis:
+		_, ok := costType.(DiscardThis)
 		return ok
-	case LifeCost:
-		_, ok := costType.(LifeCost)
+	case DiscardACard:
+		_, ok := costType.(DiscardACard)
 		return ok
-	case ManaCost:
-		_, ok := costType.(ManaCost)
+	case Life:
+		_, ok := costType.(Life)
 		return ok
-	case TapThisCost:
-		_, ok := costType.(TapThisCost)
+	case Mana:
+		_, ok := costType.(Mana)
+		return ok
+	case TapThis:
+		_, ok := costType.(TapThis)
 		return ok
 	default:
 		return false

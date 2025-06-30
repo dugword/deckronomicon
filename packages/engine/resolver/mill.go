@@ -4,6 +4,7 @@ import (
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/state"
 )
 
@@ -11,7 +12,7 @@ func ResolveMill(
 	game state.Game,
 	playerID string,
 	mill effect.Mill,
-	target effect.Target,
+	target target.Target,
 ) (Result, error) {
 	targetPlayerID := playerID
 	if target.ID != "" {

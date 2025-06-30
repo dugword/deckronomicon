@@ -1,9 +1,9 @@
+Name: Hidden Strings
 CardTypes:
   - Sorcery
 Color:
   - U
 ManaCost: '{1}{U}'
-Name: Hidden Strings
 SpellAbility:
   - Name: TapOrUntap
     Modifiers:

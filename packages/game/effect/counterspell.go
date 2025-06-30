@@ -2,6 +2,7 @@ package effect
 
 import (
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/target"
 )
 
 type Counterspell struct {
@@ -23,8 +24,8 @@ func NewCounterspell(modifiers map[string]any) (Counterspell, error) {
 	return Counterspell(query), nil
 }
 
-func (e Counterspell) TargetSpec() TargetSpec {
-	return SpellTargetSpec(
+func (e Counterspell) TargetSpec() target.TargetSpec {
+	return target.SpellTargetSpec(
 		e,
 	)
 }

@@ -30,13 +30,13 @@ func AutoActivateManaSources(game state.Game, someCost cost.Cost, object gob.Obj
 	// and the impact to the player's mana pool.
 	switch c := someCost.(type) {
 	// TODO: Assumes no nested composite costs
-	case cost.CompositeCost:
+	case cost.Composite:
 		var events []event.GameEvent
 		for _, subCost := range c.Costs() {
 			switch sc := subCost.(type) {
-			case cost.CompositeCost:
+			case cost.Composite:
 				panic("nested composite costs are not supported")
-			case cost.ManaCost:
+			case cost.Mana:
 				var subEvents []event.GameEvent
 				var err error
 				game, subEvents, err = withActivateManaSources(game, playerID, sc, colors)
@@ -47,7 +47,7 @@ func AutoActivateManaSources(game state.Game, someCost cost.Cost, object gob.Obj
 			}
 		}
 		return events, nil
-	case cost.ManaCost:
+	case cost.Mana:
 		_, events, err := withActivateManaSources(game, playerID, c, colors)
 		return events, err
 	default:
@@ -72,12 +72,12 @@ func withUpdatePlayerSpendAmount(
 func withActivateManaSources(
 	game state.Game,
 	playerID string,
-	manaCost cost.ManaCost,
+	Mana cost.Mana,
 	colors []mana.Color,
 ) (state.Game, []event.GameEvent, error) {
 	var events []event.GameEvent
 	var err error
-	remaining := manaCost.Amount()
+	remaining := Mana.Amount()
 	// Pay down from existing mana pool
 	game, remaining = withUpdatePlayerSpendAmount(
 		game,
@@ -213,11 +213,14 @@ func activateManaSource(
 				Zone:      mtg.ZoneBattlefield,
 			},
 		}
-		costEvents := Cost( // pay.Cost() of the mana ability
+		costEvents, err := Cost( // pay.Cost() of the mana ability
 			ability.Cost(),
 			land,
 			player.ID(),
 		)
+		if err != nil {
+			return game, nil, fmt.Errorf("failed to pay cost for mana ability %s: %w", ability.Name(), err)
+		}
 		events = append(events, costEvents...)
 		events = append(events, event.LandTappedForManaEvent{
 			PlayerID: player.ID(),

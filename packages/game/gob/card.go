@@ -16,7 +16,8 @@ type Card struct {
 	colors             mtg.Colors
 	id                 string
 	loyalty            int
-	manaCost           cost.ManaCost
+	manaCost           cost.Mana
+	additionalCost     cost.Cost
 	name               string
 	power              int
 	rulesText          string
@@ -29,6 +30,10 @@ type Card struct {
 
 func (c Card) ActivatedAbilities() []Ability {
 	return c.activatedAbilities[:]
+}
+
+func (c Card) AdditionalCost() cost.Cost {
+	return c.additionalCost
 }
 
 func (c Card) CardTypes() []mtg.CardType {
@@ -59,7 +64,7 @@ func (c Card) Loyalty() int {
 	return c.loyalty
 }
 
-func (c Card) ManaCost() cost.ManaCost {
+func (c Card) ManaCost() cost.Mana {
 	return c.manaCost
 }
 

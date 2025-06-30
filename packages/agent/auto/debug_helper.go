@@ -9,6 +9,9 @@ import (
 )
 
 func (a *RuleBasedAgent) enterToContinue() {
+	if !a.interactive {
+		return
+	}
 	if err := a.uiBuffer.Render(); err != nil {
 		panic(fmt.Errorf("failed to render UI buffer: %w", err))
 	}
@@ -17,6 +20,9 @@ func (a *RuleBasedAgent) enterToContinue() {
 }
 
 func (a *RuleBasedAgent) enterToContinueOnSteps(step mtg.Step) {
+	if !a.interactive {
+		return
+	}
 	if slices.Contains(a.stops, step) {
 		if err := a.uiBuffer.Render(); err != nil {
 			panic(fmt.Errorf("failed to render UI buffer: %w", err))

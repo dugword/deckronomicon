@@ -3,6 +3,7 @@ package effect
 import (
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/target"
 	"fmt"
 )
 
@@ -23,8 +24,8 @@ func (e RegisterDelayedTriggeredAbility) Name() string {
 	return "RegisterDelayedTriggeredAbility"
 }
 
-func (e RegisterDelayedTriggeredAbility) TargetSpec() TargetSpec {
-	return NoneTargetSpec{}
+func (e RegisterDelayedTriggeredAbility) TargetSpec() target.TargetSpec {
+	return target.NoneTargetSpec{}
 }
 
 func NewRegisterDelayedTriggeredAbility(modifier map[string]any) (RegisterDelayedTriggeredAbility, error) {

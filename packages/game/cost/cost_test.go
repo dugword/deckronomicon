@@ -18,102 +18,121 @@ func TestHasCostType(t *testing.T) {
 	}{
 		{
 			name: "with has discard this cost",
-			cost: CompositeCost{
+			cost: Composite{
 				costs: []Cost{
-					ManaCost{},
-					DiscardThisCost{},
+					Mana{},
+					DiscardThis{},
 				},
 			},
-			costType: DiscardThisCost{},
+			costType: DiscardThis{},
 			want:     true,
 		},
 		{
 			name: "with no discard this cost",
-			cost: CompositeCost{
-				costs: []Cost{ManaCost{}},
+			cost: Composite{
+				costs: []Cost{Mana{}},
 			},
-			costType: DiscardThisCost{},
+			costType: DiscardThis{},
+			want:     false,
+		},
+		{
+			name: "with has discard a card cost",
+			cost: Composite{
+				costs: []Cost{
+					Mana{},
+					DiscardACard{},
+				},
+			},
+			costType: DiscardACard{},
+			want:     true,
+		},
+		{
+			name: "with no discard a card cost",
+			cost: Composite{
+				costs: []Cost{Mana{}},
+			},
+			costType: DiscardACard{},
 			want:     false,
 		},
 		{
 			name: "with has life cost",
-			cost: CompositeCost{
+			cost: Composite{
 				costs: []Cost{
-					ManaCost{},
-					LifeCost{},
+					Mana{},
+					Life{},
 				},
 			},
-			costType: LifeCost{},
+			costType: Life{},
 			want:     true,
 		},
 		{
 			name: "with no life cost",
-			cost: CompositeCost{
+			cost: Composite{
 				costs: []Cost{
-					ManaCost{},
+					Mana{},
 				},
 			},
-			costType: LifeCost{},
+			costType: Life{},
 			want:     false,
 		},
 		{
 			name: "with has mana cost",
-			cost: CompositeCost{
+			cost: Composite{
 				costs: []Cost{
-					ManaCost{},
-					TapThisCost{},
+					Mana{},
+					TapThis{},
 				},
 			},
-			costType: ManaCost{},
+			costType: Mana{},
 			want:     true,
 		},
 		{
 			name: "with no mana cost",
-			cost: CompositeCost{
+			cost: Composite{
 				costs: []Cost{
-					TapThisCost{},
+					TapThis{},
 				},
 			},
-			costType: ManaCost{},
+			costType: Mana{},
 			want:     false,
 		},
 		{
 			name: "with has tap this cost",
-			cost: CompositeCost{
+			cost: Composite{
 				costs: []Cost{
-					TapThisCost{},
-					ManaCost{},
+					TapThis{},
+					Mana{},
 				},
 			},
-			costType: TapThisCost{},
+			costType: TapThis{},
 			want:     true,
 		},
 		{
 			name: "with no tap this cost",
-			cost: CompositeCost{
+			cost: Composite{
 				costs: []Cost{
-					ManaCost{},
+					Mana{},
 				},
 			},
-			costType: TapThisCost{},
+			costType: TapThis{},
 			want:     false,
 		},
 		{
 			name: "with has composite cost",
-			cost: CompositeCost{
+			cost: Composite{
 				costs: []Cost{
-					TapThisCost{},
-					ManaCost{},
-					DiscardThisCost{},
+					TapThis{},
+					Mana{},
+					DiscardThis{},
 				},
 			},
-			costType: CompositeCost{},
+			costType: Composite{},
 			want:     true,
 		},
 		{
 			name:     "with no composite cost",
-			cost:     ManaCost{},
-			costType: CompositeCost{},
+			cost:     Mana{},
+			costType: Composite{},
 			want:     false,
 		},
 	}
@@ -130,57 +149,57 @@ func TestNewComposite(t *testing.T) {
 	tests := []struct {
 		name  string
 		costs []Cost
-		want  CompositeCost
+		want  Composite
 	}{
 		{
 			name:  "with no costs",
 			costs: []Cost{},
-			want:  CompositeCost{},
+			want:  Composite{},
 		},
 		{
 			name:  "with single cost",
-			costs: []Cost{ManaCost{}},
-			want:  CompositeCost{costs: []Cost{ManaCost{}}},
+			costs: []Cost{Mana{}},
+			want:  Composite{costs: []Cost{Mana{}}},
 		},
 		{
 			name:  "with multiple costs",
-			costs: []Cost{ManaCost{}, ManaCost{}},
-			want:  CompositeCost{costs: []Cost{ManaCost{}, ManaCost{}}},
+			costs: []Cost{Mana{}, Mana{}},
+			want:  Composite{costs: []Cost{Mana{}, Mana{}}},
 		},
 		{
 			name:  "with composite costs",
-			costs: []Cost{CompositeCost{costs: []Cost{ManaCost{}}}, ManaCost{}},
-			want:  CompositeCost{costs: []Cost{ManaCost{}, ManaCost{}}},
+			costs: []Cost{Composite{costs: []Cost{Mana{}}}, Mana{}},
+			want:  Composite{costs: []Cost{Mana{}, Mana{}}},
 		},
 		{
 			name: "with nested composite costs",
 			costs: []Cost{
-				CompositeCost{
+				Composite{
 					costs: []Cost{
-						CompositeCost{
+						Composite{
 							costs: []Cost{
-								ManaCost{},
-								CompositeCost{
+								Mana{},
+								Composite{
 									costs: []Cost{
-										ManaCost{},
+										Mana{},
 									},
 								},
 							},
 						},
 					},
 				},
-				CompositeCost{
+				Composite{
 					costs: []Cost{
-						CompositeCost{
+						Composite{
 							costs: []Cost{
-								ManaCost{},
+								Mana{},
 							},
 						},
-						ManaCost{},
+						Mana{},
 					},
 				},
 			},
-			want: CompositeCost{costs: []Cost{ManaCost{}, ManaCost{}, ManaCost{}, ManaCost{}}},
+			want: Composite{costs: []Cost{Mana{}, Mana{}, Mana{}, Mana{}}},
 		},
 	}
 	for _, test := range tests {

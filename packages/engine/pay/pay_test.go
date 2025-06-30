@@ -6,6 +6,8 @@ import (
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/gob"
+	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/target"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -18,6 +20,7 @@ func TestPayCost(t *testing.T) {
 		cost   string
 		object gob.Object
 		want   []event.GameEvent
+		target target.Target
 	}{
 		{
 			name: "with white mana cost",
@@ -76,6 +79,20 @@ func TestPayCost(t *testing.T) {
 			},
 		},
 		{
+			name: "with discard a card cost",
+			cost: "Discard a card",
+			target: target.Target{
+				ID:   "Card ID",
+				Type: mtg.TargetTypeCard,
+			},
+			want: []event.GameEvent{
+				event.DiscardCardEvent{
+					PlayerID: playerID,
+					CardID:   "Card ID",
+				},
+			},
+		},
+		{
 			name: "with composite cost of mana and life",
 			cost: `{W}, Pay 2 life`,
 			want: []event.GameEvent{
@@ -96,7 +113,13 @@ func TestPayCost(t *testing.T) {
 			if err != nil {
 				t.Fatalf("cost.Parse(%s); err = %v; want %v", testCost, err, nil)
 			}
-			got := pay.Cost(testCost, test.object, playerID)
+			if costWithTarget, ok := testCost.(cost.CostWithTarget); ok && test.target.ID != "" {
+				testCost = costWithTarget.WithTarget(test.target)
+			}
+			got, err := pay.Cost(testCost, test.object, playerID)
+			if err != nil {
+				t.Fatalf("pay.Cost(%s) returned error: %v", testCost.Description(), err)
+			}
 			if diff := cmp.Diff(test.want, got); diff != "" {
 				t.Errorf("pay.Cost(%s) mismatch (-want +got):\n%s", testCost.Description(), diff)
 			}

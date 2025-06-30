@@ -6,6 +6,7 @@ import (
 	"deckronomicon/packages/agent/auto"
 	"deckronomicon/packages/agent/dummy"
 	"deckronomicon/packages/agent/interactive"
+	"deckronomicon/packages/analytics"
 	"deckronomicon/packages/configs"
 	"deckronomicon/packages/engine"
 	"deckronomicon/packages/game/definition"
@@ -16,10 +17,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 )
-
-// TODO: Remove this seed and make it configurable.
-const seed = 13
 
 func createPlayerAgent(
 	playerScenario configs.Player,
@@ -149,6 +148,15 @@ func Run(
 		players = append(players, player)
 		logger.Info(fmt.Sprintf("Player %q created!", player.ID()))
 	}
+	seed := time.Now().UnixNano()
+	if scenario.Setup.Seed != 0 && config.Seed == 0 {
+		logger.Info(fmt.Sprintf("Using seed %d from scenario setup.", scenario.Setup.Seed))
+		seed = scenario.Setup.Seed
+	}
+	if config.Seed != 0 {
+		logger.Info(fmt.Sprintf("Using seed %d from command line config.", config.Seed))
+		seed = config.Seed
+	}
 	engineConfig := engine.EngineConfig{
 		Agents:      playerAgents,
 		Definitions: cardDefinitions,
@@ -158,17 +166,23 @@ func Run(
 		Log:         logger,
 	}
 	engine := engine.NewEngine(engineConfig)
-	if err := engine.RunGame(); err != nil {
-		if errors.Is(err, mtg.ErrGameOver) {
-			logger.Info("Game over!")
-			var playerLostErr mtg.PlayerLostError
-			if errors.As(err, &playerLostErr) {
-				logger.Info(fmt.Sprintf("Game over reason: %s", playerLostErr.Reason))
-			}
-			return nil
-		}
+	if err := engine.RunGame(); err != nil && !errors.Is(err, mtg.ErrGameOver) {
 		return fmt.Errorf("failed to run the game: %w", err)
 	}
+	game := engine.Game()
 	logger.Info("Game completed successfully!")
+	logger.Info("Game over!")
+	var playerLostErr mtg.PlayerLostError
+	if errors.As(err, &playerLostErr) {
+		logger.Info(fmt.Sprintf("Game over reason: %s", playerLostErr.Reason))
+	}
+	if err := analytics.WriteGameRecordToFile(engine.Record(), "results"); err != nil {
+		return fmt.Errorf("failed to write game record: %w", err)
+	}
+	if err := analytics.WriteGameStateToFile(game, "results"); err != nil {
+		return fmt.Errorf("failed to write game state: %w", err)
+	}
+	logger.Info("Game record and state written to results directory.")
+
 	return nil
 }

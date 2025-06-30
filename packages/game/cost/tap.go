@@ -1,9 +1,9 @@
 package cost
 
-type TapThisCost struct{}
+type TapThis struct{}
 
-func (c TapThisCost) Description() string {
+func (c TapThis) Description() string {
 	return "Tap this permanent"
 }
 
-func (c TapThisCost) isCost() {}
+func (c TapThis) isCost() {}

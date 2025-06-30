@@ -7,6 +7,7 @@ import (
 	"deckronomicon/packages/engine/action"
 	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/target"
 	"errors"
 	"testing"
 
@@ -68,7 +69,7 @@ func TestParseCastSpellCommand(t *testing.T) {
 			}),
 			want: action.CastSpellRequest{
 				CardID: "Card with Target ID",
-				TargetsForEffects: map[effect.EffectTargetKey]effect.Target{
+				TargetsForEffects: map[effect.EffectTargetKey]target.Target{
 					{SourceID: "Card with Target ID", EffectIndex: 0}: {
 						Type: mtg.TargetTypePermanent,
 						ID:   "Test Permanent ID",

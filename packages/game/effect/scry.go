@@ -1,5 +1,7 @@
 package effect
 
+import "deckronomicon/packages/game/target"
+
 type Scry struct {
 	Count int `json:"Count"`
 }
@@ -18,6 +20,6 @@ func (e Scry) Name() string {
 	return "Scry"
 }
 
-func (e Scry) TargetSpec() TargetSpec {
-	return NoneTargetSpec{}
+func (e Scry) TargetSpec() target.TargetSpec {
+	return target.NoneTargetSpec{}
 }

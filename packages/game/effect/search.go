@@ -2,6 +2,7 @@ package effect
 
 import (
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/target"
 )
 
 type Search struct {
@@ -23,6 +24,6 @@ func (e Search) Name() string {
 	return "Search"
 }
 
-func (e Search) TargetSpec() TargetSpec {
-	return NoneTargetSpec{}
+func (e Search) TargetSpec() target.TargetSpec {
+	return target.NoneTargetSpec{}
 }

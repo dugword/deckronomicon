@@ -1,0 +1,16 @@
+Name: Player Strategy
+Description: Stormshriek Feral Strategy
+
+Rules:
+  Setup:
+    - Make Land Drop
+    - Name: Play Flush Out
+      When:
+        Step: PrecombatMain
+        InZone:
+          Zone: Hand
+          Cards:
+            - Flush Out
+      Then:
+        Cast:
+          - Flush Out

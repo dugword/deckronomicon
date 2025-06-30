@@ -2,6 +2,7 @@ package effect
 
 import (
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/target"
 	"fmt"
 )
 
@@ -67,6 +68,6 @@ func NewLookAndChoose(modifiers map[string]any) (LookAndChoose, error) {
 	}, nil
 }
 
-func (e LookAndChoose) TargetSpec() TargetSpec {
-	return NoneTargetSpec{}
+func (e LookAndChoose) TargetSpec() target.TargetSpec {
+	return target.NoneTargetSpec{}
 }

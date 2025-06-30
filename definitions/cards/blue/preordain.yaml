@@ -1,9 +1,9 @@
+Name: Preordain
 CardTypes:
   - Sorcery
 Color:
   - U
 ManaCost: '{U}'
-Name: Preordain
 SpellAbility:
   - Name: Scry
     Modifiers:

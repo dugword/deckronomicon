@@ -5,6 +5,7 @@ import (
 	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/target"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -31,11 +32,11 @@ func TestCastSpellActionComplete(t *testing.T) {
 			name: "with effects",
 			action: CastSpellAction{
 				cardID: "Card with Effects ID",
-				targetsForEffects: map[effect.EffectTargetKey]effect.Target{
-					{SourceID: "Card with Effects ID", EffectIndex: 0}: effect.Target{
+				targetsForEffects: map[effect.EffectTargetKey]target.Target{
+					{SourceID: "Card with Effects ID", EffectIndex: 0}: target.Target{
 						ID: "Target Object ID",
 					},
-					{SourceID: "Card with Effects ID", EffectIndex: 1}: effect.Target{
+					{SourceID: "Card with Effects ID", EffectIndex: 1}: target.Target{
 						ID: "Another Target Object ID",
 					},
 				},
@@ -55,14 +56,14 @@ func TestCastSpellActionComplete(t *testing.T) {
 							Effect: effect.TargetEffect{
 								Target: "Permanent",
 							},
-							Target:   effect.Target{ID: "Target Object ID"},
+							Target:   target.Target{ID: "Target Object ID"},
 							SourceID: "Card with Effects ID",
 						},
 						{
 							Effect: effect.TargetEffect{
 								Target: "Permanent",
 							},
-							Target:   effect.Target{ID: "Another Target Object ID"},
+							Target:   target.Target{ID: "Another Target Object ID"},
 							SourceID: "Card with Effects ID",
 						},
 					},
@@ -84,8 +85,8 @@ func TestCastSpellActionComplete(t *testing.T) {
 			name: "with spell that has targets",
 			action: CastSpellAction{
 				cardID: "Card with Target ID",
-				targetsForEffects: map[effect.EffectTargetKey]effect.Target{
-					{SourceID: "Card with Target ID", EffectIndex: 0}: effect.Target{
+				targetsForEffects: map[effect.EffectTargetKey]target.Target{
+					{SourceID: "Card with Target ID", EffectIndex: 0}: target.Target{
 						ID: playerID,
 					},
 				},
@@ -105,7 +106,7 @@ func TestCastSpellActionComplete(t *testing.T) {
 							Effect: effect.TargetEffect{
 								Target: "Permanent",
 							},
-							Target:   effect.Target{ID: "Test Player"},
+							Target:   target.Target{ID: "Test Player"},
 							SourceID: "Card with Target ID",
 						},
 					},
@@ -131,7 +132,7 @@ func TestCastSpellActionComplete(t *testing.T) {
 							Effect: effect.Replicate{
 								Count: 3,
 							},
-							Target: effect.Target{
+							Target: target.Target{
 								ID: "Card with Replicate ID",
 							},
 							SourceID: "Card with Replicate ID",

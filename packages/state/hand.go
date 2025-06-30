@@ -42,6 +42,10 @@ func (h Hand) Find(predicate query.Predicate) (gob.Card, bool) {
 	return query.Find(h.cards, predicate)
 }
 
+func (h Hand) FindAll(predicate query.Predicate) []gob.Card {
+	return query.FindAll(h.cards, predicate)
+}
+
 func (h Hand) Get(id string) (gob.Card, bool) {
 	return query.Get(h.cards, id)
 }

@@ -141,9 +141,9 @@ func TestWithActivateManaSources(t *testing.T) {
 				test.manaPool,
 				test.permanents,
 			)
-			testCost, err := cost.ParseManaCost(test.cost)
+			testCost, err := cost.ParseMana(test.cost)
 			if err != nil {
-				t.Fatalf("ParseManaCost(); error = %v", err)
+				t.Fatalf("ParseMana(); error = %v", err)
 			}
 			_, got, err := withActivateManaSources(game, playerID, testCost, test.colors)
 			if err != nil {
