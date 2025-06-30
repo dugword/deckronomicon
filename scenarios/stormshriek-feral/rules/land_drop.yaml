@@ -1,0 +1,11 @@
+Name: Make Land Drop
+When:
+  Step: PrecombatMain
+  LandPlayedThisTurn: false
+  InZone:
+    Zone: Hand
+    Cards:
+      - Mountain
+Then:
+  Play:
+    - Mountain

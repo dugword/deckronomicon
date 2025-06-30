@@ -1,5 +1,7 @@
 package effect
 
+import "deckronomicon/packages/game/target"
+
 type PutBackOnTop struct {
 	Count int
 }
@@ -18,6 +20,6 @@ func (e PutBackOnTop) Name() string {
 	return "PutBackOnTop"
 }
 
-func (e PutBackOnTop) TargetSpec() TargetSpec {
-	return NoneTargetSpec{}
+func (e PutBackOnTop) TargetSpec() target.TargetSpec {
+	return target.NoneTargetSpec{}
 }

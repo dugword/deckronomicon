@@ -1,6 +1,9 @@
 package effect
 
-import "deckronomicon/packages/game/mtg"
+import (
+	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/target"
+)
 
 type TargetEffect struct {
 	Target mtg.TargetType
@@ -20,6 +23,6 @@ func (t TargetEffect) Name() string {
 	return "TargetEffect"
 }
 
-func (t TargetEffect) TargetSpec() TargetSpec {
-	return PermanentTargetSpec{}
+func (t TargetEffect) TargetSpec() target.TargetSpec {
+	return target.PermanentTargetSpec{}
 }

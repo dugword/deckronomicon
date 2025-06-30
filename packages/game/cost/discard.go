@@ -1,9 +1,34 @@
 package cost
 
-type DiscardThisCost struct{}
+import "deckronomicon/packages/game/target"
 
-func (c DiscardThisCost) isCost() {}
+type DiscardThis struct{}
 
-func (c DiscardThisCost) Description() string {
+func (c DiscardThis) isCost() {}
+
+func (c DiscardThis) Description() string {
 	return "Discard this card"
+}
+
+type DiscardACard struct {
+	target target.Target
+}
+
+func (c DiscardACard) isCost() {}
+
+func (c DiscardACard) Description() string {
+	return "Discard a card"
+}
+
+func (c DiscardACard) Target() target.Target {
+	return c.target
+}
+
+func (c DiscardACard) WithTarget(target target.Target) CostWithTarget {
+	c.target = target
+	return c
+}
+
+func (c DiscardACard) TargetSpec() target.TargetSpec {
+	return target.CardTargetSpec{}
 }

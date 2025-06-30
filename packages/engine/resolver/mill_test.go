@@ -5,6 +5,7 @@ import (
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/state"
 	"testing"
 
@@ -45,7 +46,7 @@ func TestMill(t *testing.T) {
 	testCases := []struct {
 		name       string
 		effect     effect.Mill
-		target     effect.Target
+		target     target.Target
 		wantEvents []event.GameEvent
 	}{
 		{
@@ -58,7 +59,7 @@ func TestMill(t *testing.T) {
 		{
 			name:   "with count 1 target player",
 			effect: effect.Mill{Count: 1, Target: mtg.TargetTypePlayer},
-			target: effect.Target{
+			target: target.Target{
 				Type: mtg.TargetTypePlayer,
 				ID:   "Test Opponent",
 			},
@@ -69,7 +70,7 @@ func TestMill(t *testing.T) {
 		{
 			name:   "with count 4 target player",
 			effect: effect.Mill{Count: 4, Target: mtg.TargetTypePlayer},
-			target: effect.Target{
+			target: target.Target{
 				Type: mtg.TargetTypePlayer,
 				ID:   playerID,
 			},

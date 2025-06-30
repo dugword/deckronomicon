@@ -20,9 +20,13 @@ func NewCardFromDefinition(definition definition.Card) Card {
 		rulesText:  definition.RulesText,
 		toughness:  definition.Toughness,
 	}
-	manaCost, err := cost.ParseManaCost(definition.Cost)
+	manaCost, err := cost.ParseMana(definition.Mana)
 	if err != nil {
-		panic(fmt.Errorf("failed to parse cost %q: %w", definition.Cost, err))
+		panic(fmt.Errorf("failed to parse cost %q: %w", definition.Mana, err))
+	}
+	additionalCost, err := cost.Parse(definition.AdditionalCost)
+	if err != nil {
+		panic(fmt.Errorf("failed to parse additional cost %q: %w", definition.AdditionalCost, err))
 	}
 	cardColors, err := mtg.StringsToColors(definition.Colors)
 	if err != nil {
@@ -80,6 +84,7 @@ func NewCardFromDefinition(definition definition.Card) Card {
 	card.cardTypes = cardTypes
 	card.colors = cardColors
 	card.manaCost = manaCost
+	card.additionalCost = additionalCost
 	card.spellAbility = spellAbility
 	card.staticAbilities = staticAbilities
 	card.subtypes = subtypes
@@ -119,7 +124,7 @@ func NewPermanentFromDefinition(
 		tapped:            definition.Tapped,
 		toughness:         definition.Toughness,
 	}
-	manaCost, err := cost.ParseManaCost(definition.Cost)
+	manaCost, err := cost.ParseMana(definition.Cost)
 	if err != nil {
 		panic(fmt.Errorf("failed to parse cost %q: %w", definition.Cost, err))
 	}
@@ -203,7 +208,7 @@ func NewSpellFromDefinition(
 		owner:      definition.Owner,
 		flashback:  definition.Flashback,
 	}
-	manaCost, err := cost.ParseManaCost(definition.Cost)
+	manaCost, err := cost.ParseMana(definition.Cost)
 	if err != nil {
 		panic(fmt.Errorf("failed to parse cost %q: %w", definition.Cost, err))
 	}

@@ -7,33 +7,59 @@ import (
 	"fmt"
 )
 
-func Cost(someCost cost.Cost, object gob.Object, playerID string) []event.GameEvent {
+func Cost(someCost cost.Cost, object gob.Object, playerID string) ([]event.GameEvent, error) {
 	switch c := someCost.(type) {
-	case cost.CompositeCost:
-		return payCompositeCost(c, object, playerID)
-	case cost.ManaCost:
-		return payManaCost(c, playerID)
-	case cost.TapThisCost:
-		return payTapCost(object, playerID)
-	case cost.DiscardThisCost:
-		return payDiscardCost(object, playerID)
-	case cost.LifeCost:
-		return payLifeCost(c, playerID)
+	case cost.Composite:
+		return payComposite(c, object, playerID)
+	case cost.DiscardACard:
+		return payDiscardACard(c, playerID)
+	case cost.DiscardThis:
+		return payDiscardThis(object, playerID), nil
+	case cost.Life:
+		return payLife(c, playerID), nil
+	case cost.Mana:
+		return payMana(c, playerID), nil
+	case cost.TapThis:
+		return payTapCost(object, playerID), nil
 	default:
-		panic(fmt.Errorf("unsupported cost type: %T", c))
+		return nil, fmt.Errorf("unsupported cost type: %T", c)
 	}
 }
 
-func payCompositeCost(c cost.CompositeCost, object gob.Object, playerID string) []event.GameEvent {
+func payComposite(c cost.Composite, object gob.Object, playerID string) ([]event.GameEvent, error) {
 	var events []event.GameEvent
 	for _, subCost := range c.Costs() {
-		subEvents := Cost(subCost, object, playerID)
+		subEvents, err := Cost(subCost, object, playerID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to pay composite cost: %w", err)
+		}
 		events = append(events, subEvents...)
 	}
-	return events
+	return events, nil
 }
 
-func payLifeCost(c cost.LifeCost, playerID string) []event.GameEvent {
+func payDiscardThis(object gob.Object, playerID string) []event.GameEvent {
+	return []event.GameEvent{
+		event.DiscardCardEvent{
+			PlayerID: playerID,
+			CardID:   object.ID(),
+		},
+	}
+}
+
+func payDiscardACard(c cost.DiscardACard, playerID string) ([]event.GameEvent, error) {
+	if c.Target().ID == "" {
+		return nil, fmt.Errorf("DiscardACard requires a CardID, got empty string")
+	}
+	return []event.GameEvent{
+		event.DiscardCardEvent{
+			PlayerID: playerID,
+			CardID:   c.Target().ID,
+		},
+	}, nil
+}
+
+func payLife(c cost.Life, playerID string) []event.GameEvent {
 	return []event.GameEvent{
 		event.LoseLifeEvent{
 			PlayerID: playerID,
@@ -42,7 +68,7 @@ func payLifeCost(c cost.LifeCost, playerID string) []event.GameEvent {
 	}
 }
 
-func payManaCost(c cost.ManaCost, playerID string) []event.GameEvent {
+func payMana(c cost.Mana, playerID string) []event.GameEvent {
 	if c.Amount().Total() == 0 {
 		return nil
 	}
@@ -57,15 +83,6 @@ func payTapCost(object gob.Object, playerID string) []event.GameEvent {
 		event.TapPermanentEvent{
 			PlayerID:    playerID,
 			PermanentID: object.ID(),
-		},
-	}
-}
-
-func payDiscardCost(object gob.Object, playerID string) []event.GameEvent {
-	return []event.GameEvent{
-		event.DiscardCardEvent{
-			PlayerID: playerID,
-			CardID:   object.ID(),
 		},
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/state"
 	"fmt"
 	"slices"
@@ -97,7 +98,7 @@ func HandleTriggeredAbility(game state.Game, triggeredAbility gob.TriggeredAbili
 		} else {
 			effectWithTargets = append(effectWithTargets, effect.EffectWithTarget{
 				Effect: efct,
-				Target: effect.Target{
+				Target: target.Target{
 					Type: mtg.TargetTypeNone,
 				},
 			})

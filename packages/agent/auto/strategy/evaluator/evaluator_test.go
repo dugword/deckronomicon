@@ -177,10 +177,16 @@ func TestStep(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			playerID := "Test Player"
 			ctx := evalstate.EvalState{
 				Game: state.NewGameFromDefinition(definition.Game{
+					ActivePlayerID: playerID,
+					Players: []definition.Player{{
+						ID: playerID,
+					}},
 					Step: string(test.is),
 				}),
+				PlayerID: playerID,
 			}
 			got := test.when.Evaluate(&ctx)
 			if got != test.want {

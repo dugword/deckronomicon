@@ -17,8 +17,10 @@ func (p *StrategyParser) parseActionNode(raw any) action.ActionNode {
 		}
 		for k, v := range val {
 			switch k {
-			case "Play", "Cast":
+			case "Play":
 				return p.parsePlayAction(v)
+			case "Cast":
+				return p.parseCastAction(v)
 			case "Concede":
 				return p.parseConcedeAction(v)
 			case "Activate", "Tap":
@@ -61,6 +63,34 @@ func (p *StrategyParser) parsePlayAction(value any) action.ActionNode {
 		return &action.PlayLandCardActionNode{Cards: predicate}
 	default:
 		p.errors.Add(fmt.Errorf("expected string or object for 'Play' action, got %T", value))
+		return nil
+	}
+}
+
+// TODO: Look this over, wrote it quickly late at night
+func (p *StrategyParser) parseCastAction(value any) action.ActionNode {
+	fmt.Println("Parsing Cast action with value:", value)
+	switch val := value.(type) {
+	case string:
+		predicate := p.parsePredicate(val)
+		return &action.CastSpellActionNode{Cards: predicate}
+	case []any:
+		var predicates []predicate.Predicate
+		for _, item := range val {
+			predicate := p.parsePredicate(item)
+			predicates = append(predicates, predicate)
+		}
+		return &action.CastSpellActionNode{Cards: &predicate.Or{Predicates: predicates}}
+	case map[string]any:
+		cardName, ok := val["Card"].(string)
+		if !ok {
+			p.errors.Add(fmt.Errorf("expected 'Card' key to be a string in 'Cast' action, got %T", val["Card"]))
+			return nil
+		}
+		predicate := p.parsePredicate(cardName)
+		return &action.CastSpellActionNode{Cards: predicate}
+	default:
+		p.errors.Add(fmt.Errorf("expected string or object for 'Cast' action, got %T", value))
 		return nil
 	}
 }

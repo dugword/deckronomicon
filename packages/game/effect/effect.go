@@ -2,11 +2,12 @@ package effect
 
 import (
 	"deckronomicon/packages/game/definition"
+	"deckronomicon/packages/game/target"
 	"fmt"
 )
 
 type Effect interface {
-	TargetSpec() TargetSpec
+	TargetSpec() target.TargetSpec
 	Name() string
 }
 

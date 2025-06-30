@@ -80,6 +80,14 @@ func NewEngine(config EngineConfig) *Engine {
 	}
 }
 
+func (e *Engine) Game() state.Game {
+	return e.game
+}
+
+func (e *Engine) Record() *GameRecord {
+	return e.record
+}
+
 func (e *Engine) RunGame() error {
 	// TODO This shouldn't live here. It should be in the Apply reducers and managed via events.
 	// Or it needs to be created prior to the game starting and passed in.

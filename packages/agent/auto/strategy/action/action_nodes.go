@@ -8,7 +8,9 @@ import (
 	"deckronomicon/packages/engine"
 	"deckronomicon/packages/engine/action"
 	"deckronomicon/packages/engine/judge"
+	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/gob"
+	"deckronomicon/packages/game/mana"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 	"fmt"
@@ -79,16 +81,41 @@ func (n *PlayLandCardActionNode) Resolve(ctx *evalstate.EvalState) (engine.Actio
 }
 
 type CastSpellActionNode struct {
-	CardInZone gob.CardInZone
+	Cards predicate.Predicate
 }
 
+// TODO: Look this over, wrote it quickly late at night
 func (n *CastSpellActionNode) Resolve(ctx *evalstate.EvalState) (engine.Action, error) {
+	player := ctx.Game.GetPlayer(ctx.PlayerID)
+	found := n.Cards.Select(query.NewQueryObjects(player.Hand().GetAll()))
+	if len(found) == 0 {
+		return nil, fmt.Errorf("no spell cards found in hand for player %s", player.ID())
+	}
+	var castable []gob.Card
+	ruling := judge.Ruling{Explain: true}
+	for _, obj := range found {
+		card, ok := obj.(gob.Card)
+		if !ok {
+			return nil, fmt.Errorf("object %s is not a card", obj.ID())
+		}
+		autoPay := true
+		totalCost := cost.NewComposite(card.ManaCost(), card.AdditionalCost())
+		if !judge.CanCastSpellFromHand(ctx.Game, player, card, totalCost, autoPay, mana.Colors(), &ruling) {
+			continue
+		}
+		castable = append(castable, card)
+	}
+	if len(castable) == 0 {
+		return nil, fmt.Errorf("no castable spell cards found in hand for player %s", player.ID())
+	}
 	request := action.CastSpellRequest{
-		CardID:         n.CardInZone.Card().ID(),
-		ReplicateCount: 0, // TODO: Handle replicate count
+		CardID:         castable[0].ID(), // Assuming we cast the first found spell card
+		ReplicateCount: 0,                // TODO: Handle replicate count
 		// TargetsForEffects: n.CardInZone.Card().TargetsForEffects(),
-		SpliceCardIDs: nil,   // TODO: Handle splice cards
-		Flashback:     false, // TODO: Handle flashback
+		SpliceCardIDs: nil,           // TODO: Handle splice cards
+		Flashback:     false,         // TODO: Handle flashback
+		AutoPayCost:   true,          // TODO: Handle auto pay cost
+		AutoPayColors: mana.Colors(), // TODO: Handle auto pay colors
 	}
 	return action.NewCastSpellAction(request), nil
 }

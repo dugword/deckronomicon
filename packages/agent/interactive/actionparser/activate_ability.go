@@ -35,6 +35,7 @@ func parseActivateAbilityCommand(
 		abilityInZone = found
 	}
 	targetsForEffects, err := getTargetsForEffects(
+		player.ID(),
 		abilityInZone.Ability(),
 		abilityInZone.Ability().Effects(),
 		game,

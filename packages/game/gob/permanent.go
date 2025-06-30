@@ -19,7 +19,7 @@ type Permanent struct {
 	controller         string
 	id                 string
 	loyalty            int
-	manaCost           cost.ManaCost
+	manaCost           cost.Mana
 	name               string
 	owner              string
 	power              int
@@ -114,7 +114,7 @@ func (p Permanent) Loyalty() int {
 	return p.loyalty
 }
 
-func (p Permanent) ManaCost() cost.ManaCost {
+func (p Permanent) ManaCost() cost.Mana {
 	return p.manaCost
 }
 

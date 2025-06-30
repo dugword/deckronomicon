@@ -13,6 +13,7 @@ type Config struct {
 	ScenariosDir string
 	AutoPay      bool
 	Verbose      bool
+	Seed         int64
 }
 
 // LoadConfig loads the configuration from command line arguments and
@@ -33,6 +34,7 @@ func LoadConfig(args []string, getenv func(string) string) (Config, error) {
 	definitions := flags.String("definitions", "definitions/cards", "definitions directory")
 	interactive := flags.Bool("interactive", false, "run as interactive mode")
 	scenario := flags.String("scenario", "example", "scenario to run")
+	seed := flags.Int64("seed", 0, "random seed for the scenario (0 for random seed)")
 	scenariosDir := flags.String("scenarios", "scenarios", "scenarios directory")
 	autoPay := flags.Bool("autopay", false, "automatically pay costs when possible")
 	verbose := flags.Bool("verbose", config.Verbose, "verbose output")
@@ -46,5 +48,6 @@ func LoadConfig(args []string, getenv func(string) string) (Config, error) {
 	config.ScenariosDir = *scenariosDir
 	config.AutoPay = *autoPay
 	config.Verbose = *verbose
+	config.Seed = *seed
 	return config, nil
 }

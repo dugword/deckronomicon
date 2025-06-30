@@ -1,4 +1,4 @@
-package effect
+package target
 
 import "deckronomicon/packages/game/mtg"
 
@@ -34,7 +34,12 @@ func (t PlayerTargetSpec) TargetType() mtg.TargetType {
 	return mtg.TargetTypePlayer
 }
 
-type PermanentTargetSpec struct{}
+type PermanentTargetSpec struct {
+	CardTypes  []mtg.CardType
+	Colors     []mtg.Color
+	Subtypes   []mtg.Subtype
+	ManaValues []int
+}
 
 func (t PermanentTargetSpec) Name() string {
 	return string(mtg.TargetTypePermanent)
@@ -57,4 +62,19 @@ func (t SpellTargetSpec) Name() string {
 
 func (t SpellTargetSpec) TargetType() mtg.TargetType {
 	return mtg.TargetTypeSpell
+}
+
+type CardTargetSpec struct {
+	CardTypes  []mtg.CardType
+	Colors     []mtg.Color
+	Subtypes   []mtg.Subtype
+	ManaValues []int
+}
+
+func (t CardTargetSpec) Name() string {
+	return string(mtg.TargetTypeCard)
+}
+
+func (t CardTargetSpec) TargetType() mtg.TargetType {
+	return mtg.TargetTypeCard
 }

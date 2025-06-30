@@ -1,3 +1,4 @@
+Name: Peer Through Depths
 CardTypes:
   - Instant
 Subtypes:
@@ -5,7 +6,6 @@ Subtypes:
 Color:
   - U
 ManaCost: '{1}{U}'
-Name: Peer Through Depths
 SpellAbility:
   - Name: LookAndChoose
     Modifiers:

@@ -2,6 +2,7 @@ package effect
 
 import (
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/target"
 	"fmt"
 )
 
@@ -29,14 +30,14 @@ func NewDiscard(modifiers map[string]any) (Discard, error) {
 	}, nil
 }
 
-func (e Discard) TargetSpec() TargetSpec {
+func (e Discard) TargetSpec() target.TargetSpec {
 	switch e.Target {
 	case "", mtg.TargetTypeNone:
-		return NoneTargetSpec{}
+		return target.NoneTargetSpec{}
 	case mtg.TargetTypePlayer:
-		return PlayerTargetSpec{}
+		return target.PlayerTargetSpec{}
 	default:
 		panic(fmt.Sprintf("unknown target spec %q for DiscardEffect", e.Target))
-		return NoneTargetSpec{}
+		return target.NoneTargetSpec{}
 	}
 }

@@ -40,7 +40,17 @@ func parseCastSpellCommand(
 		}
 		cardInZone = found
 	}
+	costTarget, err := getTargetsForCost(
+		player.ID(),
+		cardInZone.Card(),
+		game,
+		agent,
+	)
+	if err != nil {
+		return action.CastSpellRequest{}, fmt.Errorf("failed to get cost target: %w", err)
+	}
 	targetsForEffects, err := getTargetsForEffects(
+		player.ID(),
 		cardInZone.Card(),
 		cardInZone.Card().SpellAbility(),
 		game,
@@ -62,6 +72,7 @@ func parseCastSpellCommand(
 	var spliceCardIDs []string
 	for _, cardToSplice := range cardsToSplice {
 		spliceTargetsForEffects, err := getTargetsForEffects(
+			player.ID(),
 			cardToSplice.Card(),
 			cardToSplice.Card().SpellAbility(),
 			game,
@@ -95,6 +106,7 @@ func parseCastSpellCommand(
 		Flashback:         flashback,
 		AutoPayCost:       autoPayCost, // WARNING: This is turned on for testing, it doesn't work properly yet.,
 		AutoPayColors:     autoPayColors,
+		CostTarget:        costTarget,
 	}
 	return request, nil
 }

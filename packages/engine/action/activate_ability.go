@@ -10,6 +10,7 @@ import (
 	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/query/is"
 	"deckronomicon/packages/state"
 	"fmt"
@@ -19,7 +20,7 @@ type ActivateAbilityRequest struct {
 	AbilityID         string
 	SourceID          string
 	Zone              mtg.Zone
-	TargetsForEffects map[effect.EffectTargetKey]effect.Target
+	TargetsForEffects map[effect.EffectTargetKey]target.Target
 }
 
 func (r ActivateAbilityRequest) Build(string) ActivateAbilityAction {
@@ -30,7 +31,7 @@ type ActivateAbilityAction struct {
 	abilityID         string
 	sourceID          string
 	zone              mtg.Zone
-	targetsForEffects map[effect.EffectTargetKey]effect.Target
+	targetsForEffects map[effect.EffectTargetKey]target.Target
 }
 
 func NewActivateAbilityAction(
@@ -103,7 +104,17 @@ func (a ActivateAbilityAction) Complete(game state.Game, player state.Player, re
 	if err != nil {
 		return nil, fmt.Errorf("failed to build effect with targets: %w", err)
 	}
-	costEvents := pay.Cost(ability.Cost(), source, player.ID())
+	//abilityCost := ability.Cost()
+	/*
+		if costWithTarget, ok := abilityCost.(cost.CostWithTarget); ok {
+			// TODO: Set the target ID for the cost
+			abilityCost = costWithTarget.WithTarget("TODO - SET THIS TARGET ID")
+		}
+	*/
+	costEvents, err := pay.Cost(ability.Cost(), source, player.ID())
+	if err != nil {
+		return nil, fmt.Errorf("failed to pay ability cost: %w", err)
+	}
 	events = append(events, costEvents...)
 	var nonAddManaEffectsWithTargets []effect.EffectWithTarget
 	for _, effectWithTarget := range effectWithTargets {
@@ -112,7 +123,7 @@ func (a ActivateAbilityAction) Complete(game state.Game, player state.Player, re
 			nonAddManaEffectsWithTargets = append(nonAddManaEffectsWithTargets, effectWithTarget)
 			continue
 		}
-		if source.Match(is.Land()) && cost.HasType(ability.Cost(), cost.TapThisCost{}) {
+		if source.Match(is.Land()) && cost.HasType(ability.Cost(), cost.TapThis{}) {
 			land, ok := source.(gob.Permanent)
 			if !ok {
 				return nil, fmt.Errorf("source %q is not a permanent", source.ID())

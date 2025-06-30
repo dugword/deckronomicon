@@ -44,6 +44,7 @@ type Player struct {
 
 type Setup struct {
 	CheatsEnabled bool   `json:"CheatsEnabled" yaml:"CheatsEnabled"`
+	Seed          int64  `json:"Seed" yaml:"Seed"`
 	MaxTurns      int    `json:"MaxTurns" yaml:"MaxTurns"`
 	OnThePlay     string `json:"OnThePlay" yaml:"OnThePlay"`
 	Players       []struct {

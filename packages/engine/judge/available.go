@@ -212,11 +212,15 @@ func GetAvailableMana(game state.Game, player state.Player) mana.Pool {
 					Zone:      mtg.ZoneBattlefield,
 				},
 			}
-			costEvents := pay.Cost(
+			costEvents, err := pay.Cost(
 				ability.Cost(),
 				untappedLand,
 				player.ID(),
 			)
+			if err != nil {
+				// TODO: Don't panic
+				panic(fmt.Errorf("failed to pay cost for ability %q: %w", ability.Name(), err))
+			}
 			events = append(events, costEvents...)
 			events = append(events, event.LandTappedForManaEvent{
 				PlayerID: player.ID(),

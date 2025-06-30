@@ -11,6 +11,7 @@ import (
 	"deckronomicon/packages/game/mana"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/game/staticability"
+	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/state"
 	"fmt"
 )
@@ -20,11 +21,12 @@ type CastSpellRequest struct {
 	CardID            string
 	ReplicateCount    int
 	SpliceCardIDs     []string
-	TargetsForEffects map[effect.EffectTargetKey]effect.Target
+	TargetsForEffects map[effect.EffectTargetKey]target.Target
 	Flashback         bool
 	AutoPayCost       bool
 	AutoPayColors     []mana.Color             // Colors to prioritize when auto-paying costs, if applicable
 	Preactions        []ActivateAbilityRequest // Preactions to be executed before casting the spell
+	CostTarget        target.Target            // Target for additional costs, if applicable
 }
 
 func (r CastSpellRequest) Build(string) CastSpellAction {
@@ -34,12 +36,13 @@ func (r CastSpellRequest) Build(string) CastSpellAction {
 type CastSpellAction struct {
 	cardID            string
 	replicateCount    int
-	targetsForEffects map[effect.EffectTargetKey]effect.Target
+	targetsForEffects map[effect.EffectTargetKey]target.Target
 	spliceCardIDs     []string
 	flashback         bool
 	autoPayCost       bool
 	autoPayColors     []mana.Color             // Colors to prioritize when auto-paying costs, if applicable
 	preactions        []ActivateAbilityRequest // Preactions to be executed before casting the spell
+	costTarget        target.Target            // Target for additional costs, if applicable
 }
 
 func NewCastSpellAction(
@@ -54,6 +57,7 @@ func NewCastSpellAction(
 		autoPayCost:       request.AutoPayCost,
 		autoPayColors:     request.AutoPayColors,
 		preactions:        request.Preactions,
+		costTarget:        request.CostTarget,
 	}
 }
 
@@ -111,7 +115,10 @@ func (a CastSpellAction) castWithFlashback(game state.Game, player state.Player)
 		}
 		events = append(events, activateEvents...)
 	}
-	costEvents := pay.Cost(flashback.Cost, cardToCast, player.ID())
+	costEvents, err := pay.Cost(flashback.Cost, cardToCast, player.ID())
+	if err != nil {
+		return nil, fmt.Errorf("failed to pay cost for card %q: %w", cardToCast.ID(), err)
+	}
 	events = append(events, costEvents...)
 	events = append(
 		events,
@@ -205,7 +212,16 @@ func (a CastSpellAction) castFromHand(game state.Game, player state.Player) ([]e
 		}
 		events = append(events, activateEvents...)
 	}
-	costEvents := pay.Cost(totalCost, cardToCast, player.ID())
+	if cardToCast.AdditionalCost() != nil {
+		if costWithTarget, ok := cardToCast.AdditionalCost().(cost.CostWithTarget); ok {
+			costWithTarget = costWithTarget.WithTarget(a.costTarget)
+			totalCost = cost.NewComposite(totalCost, costWithTarget)
+		}
+	}
+	costEvents, err := pay.Cost(totalCost, cardToCast, player.ID())
+	if err != nil {
+		return nil, fmt.Errorf("failed to pay cost for card %q: %w", cardToCast.ID(), err)
+	}
 	events = append(events, costEvents...)
 	events = append(
 		events,
@@ -224,7 +240,7 @@ func (a CastSpellAction) castFromHand(game state.Game, player state.Player) ([]e
 	if a.replicateCount > 0 {
 		effectWithTargets := []effect.EffectWithTarget{{
 			Effect: effect.Replicate{Count: a.replicateCount},
-			Target: effect.Target{
+			Target: target.Target{
 				ID: cardToCast.ID(),
 			},
 			SourceID: cardToCast.ID(),
@@ -247,7 +263,7 @@ func buildSpliceEffectWithCards(
 	player state.Player,
 	cardToCast gob.Card,
 	spliceCardIDs []string,
-	targetsForEffects map[effect.EffectTargetKey]effect.Target,
+	targetsForEffects map[effect.EffectTargetKey]target.Target,
 ) ([]effect.EffectWithTarget, cost.Cost, error) {
 	var spliceCost cost.Cost
 	var effectWithTargets []effect.EffectWithTarget

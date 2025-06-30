@@ -131,8 +131,10 @@ func (a *RuleBasedAgent) GetNextAction(game state.Game) (engine.Action, error) {
 		}
 		break // Stop after the first matching rule
 	}
-	if err := a.uiBuffer.Render(); err != nil {
-		return nil, fmt.Errorf("failed to render UI buffer: %w", err)
+	if a.interactive {
+		if err := a.uiBuffer.Render(); err != nil {
+			return nil, fmt.Errorf("failed to render UI buffer: %w", err)
+		}
 	}
 	if act == nil {
 		fmt.Println("No action matched for player:", a.playerID)

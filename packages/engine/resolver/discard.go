@@ -5,6 +5,7 @@ import (
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/gob"
+	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/state"
 	"errors"
 )
@@ -13,7 +14,7 @@ func ResolveDiscard(
 	game state.Game,
 	playerID string,
 	discard effect.Discard,
-	target effect.Target,
+	target target.Target,
 	source gob.Object,
 ) (Result, error) {
 	player := game.GetPlayer(playerID)

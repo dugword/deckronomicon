@@ -61,7 +61,7 @@ func (p *StrategyParser) parsePredicate(data any) predicate.Predicate {
 				predicates = append(predicates, p.parseSubtypePredicate(val))
 			case "Supertype":
 			case "Color":
-			case "ManaCost":
+			case "Mana":
 			case "Power":
 			case "Toughness":
 			default:

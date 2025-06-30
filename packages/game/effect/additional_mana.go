@@ -2,6 +2,7 @@ package effect
 
 import (
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/target"
 	"fmt"
 )
 
@@ -49,6 +50,6 @@ func NewAdditionalMana(modifiers map[string]any) (AdditionalMana, error) {
 	}, nil
 }
 
-func (e AdditionalMana) TargetSpec() TargetSpec {
-	return NoneTargetSpec{}
+func (e AdditionalMana) TargetSpec() target.TargetSpec {
+	return target.NoneTargetSpec{}
 }

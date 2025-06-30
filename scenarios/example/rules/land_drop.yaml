@@ -1,6 +1,9 @@
 Name: Make Land Drop
 When:
+  # This should assume the Player's PrecombatMain step
+  # Not the player's or opponent's precombat main step
   Step: PrecombatMain
+  # LandPlayedThisTurn should be a default value
   LandPlayedThisTurn: false
   InZone:
     Zone: Hand

@@ -4,17 +4,17 @@ import (
 	"fmt"
 )
 
-type LifeCost struct {
+type Life struct {
 	amount int
 }
 
-func (l LifeCost) isCost() {}
+func (l Life) isCost() {}
 
-func (l LifeCost) Description() string {
+func (l Life) Description() string {
 	// Return a string representation of the life cost
 	return fmt.Sprintf("Pay %d life", l.amount)
 }
 
-func (l LifeCost) Amount() int {
+func (l Life) Amount() int {
 	return l.amount
 }
