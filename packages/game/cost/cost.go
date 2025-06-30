@@ -5,6 +5,15 @@ type Cost interface {
 	Description() string
 }
 
+// TODO: I think I like this pattern a lot,
+// Are there other places I can use this?
+// Object With Zone? Effect With Target?
+type CostWithTarget interface {
+	Cost
+	TargetID() string
+	WithTargetID(targetID string) CostWithTarget
+}
+
 // Has checks if the cost has a specific cost type. E.g.
 // Has(cost, ManaCost{}) returns true if the cost has a mana cost.
 // or Has(cost, TapThisCost{}) returns true if the cost has a tap this cost.
@@ -23,6 +32,9 @@ func HasType(cost Cost, costType Cost) bool {
 		}
 	case DiscardThisCost:
 		_, ok := costType.(DiscardThisCost)
+		return ok
+	case DiscardACardCost:
+		_, ok := costType.(DiscardACardCost)
 		return ok
 	case LifeCost:
 		_, ok := costType.(LifeCost)

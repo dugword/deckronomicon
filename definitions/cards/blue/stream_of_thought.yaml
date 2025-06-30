@@ -1,9 +1,9 @@
+Name: Stream of Thought
 CardTypes:
   - Sorcery
 Color:
   - U
 ManaCost: '{U}'
-Name: Stream of Thought
 SpellAbility:
   - Name: Mill
     Modifiers:

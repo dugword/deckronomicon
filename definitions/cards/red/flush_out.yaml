@@ -1,0 +1,14 @@
+Name: Flush Out
+CardTypes:
+  - Sorcery
+SubTypes:
+  - Omen
+Color:
+  - R
+ManaCost: '{1}{R}'
+AdditionalCost: 'Discard a card'
+SpellAbility:
+  - Name: Draw
+    Modifiers:
+      Count: 2
+RulesText: Discard a card. If you do, draw two cards.

@@ -213,11 +213,14 @@ func activateManaSource(
 				Zone:      mtg.ZoneBattlefield,
 			},
 		}
-		costEvents := Cost( // pay.Cost() of the mana ability
+		costEvents, err := Cost( // pay.Cost() of the mana ability
 			ability.Cost(),
 			land,
 			player.ID(),
 		)
+		if err != nil {
+			return game, nil, fmt.Errorf("failed to pay cost for mana ability %s: %w", ability.Name(), err)
+		}
 		events = append(events, costEvents...)
 		events = append(events, event.LandTappedForManaEvent{
 			PlayerID: player.ID(),

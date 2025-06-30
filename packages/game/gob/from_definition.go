@@ -20,9 +20,9 @@ func NewCardFromDefinition(definition definition.Card) Card {
 		rulesText:  definition.RulesText,
 		toughness:  definition.Toughness,
 	}
-	manaCost, err := cost.ParseManaCost(definition.Cost)
+	manaCost, err := cost.ParseManaCost(definition.ManaCost)
 	if err != nil {
-		panic(fmt.Errorf("failed to parse cost %q: %w", definition.Cost, err))
+		panic(fmt.Errorf("failed to parse cost %q: %w", definition.ManaCost, err))
 	}
 	cardColors, err := mtg.StringsToColors(definition.Colors)
 	if err != nil {

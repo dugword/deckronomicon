@@ -1,9 +1,9 @@
+Name: Pieces of the Puzzle
 CardTypes:
   - Sorcery
 Color:
   - U
 ManaCost: '{2}{U}'
-Name: Pieces of the Puzzle
 SpellAbility:
   - Name: LookAndChoose
     Modifiers:

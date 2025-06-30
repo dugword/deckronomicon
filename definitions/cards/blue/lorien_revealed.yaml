@@ -1,9 +1,9 @@
+Name: Lorien Revealed
 CardTypes:
   - Sorcery
 Color:
   - U
 ManaCost: '{3}{U}{U}'
-Name: Lorien Revealed
 SpellAbility:
   - Name: Draw
     Modifiers:

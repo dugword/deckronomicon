@@ -1,9 +1,9 @@
+Name: Muddle the Mixture
 CardTypes:
   - Instant
 Color:
   - U
 ManaCost: '{U}{U}'
-Name: Muddle the Mixture
 SpellAbility:
   - Name: Counterspell
     Modifiers:

@@ -1,0 +1,12 @@
+Name: Basic Deck
+Cards:
+  - Name: Plains
+    Count: 12
+  - Name: Island
+    Count: 12
+  - Name: Swamp
+    Count: 12
+  - Name: Mountain
+    Count: 12
+  - Name: Forest
+    Count: 12

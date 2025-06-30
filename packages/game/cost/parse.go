@@ -16,6 +16,8 @@ func Parse(costString string) (Cost, error) {
 		switch {
 		case isDiscardThisCost(trimmed):
 			costs = append(costs, DiscardThisCost{})
+		case isDiscardACardCost(trimmed):
+			costs = append(costs, DiscardACardCost{})
 		case isLifeCost(trimmed):
 			lifeCost, err := parseLifeCost(trimmed)
 			if err != nil {
@@ -66,6 +68,10 @@ func parseLifeCost(input string) (LifeCost, error) {
 
 func isDiscardThisCost(input string) bool {
 	return input == "Discard this card"
+}
+
+func isDiscardACardCost(input string) bool {
+	return input == "Discard a card"
 }
 
 var manaPattern = regexp.MustCompile(`^(?:\{[0-9WUBRGC]+\})*$`)

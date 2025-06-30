@@ -45,9 +45,15 @@ func (c CompositeCost) Description() string {
 			costStrings = append(costStrings, cost.Description())
 		}
 	}
-	// Discard
+	// Discard this card
 	for _, cost := range c.costs {
 		if _, ok := cost.(DiscardThisCost); ok {
+			costStrings = append(costStrings, cost.Description())
+		}
+	}
+	// Discard a card
+	for _, cost := range c.costs {
+		if _, ok := cost.(DiscardACardCost); ok {
 			costStrings = append(costStrings, cost.Description())
 		}
 	}

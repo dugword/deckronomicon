@@ -14,10 +14,11 @@ import (
 func TestPayCost(t *testing.T) {
 	const playerID = "Test Player"
 	tests := []struct {
-		name   string
-		cost   string
-		object gob.Object
-		want   []event.GameEvent
+		name     string
+		cost     string
+		object   gob.Object
+		want     []event.GameEvent
+		targetID string
 	}{
 		{
 			name: "with white mana cost",
@@ -76,6 +77,17 @@ func TestPayCost(t *testing.T) {
 			},
 		},
 		{
+			name:     "with discard a card cost",
+			cost:     "Discard a card",
+			targetID: "Card ID",
+			want: []event.GameEvent{
+				event.DiscardCardEvent{
+					PlayerID: playerID,
+					CardID:   "Card ID",
+				},
+			},
+		},
+		{
 			name: "with composite cost of mana and life",
 			cost: `{W}, Pay 2 life`,
 			want: []event.GameEvent{
@@ -96,7 +108,13 @@ func TestPayCost(t *testing.T) {
 			if err != nil {
 				t.Fatalf("cost.Parse(%s); err = %v; want %v", testCost, err, nil)
 			}
-			got := pay.Cost(testCost, test.object, playerID)
+			if costWithTarget, ok := testCost.(cost.CostWithTarget); ok && test.targetID != "" {
+				testCost = costWithTarget.WithTargetID(test.targetID)
+			}
+			got, err := pay.Cost(testCost, test.object, playerID)
+			if err != nil {
+				t.Fatalf("pay.Cost(%s) returned error: %v", testCost.Description(), err)
+			}
 			if diff := cmp.Diff(test.want, got); diff != "" {
 				t.Errorf("pay.Cost(%s) mismatch (-want +got):\n%s", testCost.Description(), diff)
 			}

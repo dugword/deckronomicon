@@ -36,6 +36,25 @@ func TestHasCostType(t *testing.T) {
 			want:     false,
 		},
 		{
+			name: "with has discard a card cost",
+			cost: CompositeCost{
+				costs: []Cost{
+					ManaCost{},
+					DiscardACardCost{},
+				},
+			},
+			costType: DiscardACardCost{},
+			want:     true,
+		},
+		{
+			name: "with no discard a card cost",
+			cost: CompositeCost{
+				costs: []Cost{ManaCost{}},
+			},
+			costType: DiscardACardCost{},
+			want:     false,
+		},
+		{
 			name: "with has life cost",
 			cost: CompositeCost{
 				costs: []Cost{

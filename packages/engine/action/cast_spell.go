@@ -111,24 +111,35 @@ func (a CastSpellAction) castWithFlashback(game state.Game, player state.Player)
 		}
 		events = append(events, activateEvents...)
 	}
-	costEvents := pay.Cost(flashback.Cost, cardToCast, player.ID())
-	events = append(events, costEvents...)
-	events = append(
-		events,
-		event.CastSpellEvent{
-			PlayerID: player.ID(),
-			CardID:   cardToCast.ID(),
-			FromZone: mtg.ZoneGraveyard,
-		},
-		event.PutSpellOnStackEvent{
-			PlayerID:          player.ID(),
-			CardID:            cardToCast.ID(),
-			FromZone:          mtg.ZoneGraveyard,
-			EffectWithTargets: effectWithTargets,
-			Flashback:         true,
-		},
-	)
-	return events, nil
+	flashbackCost := flashback.Cost
+	if costWithTarget, ok := flashback.Cost.(cost.CostWithTarget); ok {
+		// TODO: Set the target ID for the cost
+		flashbackCost = costWithTarget.WithTargetID("TODO - SET THIS TARGET ID")
+	}
+	costEvents, err := pay.Cost(flashbackCost, cardToCast, player.ID())
+	if err != nil {
+		return nil, fmt.Errorf("failed to pay flashback cost for card %q: %w", cardToCast.ID(), err)
+	}
+	if len(a.spliceCardIDs) > 0 {
+		events = append(events, costEvents...)
+		events = append(
+			events,
+			event.CastSpellEvent{
+				PlayerID: player.ID(),
+				CardID:   cardToCast.ID(),
+				FromZone: mtg.ZoneGraveyard,
+			},
+			event.PutSpellOnStackEvent{
+				PlayerID:          player.ID(),
+				CardID:            cardToCast.ID(),
+				FromZone:          mtg.ZoneGraveyard,
+				EffectWithTargets: effectWithTargets,
+				Flashback:         true,
+			},
+		)
+		return events, nil
+
+	}
 }
 
 func (a CastSpellAction) castFromHand(game state.Game, player state.Player) ([]event.GameEvent, error) {

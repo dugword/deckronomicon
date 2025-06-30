@@ -23,7 +23,8 @@ type Card struct {
 	CardTypes          []string        `json:"CardTypes,omitempty" yaml:"CardTypes,omitempty"`
 	Colors             []string        `json:"Color,omitempty" yaml:"Color,omitempty"`
 	Controller         string          `json:"Controller,omitempty" yaml:"Controller,omitempty"`
-	Cost               string          `json:"ManaCost,omitempty" yaml:"ManaCost,omitempty"`
+	ManaCost           string          `json:"ManaCost,omitempty" yaml:"ManaCost,omitempty"`
+	AdditonalCost      string          `json:"AdditionalCosts,omitempty" yaml:"AdditionalCosts,omitempty"`
 	ID                 string          `json:"ID,omitempty" yaml:"ID,omitempty"`
 	Loyalty            int             `json:"Loyalty,omitempty" yaml:"Loyalty,omitempty"`
 	Name               string          `json:"Name,omitempty" yaml:"Name,omitempty"`

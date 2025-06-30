@@ -1,3 +1,4 @@
+Name: Ideas Unbound
 CardTypes:
   - Sorcery
 Subtypes:
@@ -5,7 +6,6 @@ Subtypes:
 Color:
   - U
 ManaCost: "{U}{U}"
-Name: Ideas Unbound
 SpellAbility:
   - Name: Draw
     Modifiers:

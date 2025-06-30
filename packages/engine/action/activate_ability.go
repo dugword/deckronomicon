@@ -103,7 +103,15 @@ func (a ActivateAbilityAction) Complete(game state.Game, player state.Player, re
 	if err != nil {
 		return nil, fmt.Errorf("failed to build effect with targets: %w", err)
 	}
-	costEvents := pay.Cost(ability.Cost(), source, player.ID())
+	abilityCost := ability.Cost()
+	if costWithTarget, ok := abilityCost.(cost.CostWithTarget); ok {
+		// TODO: Set the target ID for the cost
+		abilityCost = costWithTarget.WithTargetID("TODO - SET THIS TARGET ID")
+	}
+	costEvents, err := pay.Cost(ability.Cost(), source, player.ID())
+	if err != nil {
+		return nil, fmt.Errorf("failed to pay ability cost: %w", err)
+	}
 	events = append(events, costEvents...)
 	var nonAddManaEffectsWithTargets []effect.EffectWithTarget
 	for _, effectWithTarget := range effectWithTargets {

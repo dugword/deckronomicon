@@ -1,9 +1,9 @@
+Name: Brainstorm
 CardTypes:
   - Instant
 Color:
   - U
 ManaCost: '{U}'
-Name: Brainstorm
 SpellAbility:
   - Name: Draw
     Modifiers:
