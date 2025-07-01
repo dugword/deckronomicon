@@ -11,6 +11,7 @@ import (
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/has"
 	"deckronomicon/packages/query/is"
+	"deckronomicon/packages/query/querybuilder"
 	"deckronomicon/packages/state"
 	"fmt"
 )
@@ -34,17 +35,9 @@ func getTargetsForCost(
 	case nil, target.NoneTargetSpec:
 		return target.Target{}, nil // No targets needed for NoneTargetSpec
 	case target.CardTargetSpec:
-		cardTarget, err := getCardTarget(playerID, targetSpec, card, game, agent)
-		if err != nil {
-			return target.Target{}, fmt.Errorf("failed to get card target: %w", err)
-		}
-		return cardTarget, nil
+		return getCardTarget(playerID, targetSpec, card, game, agent)
 	case target.PermanentTargetSpec:
-		permanentTarget, err := getPermanentTarget(targetSpec, card, game, agent)
-		if err != nil {
-			return target.Target{}, fmt.Errorf("failed to get permanent target: %w", err)
-		}
-		return permanentTarget, nil
+		return getPermanentTarget(targetSpec, card, game, agent)
 	default:
 		return target.Target{}, fmt.Errorf("unsupported target spec type %T", costWithTargets.TargetSpec())
 	}
@@ -150,7 +143,7 @@ func getSpellTarget(
 	game state.Game,
 	agent engine.PlayerAgent,
 ) (target.Target, error) {
-	query, err := buildQuery(QueryOpts(targetSpec))
+	query, err := querybuilder.Build(querybuilder.Opts(targetSpec))
 	if err != nil {
 		panic(fmt.Errorf("failed to build query for Search effect: %w", err))
 	}
@@ -220,7 +213,7 @@ func getCardTarget(
 	agent engine.PlayerAgent,
 ) (target.Target, error) {
 	player := game.GetPlayer(playerID)
-	predicate, err := buildQuery(QueryOpts(targetSpec))
+	predicate, err := querybuilder.Build(querybuilder.Opts(targetSpec))
 	if err != nil {
 		panic(fmt.Errorf("failed to build query for Search effect: %w", err))
 	}

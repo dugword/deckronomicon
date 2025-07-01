@@ -12,6 +12,7 @@ import (
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
+	"deckronomicon/packages/query/has"
 	"deckronomicon/packages/query/is"
 	"deckronomicon/packages/state"
 	"errors"
@@ -318,6 +319,24 @@ func (e *Engine) ResolveSpellOrAbility(resolvable state.Resolvable) error {
 			ObjectID: resolvable.ID(),
 		}); err != nil {
 			return fmt.Errorf("failed to apply event RemoveSpellOrAbilityFromStackEvent: %w", err)
+		}
+		// TODO: I don't like this, I moved having the reducer manage putting flashback
+		// cards in the exile zone because I wanted it to be managed in one spot, this
+		// feels like it should be managed there too, but I need the rng from engine...
+		// Dunno, think about this more.
+		if resolvable.Match(query.And(is.Spell(), has.Subtype(mtg.SubtypeOmen))) {
+			var cardIDs []string
+			player := e.game.GetPlayer(resolvable.Owner())
+			for _, card := range player.Library().GetAll() {
+				cardIDs = append(cardIDs, card.ID())
+			}
+			shuffledCardsIDs := e.resEnv.RNG.ShuffleIDs(cardIDs)
+			if err := e.ApplyEvent(event.ShuffleLibraryEvent{
+				PlayerID:         player.ID(),
+				ShuffledCardsIDs: shuffledCardsIDs,
+			}); err != nil {
+				return fmt.Errorf("failed to apply event ShuffleLibraryEvent for omen: %w", err)
+			}
 		}
 	}
 	return nil

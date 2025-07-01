@@ -1,7 +1,7 @@
 Name: Flush Out
 CardTypes:
   - Sorcery
-SubTypes:
+Subtypes:
   - Omen
 Color:
   - R
