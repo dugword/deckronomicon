@@ -52,9 +52,13 @@ func ParseInput(
 		return action.NewClearRevealedAction(), nil
 	case "concede", "exit", "quit":
 		return action.NewConcedeAction(), nil
+	case "emit":
+		return parseEmitMetric(arg)
 	case "help":
 		fmt.Println("Need to implement help command")
 		return nil, nil
+	case "log":
+		return parseLogMessage(arg)
 	case "pass", "next", "done":
 		return action.NewPassPriorityAction(), nil
 	case "play":

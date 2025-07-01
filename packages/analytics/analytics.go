@@ -24,6 +24,21 @@ func WriteGameRecordToFile(record *engine.GameRecord, dirname string) error {
 	return nil
 }
 
+func WriteAnalyticsEventsToFile(record *engine.GameRecord, dirname string) error {
+	filename := dirname + "/analytics.json"
+	file, err := os.Create(filename)
+	if err != nil {
+		return fmt.Errorf("failed to create game record file: %w", err)
+	}
+	defer file.Close()
+	encoder := json.NewEncoder(file)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(record.ExportAnalytics()); err != nil {
+		return fmt.Errorf("failed to write game record: %w", err)
+	}
+	return nil
+}
+
 func WriteGameStateToFile(game state.Game, dirname string) error {
 	gameView := view.NewGameViewFromState(game)
 	filename := dirname + "/game_view.json"

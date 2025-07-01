@@ -50,6 +50,23 @@ func (n *ActivateActionNode) Resolve(ctx *evalstate.EvalState) (engine.Action, e
 	return action.NewActivateAbilityAction(request), nil
 }
 
+type LogMessageActionNode struct {
+	Message string
+}
+
+func (n *LogMessageActionNode) Resolve(ctx *evalstate.EvalState) (engine.Action, error) {
+	return action.NewLogMessageAction(n.Message), nil
+}
+
+type EmitMetricActionNode struct {
+	Name  string
+	Value int
+}
+
+func (n *EmitMetricActionNode) Resolve(ctx *evalstate.EvalState) (engine.Action, error) {
+	return action.NewEmitMetricAction(n.Name, n.Value), nil
+}
+
 type PlayLandCardActionNode struct {
 	Cards predicate.Predicate
 }

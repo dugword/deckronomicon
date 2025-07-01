@@ -52,6 +52,8 @@ func ApplyEventAndTriggers(game state.Game, gameEvent event.GameEvent) (state.Ga
 
 func applyEvent(game state.Game, gameEvent event.GameEvent) (state.Game, error) {
 	switch evnt := gameEvent.(type) {
+	case event.AnalyticsEvent:
+		return applyAnalyticsEvent(game, evnt)
 	case event.GameLifecycleEvent:
 		return applyGameLifecycleEvent(game, evnt)
 	case event.GameStateChangeEvent:
