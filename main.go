@@ -101,8 +101,8 @@ func Run(
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
-	// Logger for application level information.
 	logger := logger.NewLogger()
+	logger.LogLevel = config.LogLevel
 	logger.Info("Starting Deckronomicon...")
 	logger.Info("Loading scenario...")
 	scenario, err := configs.LoadScenario(config.ScenariosDir, config.Scenario)

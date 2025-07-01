@@ -45,7 +45,6 @@ func (p *StrategyParser) parseActionNode(raw any) action.ActionNode {
 }
 
 func (p *StrategyParser) parseEmitMetricAction(value any) action.ActionNode {
-	fmt.Println("Parsing Emit action with value:", value)
 	switch val := value.(type) {
 	case map[string]any:
 		name, ok := val["Metric"].(string)
@@ -67,7 +66,6 @@ func (p *StrategyParser) parseEmitMetricAction(value any) action.ActionNode {
 }
 
 func (p *StrategyParser) parseLogMessageAction(value any) action.ActionNode {
-	fmt.Println("Parsing Log action with value:", value)
 	switch val := value.(type) {
 	case string:
 		return &action.LogMessageActionNode{Message: val}
@@ -85,7 +83,6 @@ func (p *StrategyParser) parseLogMessageAction(value any) action.ActionNode {
 }
 
 func (p *StrategyParser) parsePlayAction(value any) action.ActionNode {
-	fmt.Println("Parsing Play action with value:", value)
 	switch val := value.(type) {
 	case string:
 		predicate := p.parsePredicate(val)
@@ -113,7 +110,6 @@ func (p *StrategyParser) parsePlayAction(value any) action.ActionNode {
 
 // TODO: Look this over, wrote it quickly late at night
 func (p *StrategyParser) parseCastAction(value any) action.ActionNode {
-	fmt.Println("Parsing Cast action with value:", value)
 	switch val := value.(type) {
 	case string:
 		predicate := p.parsePredicate(val)

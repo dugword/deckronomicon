@@ -12,6 +12,8 @@ import (
 	"slices"
 )
 
+// This needs to move back to the engine package, but for now it is here to avoid circular dependencies
+// and it enables the "what if" apply events stuff like GetPotentialMana to work.
 func ApplyEventAndTriggers(game state.Game, gameEvent event.GameEvent) (state.Game, error) {
 	game, err := applyEvent(game, gameEvent)
 	if err != nil {

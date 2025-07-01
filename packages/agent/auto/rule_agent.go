@@ -149,12 +149,13 @@ func (a *RuleBasedAgent) GetNextAction(game state.Game) (engine.Action, error) {
 		}
 	}
 	var act engine.Action
-	var matchedRule string
 	for _, rule := range a.strategy.Rules[a.mode] {
 		if !rule.When.Evaluate(&ctx) {
 			continue
 		}
-		matchedRule = rule.Name
+		if a.interactive {
+			a.uiBuffer.UpdateMessage([]string{fmt.Sprintf("Matched rule: %s", rule.Name)})
+		}
 		var err error
 		act, err = rule.Then.Resolve(&ctx)
 		if err != nil {
@@ -170,14 +171,11 @@ func (a *RuleBasedAgent) GetNextAction(game state.Game) (engine.Action, error) {
 		}
 	}
 	if act == nil {
-		fmt.Println("No action matched for player:", a.playerID)
 		if game.ActivePlayerID() == a.playerID {
 			a.enterToContinueOnSteps(game.Step())
 		}
 		return action.NewPassPriorityAction(), nil
 	}
-	fmt.Println("Matched rule: ", matchedRule)
-	fmt.Println("Action chosen for player: ", act.Name())
 	a.enterToContinue()
 	return act, nil
 }

@@ -14,7 +14,23 @@ const (
 	WarningLevel
 	ErrorLevel
 	CriticalLevel
+	SupressLogsLevel
 )
+
+func StringToLogLevel(level string) (LogLevel, bool) {
+	logLevels := map[string]LogLevel{
+		"debug":    DebugLevel,
+		"info":     InfoLevel,
+		"warning":  WarningLevel,
+		"error":    ErrorLevel,
+		"critical": CriticalLevel,
+		"suppress": SupressLogsLevel,
+	}
+	if logLevel, ok := logLevels[level]; ok {
+		return logLevel, ok
+	}
+	return 0, false
+}
 
 var logLevelNames = map[LogLevel]struct {
 	label string
@@ -31,6 +47,7 @@ var logLevelNames = map[LogLevel]struct {
 const reset = "\033[0m"
 
 type Logger struct {
+	LogLevel       LogLevel
 	IncludeContext bool
 	ContextFunc    func() any
 }
@@ -62,6 +79,9 @@ func PrintContext(context any) {
 }
 
 func (l *Logger) logf(level LogLevel, format string, args ...any) {
+	if l.LogLevel > level {
+		return
+	}
 	ll := logLevelNames[level]
 	ts := time.Now().Format("15:04:05")
 	msg := fmt.Sprintf(format, args...)
