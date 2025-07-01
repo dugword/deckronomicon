@@ -2,11 +2,8 @@
 
 .PHONY: build run test clean
 
-build:
-	go build -o tron_eggs_sim
-
 run:
-	go run main.go
+	go run ./
 
 test:
 	go test ./...
@@ -16,6 +13,3 @@ test-verbose:
 
 lint:
 	golangci-lint run
-
-clean:
-	rm -f tron_eggs_sim

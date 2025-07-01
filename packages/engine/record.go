@@ -54,3 +54,16 @@ func (r *GameRecord) Export() []ExportEvent {
 	}
 	return events
 }
+
+func (r *GameRecord) ExportAnalytics() []ExportEvent {
+	var events []ExportEvent
+	for _, e := range r.Events {
+		if _, ok := e.(event.AnalyticsEvent); ok {
+			events = append(events, ExportEvent{
+				EventType: e.EventType(),
+				Details:   e,
+			})
+		}
+	}
+	return events
+}

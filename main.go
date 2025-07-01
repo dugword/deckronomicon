@@ -176,6 +176,9 @@ func Run(
 	if errors.As(err, &playerLostErr) {
 		logger.Info(fmt.Sprintf("Game over reason: %s", playerLostErr.Reason))
 	}
+	if err := analytics.WriteAnalyticsEventsToFile(engine.Record(), "results"); err != nil {
+		return fmt.Errorf("failed to write game record: %w", err)
+	}
 	if err := analytics.WriteGameRecordToFile(engine.Record(), "results"); err != nil {
 		return fmt.Errorf("failed to write game record: %w", err)
 	}
