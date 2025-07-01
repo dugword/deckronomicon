@@ -1,8 +1,11 @@
 package configs
 
 import (
+	"deckronomicon/packages/logger"
 	"flag"
+	"fmt"
 	"strconv"
+	"strings"
 )
 
 type Config struct {
@@ -14,6 +17,7 @@ type Config struct {
 	AutoPay      bool
 	Verbose      bool
 	Seed         int64
+	LogLevel     logger.LogLevel
 }
 
 // LoadConfig loads the configuration from command line arguments and
@@ -38,8 +42,13 @@ func LoadConfig(args []string, getenv func(string) string) (Config, error) {
 	scenariosDir := flags.String("scenarios", "scenarios", "scenarios directory")
 	autoPay := flags.Bool("autopay", false, "automatically pay costs when possible")
 	verbose := flags.Bool("verbose", config.Verbose, "verbose output")
+	logLevelString := flags.String("loglevel", "error", "log level (debug, info, warning, error, critical)")
 	if err := flags.Parse(args[1:]); err != nil {
 		return Config{}, err
+	}
+	logLevel, ok := logger.StringToLogLevel(strings.ToLower(*logLevelString))
+	if !ok {
+		return Config{}, fmt.Errorf("invalid log level %q", *logLevelString)
 	}
 	config.Cheat = *cheat
 	config.Definitions = *definitions
@@ -49,5 +58,6 @@ func LoadConfig(args []string, getenv func(string) string) (Config, error) {
 	config.AutoPay = *autoPay
 	config.Verbose = *verbose
 	config.Seed = *seed
+	config.LogLevel = logLevel
 	return config, nil
 }
