@@ -67,6 +67,25 @@ func (a *RuleBasedAgent) PlayerID() string {
 }
 
 func (a *RuleBasedAgent) Choose(prompt choose.ChoicePrompt) (choose.ChoiceResults, error) {
+	if a.interactive {
+		var choices []choose.Choice
+		switch opts := prompt.ChoiceOpts.(type) {
+		case choose.ChooseOneOpts:
+			choices = opts.Choices
+		case choose.ChooseManyOpts:
+			choices = opts.Choices
+		case choose.MapChoicesToBucketsOpts:
+			choices = opts.Choices
+		default:
+			return nil, fmt.Errorf("unsupported interactive choice options type: %T", prompt.ChoiceOpts)
+		}
+		fmt.Println("Interactive choice prompt:", prompt.Message)
+		a.uiBuffer.UpdateChoices(prompt.Message, choices)
+		if err := a.uiBuffer.Render(); err != nil {
+			return nil, fmt.Errorf("failed to render UI buffer: %w", err)
+		}
+		a.enterToContinue()
+	}
 	switch opts := prompt.ChoiceOpts.(type) {
 	case choose.ChooseOneOpts:
 		if len(opts.Choices) == 0 {
@@ -78,6 +97,20 @@ func (a *RuleBasedAgent) Choose(prompt choose.ChoicePrompt) (choose.ChoiceResult
 	case choose.ChooseManyOpts:
 		if len(opts.Choices) == 0 || len(opts.Choices) < opts.Min {
 			return choose.ChooseManyResults{}, fmt.Errorf("no choices available")
+		}
+		var preferreedChoices []choose.Choice
+		// TODO: Temporary hack, need to let the strategy specify preferred choices for specific prompts
+		if prompt.Source.Name() == "Discard to Hand Size" {
+			for _, choice := range opts.Choices {
+				if choice.Name() == "Island" || choice.Name() == "Mountain" {
+					preferreedChoices = append(preferreedChoices, choice)
+				}
+			}
+			if len(preferreedChoices) >= opts.Min {
+				return choose.ChooseManyResults{
+					Choices: preferreedChoices[:opts.Min], // Return the minimum number of preferred choices
+				}, nil
+			}
 		}
 		return choose.ChooseManyResults{
 			Choices: opts.Choices[:opts.Min], // Return the minimum number of choices

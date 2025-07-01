@@ -4,6 +4,7 @@ import (
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/query/has"
 	"deckronomicon/packages/state"
 	"fmt"
 )
@@ -97,6 +98,9 @@ func applyRemoveSpellOrAbilityFromStackEvent(
 		zone := mtg.ZoneGraveyard
 		if obj.Flashback() {
 			zone = mtg.ZoneExile
+		}
+		if obj.Match(has.Subtype(mtg.SubtypeOmen)) {
+			zone = mtg.ZoneLibrary
 		}
 		player, ok = player.WithAddCardToZone(obj.Card(), zone)
 		if !ok {

@@ -12,6 +12,7 @@ import (
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mana"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/query"
 	"fmt"
 )
@@ -81,7 +82,8 @@ func (n *PlayLandCardActionNode) Resolve(ctx *evalstate.EvalState) (engine.Actio
 }
 
 type CastSpellActionNode struct {
-	Cards predicate.Predicate
+	Cards          predicate.Predicate
+	AdditionalCost predicate.Predicate
 }
 
 // TODO: Look this over, wrote it quickly late at night
@@ -93,13 +95,30 @@ func (n *CastSpellActionNode) Resolve(ctx *evalstate.EvalState) (engine.Action, 
 	}
 	var castable []gob.Card
 	ruling := judge.Ruling{Explain: true}
+	var costTarget target.Target
 	for _, obj := range found {
 		card, ok := obj.(gob.Card)
 		if !ok {
 			return nil, fmt.Errorf("object %s is not a card", obj.ID())
 		}
 		autoPay := true
-		totalCost := cost.NewComposite(card.ManaCost(), card.AdditionalCost())
+		additionalCost := card.AdditionalCost()
+		if additionalCost != nil {
+			if _, ok := additionalCost.(cost.Composite); ok {
+				panic("Composite costs are not supported as additional costs yet")
+			}
+			if costWithTarget, ok := additionalCost.(cost.CostWithTarget); ok {
+				cards := n.AdditionalCost.Select(query.NewQueryObjects(player.Hand().GetAll()))
+				if len(cards) == 0 {
+					return nil, fmt.Errorf("no additional cost cards found in hand for card %s", card.ID())
+				}
+				costTarget = target.Target{
+					ID: cards[0].ID(),
+				}
+				additionalCost = costWithTarget.WithTarget(costTarget)
+			}
+		}
+		totalCost := cost.NewComposite(card.ManaCost(), additionalCost)
 		if !judge.CanCastSpellFromHand(ctx.Game, player, card, totalCost, autoPay, mana.Colors(), &ruling) {
 			continue
 		}
@@ -116,6 +135,7 @@ func (n *CastSpellActionNode) Resolve(ctx *evalstate.EvalState) (engine.Action, 
 		Flashback:     false,         // TODO: Handle flashback
 		AutoPayCost:   true,          // TODO: Handle auto pay cost
 		AutoPayColors: mana.Colors(), // TODO: Handle auto pay colors
+		CostTarget:    costTarget,
 	}
 	return action.NewCastSpellAction(request), nil
 }

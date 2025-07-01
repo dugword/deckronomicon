@@ -2,8 +2,31 @@ package evaluator
 
 import (
 	"deckronomicon/packages/agent/auto/strategy/evalstate"
+	"deckronomicon/packages/engine/judge"
 	"deckronomicon/packages/game/mtg"
 )
+
+type Op string
+
+const (
+	OpEqual              Op = "=="
+	OpGreaterThan        Op = ">"
+	OpGreaterThanOrEqual Op = ">="
+	OpLessThan           Op = "<"
+	OpLessThanOrEqual    Op = "<="
+	OpNotEqual           Op = "!="
+)
+
+func Operators() []Op {
+	return []Op{
+		OpEqual,
+		OpGreaterThan,
+		OpGreaterThanOrEqual,
+		OpLessThan,
+		OpLessThanOrEqual,
+		OpNotEqual,
+	}
+}
 
 type Evaluator interface {
 	Evaluate(ctx *evalstate.EvalState) bool
@@ -78,6 +101,22 @@ func (e *LandPlayedThisTurn) Evaluate(ctx *evalstate.EvalState) bool {
 	return player.LandPlayedThisTurn() == e.LandPlayedThisTurn
 }
 
+type StackEmpty struct {
+	StackEmpty bool
+}
+
+func (e *StackEmpty) Evaluate(ctx *evalstate.EvalState) bool {
+	return (ctx.Game.Stack().Size() == 0) == e.StackEmpty
+}
+
+type SorcerySpeed struct {
+	SorcerySpeed bool
+}
+
+func (e *SorcerySpeed) Evaluate(ctx *evalstate.EvalState) bool {
+	return judge.CanPlaySorcerySpeed(ctx.Game, ctx.PlayerID, nil) == e.SorcerySpeed
+}
+
 type Mode struct {
 	Mode string
 }
@@ -86,12 +125,29 @@ func (e *Mode) Evaluate(ctx *evalstate.EvalState) bool {
 	return ctx.Mode == e.Mode
 }
 
-type PlayerStat struct {
-	Stat  string
-	Op    string
-	Value int
-}
-
-func (e *PlayerStat) Evaluate(ctx *evalstate.EvalState) bool {
+func compare(gotAny any, op Op, wantAny any) bool {
+	switch got := gotAny.(type) {
+	case int:
+		want, ok := wantAny.(int)
+		if !ok {
+			return false
+		}
+		switch op {
+		case OpEqual:
+			return got == want
+		case OpGreaterThan:
+			return got > want
+		case OpGreaterThanOrEqual:
+			return got >= want
+		case OpLessThan:
+			return got < want
+		case OpLessThanOrEqual:
+			return got <= want
+		case OpNotEqual:
+			return got != want
+		default:
+			return false
+		}
+	}
 	return false
 }

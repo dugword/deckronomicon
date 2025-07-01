@@ -1,4 +1,4 @@
-package actionparser
+package querybuilder
 
 import (
 	"deckronomicon/packages/game/mtg"
@@ -10,15 +10,15 @@ import (
 // Maybe we should have a common package for this?
 // Or maybe this should be in the query package?
 
-type QueryOpts struct {
+type Opts struct {
 	CardTypes  []mtg.CardType
 	Colors     []mtg.Color
 	Subtypes   []mtg.Subtype
 	ManaValues []int
 }
 
-func buildQuery(
-	opts QueryOpts,
+func Build(
+	opts Opts,
 ) (query.Predicate, error) {
 	// TODO: Can this be more simple/elegant?
 	var cardTypePredicates []query.Predicate

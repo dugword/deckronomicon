@@ -23,7 +23,7 @@ type Card struct {
 	CardTypes          []string        `json:"CardTypes,omitempty" yaml:"CardTypes,omitempty"`
 	Colors             []string        `json:"Color,omitempty" yaml:"Color,omitempty"`
 	Controller         string          `json:"Controller,omitempty" yaml:"Controller,omitempty"`
-	Mana               string          `json:"Mana,omitempty" yaml:"Mana,omitempty"`
+	ManaCost           string          `json:"ManaCost,omitempty" yaml:"ManaCost,omitempty"`
 	AdditionalCost     string          `json:"AdditionalCost,omitempty" yaml:"AdditionalCost,omitempty"`
 	ID                 string          `json:"ID,omitempty" yaml:"ID,omitempty"`
 	Loyalty            int             `json:"Loyalty,omitempty" yaml:"Loyalty,omitempty"`
@@ -56,7 +56,7 @@ type Permanent struct {
 	Controller         string          `json:"Controller,omitempty" yaml:"Controller,omitempty"`
 	ID                 string          `json:"ID,omitempty" yaml:"ID,omitempty"`
 	Loyalty            int             `json:"Loyalty,omitempty" yaml:"Loyalty,omitempty"`
-	Cost               string          `json:"Cost,omitempty" yaml:"Cost,omitempty"`
+	ManaCost           string          `json:"ManaCost,omitempty" yaml:"ManaCost,omitempty"`
 	Name               string          `json:"Name,omitempty" yaml:"Name,omitempty"`
 	Owner              string          `json:"Owner,omitempty" yaml:"Owner,omitempty"`
 	Power              int             `json:"Power,omitempty" yaml:"Power,omitempty"`
@@ -80,7 +80,7 @@ type Spell struct {
 	ID                string             `json:"ID,omitempty" yaml:"ID,omitempty"`
 	Copy              bool               `json:"Copy,omitempty" yaml:"Copy,omitempty"`
 	Loyalty           int                `json:"Loyalty,omitempty" yaml:"Loyalty,omitempty"`
-	Cost              string             `json:"Cost,omitempty" yaml:"Cost,omitempty"`
+	ManaCost          string             `json:"ManaCost,omitempty" yaml:"ManaCost,omitempty"`
 	Name              string             `json:"Name,omitempty" yaml:"Name,omitempty"`
 	Owner             string             `json:"Owner,omitempty" yaml:"Owner,omitempty"`
 	Power             int                `json:"Power,omitempty" yaml:"Power,omitempty"`

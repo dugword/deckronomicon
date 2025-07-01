@@ -1,11 +1,25 @@
 Name: Player Strategy
 Description: Stormshriek Feral Strategy
+Groups:
+  Basic Land:
+    - Plains
+    - Island
+    - Swamp
+    - Mountain
+    - Forest
 
 Rules:
   Setup:
     - Make Land Drop
-    - Name: Play Flush Out
+    - Name: Cast Flush Out
       When:
+        SorcerySpeed: true
+        AvailableMana:
+          Any:
+            AtLeast: 2
+          Red:
+            Op: ">"
+            Value: 1
         Step: PrecombatMain
         InZone:
           Zone: Hand
@@ -13,4 +27,11 @@ Rules:
             - Flush Out
       Then:
         Cast:
-          - Flush Out
+          Card: Flush Out
+          AdditionalCost:
+            Cards:
+              - Mountain
+Choices: # Have a univeral choice and a choice that can override it for specific modes
+  - Name: Discard to Hand Size
+    Cards:
+      - $Basic Land

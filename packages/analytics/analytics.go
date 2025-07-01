@@ -18,7 +18,7 @@ func WriteGameRecordToFile(record *engine.GameRecord, dirname string) error {
 	defer file.Close()
 	encoder := json.NewEncoder(file)
 	encoder.SetIndent("", "  ")
-	if err := encoder.Encode(record); err != nil {
+	if err := encoder.Encode(record.Export()); err != nil {
 		return fmt.Errorf("failed to write game record: %w", err)
 	}
 	return nil

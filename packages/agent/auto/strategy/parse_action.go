@@ -88,7 +88,21 @@ func (p *StrategyParser) parseCastAction(value any) action.ActionNode {
 			return nil
 		}
 		predicate := p.parsePredicate(cardName)
-		return &action.CastSpellActionNode{Cards: predicate}
+		if additionalCostRaw, ok := val["AdditionalCost"].(map[string]any); ok {
+			cardsRaw, ok := additionalCostRaw["Cards"]
+			if !ok {
+				p.errors.Add(fmt.Errorf("missing cards in 'AdditionalCost'"))
+				return nil
+			}
+			additionalCost := p.parsePredicate(cardsRaw)
+			return &action.CastSpellActionNode{
+				Cards:          predicate,
+				AdditionalCost: additionalCost,
+			}
+		}
+		return &action.CastSpellActionNode{
+			Cards: predicate,
+		}
 	default:
 		p.errors.Add(fmt.Errorf("expected string or object for 'Cast' action, got %T", value))
 		return nil

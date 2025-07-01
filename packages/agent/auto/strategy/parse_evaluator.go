@@ -5,6 +5,8 @@ import (
 	"deckronomicon/packages/agent/auto/strategy/node"
 	"deckronomicon/packages/game/mtg"
 	"fmt"
+	"strconv"
+	"strings"
 )
 
 func (p *StrategyParser) parseEvaluator(raw any) evaluator.Evaluator {
@@ -27,10 +29,20 @@ func (p *StrategyParser) parseEvaluator(raw any) evaluator.Evaluator {
 				evaluators = append(evaluators, p.parseStepEvaluator(v))
 			case "Mode":
 				evaluators = append(evaluators, p.parseModeEvaluator(v))
+			case "Player":
+				evaluators = append(evaluators, p.parsePlayerEvaluator(v))
+			case "ManaPool":
+				evaluators = append(evaluators, p.parseManaPoolEvaluator(v))
+			case "AvailableMana":
+				evaluators = append(evaluators, p.parseAvailableManaEvaluator(v))
 			case "InHand":
 				evaluators = append(evaluators, p.parseInZoneAliasEvaluator("Hand", v))
 			case "InZone":
 				evaluators = append(evaluators, p.parseInZoneEvaluator(v))
+			case "StackEmpty":
+				evaluators = append(evaluators, p.parseStackEmptyEvaluator(v))
+			case "SorcerySpeed":
+				evaluators = append(evaluators, p.parseSorcerySpeedEvaluator(v))
 			case "LandPlayedThisTurn":
 				evaluators = append(evaluators, p.parseLandPlayedThisTurnEvaluator(v))
 			default:
@@ -48,6 +60,28 @@ func (p *StrategyParser) parseEvaluator(raw any) evaluator.Evaluator {
 	default:
 		p.errors.Add(fmt.Errorf("expected object, got %T", raw))
 		return nil
+	}
+}
+
+func (p *StrategyParser) parseSorcerySpeedEvaluator(value interface{}) evaluator.Evaluator {
+	sorcerySpeed, ok := value.(bool)
+	if !ok {
+		p.errors.Add(fmt.Errorf("expected boolean for 'SorcerySpeed', got %T", value))
+		return nil
+	}
+	return &evaluator.SorcerySpeed{
+		SorcerySpeed: sorcerySpeed,
+	}
+}
+
+func (p *StrategyParser) parseStackEmptyEvaluator(value interface{}) evaluator.Evaluator {
+	stackEmpty, ok := value.(bool)
+	if !ok {
+		p.errors.Add(fmt.Errorf("expected boolean for 'StackEmpty', got %T", value))
+		return nil
+	}
+	return &evaluator.LandPlayedThisTurn{
+		LandPlayedThisTurn: stackEmpty,
 	}
 }
 
@@ -153,5 +187,80 @@ func (p *StrategyParser) parseInZoneEvaluator(value interface{}) evaluator.Evalu
 	return &node.InZone{
 		Zone:  zone,
 		Cards: p.parsePredicate(cardsRaw),
+	}
+}
+
+func (p *StrategyParser) parseNumericOpValue(raw any) (evaluator.Op, any) {
+	switch value := raw.(type) {
+	case int:
+		return evaluator.OpEqual, value
+	case string:
+		return p.parseNumericOpValueString(value)
+	case map[string]any:
+		for k, v := range value {
+			switch k {
+			case "AtLeast":
+				return evaluator.OpGreaterThanOrEqual, v
+			case "AtMost":
+				return evaluator.OpLessThanOrEqual, v
+			case "Equal":
+				return evaluator.OpEqual, v
+			case "Op":
+				opString, ok := v.(string)
+				if !ok {
+					p.errors.Add(fmt.Errorf("expected 'Op' to be a string got %T", v))
+					return "", nil
+				}
+				opValue, ok := value["Value"].(int)
+				if !ok {
+					p.errors.Add(fmt.Errorf("expected 'Value' to be an int got %T", value["Value"]))
+					return "", nil
+				}
+				op := p.parseOpString(opString)
+				return op, opValue
+			}
+		}
+	default:
+		p.errors.Add(fmt.Errorf("expected int, string, or map for numeric value, got %T", raw))
+		return "", nil
+	}
+	return "", nil
+}
+
+func (p *StrategyParser) parseNumericOpValueString(value string) (evaluator.Op, any) {
+	parts := strings.Fields(value)
+	s := strings.Join(parts, "")
+	for _, op := range evaluator.Operators() {
+		if strings.HasPrefix(s, string(op)) {
+			valuePart := strings.TrimPrefix(s, string(op))
+			value, err := strconv.Atoi(valuePart)
+			if err != nil {
+				p.errors.Add(fmt.Errorf("could not parse numeric value from string '%s': %v", valuePart, err))
+				return "", nil
+			}
+			return op, value
+		}
+	}
+	p.errors.Add(fmt.Errorf("could not parse numeric operator from string '%s'", value))
+	return "", nil
+}
+
+func (p *StrategyParser) parseOpString(opString string) evaluator.Op {
+	switch opString {
+	case "==":
+		return evaluator.OpEqual
+	case ">":
+		return evaluator.OpGreaterThan
+	case ">=":
+		return evaluator.OpGreaterThanOrEqual
+	case "<":
+		return evaluator.OpLessThan
+	case "<=":
+		return evaluator.OpLessThanOrEqual
+	case "!=":
+		return evaluator.OpNotEqual
+	default:
+		p.errors.Add(fmt.Errorf("unknown operator '%s'", opString))
+		return ""
 	}
 }
