@@ -9,9 +9,9 @@ import (
 )
 
 func ResolveMill(
-	game state.Game,
+	game *state.Game,
 	playerID string,
-	mill effect.Mill,
+	mill *effect.Mill,
 	target target.Target,
 ) (Result, error) {
 	targetPlayerID := playerID
@@ -22,7 +22,7 @@ func ResolveMill(
 	cards := targetPlayer.Library().GetN(mill.Count)
 	var events []event.GameEvent
 	for _, card := range cards {
-		events = append(events, event.PutCardInGraveyardEvent{
+		events = append(events, &event.PutCardInGraveyardEvent{
 			PlayerID: targetPlayerID,
 			CardID:   card.ID(),
 			FromZone: mtg.ZoneLibrary,

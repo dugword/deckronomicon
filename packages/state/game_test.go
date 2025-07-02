@@ -89,8 +89,8 @@ func TestPriorityPlayerID(t *testing.T) {
 			for _, playerID := range tc.playersPassedPriority {
 				playersPassedPriority[playerID] = true
 			}
-			game := NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{
+			game := NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{
 					{ID: player1},
 					{ID: player2},
 					{ID: player3},

@@ -11,28 +11,28 @@ import (
 )
 
 func ResolveCounterspell(
-	game state.Game,
+	game *state.Game,
 	playerID string,
-	counterspell effect.Counterspell,
+	counterspell *effect.Counterspell,
 	target target.Target,
 ) (Result, error) {
 	resolvable, ok := game.Stack().Find(has.ID(target.ID))
 	if !ok {
 		return Result{
 			Events: []event.GameEvent{
-				event.SpellOrAbilityFizzlesEvent{
+				&event.SpellOrAbilityFizzlesEvent{
 					PlayerID: playerID,
 					ObjectID: target.ID,
 				},
 			},
 		}, nil
 	}
-	spell, ok := resolvable.(gob.Spell)
+	spell, ok := resolvable.(*gob.Spell)
 	if !ok {
 		return Result{}, errors.New("choice is not a spell")
 	}
 	events := []event.GameEvent{
-		event.RemoveSpellOrAbilityFromStackEvent{
+		&event.RemoveSpellOrAbilityFromStackEvent{
 			PlayerID: spell.Owner(),
 			ObjectID: spell.ID(),
 		},

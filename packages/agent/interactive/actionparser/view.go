@@ -8,8 +8,8 @@ import (
 
 func parseViewCommand(
 	arg string,
-	game state.Game,
-	player state.Player,
+	game *state.Game,
+	playerID string,
 	agent engine.PlayerAgent,
 ) (action.ViewAction, error) {
 	return action.NewViewAction("", arg), nil

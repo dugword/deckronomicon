@@ -15,14 +15,14 @@ type TurnBasedActionEvent interface{ isTurnBasedActionEvent() }
 
 type TurnBasedActionEventBase struct{}
 
-func (e TurnBasedActionEventBase) isTurnBasedActionEvent() {}
+func (e *TurnBasedActionEventBase) isTurnBasedActionEvent() {}
 
 type DrawStartingHandEvent struct {
 	TurnBasedActionEventBase
 	PlayerID string
 }
 
-func (e DrawStartingHandEvent) EventType() string {
+func (e *DrawStartingHandEvent) EventType() string {
 	return EventDrawStartingHand
 }
 
@@ -31,7 +31,7 @@ type PhaseInPhaseOutEvent struct {
 	PlayerID string
 }
 
-func (e PhaseInPhaseOutEvent) EventType() string {
+func (e *PhaseInPhaseOutEvent) EventType() string {
 	return EventTypePhaseInPhaseOut
 }
 
@@ -40,7 +40,7 @@ type CheckDayNightEvent struct {
 	PlayerID string
 }
 
-func (e CheckDayNightEvent) EventType() string {
+func (e *CheckDayNightEvent) EventType() string {
 	return EventTypeCheckDayNight
 }
 
@@ -49,7 +49,7 @@ type UntapAllEvent struct {
 	PlayerID string
 }
 
-func (e UntapAllEvent) EventType() string {
+func (e *UntapAllEvent) EventType() string {
 	return EventTypeUntapAll
 }
 
@@ -58,7 +58,7 @@ type UpkeepEvent struct {
 	PlayerID string
 }
 
-func (e UpkeepEvent) EventType() string {
+func (e *UpkeepEvent) EventType() string {
 	return EventTypeUpkeep
 }
 
@@ -67,7 +67,7 @@ type ProgressSagaEvent struct {
 	PlayerID string
 }
 
-func (e ProgressSagaEvent) EventType() string {
+func (e *ProgressSagaEvent) EventType() string {
 	return EventTypeProgressSaga
 }
 
@@ -76,7 +76,7 @@ type DiscardToHandSizeEvent struct {
 	PlayerID string
 }
 
-func (e DiscardToHandSizeEvent) EventType() string {
+func (e *DiscardToHandSizeEvent) EventType() string {
 	return EventTypeDiscardToHandSize
 }
 
@@ -85,6 +85,6 @@ type RemoveDamageEvent struct {
 	PlayerID string
 }
 
-func (e RemoveDamageEvent) EventType() string {
+func (e *RemoveDamageEvent) EventType() string {
 	return EventTypeRemoveDamage
 }

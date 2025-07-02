@@ -21,12 +21,12 @@ func (a ConjureCardCheatAction) Name() string {
 	return "Conjure Card"
 }
 
-func (a ConjureCardCheatAction) Complete(game state.Game, player state.Player, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
+func (a ConjureCardCheatAction) Complete(game *state.Game, playerID string, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	if !game.CheatsEnabled() {
 		return nil, fmt.Errorf("no cheating you cheater")
 	}
-	return []event.GameEvent{event.CheatConjureCardEvent{
-		PlayerID: player.ID(),
+	return []event.GameEvent{&event.CheatConjureCardEvent{
+		PlayerID: playerID,
 		CardName: a.cardName,
 	}}, nil
 }

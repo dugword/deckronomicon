@@ -9,10 +9,10 @@ type Flashback struct {
 	Cost cost.Cost
 }
 
-func (a Flashback) Name() string {
+func (a *Flashback) Name() string {
 	return "Flashback"
 }
 
-func (a Flashback) StaticKeyword() mtg.StaticKeyword {
+func (a *Flashback) StaticKeyword() mtg.StaticKeyword {
 	return mtg.StaticKeywordFlashback
 }

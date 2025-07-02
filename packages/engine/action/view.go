@@ -22,8 +22,8 @@ func (a ViewAction) Name() string {
 	return "View card"
 }
 
-func (a ViewAction) Complete(game state.Game, player state.Player, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
-	return []event.GameEvent{event.NoOpEvent{
+func (a ViewAction) Complete(game *state.Game, playerID string, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
+	return []event.GameEvent{&event.NoOpEvent{
 		Message: "Viewed card in zone " + a.zone + ": " + a.cardID,
 	}}, nil
 }

@@ -8,33 +8,32 @@ import (
 
 // These are events that manage the priority system in the game.
 
-func applyCheatEvent(game state.Game, cheatEvent event.CheatEvent) (state.Game, error) {
+func applyCheatEvent(game *state.Game, cheatEvent event.CheatEvent) (*state.Game, error) {
 	switch evnt := cheatEvent.(type) {
-
-	case event.CheatAddManaEvent:
+	case *event.CheatAddManaEvent:
 		return game, nil
-	case event.CheatConjureCardEvent:
+	case *event.CheatConjureCardEvent:
 		return applyConjureCardCheatEvent(game, evnt)
-	case event.CheatDiscardEvent:
+	case *event.CheatDiscardEvent:
 		return game, nil
-	case event.CheatDrawEvent:
+	case *event.CheatDrawEvent:
 		return game, nil
-	case event.CheatFindCardEvent:
+	case *event.CheatFindCardEvent:
 		return game, nil
-	case event.CheatPeekEvent:
+	case *event.CheatPeekEvent:
 		return applyCheatPeekEvent(game, evnt)
-	case event.CheatResetLandDropEvent:
+	case *event.CheatResetLandDropEvent:
 		return applyResetLandDropCheatEvent(game, evnt)
-	case event.CheatShuffleDeckEvent:
+	case *event.CheatShuffleDeckEvent:
 		return game, nil
-	case event.CheatUntapEvent:
+	case *event.CheatUntapEvent:
 		return game, nil
 	default:
 		return game, fmt.Errorf("unknown cheat event type '%T'", evnt)
 	}
 }
 
-func applyConjureCardCheatEvent(game state.Game, evnt event.CheatConjureCardEvent) (state.Game, error) {
+func applyConjureCardCheatEvent(game *state.Game, evnt *event.CheatConjureCardEvent) (*state.Game, error) {
 	return game, nil
 	/*
 		cardDef, ok := e.definitions[evnt.CardName]
@@ -59,7 +58,7 @@ func applyConjureCardCheatEvent(game state.Game, evnt event.CheatConjureCardEven
 	*/
 }
 
-func applyCheatPeekEvent(game state.Game, evnt event.CheatPeekEvent) (state.Game, error) {
+func applyCheatPeekEvent(game *state.Game, evnt *event.CheatPeekEvent) (*state.Game, error) {
 	player := game.GetPlayer(evnt.PlayerID)
 	card := player.Library().Peek()
 	revealed := player.Revealed().Add(card)
@@ -68,9 +67,9 @@ func applyCheatPeekEvent(game state.Game, evnt event.CheatPeekEvent) (state.Game
 }
 
 func applyResetLandDropCheatEvent(
-	game state.Game,
-	evnt event.CheatResetLandDropEvent,
-) (state.Game, error) {
+	game *state.Game,
+	evnt *event.CheatResetLandDropEvent,
+) (*state.Game, error) {
 	player := game.GetPlayer(evnt.PlayerID)
 	player = player.WithClearLandPlayedThisTurn()
 	game = game.WithUpdatedPlayer(player)

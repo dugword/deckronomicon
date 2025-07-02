@@ -14,15 +14,16 @@ import (
 
 // canCastSpell checks for generic conditions that apply regardless of the zone.
 func canCastSpell(
-	game state.Game,
-	player state.Player,
+	game *state.Game,
+	playerID string,
 	zone mtg.Zone,
-	card gob.Card,
+	card *gob.Card,
 	cost cost.Cost,
 	autoPayCost bool,
 	autoPayColors []mana.Color,
 	ruling *Ruling,
 ) bool {
+	player := game.GetPlayer(playerID)
 	can := true
 	if !player.ZoneContains(zone, has.ID(card.ID())) {
 		if ruling != nil && ruling.Explain {
@@ -37,7 +38,7 @@ func canCastSpell(
 		can = false
 	}
 	if card.Match(query.Or(is.PermanentCardType(), has.CardType(mtg.CardTypeSorcery))) {
-		if !CanPlaySorcerySpeed(game, player.ID(), ruling) {
+		if !CanPlaySorcerySpeed(game, playerID, ruling) {
 			if ruling != nil && ruling.Explain {
 				ruling.Reasons = append(ruling.Reasons, "spell cannot be played at instant speed")
 			}
@@ -45,14 +46,14 @@ func canCastSpell(
 		}
 	}
 	if autoPayCost {
-		if !CanPayCostAutomatically(cost, card, game, player.ID(), autoPayColors, ruling) {
+		if !CanPayCostAutomatically(cost, card, game, playerID, autoPayColors, ruling) {
 			if ruling != nil && ruling.Explain {
 				ruling.Reasons = append(ruling.Reasons, "cannot pay cost for spell: "+cost.Description())
 			}
 			can = false
 		}
 	} else {
-		if !CanPayCost(cost, card, game, player, ruling) {
+		if !CanPayCost(cost, card, game, playerID, ruling) {
 			if ruling != nil && ruling.Explain {
 				ruling.Reasons = append(ruling.Reasons, "cannot pay cost for spell: "+cost.Description())
 			}
@@ -63,9 +64,9 @@ func canCastSpell(
 }
 
 func CanCastSpellWithFlashback(
-	game state.Game,
-	player state.Player,
-	card gob.Card,
+	game *state.Game,
+	playerID string,
+	card *gob.Card,
 	cost cost.Cost,
 	autoPayCost bool,
 	autoPayColors []mana.Color,
@@ -79,7 +80,7 @@ func CanCastSpellWithFlashback(
 		}
 		return can
 	}
-	if !canCastSpell(game, player, mtg.ZoneGraveyard, card, cost, autoPayCost, autoPayColors, ruling) {
+	if !canCastSpell(game, playerID, mtg.ZoneGraveyard, card, cost, autoPayCost, autoPayColors, ruling) {
 		if ruling != nil && ruling.Explain {
 			ruling.Reasons = append(ruling.Reasons, "cannot cast spell from graveyard")
 		}
@@ -89,16 +90,16 @@ func CanCastSpellWithFlashback(
 }
 
 func CanCastSpellFromHand(
-	game state.Game,
-	player state.Player,
-	card gob.Card,
+	game *state.Game,
+	playerID string,
+	card *gob.Card,
 	cost cost.Cost,
 	autoPayCost bool,
 	autoPayColors []mana.Color,
 	ruling *Ruling,
 ) bool {
 	can := true
-	if !canCastSpell(game, player, mtg.ZoneHand, card, cost, autoPayCost, autoPayColors, ruling) {
+	if !canCastSpell(game, playerID, mtg.ZoneHand, card, cost, autoPayCost, autoPayColors, ruling) {
 		if ruling != nil && ruling.Explain {
 			ruling.Reasons = append(ruling.Reasons, "cannot cast spell from hand")
 		}

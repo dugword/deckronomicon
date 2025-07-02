@@ -26,7 +26,7 @@ type NoOpEvent struct {
 	Message string
 }
 
-func (e NoOpEvent) EventType() string {
+func (e *NoOpEvent) EventType() string {
 	return "NoOp"
 }
 
@@ -36,6 +36,6 @@ type MilestoneEvent struct {
 	Message string
 }
 
-func (e MilestoneEvent) EventType() string {
+func (e *MilestoneEvent) EventType() string {
 	return "Milestone"
 }

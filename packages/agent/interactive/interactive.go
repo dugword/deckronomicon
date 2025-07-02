@@ -60,22 +60,20 @@ func (a *Agent) PlayerID() string {
 	return a.playerID
 }
 
-func (a *Agent) ReportState(game state.Game) {
-	player := game.GetPlayer(a.playerID)
-	opponent := game.GetOpponent(a.playerID)
+func (a *Agent) ReportState(game *state.Game) {
+	opponentID := game.GetOpponent(a.playerID).ID()
 	a.uiBuffer.Update(
 		view.NewGameViewFromState(game),
-		view.NewPlayerViewFromState(game, player, ""),
-		view.NewPlayerViewFromState(game, opponent, ""),
+		view.NewPlayerViewFromState(game, a.playerID, ""),
+		view.NewPlayerViewFromState(game, opponentID, ""),
 	)
 }
 
-func (a *Agent) GetNextAction(game state.Game) (engine.Action, error) {
-	player := game.GetPlayer(a.playerID)
+func (a *Agent) GetNextAction(game *state.Game) (engine.Action, error) {
 	for {
 		pass := true
 		if slices.Contains(a.stops, game.Step()) {
-			if game.ActivePlayerID() == player.ID() {
+			if game.ActivePlayerID() == a.playerID {
 				pass = false
 			}
 		}
@@ -98,7 +96,7 @@ func (a *Agent) GetNextAction(game state.Game) (engine.Action, error) {
 			input,
 			a,
 			game,
-			player,
+			a.playerID,
 			a.autopay,
 			a.autopayColors,
 		)

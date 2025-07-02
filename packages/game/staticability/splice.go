@@ -11,24 +11,24 @@ type Splice struct {
 	Subtype mtg.Subtype `json:"Subtype"`
 }
 
-func (a Splice) Name() string {
+func (a *Splice) Name() string {
 	return "Splice"
 }
 
-func (a Splice) StaticKeyword() mtg.StaticKeyword {
+func (a *Splice) StaticKeyword() mtg.StaticKeyword {
 	return mtg.StaticKeywordSplice
 }
 
-func NewSplice(cost cost.Cost, modifiers map[string]any) (Splice, error) {
+func NewSplice(cost cost.Cost, modifiers map[string]any) (*Splice, error) {
 	subtypeString, ok := modifiers["Subtype"].(string)
 	if !ok {
-		return Splice{}, fmt.Errorf("a 'Subtype' key is required for Splice modifier")
+		return nil, fmt.Errorf("a 'Subtype' key is required for Splice modifier")
 	}
 	subtype, ok := mtg.StringToSubtype(subtypeString)
 	if !ok {
-		return Splice{}, fmt.Errorf("invalid subtype %s for Splice modifier", subtypeString)
+		return nil, fmt.Errorf("invalid subtype %s for Splice modifier", subtypeString)
 	}
-	return Splice{
+	return &Splice{
 		Cost:    cost,
 		Subtype: subtype,
 	}, nil

@@ -24,13 +24,14 @@ func GetTargetsForEffect() bool {
 	return false
 }
 
-func GetLandsAvailableToPlay(game state.Game, player state.Player, ruling *Ruling) []gob.CardInZone {
-	var availableCards []gob.CardInZone
+func GetLandsAvailableToPlay(game *state.Game, playerID string, ruling *Ruling) []*gob.CardInZone {
+	player := game.GetPlayer(playerID)
+	var availableCards []*gob.CardInZone
 	for _, card := range player.Hand().GetAll() {
 		if ruling != nil && ruling.Explain {
 			ruling.Reasons = append(ruling.Reasons, fmt.Sprintf("[card %q]: ", card.Name()))
 		}
-		if CanPlayLand(game, player, mtg.ZoneHand, card, ruling) {
+		if CanPlayLand(game, playerID, mtg.ZoneHand, card, ruling) {
 
 			availableCards = append(availableCards, gob.NewCardInZone(card, mtg.ZoneHand))
 		}
@@ -39,20 +40,21 @@ func GetLandsAvailableToPlay(game state.Game, player state.Player, ruling *Rulin
 		if ruling != nil && ruling.Explain {
 			ruling.Reasons = append(ruling.Reasons, fmt.Sprintf("[card %q]: ", card.Name()))
 		}
-		if CanPlayLand(game, player, mtg.ZoneGraveyard, card, ruling) {
+		if CanPlayLand(game, playerID, mtg.ZoneGraveyard, card, ruling) {
 			availableCards = append(availableCards, gob.NewCardInZone(card, mtg.ZoneGraveyard))
 		}
 	}
 	return availableCards
 }
 
-func GetSpellsAvailableToCast(game state.Game, player state.Player, autoPayCost bool, autoPayColors []mana.Color, ruling *Ruling) []gob.CardInZone {
-	var availableCards []gob.CardInZone
+func GetSpellsAvailableToCast(game *state.Game, playerID string, autoPayCost bool, autoPayColors []mana.Color, ruling *Ruling) []*gob.CardInZone {
+	player := game.GetPlayer(playerID)
+	var availableCards []*gob.CardInZone
 	for _, card := range player.Hand().GetAll() {
 		if ruling != nil && ruling.Explain {
 			ruling.Reasons = append(ruling.Reasons, fmt.Sprintf("[card %q]: ", card.Name()))
 		}
-		if CanCastSpellFromHand(game, player, card, card.ManaCost(), autoPayCost, autoPayColors, ruling) {
+		if CanCastSpellFromHand(game, playerID, card, card.ManaCost(), autoPayCost, autoPayColors, ruling) {
 			availableCards = append(availableCards, gob.NewCardInZone(card, mtg.ZoneHand))
 		}
 	}
@@ -70,7 +72,7 @@ func GetSpellsAvailableToCast(game state.Game, player state.Player, autoPayCost 
 			}
 			continue
 		}
-		flashbackAbility, ok := staticAbility.(staticability.Flashback)
+		flashbackAbility, ok := staticAbility.(*staticability.Flashback)
 		if !ok {
 			if ruling != nil && ruling.Explain {
 				ruling.Reasons = append(
@@ -80,7 +82,7 @@ func GetSpellsAvailableToCast(game state.Game, player state.Player, autoPayCost 
 			}
 			continue
 		}
-		if CanCastSpellWithFlashback(game, player, card, flashbackAbility.Cost, autoPayCost, autoPayColors, ruling) {
+		if CanCastSpellWithFlashback(game, playerID, card, flashbackAbility.Cost, autoPayCost, autoPayColors, ruling) {
 			availableCards = append(availableCards, gob.NewCardInZone(card, mtg.ZoneGraveyard))
 		}
 	}
@@ -89,14 +91,15 @@ func GetSpellsAvailableToCast(game state.Game, player state.Player, autoPayCost 
 
 // TODO: This probably shouldn't be in Judge, maybe judge is just boolean functions
 // that return true or false, and this should be where it's used, like in the agent functions
-func GetAbilitiesAvailableToActivate(game state.Game, player state.Player, ruling *Ruling) []gob.AbilityInZone {
-	var availableAbilities []gob.AbilityInZone
+func GetAbilitiesAvailableToActivate(game *state.Game, playerID string, ruling *Ruling) []*gob.AbilityInZone {
+	player := game.GetPlayer(playerID)
+	var availableAbilities []*gob.AbilityInZone
 	for _, permanent := range game.Battlefield().GetAll() {
 		for _, ability := range permanent.ActivatedAbilities() {
 			if ruling != nil && ruling.Explain {
 				ruling.Reasons = append(ruling.Reasons, fmt.Sprintf("[ability %q]: ", ability.Name()))
 			}
-			if CanActivateAbility(game, player, permanent, ability, ruling) {
+			if CanActivateAbility(game, playerID, permanent, ability, ruling) {
 				availableAbilities = append(availableAbilities, gob.NewAbilityInZone(ability, permanent, mtg.ZoneBattlefield))
 			}
 		}
@@ -112,7 +115,7 @@ func GetAbilitiesAvailableToActivate(game state.Game, player state.Player, rulin
 				}
 				continue
 			}
-			if CanActivateAbility(game, player, card, ability, ruling) {
+			if CanActivateAbility(game, playerID, card, ability, ruling) {
 				availableAbilities = append(availableAbilities, gob.NewAbilityInZone(ability, card, mtg.ZoneHand))
 			}
 		}
@@ -122,12 +125,13 @@ func GetAbilitiesAvailableToActivate(game state.Game, player state.Player, rulin
 
 // TODO: Account for Cost
 func GetSplicableCards(
-	game state.Game,
-	player state.Player,
-	cardToCast gob.CardInZone,
+	game *state.Game,
+	playerID string,
+	cardToCast *gob.CardInZone,
 	ruling *Ruling,
-) ([]gob.CardInZone, error) {
-	var splicableCards []gob.CardInZone
+) ([]*gob.CardInZone, error) {
+	player := game.GetPlayer(playerID)
+	var splicableCards []*gob.CardInZone
 	for _, card := range player.Hand().GetAll() {
 		if card.ID() == cardToCast.ID() {
 			continue
@@ -148,7 +152,7 @@ func GetSplicableCards(
 			}
 			continue
 		}
-		spliceAbility, ok := spliceAbilityRaw.(staticability.Splice)
+		spliceAbility, ok := spliceAbilityRaw.(*staticability.Splice)
 		if !ok {
 			if ruling != nil && ruling.Explain {
 				ruling.Reasons = append(
@@ -178,7 +182,7 @@ func GetSplicableCards(
 			cardToCast.Card().ManaCost(),
 			spliceAbility.Cost,
 		)
-		if !CanPayCost(totalCost, card, game, player, ruling) {
+		if !CanPayCost(totalCost, card, game, playerID, ruling) {
 			if ruling != nil && ruling.Explain {
 				ruling.Reasons = append(
 					ruling.Reasons,
@@ -197,16 +201,16 @@ func GetSplicableCards(
 }
 
 // TODO: Redundate with pay automatic activation
-func GetAvailableMana(game state.Game, player state.Player) mana.Pool {
+func GetAvailableMana(game *state.Game, playerID string) mana.Pool {
 	for _, untappedLand := range game.Battlefield().FindAll(
-		query.And(has.Controller(player.ID()), is.Land(), is.Untapped())) {
+		query.And(has.Controller(playerID), is.Land(), is.Untapped())) {
 		for _, ability := range untappedLand.ActivatedAbilities() {
 			if !ability.Match(is.ManaAbility()) {
 				continue
 			}
 			events := []event.GameEvent{
-				event.ActivateAbilityEvent{
-					PlayerID:  player.ID(),
+				&event.ActivateAbilityEvent{
+					PlayerID:  playerID,
 					SourceID:  untappedLand.ID(),
 					AbilityID: ability.Name(),
 					Zone:      mtg.ZoneBattlefield,
@@ -215,15 +219,15 @@ func GetAvailableMana(game state.Game, player state.Player) mana.Pool {
 			costEvents, err := pay.Cost(
 				ability.Cost(),
 				untappedLand,
-				player.ID(),
+				playerID,
 			)
 			if err != nil {
 				// TODO: Don't panic
 				panic(fmt.Errorf("failed to pay cost for ability %q: %w", ability.Name(), err))
 			}
 			events = append(events, costEvents...)
-			events = append(events, event.LandTappedForManaEvent{
-				PlayerID: player.ID(),
+			events = append(events, &event.LandTappedForManaEvent{
+				PlayerID: playerID,
 				ObjectID: untappedLand.ID(),
 				Subtypes: untappedLand.Subtypes(),
 			})
@@ -235,11 +239,11 @@ func GetAvailableMana(game state.Game, player state.Player) mana.Pool {
 				}
 			}
 			for _, efct := range ability.Effects() {
-				addMana, ok := efct.(effect.AddMana)
+				addMana, ok := efct.(*effect.AddMana)
 				if !ok {
 					continue
 				}
-				result, err := resolver.ResolveAddMana(game, player.ID(), addMana)
+				result, err := resolver.ResolveAddMana(game, playerID, addMana)
 				if err != nil {
 					panic(fmt.Errorf("failed to resolve add mana effect: %w", err))
 				}
@@ -253,6 +257,6 @@ func GetAvailableMana(game state.Game, player state.Player) mana.Pool {
 			}
 		}
 	}
-	player = game.GetPlayer(player.ID())
+	player := game.GetPlayer(playerID)
 	return player.ManaPool()
 }

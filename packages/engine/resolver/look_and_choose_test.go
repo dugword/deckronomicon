@@ -12,12 +12,12 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-func lookAndChooseTestGame(playerID string) state.Game {
-	game := state.NewGameFromDefinition(definition.Game{
-		Players: []definition.Player{{
+func lookAndChooseTestGame(playerID string) *state.Game {
+	game := state.NewGameFromDefinition(&definition.Game{
+		Players: []*definition.Player{{
 			ID: playerID,
-			Library: definition.Library{
-				Cards: []definition.Card{
+			Library: &definition.Library{
+				Cards: []*definition.Card{
 					{ID: "Card 1 ID"},
 					{
 						ID:        "Card 2 ID",
@@ -40,12 +40,12 @@ func TestLookAndChoose(t *testing.T) {
 	playerID := "Test Player"
 	testCases := []struct {
 		name       string
-		effect     effect.LookAndChoose
+		effect     *effect.LookAndChoose
 		wantEvents []event.GameEvent
 	}{
 		{
 			name: "with look 5 choose 2 Sorcery or Instant rest to Graveyard",
-			effect: effect.LookAndChoose{
+			effect: &effect.LookAndChoose{
 				Look:      5,
 				Choose:    2,
 				CardTypes: []mtg.CardType{mtg.CardTypeSorcery, mtg.CardTypeInstant},
@@ -53,11 +53,11 @@ func TestLookAndChoose(t *testing.T) {
 			},
 			// TODO: I think the maps make this non-deterministic
 			wantEvents: []event.GameEvent{
-				event.PutCardInHandEvent{PlayerID: "Test Player", CardID: "Card 2 ID", FromZone: "Library"},
-				event.PutCardInHandEvent{PlayerID: "Test Player", CardID: "Card 4 ID", FromZone: "Library"},
-				event.PutCardInGraveyardEvent{PlayerID: "Test Player", CardID: "Card 1 ID", FromZone: "Library"},
-				event.PutCardInGraveyardEvent{PlayerID: "Test Player", CardID: "Card 3 ID", FromZone: "Library"},
-				event.PutCardInGraveyardEvent{PlayerID: "Test Player", CardID: "Card 5 ID", FromZone: "Library"},
+				&event.PutCardInHandEvent{PlayerID: "Test Player", CardID: "Card 2 ID", FromZone: "Library"},
+				&event.PutCardInHandEvent{PlayerID: "Test Player", CardID: "Card 4 ID", FromZone: "Library"},
+				&event.PutCardInGraveyardEvent{PlayerID: "Test Player", CardID: "Card 1 ID", FromZone: "Library"},
+				&event.PutCardInGraveyardEvent{PlayerID: "Test Player", CardID: "Card 3 ID", FromZone: "Library"},
+				&event.PutCardInGraveyardEvent{PlayerID: "Test Player", CardID: "Card 5 ID", FromZone: "Library"},
 			},
 		},
 	}

@@ -19,51 +19,51 @@ type Ability struct {
 	zone    mtg.Zone
 }
 
-func (a Ability) Controller() string {
+func (a *Ability) Controller() string {
 	return a.source.Controller()
 }
 
-func (a Ability) Description() string {
+func (a *Ability) Description() string {
 	return "Put a good description here"
 }
 
-func (a Ability) Effects() []effect.Effect {
+func (a *Ability) Effects() []effect.Effect {
 	return a.effects
 }
 
-func (a Ability) Cost() cost.Cost {
+func (a *Ability) Cost() cost.Cost {
 	return a.cost
 }
 
-func (a Ability) ID() string {
+func (a *Ability) ID() string {
 	return a.id
 }
 
-func (a Ability) Match(predicate query.Predicate) bool {
+func (a *Ability) Match(predicate query.Predicate) bool {
 	return predicate(a)
 }
 
-func (a Ability) Name() string {
+func (a *Ability) Name() string {
 	return a.name
 }
 
-func (a Ability) Owner() string {
+func (a *Ability) Owner() string {
 	return a.source.Owner()
 }
 
-func (a Ability) Speed() mtg.Speed {
+func (a *Ability) Speed() mtg.Speed {
 	return a.speed
 }
 
-func (a Ability) Source() Object {
+func (a *Ability) Source() Object {
 	return a.source
 }
 
-func (a Ability) Zone() mtg.Zone {
+func (a *Ability) Zone() mtg.Zone {
 	return a.zone
 }
 
-func buildAbility(source Object, idx int, abilityDefinition definition.Ability) (Ability, error) {
+func NewAbility(source Object, idx int, abilityDefinition *definition.Ability) (*Ability, error) {
 	speed := mtg.SpeedInstant
 	specSpeed, ok := mtg.StringToSpeed(abilityDefinition.Speed)
 	if ok {
@@ -76,13 +76,13 @@ func buildAbility(source Object, idx int, abilityDefinition definition.Ability) 
 	}
 	abilityCost, err := cost.Parse(abilityDefinition.Cost)
 	if err != nil {
-		return Ability{}, fmt.Errorf("failed to parse cost %q: %w", abilityDefinition.Cost, err)
+		return nil, fmt.Errorf("failed to parse cost %q: %w", abilityDefinition.Cost, err)
 	}
 	var effects []effect.Effect
 	for _, effectDefinition := range abilityDefinition.Effects {
 		effect, err := effect.New(effectDefinition)
 		if err != nil {
-			return Ability{}, fmt.Errorf("failed to build effect %s: %w", effectDefinition.Name, err)
+			return nil, fmt.Errorf("failed to build effect %s: %w", effectDefinition.Name, err)
 		}
 		effects = append(effects, effect)
 	}
@@ -95,5 +95,5 @@ func buildAbility(source Object, idx int, abilityDefinition definition.Ability) 
 		speed:   speed,
 		source:  source,
 	}
-	return ability, nil
+	return &ability, nil
 }

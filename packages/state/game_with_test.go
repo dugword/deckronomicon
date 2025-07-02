@@ -8,8 +8,8 @@ import (
 )
 
 func TestWithResetPriorityPasses(t *testing.T) {
-	got := Game{}.WithResetPriorityPasses()
-	want := NewGameFromDefinition(definition.Game{
+	got := NewGameFromDefinition(&definition.Game{}).WithResetPriorityPasses()
+	want := NewGameFromDefinition(&definition.Game{
 		PlayersPassedPriority: map[string]bool{},
 	})
 	if diff := cmp.Diff(want, got, AllowAllUnexported); diff != "" {
@@ -19,8 +19,8 @@ func TestWithResetPriorityPasses(t *testing.T) {
 
 func TestWithPlayerPassedPriority(t *testing.T) {
 	const playerID = "Test Player"
-	got := Game{}.WithPlayerPassedPriority(playerID)
-	want := NewGameFromDefinition(definition.Game{
+	got := NewGameFromDefinition(&definition.Game{}).WithPlayerPassedPriority(playerID)
+	want := NewGameFromDefinition(&definition.Game{
 		PlayersPassedPriority: map[string]bool{
 			"Test Player": true,
 		},

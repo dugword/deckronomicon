@@ -17,9 +17,9 @@ func TestNewBuffer(t *testing.T) {
 func TestBufferUpdate(t *testing.T) {
 	buffer := NewBuffer("./testdata/display.tmpl")
 	buffer.Update(
-		view.Game{ActivePlayerID: "A"},
-		view.Player{ID: "A"},
-		view.Player{ID: "B"},
+		&view.Game{ActivePlayerID: "A"},
+		&view.Player{ID: "A"},
+		&view.Player{ID: "B"},
 	)
 	if buffer.displayData == nil &&
 		!slices.Contains(buffer.displayData.GameStatusData.Content, "Active Player: A") &&
@@ -63,7 +63,7 @@ func TestUpdateMessage(t *testing.T) {
 }
 
 func TestBattlefieldData(t *testing.T) {
-	permanents := []view.Permanent{
+	permanents := []*view.Permanent{
 		{ID: "p1", Name: "Elf", Controller: "A", Tapped: false, SummoningSick: false},
 		{ID: "p2", Name: "Goblin", Controller: "B", Tapped: true, SummoningSick: true},
 	}
@@ -84,7 +84,7 @@ func TestBattlefieldData(t *testing.T) {
 }
 
 func TestStackData(t *testing.T) {
-	stack := []view.Resolvable{
+	stack := []*view.Resolvable{
 		{ID: "s1", Name: "Lightning Bolt", Controller: "A"},
 		{ID: "s2", Name: "Counterspell", Controller: "B"},
 	}
@@ -105,11 +105,11 @@ func TestPlayerData(t *testing.T) {
 	player := view.Player{
 		ID:          "p1",
 		Life:        20,
-		Hand:        []view.Card{{ID: "c1", Name: "Island"}},
+		Hand:        []*view.Card{{ID: "c1", Name: "Island"}},
 		LibrarySize: 40,
-		Graveyard:   []view.Card{{ID: "c2", Name: "Mountain"}},
+		Graveyard:   []*view.Card{{ID: "c2", Name: "Mountain"}},
 	}
-	box := PlayerData(player)
+	box := PlayerData(&player)
 	if box.Title != "Status for p1" {
 		t.Errorf("expected title 'Status for p1', got %q", box.Title)
 	}
@@ -122,7 +122,7 @@ func TestPlayerData(t *testing.T) {
 }
 
 func TestGraveyardData(t *testing.T) {
-	cards := []view.Card{
+	cards := []*view.Card{
 		{ID: "g1", Name: "Swamp"},
 		{ID: "g2", Name: "Forest"},
 	}
@@ -140,7 +140,7 @@ func TestGraveyardData(t *testing.T) {
 }
 
 func TestHandData(t *testing.T) {
-	cards := []view.Card{
+	cards := []*view.Card{
 		{ID: "h1", Name: "Plains"},
 		{ID: "h2", Name: "Island"},
 	}

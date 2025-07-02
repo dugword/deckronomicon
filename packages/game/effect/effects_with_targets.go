@@ -21,8 +21,8 @@ func BuildEffectWithTargets(
 	sourceID string,
 	effects []Effect,
 	targetsForEffects map[EffectTargetKey]target.Target,
-) ([]EffectWithTarget, error) {
-	var effectWithTargets []EffectWithTarget
+) ([]*EffectWithTarget, error) {
+	var effectWithTargets []*EffectWithTarget
 	for i, effect := range effects {
 		targetsForEffect, ok := targetsForEffects[EffectTargetKey{
 			SourceID:    sourceID,
@@ -32,7 +32,7 @@ func BuildEffectWithTargets(
 			// TODO: Hacky fix me
 			switch effect.TargetSpec().(type) {
 			case nil, target.NoneTargetSpec:
-				effectWithTargets = append(effectWithTargets, EffectWithTarget{
+				effectWithTargets = append(effectWithTargets, &EffectWithTarget{
 					Effect:   effect,
 					Target:   target.Target{Type: mtg.TargetTypeNone},
 					SourceID: sourceID,
@@ -46,7 +46,7 @@ func BuildEffectWithTargets(
 			// or not. And use interfaces type checking to narrow the type.
 			return nil, fmt.Errorf("missing targets for effect %d of card %q", i, sourceID)
 		}
-		effectWithTargets = append(effectWithTargets, EffectWithTarget{
+		effectWithTargets = append(effectWithTargets, &EffectWithTarget{
 			Effect:   effect,
 			Target:   targetsForEffect,
 			SourceID: sourceID,

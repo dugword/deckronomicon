@@ -15,16 +15,16 @@ import (
 )
 
 func ResolveLookAndChoose(
-	game state.Game,
+	game *state.Game,
 	playerID string,
-	lookAndChoose effect.LookAndChoose,
+	lookAndChoose *effect.LookAndChoose,
 	source gob.Object,
 ) (Result, error) {
 	player := game.GetPlayer(playerID)
 	cards, _ := player.Library().TakeN(lookAndChoose.Look)
 	var events []event.GameEvent
 	for _, card := range cards {
-		events = append(events, event.RevealCardEvent{
+		events = append(events, &event.RevealCardEvent{
 			PlayerID: player.ID(),
 			CardID:   card.ID(),
 			FromZone: mtg.ZoneLibrary,
@@ -52,7 +52,7 @@ func ResolveLookAndChoose(
 		if !ok {
 			return Result{}, errors.New("invalid choice results for LookAndChoose")
 		}
-		var selectedCards []gob.Card
+		var selectedCards []*gob.Card
 		for _, choice := range selected.Choices {
 			taken, remaining, ok := take.By(cards, has.ID(choice.ID()))
 			if !ok {
@@ -63,7 +63,7 @@ func ResolveLookAndChoose(
 		}
 		var events []event.GameEvent
 		for _, card := range selectedCards {
-			events = append(events, event.PutCardInHandEvent{
+			events = append(events, &event.PutCardInHandEvent{
 				PlayerID: player.ID(),
 				CardID:   card.ID(),
 				FromZone: mtg.ZoneLibrary,
@@ -73,7 +73,7 @@ func ResolveLookAndChoose(
 			// Put the rest on the bottom of the library in a random order
 			// TODO: Support ordering
 			for _, card := range cards {
-				events = append(events, event.PutCardOnBottomOfLibraryEvent{
+				events = append(events, &event.PutCardOnBottomOfLibraryEvent{
 					PlayerID: player.ID(),
 					CardID:   card.ID(),
 					FromZone: mtg.ZoneLibrary,
@@ -82,7 +82,7 @@ func ResolveLookAndChoose(
 		} else if lookAndChoose.Rest == mtg.ZoneGraveyard {
 			// Put the rest in the graveyard
 			for _, card := range cards {
-				events = append(events, event.PutCardInGraveyardEvent{
+				events = append(events, &event.PutCardInGraveyardEvent{
 					PlayerID: player.ID(),
 					CardID:   card.ID(),
 					FromZone: mtg.ZoneLibrary,

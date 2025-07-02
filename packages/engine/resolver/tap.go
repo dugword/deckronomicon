@@ -6,7 +6,7 @@ import (
 )
 
 func ResolveTap(
-	game state.Game,
+	game *state.Game,
 	playerID string,
 ) (Result, error) {
 	var events []event.GameEvent

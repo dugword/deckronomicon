@@ -12,9 +12,9 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-func additionalManaTestGame(playerID string) state.Game {
-	game := state.NewGameFromDefinition(definition.Game{
-		Players: []definition.Player{{
+func additionalManaTestGame(playerID string) *state.Game {
+	game := state.NewGameFromDefinition(&definition.Game{
+		Players: []*definition.Player{{
 			ID: playerID,
 		}},
 	})
@@ -25,18 +25,18 @@ func TestResolveAdditionalMana(t *testing.T) {
 	playerID := "Test Player"
 	testCases := []struct {
 		name       string
-		effect     effect.AdditionalMana
+		effect     *effect.AdditionalMana
 		wantEvents []event.GameEvent
 	}{
 		{
 			name: "with WUBRG mana from Island",
-			effect: effect.AdditionalMana{
+			effect: &effect.AdditionalMana{
 				Subtype:  "Island",
 				Mana:     "{W}{U}{B}{R}{G}",
 				Duration: mtg.DurationEndOfTurn,
 			},
 			wantEvents: []event.GameEvent{
-				event.RegisterTriggeredAbilityEvent{
+				&event.RegisterTriggeredAbilityEvent{
 					PlayerID: "Test Player",
 					Trigger: gob.Trigger{
 						EventType: "LandTappedForMana",
@@ -44,7 +44,7 @@ func TestResolveAdditionalMana(t *testing.T) {
 							Subtypes: []mtg.Subtype{"Island"},
 						},
 					},
-					Effects: []effect.Effect{effect.AddMana{
+					Effects: []effect.Effect{&effect.AddMana{
 						Mana: "{W}{U}{B}{R}{G}",
 					}},
 					Duration: "EndOfTurn",

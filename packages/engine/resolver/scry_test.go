@@ -11,12 +11,12 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-func scryTestGame(playerID string) state.Game {
-	game := state.NewGameFromDefinition(definition.Game{
-		Players: []definition.Player{{
+func scryTestGame(playerID string) *state.Game {
+	game := state.NewGameFromDefinition(&definition.Game{
+		Players: []*definition.Player{{
 			ID: playerID,
-			Library: definition.Library{
-				Cards: []definition.Card{
+			Library: &definition.Library{
+				Cards: []*definition.Card{
 					{ID: "Card 1 ID"},
 					{ID: "Card 2 ID"},
 					{ID: "Card 3 ID"},
@@ -41,15 +41,15 @@ func TestScryEffect(t *testing.T) {
 			name:  "with count 2",
 			count: 2,
 			wantEvents: []event.GameEvent{
-				event.PutCardOnTopOfLibraryEvent{PlayerID: playerID, CardID: "Card 1 ID", FromZone: "Library"},
-				event.PutCardOnBottomOfLibraryEvent{PlayerID: playerID, CardID: "Card 2 ID", FromZone: "Library"},
+				&event.PutCardOnTopOfLibraryEvent{PlayerID: playerID, CardID: "Card 1 ID", FromZone: "Library"},
+				&event.PutCardOnBottomOfLibraryEvent{PlayerID: playerID, CardID: "Card 2 ID", FromZone: "Library"},
 			},
 		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			game := scryTestGame(playerID)
-			efct := effect.Scry{
+			efct := &effect.Scry{
 				Count: tc.count,
 			}
 			effectResult, err := ResolveScry(game, playerID, efct, nil)

@@ -12,20 +12,21 @@ type Counterspell struct {
 	ManaValues []int          `json:"ManaValues,omitempty"`
 }
 
-func (e Counterspell) Name() string {
+func (e *Counterspell) Name() string {
 	return "Counterspell"
 }
 
-func NewCounterspell(modifiers map[string]any) (Counterspell, error) {
+func NewCounterspell(modifiers map[string]any) (*Counterspell, error) {
 	query, err := parseQuery(modifiers)
 	if err != nil {
-		return Counterspell{}, err
+		return nil, err
 	}
-	return Counterspell(query), nil
+	counterspell := Counterspell(query)
+	return &counterspell, nil
 }
 
-func (e Counterspell) TargetSpec() target.TargetSpec {
+func (e *Counterspell) TargetSpec() target.TargetSpec {
 	return target.SpellTargetSpec(
-		e,
+		*e,
 	)
 }

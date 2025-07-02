@@ -12,13 +12,13 @@ import (
 )
 
 func ResolveSearch(
-	game state.Game,
+	game *state.Game,
 	playerID string,
-	search effect.Search,
+	search *effect.Search,
 	source gob.Object,
 ) (Result, error) {
 	player := game.GetPlayer(playerID)
-	query, err := buildPredicate(QueryOpts(search))
+	query, err := buildPredicate(QueryOpts(*search))
 	if err != nil {
 		return Result{}, fmt.Errorf("failed to build query for Search effect: %w", err)
 	}
@@ -36,12 +36,12 @@ func ResolveSearch(
 		if !ok {
 			return Result{}, fmt.Errorf("expected a single choice result")
 		}
-		card, ok := selected.Choice.(gob.Card)
+		card, ok := selected.Choice.(*gob.Card)
 		if !ok {
 			return Result{}, errors.New("choice is not a card")
 		}
 		events := []event.GameEvent{
-			event.PutCardInHandEvent{
+			&event.PutCardInHandEvent{
 				PlayerID: player.ID(),
 				CardID:   card.ID(),
 				FromZone: mtg.ZoneLibrary,

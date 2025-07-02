@@ -13,14 +13,16 @@ import (
 
 func parseFindCardCheatCommand(
 	idOrName string,
-	player state.Player,
+	game *state.Game,
+	playerID string,
 	agent engine.PlayerAgent,
 ) (action.FindCardCheatAction, error) {
+	player := game.GetPlayer(playerID)
 	cards := player.Library().GetAll()
-	var card gob.Card
+	var card *gob.Card
 	var err error
 	if idOrName == "" {
-		card, err = buildFindCardCheatCommandByChoice(cards, player, agent)
+		card, err = buildFindCardCheatCommandByChoice(cards, playerID, agent)
 		if err != nil {
 			return action.FindCardCheatAction{}, fmt.Errorf("failed to choose a card to find: %w", err)
 		}
@@ -31,17 +33,17 @@ func parseFindCardCheatCommand(
 		}
 		card = found
 	}
-	return action.NewFindCardCheatAction(card), nil
+	return action.NewFindCardCheatAction(card.ID()), nil
 }
 
 func buildFindCardCheatCommandByChoice(
-	cards []gob.Card,
-	player state.Player,
+	cards []*gob.Card,
+	playerID string,
 	agent engine.PlayerAgent,
-) (gob.Card, error) {
+) (*gob.Card, error) {
 	prompt := choose.ChoicePrompt{
 		Message:  "Choose a card to put into your hand",
-		Source:   player,
+		Source:   nil, // TODO: Make this better
 		Optional: true,
 		ChoiceOpts: choose.ChooseOneOpts{
 			Choices: choose.NewChoices(cards),
@@ -49,15 +51,15 @@ func buildFindCardCheatCommandByChoice(
 	}
 	choiceResults, err := agent.Choose(prompt)
 	if err != nil {
-		return gob.Card{}, fmt.Errorf("failed to get choices: %w", err)
+		return nil, fmt.Errorf("failed to get choices: %w", err)
 	}
 	selected, ok := choiceResults.(choose.ChooseOneResults)
 	if !ok {
-		return gob.Card{}, fmt.Errorf("expected a single choice result")
+		return nil, fmt.Errorf("expected a single choice result")
 	}
-	card, ok := selected.Choice.(gob.Card)
+	card, ok := selected.Choice.(*gob.Card)
 	if !ok {
-		return gob.Card{}, fmt.Errorf("selected choice is not a card")
+		return nil, fmt.Errorf("selected choice is not a card")
 	}
 	return card, nil
 }

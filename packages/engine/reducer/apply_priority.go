@@ -8,15 +8,15 @@ import (
 
 // These are events that manage the priority system in the game.
 
-func applyPriorityEvent(game state.Game, priorityEvent event.PriorityEvent) (state.Game, error) {
+func applyPriorityEvent(game *state.Game, priorityEvent event.PriorityEvent) (*state.Game, error) {
 	switch evnt := priorityEvent.(type) {
-	case event.AllPlayersPassedPriorityEvent:
+	case *event.AllPlayersPassedPriorityEvent:
 		return game, nil
-	case event.PassPriorityEvent:
+	case *event.PassPriorityEvent:
 		return applyPassPriorityEvent(game, evnt)
-	case event.ReceivePriorityEvent:
+	case *event.ReceivePriorityEvent:
 		return game, nil
-	case event.ResetPriorityPassesEvent:
+	case *event.ResetPriorityPassesEvent:
 		return applyResetPriorityPassesEvent(game, evnt)
 	default:
 		return game, fmt.Errorf("unknown priority event type '%T'", evnt)
@@ -24,17 +24,17 @@ func applyPriorityEvent(game state.Game, priorityEvent event.PriorityEvent) (sta
 }
 
 func applyPassPriorityEvent(
-	game state.Game,
-	evnt event.PassPriorityEvent,
-) (state.Game, error) {
+	game *state.Game,
+	evnt *event.PassPriorityEvent,
+) (*state.Game, error) {
 	game = game.WithPlayerPassedPriority(evnt.PlayerID)
 	return game, nil
 }
 
 func applyResetPriorityPassesEvent(
-	game state.Game,
-	_ event.ResetPriorityPassesEvent,
-) (state.Game, error) {
+	game *state.Game,
+	_ *event.ResetPriorityPassesEvent,
+) (*state.Game, error) {
 	game = game.WithResetPriorityPasses()
 	return game, nil
 }

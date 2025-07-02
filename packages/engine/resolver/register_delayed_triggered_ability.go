@@ -8,11 +8,11 @@ import (
 
 func ResolveRegisterDelayedTriggeredAbility(
 	playerID string,
-	efct effect.RegisterDelayedTriggeredAbility,
+	efct *effect.RegisterDelayedTriggeredAbility,
 	source gob.Object,
 ) (Result, error) {
 	events := []event.GameEvent{
-		event.RegisterTriggeredAbilityEvent{
+		&event.RegisterTriggeredAbilityEvent{
 			PlayerID:   playerID,
 			SourceName: source.Name(),
 			SourceID:   source.ID(),

@@ -13,7 +13,7 @@ func TestEngine(t *testing.T) {
 			player1ID := "Player 1"
 			player2ID := "Player 2"
 			engine := NewEngine(EngineConfig{
-				Players: []state.Player{
+				Players: []*state.Player{
 					state.LoadPlayerFromConfig(statetest.PlayerConfig{ID: player1ID}),
 					state.LoadPlayerFromConfig(statetest.PlayerConfig{ID: player2ID}),
 				},

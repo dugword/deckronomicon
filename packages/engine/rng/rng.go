@@ -1,7 +1,6 @@
 package rng
 
 import (
-	"deckronomicon/packages/game/gob"
 	"math/rand"
 	"slices"
 )
@@ -16,7 +15,8 @@ func NewRNG(seed int64) *RNG {
 	}
 }
 
-func (r *RNG) ShuffleCards(cards []gob.Card) []gob.Card {
+/* // I think I don't need this, use shuffleIDs instead
+func (r *RNG) ShuffleCards(cards []*gob.Card) []*gob.Card {
 	shuffled := slices.Clone(cards)
 	for i := len(shuffled) - 1; i > 0; i-- {
 		j := r.rng.Intn(i + 1)
@@ -24,6 +24,7 @@ func (r *RNG) ShuffleCards(cards []gob.Card) []gob.Card {
 	}
 	return shuffled
 }
+*/
 
 func (r *RNG) ShuffleIDs(ids []string) []string {
 	shuffled := slices.Clone(ids)

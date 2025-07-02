@@ -93,7 +93,7 @@ func (p *StrategyParser) Parse(data []byte) (*Strategy, error) {
 		return nil, p.errors
 	}
 	var strategy Strategy
-	var modes []Rule
+	var modes []*Rule
 	for _, rawMode := range strategyFile.Modes {
 		mode, err := p.ParseModeNode(rawMode)
 		if err != nil {
@@ -102,9 +102,9 @@ func (p *StrategyParser) Parse(data []byte) (*Strategy, error) {
 		modes = append(modes, mode)
 	}
 	strategy.Modes = modes
-	strategy.Rules = map[string][]Rule{}
+	strategy.Rules = map[string][]*Rule{}
 	for name, rawRules := range strategyFile.Rules {
-		var rules []Rule
+		var rules []*Rule
 		for _, rawRule := range rawRules.([]any) {
 			rule, err := p.ParseRuleNode(rawRule)
 			if err != nil {

@@ -11,26 +11,26 @@ type Discard struct {
 	Target mtg.TargetType
 }
 
-func (e Discard) Name() string {
+func (e *Discard) Name() string {
 	return "Discard"
 }
 
-func NewDiscard(modifiers map[string]any) (Discard, error) {
+func NewDiscard(modifiers map[string]any) (*Discard, error) {
 	countModifier, err := parseCount(modifiers)
 	if err != nil {
-		return Discard{}, err
+		return nil, err
 	}
 	targetPlayerModifier, err := parseTargetPlayer(modifiers)
 	if err != nil {
-		return Discard{}, err
+		return nil, err
 	}
-	return Discard{
+	return &Discard{
 		Count:  countModifier,
 		Target: targetPlayerModifier,
 	}, nil
 }
 
-func (e Discard) TargetSpec() target.TargetSpec {
+func (e *Discard) TargetSpec() target.TargetSpec {
 	switch e.Target {
 	case "", mtg.TargetTypeNone:
 		return target.NoneTargetSpec{}

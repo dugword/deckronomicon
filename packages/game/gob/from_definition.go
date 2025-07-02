@@ -9,7 +9,7 @@ import (
 	"fmt"
 )
 
-func NewCardFromDefinition(definition definition.Card) Card {
+func NewCardFromDefinition(definition *definition.Card) *Card {
 	card := Card{
 		id:         definition.ID,
 		controller: definition.Controller,
@@ -56,9 +56,9 @@ func NewCardFromDefinition(definition definition.Card) Card {
 		}
 		supertypes = append(supertypes, supertype)
 	}
-	var activatedAbilities []Ability
+	var activatedAbilities []*Ability
 	for i, abilityDefinition := range definition.ActivatedAbilities {
-		ability, err := buildAbility(card, i, abilityDefinition)
+		ability, err := NewAbility(&card, i, abilityDefinition)
 		if err != nil {
 			panic(fmt.Errorf("failed to build activated ability %s: %w", abilityDefinition.Name, err))
 		}
@@ -89,12 +89,12 @@ func NewCardFromDefinition(definition definition.Card) Card {
 	card.staticAbilities = staticAbilities
 	card.subtypes = subtypes
 	card.supertypes = supertypes
-	return card
+	return &card
 }
 
 func NewPermanentFromCardDefinition(
-	definition definition.Card,
-) Permanent {
+	definition *definition.Card,
+) *Permanent {
 	card := NewCardFromDefinition(definition)
 	permanent, err := NewPermanent(
 		fmt.Sprintf("Permanent from %s", definition.ID),
@@ -108,12 +108,10 @@ func NewPermanentFromCardDefinition(
 }
 
 func NewPermanentFromDefinition(
-	definition definition.Permanent,
-) Permanent {
-	card := NewCardFromDefinition(definition.Card)
+	definition *definition.Permanent,
+) *Permanent {
 	permanent := Permanent{
 		id:                definition.ID,
-		card:              card,
 		controller:        definition.Controller,
 		owner:             definition.Owner,
 		loyalty:           definition.Loyalty,
@@ -123,6 +121,9 @@ func NewPermanentFromDefinition(
 		summoningSickness: definition.SummoningSickness,
 		tapped:            definition.Tapped,
 		toughness:         definition.Toughness,
+	}
+	if definition.Card != nil {
+		permanent.card = NewCardFromDefinition(definition.Card)
 	}
 	manaCost, err := cost.ParseMana(definition.ManaCost)
 	if err != nil {
@@ -156,9 +157,9 @@ func NewPermanentFromDefinition(
 		}
 		supertypes = append(supertypes, supertype)
 	}
-	var activatedAbilities []Ability
+	var activatedAbilities []*Ability
 	for i, abilityDefinition := range definition.ActivatedAbilities {
-		ability, err := buildAbility(permanent, i, abilityDefinition)
+		ability, err := NewAbility(&permanent, i, abilityDefinition)
 		if err != nil {
 			panic(fmt.Errorf("failed to build activated ability %s: %w", abilityDefinition.Name, err))
 		}
@@ -179,16 +180,16 @@ func NewPermanentFromDefinition(
 	permanent.staticAbilities = staticAbilities
 	permanent.subtypes = subtypes
 	permanent.supertypes = supertypes
-	return permanent
+	return &permanent
 }
 
 func NewSpellFromCardDefinition(
 	spellID,
 	playerID string,
-	cardDefinition definition.Card,
-	effectWithTargets []effect.EffectWithTarget,
+	cardDefinition *definition.Card,
+	effectWithTargets []*effect.EffectWithTarget,
 	flashback bool,
-) Spell {
+) *Spell {
 	card := NewCardFromDefinition(cardDefinition)
 	spell, err := NewSpell(spellID, card, playerID, effectWithTargets, flashback)
 	if err != nil {
@@ -199,14 +200,15 @@ func NewSpellFromCardDefinition(
 
 func NewSpellFromDefinition(
 	definition definition.Spell,
-) Spell {
-	card := NewCardFromDefinition(definition.Card)
+) *Spell {
 	spell := Spell{
 		id:         definition.ID,
-		card:       card,
 		controller: definition.Controller,
 		owner:      definition.Owner,
 		flashback:  definition.Flashback,
+	}
+	if definition.Card != nil {
+		spell.card = NewCardFromDefinition(definition.Card)
 	}
 	manaCost, err := cost.ParseMana(definition.ManaCost)
 	if err != nil {
@@ -254,5 +256,5 @@ func NewSpellFromDefinition(
 	spell.staticAbilities = staticAbilities
 	spell.subtypes = subtypes
 	spell.supertypes = supertypes
-	return spell
+	return &spell
 }

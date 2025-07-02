@@ -9,9 +9,9 @@ import (
 )
 
 func CanReplicateCard(
-	game state.Game,
-	player state.Player,
-	cardToReplicate gob.Card,
+	game *state.Game,
+	playerID string,
+	cardToReplicate *gob.Card,
 	ruling *Ruling,
 ) bool {
 	can := true
@@ -23,7 +23,7 @@ func CanReplicateCard(
 		can = false
 		return can
 	}
-	replicateAbility, ok := staticAbility.(staticability.Replicate)
+	replicateAbility, ok := staticAbility.(*staticability.Replicate)
 	if !ok {
 		if ruling != nil && ruling.Explain {
 			ruling.Reasons = append(ruling.Reasons, fmt.Sprintf("card %q has replicate ability, but it is not a Replicate ability", cardToReplicate.ID()))
@@ -31,9 +31,9 @@ func CanReplicateCard(
 		can = false
 		return can
 	}
-	if !CanPayCost(replicateAbility.Cost, cardToReplicate, game, player, ruling) {
+	if !CanPayCost(replicateAbility.Cost, cardToReplicate, game, playerID, ruling) {
 		if ruling != nil && ruling.Explain {
-			ruling.Reasons = append(ruling.Reasons, fmt.Sprintf("player %q cannot pay cost %s for card %q", player.ID(), replicateAbility.Cost, cardToReplicate.ID()))
+			ruling.Reasons = append(ruling.Reasons, fmt.Sprintf("player %q cannot pay cost %s for card %q", playerID, replicateAbility.Cost, cardToReplicate.ID()))
 		}
 		can = false
 	}

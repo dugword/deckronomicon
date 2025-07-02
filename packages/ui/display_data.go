@@ -67,7 +67,7 @@ func NewBuffer(displayFile string) *Buffer {
 }
 
 func (b *Buffer) Update(
-	game view.Game, player view.Player, opponent view.Player,
+	game *view.Game, player *view.Player, opponent *view.Player,
 ) {
 	displayData := DisplayData{
 		BattlefieldData: BattlefieldData(game.Battlefield),
@@ -105,7 +105,7 @@ func (b *Buffer) UpdateMessage(lines []string) {
 	b.displayData.MessageData = MessageData(lines)
 }
 
-func GameStatusData(game view.Game) BoxData {
+func GameStatusData(game *view.Game) BoxData {
 	return BoxData{
 		Title: "Game Status",
 		Content: []string{
@@ -120,7 +120,7 @@ func GameStatusData(game view.Game) BoxData {
 
 // BattlefieldData creates the box data for displaying permanents on the
 // battlefield.
-func BattlefieldData(permanents []view.Permanent) BoxData {
+func BattlefieldData(permanents []*view.Permanent) BoxData {
 	var lines []string
 	for _, permanent := range permanents {
 		line := fmt.Sprintf(
@@ -145,7 +145,7 @@ func BattlefieldData(permanents []view.Permanent) BoxData {
 
 // BattlefieldData creates the box data for displaying permanents on the
 // battlefield.
-func StackData(Resolvable []view.Resolvable) BoxData {
+func StackData(Resolvable []*view.Resolvable) BoxData {
 	var lines []string
 	for _, resolvable := range Resolvable {
 		line := fmt.Sprintf(
@@ -162,7 +162,7 @@ func StackData(Resolvable []view.Resolvable) BoxData {
 	}
 }
 
-func PlayerData(player view.Player) BoxData {
+func PlayerData(player *view.Player) BoxData {
 	content := []string{}
 	if player.Mode != "" {
 		content = append(content, fmt.Sprintf("Mode: %s", player.Mode))
@@ -184,7 +184,7 @@ func PlayerData(player view.Player) BoxData {
 }
 
 // GraveyardData creates the box data for displaying cards in the graveyard.
-func CardListData(title string, cards []view.Card) BoxData {
+func CardListData(title string, cards []*view.Card) BoxData {
 	var lines []string
 	for _, card := range cards {
 		line := fmt.Sprintf("%s <%s>", card.Name, card.ID)

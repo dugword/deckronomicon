@@ -12,9 +12,9 @@ import (
 )
 
 func ResolveScry(
-	game state.Game,
+	game *state.Game,
 	playerID string,
-	scry effect.Scry,
+	scry *effect.Scry,
 	source gob.Object,
 ) (Result, error) {
 	player := game.GetPlayer(playerID)
@@ -44,19 +44,19 @@ func ResolveScry(
 				return Result{}, fmt.Errorf("invalid bucket %q for Scrying", bucket)
 			}
 			for _, choice := range choices {
-				card, ok := choice.(gob.Card)
+				card, ok := choice.(*gob.Card)
 				if !ok {
 					return Result{}, errors.New("choice is not a card")
 				}
 				switch bucket {
 				case choose.BucketTop:
-					events = append(events, event.PutCardOnTopOfLibraryEvent{
+					events = append(events, &event.PutCardOnTopOfLibraryEvent{
 						PlayerID: player.ID(),
 						CardID:   card.ID(),
 						FromZone: mtg.ZoneLibrary,
 					})
 				case choose.BucketBottom:
-					events = append(events, event.PutCardOnBottomOfLibraryEvent{
+					events = append(events, &event.PutCardOnBottomOfLibraryEvent{
 						PlayerID: player.ID(),
 						CardID:   card.ID(),
 						FromZone: mtg.ZoneLibrary,

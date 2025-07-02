@@ -26,7 +26,7 @@ func TestPayCost(t *testing.T) {
 			name: "with white mana cost",
 			cost: "{W}",
 			want: []event.GameEvent{
-				event.SpendManaEvent{
+				&event.SpendManaEvent{
 					ManaString: "{W}",
 					PlayerID:   playerID,
 				},
@@ -36,7 +36,7 @@ func TestPayCost(t *testing.T) {
 			name: "with wubrg mana cost",
 			cost: "{W}{U}{B}{R}{G}",
 			want: []event.GameEvent{
-				event.SpendManaEvent{
+				&event.SpendManaEvent{
 					ManaString: "{W}{U}{B}{R}{G}",
 					PlayerID:   playerID,
 				},
@@ -46,7 +46,7 @@ func TestPayCost(t *testing.T) {
 			name: "with pay 3 life cost",
 			cost: "Pay 3 life",
 			want: []event.GameEvent{
-				event.LoseLifeEvent{
+				&event.LoseLifeEvent{
 					PlayerID: playerID,
 					Amount:   3,
 				},
@@ -55,11 +55,11 @@ func TestPayCost(t *testing.T) {
 		{
 			name: "with tap this cost",
 			cost: "{T}",
-			object: gob.NewPermanentFromDefinition((definition.Permanent{
+			object: gob.NewPermanentFromDefinition((&definition.Permanent{
 				ID: "Object ID",
 			})),
 			want: []event.GameEvent{
-				event.TapPermanentEvent{
+				&event.TapPermanentEvent{
 					PlayerID:    playerID,
 					PermanentID: "Object ID",
 				},
@@ -68,11 +68,11 @@ func TestPayCost(t *testing.T) {
 		{
 			name: "with discard cost",
 			cost: "Discard this card",
-			object: gob.NewCardFromDefinition(definition.Card{
+			object: gob.NewCardFromDefinition(&definition.Card{
 				ID: "Object ID",
 			}),
 			want: []event.GameEvent{
-				event.DiscardCardEvent{
+				&event.DiscardCardEvent{
 					PlayerID: playerID,
 					CardID:   "Object ID",
 				},
@@ -86,7 +86,7 @@ func TestPayCost(t *testing.T) {
 				Type: mtg.TargetTypeCard,
 			},
 			want: []event.GameEvent{
-				event.DiscardCardEvent{
+				&event.DiscardCardEvent{
 					PlayerID: playerID,
 					CardID:   "Card ID",
 				},
@@ -96,11 +96,11 @@ func TestPayCost(t *testing.T) {
 			name: "with composite cost of mana and life",
 			cost: `{W}, Pay 2 life`,
 			want: []event.GameEvent{
-				event.SpendManaEvent{
+				&event.SpendManaEvent{
 					ManaString: "{W}",
 					PlayerID:   playerID,
 				},
-				event.LoseLifeEvent{
+				&event.LoseLifeEvent{
 					PlayerID: playerID,
 					Amount:   2,
 				},

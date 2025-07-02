@@ -12,8 +12,8 @@ import (
 )
 
 type Permanent struct {
-	activatedAbilities []Ability
-	card               Card
+	activatedAbilities []*Ability
+	card               *Card
 	cardTypes          []mtg.CardType
 	colors             mtg.Colors
 	controller         string
@@ -30,10 +30,10 @@ type Permanent struct {
 	supertypes         []mtg.Supertype
 	tapped             bool
 	toughness          int
-	triggeredAbilities []Ability
+	triggeredAbilities []*Ability
 }
 
-func NewPermanent(id string, card Card, playerID string) (Permanent, error) {
+func NewPermanent(id string, card *Card, playerID string) (*Permanent, error) {
 	permanent := Permanent{
 		card:               card,
 		cardTypes:          card.CardTypes(),
@@ -50,7 +50,7 @@ func NewPermanent(id string, card Card, playerID string) (Permanent, error) {
 		subtypes:           card.Subtypes(),
 		supertypes:         card.Supertypes(),
 		toughness:          card.Toughness(),
-		triggeredAbilities: []Ability{},
+		triggeredAbilities: []*Ability{},
 	}
 	if slices.Contains(permanent.cardTypes, mtg.CardTypeCreature) {
 		permanent.summoningSickness = true
@@ -63,90 +63,91 @@ func NewPermanent(id string, card Card, playerID string) (Permanent, error) {
 			id:      fmt.Sprintf("%s-%d", id, i+1),
 			zone:    a.zone,
 			speed:   a.speed,
-			source:  permanent,
+			source:  &permanent,
 		}
-		permanent.activatedAbilities = append(permanent.activatedAbilities, ability)
+		permanent.activatedAbilities = append(permanent.activatedAbilities, &ability)
 	}
-	return permanent, nil
+	return &permanent, nil
 }
 
-func (p Permanent) ActivatedAbilities() []Ability {
+func (p *Permanent) ActivatedAbilities() []*Ability {
 	return p.activatedAbilities
 }
 
-func (p Permanent) Card() Card {
+func (p *Permanent) Card() *Card {
 	return p.card
 }
-func (p Permanent) CardTypes() []mtg.CardType {
+func (p *Permanent) CardTypes() []mtg.CardType {
 	return p.cardTypes
 }
 
-func (p Permanent) Colors() mtg.Colors {
+func (p *Permanent) Colors() mtg.Colors {
 	return p.colors
 }
 
-func (p Permanent) Controller() string {
+func (p *Permanent) Controller() string {
 	return p.controller
 }
 
-func (p Permanent) Description() string {
+func (p *Permanent) Description() string {
 	return p.rulesText
 }
 
-func (p Permanent) ID() string {
+func (p *Permanent) ID() string {
 	return p.id
 }
 
-func (p Permanent) IsTapped() bool {
+func (p *Permanent) IsTapped() bool {
 	return p.tapped
 }
 
-func (p Permanent) HasSummoningSickness() bool {
+func (p *Permanent) HasSummoningSickness() bool {
 	return p.summoningSickness
 }
 
-func (p Permanent) RemoveSummoningSickness() Permanent {
-	p.summoningSickness = false
-	return p
+func (p *Permanent) RemoveSummoningSickness() *Permanent {
+	newPermanent := *p
+	newPermanent.summoningSickness = false
+	return &newPermanent
 }
 
-func (p Permanent) Loyalty() int {
+func (p *Permanent) Loyalty() int {
 	return p.loyalty
 }
 
-func (p Permanent) ManaCost() cost.Mana {
+func (p *Permanent) ManaCost() cost.Mana {
 	return p.manaCost
 }
 
-func (p Permanent) ManaValue() int {
+func (p *Permanent) ManaValue() int {
 	return p.manaCost.Amount().Total()
 }
 
-func (per Permanent) Match(predicate query.Predicate) bool {
-	return predicate(per)
+func (p *Permanent) Match(predicate query.Predicate) bool {
+	return predicate(p)
 }
 
-func (p Permanent) Name() string {
+func (p *Permanent) Name() string {
 	return p.name
 }
 
-func (p Permanent) Owner() string {
+func (p *Permanent) Owner() string {
 	return p.owner
 }
 
-func (p Permanent) Power() int {
+func (p *Permanent) Power() int {
 	return p.power
 }
 
-func (p Permanent) RulesText() string {
+func (p *Permanent) RulesText() string {
 	return p.rulesText
 }
 
-func (p Permanent) StaticAbilities() []staticability.StaticAbility {
+func (p *Permanent) StaticAbilities() []staticability.StaticAbility {
 	return p.staticAbilities
 }
 
-func (p Permanent) StaticKeywords() []mtg.StaticKeyword {
+func (p *Permanent) StaticKeywords() []mtg.StaticKeyword {
 	var keywords []mtg.StaticKeyword
 	for _, ability := range p.staticAbilities {
 		if ability.StaticKeyword() != "" {
@@ -156,11 +157,11 @@ func (p Permanent) StaticKeywords() []mtg.StaticKeyword {
 	return keywords
 }
 
-func (p Permanent) Subtypes() []mtg.Subtype {
+func (p *Permanent) Subtypes() []mtg.Subtype {
 	return p.subtypes
 }
 
-func (p Permanent) Supertypes() []mtg.Supertype {
+func (p *Permanent) Supertypes() []mtg.Supertype {
 	return p.supertypes
 }
 
@@ -168,19 +169,20 @@ func (p Permanent) Supertypes() []mtg.Supertype {
 // tapped.
 // TODO: There are some specifics that matter for tapping tapped creatures,
 // but for now we will just disallow it.
-func (p Permanent) Tap() (Permanent, error) {
+func (p *Permanent) Tap() (*Permanent, error) {
 	if p.tapped {
-		return p, mtg.ErrAlreadyTapped
+		return nil, mtg.ErrAlreadyTapped
 	}
-	p.tapped = true
-	return p, nil
+	newPermanent := *p
+	newPermanent.tapped = true
+	return &newPermanent, nil
 }
 
-func (p Permanent) Toughness() int {
+func (p *Permanent) Toughness() int {
 	return p.toughness
 }
 
-func (p Permanent) TriggeredAbilities() []Ability {
+func (p *Permanent) TriggeredAbilities() []*Ability {
 	return p.triggeredAbilities
 }
 
@@ -188,7 +190,8 @@ func (p Permanent) TriggeredAbilities() []Ability {
 // is already untapped.
 // TODO: There are some specifics that matter for untapping untapped
 // creatures, but for now we will just allow it.
-func (p Permanent) Untap() Permanent {
-	p.tapped = false
-	return p
+func (p *Permanent) Untap() *Permanent {
+	newPermanent := *p
+	newPermanent.tapped = false
+	return &newPermanent
 }

@@ -7,12 +7,9 @@ import (
 )
 
 type ResetLandDropCommand struct {
-	Player state.Player
+	playerID string
 }
 
-func (p *ResetLandDropCommand) IsComplete() bool {
-	return p.Player.ID() != ""
-}
-func (p *ResetLandDropCommand) Build(game state.Game, player state.Player) (engine.Action, error) {
-	return action.NewResetLandDropCheatAction(player), nil
+func (p *ResetLandDropCommand) Build(game *state.Game, playerID string) (engine.Action, error) {
+	return action.NewResetLandDropCheatAction(), nil
 }

@@ -39,7 +39,7 @@ func WriteAnalyticsEventsToFile(record *engine.GameRecord, dirname string) error
 	return nil
 }
 
-func WriteGameStateToFile(game state.Game, dirname string) error {
+func WriteGameStateToFile(game *state.Game, dirname string) error {
 	gameView := view.NewGameViewFromState(game)
 	filename := dirname + "/game_view.json"
 	file, err := os.Create(filename)
@@ -59,7 +59,7 @@ func WriteGameStateToFile(game state.Game, dirname string) error {
 			return fmt.Errorf("failed to create player view file for %s: %w", player.ID(), err)
 		}
 		defer playerFile.Close()
-		playerView := view.NewPlayerViewFromState(game, player, "")
+		playerView := view.NewPlayerViewFromState(game, player.ID(), "")
 		encoder := json.NewEncoder(playerFile)
 		encoder.SetIndent("", "  ")
 		if err := encoder.Encode(playerView); err != nil {

@@ -15,7 +15,7 @@ func TestInZone(t *testing.T) {
 	tests := []struct {
 		name string
 		when node.InZone
-		is   state.Game
+		is   *state.Game
 		want bool
 	}{
 		{
@@ -24,11 +24,11 @@ func TestInZone(t *testing.T) {
 				Cards: &predicate.Name{Name: "Island"},
 				Zone:  mtg.ZoneHand,
 			},
-			is: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{
+			is: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{
 					ID: playerID,
-					Hand: definition.Hand{
-						Cards: []definition.Card{{Name: "Island"}},
+					Hand: &definition.Hand{
+						Cards: []*definition.Card{{Name: "Island"}},
 					},
 				}},
 			}),
@@ -40,11 +40,11 @@ func TestInZone(t *testing.T) {
 				Cards: &predicate.Name{Name: "Island"},
 				Zone:  mtg.ZoneHand,
 			},
-			is: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{
+			is: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{
 					ID: playerID,
-					Hand: definition.Hand{
-						Cards: []definition.Card{{Name: "Swamp"}},
+					Hand: &definition.Hand{
+						Cards: []*definition.Card{{Name: "Swamp"}},
 					},
 				}},
 			}),
@@ -56,11 +56,11 @@ func TestInZone(t *testing.T) {
 				Cards: &predicate.Name{Name: "Island"},
 				Zone:  mtg.ZoneHand,
 			},
-			is: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{
+			is: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{
 					ID: playerID,
-					Hand: definition.Hand{
-						Cards: []definition.Card{
+					Hand: &definition.Hand{
+						Cards: []*definition.Card{
 							{Name: "Swamp"},
 							{Name: "Island"},
 						},

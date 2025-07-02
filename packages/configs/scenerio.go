@@ -15,7 +15,7 @@ import (
 
 type DeckList struct {
 	Name  string `json:"Name" yaml:"Name"`
-	Cards []struct {
+	Cards []*struct {
 		Name  string `json:"Name" yaml:"Name"`
 		Count int    `json:"Count" yaml:"Count"`
 	} `json:"Cards" yaml:"Cards"`
@@ -34,7 +34,7 @@ type Player struct {
 	AgentType               string
 	AutoPay                 bool
 	AutoPayColorsForGeneric []mana.Color // Colors to prioritize when auto-paying costs, if applicable
-	DeckList                DeckList
+	DeckList                *DeckList
 	Name                    string
 	StartingHand            []string
 	StartingLife            int
@@ -155,7 +155,7 @@ func LoadScenario(scenariosDir, scenario string) (*Scenario, error) {
 				err,
 			)
 		}
-		player.DeckList = *deckList
+		player.DeckList = deckList
 		if _, ok := s.Players[player.Name]; ok {
 			return nil, fmt.Errorf(
 				"player name %q is not unique in scenario %q",

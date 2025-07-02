@@ -16,14 +16,14 @@ type CheatEvent interface{ isCheatEvent() }
 
 type CheatEventBase struct{}
 
-func (e CheatEventBase) isCheatEvent() {}
+func (e *CheatEventBase) isCheatEvent() {}
 
 type CheatAddManaEvent struct {
 	CheatEventBase
 	Player string // Player ID who added mana
 }
 
-func (e CheatAddManaEvent) EventType() string {
+func (e *CheatAddManaEvent) EventType() string {
 	return EventTypeCheatAddMana
 }
 
@@ -33,7 +33,7 @@ type CheatConjureCardEvent struct {
 	CardName string // Name of the card conjured
 }
 
-func (e CheatConjureCardEvent) EventType() string {
+func (e *CheatConjureCardEvent) EventType() string {
 	return "ConjureCard"
 }
 
@@ -42,7 +42,7 @@ type CheatDiscardEvent struct {
 	PlayerID string // Player ID who discarded the card
 }
 
-func (e CheatDiscardEvent) EventType() string {
+func (e *CheatDiscardEvent) EventType() string {
 	return EventTypeCheatDiscard
 }
 
@@ -51,7 +51,7 @@ type CheatDrawEvent struct {
 	PlayerID string // Player ID who drew the card
 }
 
-func (e CheatDrawEvent) EventType() string {
+func (e *CheatDrawEvent) EventType() string {
 	return EventTypeCheatDraw
 }
 
@@ -60,7 +60,7 @@ type CheatPeekEvent struct {
 	PlayerID string
 }
 
-func (e CheatPeekEvent) EventType() string {
+func (e *CheatPeekEvent) EventType() string {
 	return EventTypeCheatPeek
 }
 
@@ -70,7 +70,7 @@ type CheatFindCardEvent struct {
 	CardID   string
 }
 
-func (e CheatFindCardEvent) EventType() string {
+func (e *CheatFindCardEvent) EventType() string {
 	return EventTypeCheatFindCard
 }
 
@@ -79,7 +79,7 @@ type CheatResetLandDropEvent struct {
 	PlayerID string
 }
 
-func (e CheatResetLandDropEvent) EventType() string {
+func (e *CheatResetLandDropEvent) EventType() string {
 	return EventTypeCheatResetLandDrop
 }
 
@@ -88,7 +88,7 @@ type CheatShuffleDeckEvent struct {
 	PlayerID string
 }
 
-func (e CheatShuffleDeckEvent) EventType() string {
+func (e *CheatShuffleDeckEvent) EventType() string {
 	return EventTypeCheatShuffleDeck
 }
 
@@ -97,6 +97,6 @@ type CheatUntapEvent struct {
 	PlayerID string
 }
 
-func (e CheatUntapEvent) EventType() string {
+func (e *CheatUntapEvent) EventType() string {
 	return EventTypeCheatUntap
 }

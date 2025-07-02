@@ -12,7 +12,7 @@ type AddManaCheatAction struct {
 	ManaString string
 }
 
-func NewAddManaCheatAction(player state.Player, manaString string) AddManaCheatAction {
+func NewAddManaCheatAction(manaString string) AddManaCheatAction {
 	return AddManaCheatAction{
 		ManaString: manaString,
 	}
@@ -22,7 +22,7 @@ func (a AddManaCheatAction) Name() string {
 	return "CHEAT: Add Mana"
 }
 
-func (a AddManaCheatAction) Complete(game state.Game, player state.Player, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
+func (a AddManaCheatAction) Complete(game *state.Game, playerID string, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	if !game.CheatsEnabled() {
 		return nil, fmt.Errorf("no cheating you cheater")
 	}
@@ -34,55 +34,55 @@ func (a AddManaCheatAction) Complete(game state.Game, player state.Player, resEn
 		return nil, fmt.Errorf("failed to parse mana string %q: %w", a.ManaString, err)
 	}
 	events := []event.GameEvent{
-		event.CheatAddManaEvent{
-			Player: player.ID(),
+		&event.CheatAddManaEvent{
+			Player: playerID,
 		},
 	}
 	if amount.Generic() > 0 {
-		events = append(events, event.AddManaEvent{
-			PlayerID: player.ID(),
+		events = append(events, &event.AddManaEvent{
+			PlayerID: playerID,
 			Amount:   amount.Generic(),
 			Color:    mana.Colorless,
 		})
 	}
 	if amount.Colorless() > 0 {
-		events = append(events, event.AddManaEvent{
-			PlayerID: player.ID(),
+		events = append(events, &event.AddManaEvent{
+			PlayerID: playerID,
 			Amount:   amount.Colorless(),
 			Color:    mana.Colorless,
 		})
 	}
 	if amount.White() > 0 {
-		events = append(events, event.AddManaEvent{
-			PlayerID: player.ID(),
+		events = append(events, &event.AddManaEvent{
+			PlayerID: playerID,
 			Amount:   amount.White(),
 			Color:    mana.White,
 		})
 	}
 	if amount.Blue() > 0 {
-		events = append(events, event.AddManaEvent{
-			PlayerID: player.ID(),
+		events = append(events, &event.AddManaEvent{
+			PlayerID: playerID,
 			Amount:   amount.Blue(),
 			Color:    mana.Blue,
 		})
 	}
 	if amount.Black() > 0 {
-		events = append(events, event.AddManaEvent{
-			PlayerID: player.ID(),
+		events = append(events, &event.AddManaEvent{
+			PlayerID: playerID,
 			Amount:   amount.Black(),
 			Color:    mana.Black,
 		})
 	}
 	if amount.Red() > 0 {
-		events = append(events, event.AddManaEvent{
-			PlayerID: player.ID(),
+		events = append(events, &event.AddManaEvent{
+			PlayerID: playerID,
 			Amount:   amount.Red(),
 			Color:    mana.Red,
 		})
 	}
 	if amount.Green() > 0 {
-		events = append(events, event.AddManaEvent{
-			PlayerID: player.ID(),
+		events = append(events, &event.AddManaEvent{
+			PlayerID: playerID,
 			Amount:   amount.Green(),
 			Color:    mana.Green,
 		})

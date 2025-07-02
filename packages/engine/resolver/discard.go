@@ -11,9 +11,9 @@ import (
 )
 
 func ResolveDiscard(
-	game state.Game,
+	game *state.Game,
 	playerID string,
-	discard effect.Discard,
+	discard *effect.Discard,
 	target target.Target,
 	source gob.Object,
 ) (Result, error) {
@@ -36,7 +36,7 @@ func ResolveDiscard(
 		var events []event.GameEvent
 		for _, choice := range selected.Choices {
 			// Create the discard event
-			discardEvent := event.DiscardCardEvent{
+			discardEvent := &event.DiscardCardEvent{
 				PlayerID: player.ID(),
 				CardID:   choice.ID(),
 			}

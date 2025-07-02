@@ -40,7 +40,7 @@ func payComposite(c cost.Composite, object gob.Object, playerID string) ([]event
 
 func payDiscardThis(object gob.Object, playerID string) []event.GameEvent {
 	return []event.GameEvent{
-		event.DiscardCardEvent{
+		&event.DiscardCardEvent{
 			PlayerID: playerID,
 			CardID:   object.ID(),
 		},
@@ -52,7 +52,7 @@ func payDiscardACard(c cost.DiscardACard, playerID string) ([]event.GameEvent, e
 		return nil, fmt.Errorf("DiscardACard requires a CardID, got empty string")
 	}
 	return []event.GameEvent{
-		event.DiscardCardEvent{
+		&event.DiscardCardEvent{
 			PlayerID: playerID,
 			CardID:   c.Target().ID,
 		},
@@ -61,7 +61,7 @@ func payDiscardACard(c cost.DiscardACard, playerID string) ([]event.GameEvent, e
 
 func payLife(c cost.Life, playerID string) []event.GameEvent {
 	return []event.GameEvent{
-		event.LoseLifeEvent{
+		&event.LoseLifeEvent{
 			PlayerID: playerID,
 			Amount:   c.Amount(),
 		},
@@ -72,7 +72,7 @@ func payMana(c cost.Mana, playerID string) []event.GameEvent {
 	if c.Amount().Total() == 0 {
 		return nil
 	}
-	return []event.GameEvent{event.SpendManaEvent{
+	return []event.GameEvent{&event.SpendManaEvent{
 		PlayerID:   playerID,
 		ManaString: c.Amount().ManaString(),
 	}}
@@ -80,7 +80,7 @@ func payMana(c cost.Mana, playerID string) []event.GameEvent {
 
 func payTapCost(object gob.Object, playerID string) []event.GameEvent {
 	return []event.GameEvent{
-		event.TapPermanentEvent{
+		&event.TapPermanentEvent{
 			PlayerID:    playerID,
 			PermanentID: object.ID(),
 		},

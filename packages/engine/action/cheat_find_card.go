@@ -3,19 +3,18 @@ package action
 import (
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/engine/resenv"
-	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/state"
 	"fmt"
 )
 
 type FindCardCheatAction struct {
-	card gob.Card
+	cardID string
 }
 
-func NewFindCardCheatAction(card gob.Card) FindCardCheatAction {
+func NewFindCardCheatAction(cardID string) FindCardCheatAction {
 	return FindCardCheatAction{
-		card: card,
+		cardID: cardID,
 	}
 }
 
@@ -23,23 +22,24 @@ func (a FindCardCheatAction) Name() string {
 	return "Find Card"
 }
 
-func (a FindCardCheatAction) Complete(game state.Game, player state.Player, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
+func (a FindCardCheatAction) Complete(game *state.Game, playerID string, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	if !game.CheatsEnabled() {
 		return nil, fmt.Errorf("no cheating you cheater")
 	}
-	card, ok := player.Library().Get(a.card.ID())
+	player := game.GetPlayer(playerID)
+	card, ok := player.Library().Get(a.cardID)
 	if !ok {
-		return nil, fmt.Errorf("card %q not found in library", a.card.ID())
+		return nil, fmt.Errorf("card %q not found in library", a.cardID)
 	}
 	return []event.GameEvent{
-		event.CheatFindCardEvent{
-			PlayerID: player.ID(),
-			CardID:   a.card.ID(),
+		&event.CheatFindCardEvent{
+			PlayerID: playerID,
+			CardID:   a.cardID,
 		},
-		event.PutCardInHandEvent{
+		&event.PutCardInHandEvent{
 			CardID:   card.ID(),
 			FromZone: mtg.ZoneLibrary,
-			PlayerID: player.ID(),
+			PlayerID: playerID,
 		},
 	}, nil
 }

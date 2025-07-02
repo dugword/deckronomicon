@@ -11,8 +11,8 @@ type Game struct {
 	ActivePlayerID string
 	Phase          mtg.Phase
 	Step           mtg.Step
-	Battlefield    []Permanent
-	Stack          []Resolvable
+	Battlefield    []*Permanent
+	Stack          []*Resolvable
 }
 
 type Player struct {
@@ -24,10 +24,10 @@ type Player struct {
 	// and do the formatting in the UI.
 	ManaPool          string
 	PotentialManaPool string
-	Hand              []Card
-	Graveyard         []Card
-	Exile             []Card
-	Revealed          []Card
+	Hand              []*Card
+	Graveyard         []*Card
+	Exile             []*Card
+	Revealed          []*Card
 	LibrarySize       int
 }
 
@@ -51,8 +51,8 @@ type Card struct {
 	ID   string
 }
 
-func NewGameViewFromState(game state.Game) Game {
-	return Game{
+func NewGameViewFromState(game *state.Game) *Game {
+	return &Game{
 		ActivePlayerID: game.ActivePlayerID(),
 		Phase:          game.Phase(),
 		Step:           game.Step(),
@@ -61,10 +61,10 @@ func NewGameViewFromState(game state.Game) Game {
 	}
 }
 
-func resolvablesToViewResolvables(resolvables []state.Resolvable) []Resolvable {
-	var viewResolvables []Resolvable
+func resolvablesToViewResolvables(resolvables []state.Resolvable) []*Resolvable {
+	var viewResolvables []*Resolvable
 	for _, resolvable := range resolvables {
-		viewResolvables = append(viewResolvables, Resolvable{
+		viewResolvables = append(viewResolvables, &Resolvable{
 			Name:       resolvable.Name(),
 			ID:         resolvable.ID(),
 			Controller: resolvable.Controller(),
@@ -73,10 +73,10 @@ func resolvablesToViewResolvables(resolvables []state.Resolvable) []Resolvable {
 	return viewResolvables
 }
 
-func cardsToViewCards(cards []gob.Card) []Card {
-	var viewCards []Card
+func cardsToViewCards(cards []*gob.Card) []*Card {
+	var viewCards []*Card
 	for _, card := range cards {
-		viewCards = append(viewCards, Card{
+		viewCards = append(viewCards, &Card{
 			Name: card.Name(),
 			ID:   card.ID(),
 		})
@@ -84,10 +84,10 @@ func cardsToViewCards(cards []gob.Card) []Card {
 	return viewCards
 }
 
-func permanentsToViewPermanents(permanents []gob.Permanent) []Permanent {
-	var viewPermanents []Permanent
+func permanentsToViewPermanents(permanents []*gob.Permanent) []*Permanent {
+	var viewPermanents []*Permanent
 	for _, perm := range permanents {
-		viewPermanents = append(viewPermanents, Permanent{
+		viewPermanents = append(viewPermanents, &Permanent{
 			Name:          perm.Name(),
 			Controller:    perm.Controller(),
 			ID:            perm.ID(),
@@ -98,16 +98,17 @@ func permanentsToViewPermanents(permanents []gob.Permanent) []Permanent {
 	return viewPermanents
 }
 
-func NewPlayerViewFromState(game state.Game, player state.Player, mode string) Player {
+func NewPlayerViewFromState(game *state.Game, playerID string, mode string) *Player {
+	player := game.GetPlayer(playerID)
 	manaPool := player.ManaPool().ManaString()
 	if manaPool == "" {
 		manaPool = "(empty)"
 	}
-	potentialManaPool := judge.GetAvailableMana(game, player).ManaString()
+	potentialManaPool := judge.GetAvailableMana(game, player.ID()).ManaString()
 	if potentialManaPool == "" {
 		potentialManaPool = "(empty)"
 	}
-	return Player{
+	return &Player{
 		ID:                player.ID(),
 		Life:              player.Life(),
 		Mode:              mode,

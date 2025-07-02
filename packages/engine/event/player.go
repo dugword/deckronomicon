@@ -24,7 +24,7 @@ type PlayerEvent interface{ isPlayerEvent() }
 
 type PlayerBaseEvent struct{}
 
-func (e PlayerBaseEvent) isPlayerEvent() {}
+func (e *PlayerBaseEvent) isPlayerEvent() {}
 
 type ActivateAbilityEvent struct {
 	PlayerBaseEvent
@@ -34,7 +34,7 @@ type ActivateAbilityEvent struct {
 	Zone      mtg.Zone
 }
 
-func (e ActivateAbilityEvent) EventType() string {
+func (e *ActivateAbilityEvent) EventType() string {
 	return EventTypeActivateAbility
 }
 
@@ -44,7 +44,7 @@ type AssignCombatDamageEvent struct {
 	Assignments map[string]int // Map of attacker ID to damage assigned
 }
 
-func (e AssignCombatDamageEvent) EventType() string {
+func (e *AssignCombatDamageEvent) EventType() string {
 	return EventTypeAssignCombatDamage
 }
 
@@ -55,7 +55,7 @@ type CastSpellEvent struct {
 	FromZone mtg.Zone
 }
 
-func (e CastSpellEvent) EventType() string {
+func (e *CastSpellEvent) EventType() string {
 	return EventTypeCastSpell
 }
 
@@ -64,7 +64,7 @@ type ClearRevealedEvent struct {
 	PlayerID string
 }
 
-func (e ClearRevealedEvent) EventType() string {
+func (e *ClearRevealedEvent) EventType() string {
 	return EventTypeClearRevealed
 }
 
@@ -73,7 +73,7 @@ type ConcedeEvent struct {
 	PlayerBaseEvent
 }
 
-func (e ConcedeEvent) EventType() string {
+func (e *ConcedeEvent) EventType() string {
 	return EventTypeConcede
 }
 
@@ -83,7 +83,7 @@ type DeclareAttackersEvent struct {
 	Attackers []string // List of card IDs that are attacking
 }
 
-func (e DeclareAttackersEvent) EventType() string {
+func (e *DeclareAttackersEvent) EventType() string {
 	return EventTypeDeclareAttackers
 }
 
@@ -93,7 +93,7 @@ type DeclareBlockersEvent struct {
 	Blockers map[string][]string // Map of attacking card IDs to defending card IDs
 }
 
-func (e DeclareBlockersEvent) EventType() string {
+func (e *DeclareBlockersEvent) EventType() string {
 	return EventTypeDeclareBlockers
 }
 
@@ -104,7 +104,7 @@ type PlayLandEvent struct {
 	Zone     mtg.Zone
 }
 
-func (e PlayLandEvent) EventType() string {
+func (e *PlayLandEvent) EventType() string {
 	return EventTypePlayLand
 }
 
@@ -113,7 +113,7 @@ type CycleCardEvent struct {
 	PlayerID string
 }
 
-func (e CycleCardEvent) EventType() string {
+func (e *CycleCardEvent) EventType() string {
 	return EventTypeCycleCard
 }
 
@@ -124,6 +124,6 @@ type LandTappedForManaEvent struct {
 	Subtypes []mtg.Subtype
 }
 
-func (e LandTappedForManaEvent) EventType() string {
+func (e *LandTappedForManaEvent) EventType() string {
 	return EventTypeLandTappedForMana
 }

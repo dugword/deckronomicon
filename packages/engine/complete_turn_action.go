@@ -11,8 +11,8 @@ import (
 type TurnBasedAction interface {
 	Name() string
 	Description() string
-	GetPrompt(state.Game) (choose.ChoicePrompt, error)
-	Complete(state.Game, choose.ChoiceResults) ([]event.GameEvent, error)
+	GetPrompt(*state.Game) (choose.ChoicePrompt, error)
+	Complete(*state.Game, choose.ChoiceResults) ([]event.GameEvent, error)
 	PlayerID() string
 }
 

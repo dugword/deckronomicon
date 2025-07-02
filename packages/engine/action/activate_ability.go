@@ -23,7 +23,7 @@ type ActivateAbilityRequest struct {
 	TargetsForEffects map[effect.EffectTargetKey]target.Target
 }
 
-func (r ActivateAbilityRequest) Build(string) ActivateAbilityAction {
+func (r ActivateAbilityRequest) Build() ActivateAbilityAction {
 	return NewActivateAbilityAction(r)
 }
 
@@ -49,10 +49,10 @@ func (a ActivateAbilityAction) Name() string {
 	return "Activate Ability"
 }
 
-func (a ActivateAbilityAction) Complete(game state.Game, player state.Player, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
+func (a ActivateAbilityAction) Complete(game *state.Game, playerID string, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	ability, ok := getAbilityOnSourceInZone(
 		game,
-		player,
+		playerID,
 		a.sourceID,
 		a.abilityID,
 		a.zone,
@@ -60,7 +60,7 @@ func (a ActivateAbilityAction) Complete(game state.Game, player state.Player, re
 	if !ok {
 		return nil, fmt.Errorf(
 			"player %q does not have ability %q on source %q in zone %q",
-			player.ID(),
+			playerID,
 			a.abilityID,
 			a.sourceID,
 			a.zone,
@@ -68,7 +68,7 @@ func (a ActivateAbilityAction) Complete(game state.Game, player state.Player, re
 	}
 	source, ok := getAbilitySource(
 		game,
-		player,
+		playerID,
 		a.zone,
 		ability.Source().ID(),
 	)
@@ -82,10 +82,10 @@ func (a ActivateAbilityAction) Complete(game state.Game, player state.Player, re
 	}
 	ruling := judge.Ruling{Explain: true}
 	// TODO: Should it be abilityOnObjectInZone.Object() instead of Source()?
-	if !judge.CanActivateAbility(game, player, source, ability, &ruling) {
+	if !judge.CanActivateAbility(game, playerID, source, ability, &ruling) {
 		return nil, fmt.Errorf(
 			"player %q cannot activate ability %q on %q in %q: %v",
-			player.ID(),
+			playerID,
 			ability.Name(),
 			source.Name(),
 			a.zone,
@@ -93,8 +93,8 @@ func (a ActivateAbilityAction) Complete(game state.Game, player state.Player, re
 		)
 	}
 	events := []event.GameEvent{
-		event.ActivateAbilityEvent{
-			PlayerID:  player.ID(),
+		&event.ActivateAbilityEvent{
+			PlayerID:  playerID,
 			SourceID:  source.ID(),
 			AbilityID: ability.Name(),
 			Zone:      a.zone,
@@ -111,38 +111,38 @@ func (a ActivateAbilityAction) Complete(game state.Game, player state.Player, re
 			abilityCost = costWithTarget.WithTarget("TODO - SET THIS TARGET ID")
 		}
 	*/
-	costEvents, err := pay.Cost(ability.Cost(), source, player.ID())
+	costEvents, err := pay.Cost(ability.Cost(), source, playerID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to pay ability cost: %w", err)
 	}
 	events = append(events, costEvents...)
-	var nonAddManaEffectsWithTargets []effect.EffectWithTarget
+	var nonAddManaEffectsWithTargets []*effect.EffectWithTarget
 	for _, effectWithTarget := range effectWithTargets {
-		addManaEffect, ok := effectWithTarget.Effect.(effect.AddMana)
+		addManaEffect, ok := effectWithTarget.Effect.(*effect.AddMana)
 		if !ok {
 			nonAddManaEffectsWithTargets = append(nonAddManaEffectsWithTargets, effectWithTarget)
 			continue
 		}
 		if source.Match(is.Land()) && cost.HasType(ability.Cost(), cost.TapThis{}) {
-			land, ok := source.(gob.Permanent)
+			land, ok := source.(*gob.Permanent)
 			if !ok {
 				return nil, fmt.Errorf("source %q is not a permanent", source.ID())
 			}
-			events = append(events, event.LandTappedForManaEvent{
-				PlayerID: player.ID(),
+			events = append(events, &event.LandTappedForManaEvent{
+				PlayerID: playerID,
 				ObjectID: land.ID(),
 				Subtypes: land.Subtypes(),
 			})
 		}
-		result, err := resolver.ResolveAddMana(game, player.ID(), addManaEffect)
+		result, err := resolver.ResolveAddMana(game, playerID, addManaEffect)
 		if err != nil {
 			return nil, fmt.Errorf("failed to resolve add mana effect: %w", err)
 		}
 		events = append(events, result.Events...)
 	}
 	if len(nonAddManaEffectsWithTargets) > 0 {
-		events = append(events, event.PutAbilityOnStackEvent{
-			PlayerID:          player.ID(),
+		events = append(events, &event.PutAbilityOnStackEvent{
+			PlayerID:          playerID,
 			SourceID:          source.ID(),
 			AbilityID:         ability.ID(),
 			FromZone:          a.zone,
@@ -154,61 +154,62 @@ func (a ActivateAbilityAction) Complete(game state.Game, player state.Player, re
 }
 
 func getAbilityOnSourceInZone(
-	game state.Game,
-	player state.Player,
+	game *state.Game,
+	playerID string,
 	sourceID string,
 	abilityID string,
 	zone mtg.Zone,
-) (gob.Ability, bool) {
+) (*gob.Ability, bool) {
 	switch zone {
 	case mtg.ZoneBattlefield:
 		return getAbilityFromPermanent(game, sourceID, abilityID)
 	case mtg.ZoneHand, mtg.ZoneGraveyard, mtg.ZoneExile, mtg.ZoneLibrary:
-		return getAbilityFromCardInZone(game, player, sourceID, abilityID, zone)
+		return getAbilityFromCardInZone(game, playerID, sourceID, abilityID, zone)
 	default:
-		return gob.Ability{}, false
+		return nil, false
 	}
 }
 
 func getAbilityFromPermanent(
-	game state.Game,
+	game *state.Game,
 	sourceID string,
 	abilityID string,
-) (gob.Ability, bool) {
+) (*gob.Ability, bool) {
 	permanent, ok := game.Battlefield().Get(sourceID)
 	if !ok {
-		return gob.Ability{}, false
+		return nil, false
 	}
 	for _, ability := range permanent.ActivatedAbilities() {
 		if ability.ID() == abilityID {
 			return ability, true
 		}
 	}
-	return gob.Ability{}, false
+	return nil, false
 }
 
 func getAbilityFromCardInZone(
-	game state.Game,
-	player state.Player,
+	game *state.Game,
+	playerID string,
 	sourceID string,
 	abilityID string,
 	zone mtg.Zone,
-) (gob.Ability, bool) {
+) (*gob.Ability, bool) {
+	player := game.GetPlayer(playerID)
 	card, ok := player.GetCardFromZone(sourceID, zone)
 	if !ok {
-		return gob.Ability{}, false
+		return nil, false
 	}
 	for _, ability := range card.ActivatedAbilities() {
 		if ability.ID() == abilityID {
 			return ability, true
 		}
 	}
-	return gob.Ability{}, false
+	return nil, false
 }
 
 func getAbilitySource(
-	game state.Game,
-	player state.Player,
+	game *state.Game,
+	playerID string,
 	zone mtg.Zone,
 	sourceID string,
 ) (gob.Object, bool) {
@@ -216,12 +217,12 @@ func getAbilitySource(
 	case mtg.ZoneBattlefield:
 		return getAbilitySourceFromPermanent(game, sourceID)
 	default:
-		return getAbilitySourceFromCardInZone(player, sourceID, zone)
+		return getAbilitySourceFromCardInZone(game, playerID, sourceID, zone)
 	}
 }
 
 func getAbilitySourceFromPermanent(
-	game state.Game,
+	game *state.Game,
 	sourceID string,
 ) (gob.Object, bool) {
 	permanent, ok := game.Battlefield().Get(sourceID)
@@ -232,10 +233,12 @@ func getAbilitySourceFromPermanent(
 }
 
 func getAbilitySourceFromCardInZone(
-	player state.Player,
+	game *state.Game,
+	playerID string,
 	sourceID string,
 	zone mtg.Zone,
 ) (gob.Object, bool) {
+	player := game.GetPlayer(playerID)
 	card, ok := player.GetCardFromZone(sourceID, zone)
 	if !ok {
 		return nil, false

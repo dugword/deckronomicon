@@ -15,55 +15,55 @@ func TestApplyPriorityEvent(t *testing.T) {
 	testCases := []struct {
 		name string
 		evnt event.PriorityEvent
-		game state.Game
-		want state.Game
+		game *state.Game
+		want *state.Game
 	}{
 		{
 			name: "with AllPlayersPassedPriorityEvent",
-			evnt: event.AllPlayersPassedPriorityEvent{},
-			game: state.Game{},
-			want: state.Game{},
+			evnt: &event.AllPlayersPassedPriorityEvent{},
+			game: &state.Game{},
+			want: &state.Game{},
 		},
 		{
 			name: "with PassPriorityEvent",
-			evnt: event.PassPriorityEvent{
+			evnt: &event.PassPriorityEvent{
 				PlayerID: playerID,
 			},
-			game: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{
+			game: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{
 					ID: playerID,
 				}},
 			}),
-			want: state.NewGameFromDefinition(definition.Game{
+			want: state.NewGameFromDefinition(&definition.Game{
 				PlayersPassedPriority: map[string]bool{
 					playerID: true,
 				},
-				Players: []definition.Player{{
+				Players: []*definition.Player{{
 					ID: playerID,
 				}},
 			}),
 		},
 		{
 			name: "with ReceivePriorityEvent",
-			evnt: event.ReceivePriorityEvent{
+			evnt: &event.ReceivePriorityEvent{
 				PlayerID: playerID,
 			},
-			game: state.Game{},
-			want: state.Game{},
+			game: &state.Game{},
+			want: &state.Game{},
 		},
 		{
 			name: "with ResetPriorityPassesEvent",
-			evnt: event.ResetPriorityPassesEvent{},
-			game: state.NewGameFromDefinition(definition.Game{
+			evnt: &event.ResetPriorityPassesEvent{},
+			game: state.NewGameFromDefinition(&definition.Game{
 				PlayersPassedPriority: map[string]bool{
 					playerID: true,
 				},
-				Players: []definition.Player{{
+				Players: []*definition.Player{{
 					ID: playerID,
 				}},
 			}),
-			want: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{
+			want: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{
 					ID: playerID,
 				}},
 			}),

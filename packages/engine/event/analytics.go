@@ -9,7 +9,7 @@ type AnalyticsEvent interface{ isAnalyticsEvent() }
 
 type AnalyticsBaseEvent struct{}
 
-func (e AnalyticsBaseEvent) isAnalyticsEvent() {}
+func (e *AnalyticsBaseEvent) isAnalyticsEvent() {}
 
 type LogMessageEvent struct {
 	AnalyticsBaseEvent
@@ -17,7 +17,7 @@ type LogMessageEvent struct {
 	Message  string
 }
 
-func (e LogMessageEvent) EventType() string {
+func (e *LogMessageEvent) EventType() string {
 	return EventTypeLogMessage
 }
 
@@ -28,6 +28,6 @@ type EmitMetricEvent struct {
 	Value    int
 }
 
-func (e EmitMetricEvent) EventType() string {
+func (e *EmitMetricEvent) EventType() string {
 	return EventTypeEmitMetric
 }

@@ -23,7 +23,7 @@ import (
 // It returns a slice of events that occurred during the process, or an error if it fails
 // The events returned will include the acticvation of mana sources only.
 // Spending events are not included in the events, as they are handled separately by the pay.Cost function.
-func AutoActivateManaSources(game state.Game, someCost cost.Cost, object gob.Object, playerID string, colors []mana.Color) ([]event.GameEvent, error) {
+func AutoActivateManaSources(game *state.Game, someCost cost.Cost, object gob.Object, playerID string, colors []mana.Color) ([]event.GameEvent, error) {
 	// The game state returned from withActiatedManaSources is not used, as the game state is updated
 	// by the reducer.ApplyEvent function in the Engine's ApplyEvent method.
 	// This interim game state is use to track the which mana sources will be activated
@@ -56,11 +56,11 @@ func AutoActivateManaSources(game state.Game, someCost cost.Cost, object gob.Obj
 }
 
 func withUpdatePlayerSpendAmount(
-	game state.Game,
+	game *state.Game,
 	playerID string,
 	amount mana.Amount,
 	colors []mana.Color,
-) (state.Game, mana.Amount) {
+) (*state.Game, mana.Amount) {
 	player := game.GetPlayer(playerID)
 	manaPool := player.ManaPool()
 	manaPool, remaining := manaPool.WithSpendAmount(amount, colors)
@@ -70,11 +70,11 @@ func withUpdatePlayerSpendAmount(
 }
 
 func withActivateManaSources(
-	game state.Game,
+	game *state.Game,
 	playerID string,
 	Mana cost.Mana,
 	colors []mana.Color,
-) (state.Game, []event.GameEvent, error) {
+) (*state.Game, []event.GameEvent, error) {
 	var events []event.GameEvent
 	var err error
 	remaining := Mana.Amount()
@@ -123,11 +123,11 @@ func withActivateManaSources(
 }
 
 func activateManaSourcesForColored(
-	game state.Game,
+	game *state.Game,
 	playerID string,
 	remaining mana.Amount,
 	manaColor mana.Color,
-) (state.Game, mana.Amount, []event.GameEvent, error) {
+) (*state.Game, mana.Amount, []event.GameEvent, error) {
 	var events []event.GameEvent
 	var err error
 	for remaining.AmountOf(manaColor) > 0 {
@@ -156,11 +156,11 @@ func activateManaSourcesForColored(
 }
 
 func activateManaSourcesForGeneric(
-	game state.Game,
+	game *state.Game,
 	playerID string,
 	remaining mana.Amount,
 	colors []mana.Color,
-) (state.Game, mana.Amount, []event.GameEvent, error) {
+) (*state.Game, mana.Amount, []event.GameEvent, error) {
 	var events []event.GameEvent
 	var err error
 	for _, manaColor := range colors {
@@ -192,10 +192,10 @@ func activateManaSourcesForGeneric(
 
 // TODO: redundate with judge.GetAvailableMana
 func activateManaSource(
-	game state.Game,
+	game *state.Game,
 	playerID string,
 	landID string,
-) (state.Game, []event.GameEvent, error) {
+) (*state.Game, []event.GameEvent, error) {
 	player := game.GetPlayer(playerID)
 	land, ok := game.Battlefield().Get(landID)
 	if !ok {
@@ -206,7 +206,7 @@ func activateManaSource(
 			continue
 		}
 		events := []event.GameEvent{
-			event.ActivateAbilityEvent{
+			&event.ActivateAbilityEvent{
 				PlayerID:  player.ID(),
 				SourceID:  land.ID(),
 				AbilityID: ability.Name(),
@@ -222,7 +222,7 @@ func activateManaSource(
 			return game, nil, fmt.Errorf("failed to pay cost for mana ability %s: %w", ability.Name(), err)
 		}
 		events = append(events, costEvents...)
-		events = append(events, event.LandTappedForManaEvent{
+		events = append(events, &event.LandTappedForManaEvent{
 			PlayerID: player.ID(),
 			ObjectID: land.ID(),
 			Subtypes: land.Subtypes(),
@@ -235,7 +235,7 @@ func activateManaSource(
 			}
 		}
 		for _, efct := range ability.Effects() {
-			addManaEffect, ok := efct.(effect.AddMana)
+			addManaEffect, ok := efct.(*effect.AddMana)
 			if !ok {
 				continue
 			}

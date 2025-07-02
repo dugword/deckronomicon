@@ -12,34 +12,34 @@ import (
 // These are game state change events that modify the game state directly. The should be resuable and not
 // specific to a single action.
 
-func applyGameStateChangeEvent(game state.Game, gameStateChangeEvent event.GameStateChangeEvent) (state.Game, error) {
+func applyGameStateChangeEvent(game *state.Game, gameStateChangeEvent event.GameStateChangeEvent) (*state.Game, error) {
 	switch evnt := gameStateChangeEvent.(type) {
-	case event.AddManaEvent:
+	case *event.AddManaEvent:
 		return applyAddManaEvent(game, evnt)
-	case event.CheatEnabledEvent:
+	case *event.CheatEnabledEvent:
 		game = game.WithCheatsEnabled(true)
 		return game, nil
-	case event.DiscardCardEvent:
+	case *event.DiscardCardEvent:
 		return applyDiscardCardEvent(game, evnt)
-	case event.DrawCardEvent:
+	case *event.DrawCardEvent:
 		return applyDrawCardEvent(game, evnt)
-	case event.GainLifeEvent:
+	case *event.GainLifeEvent:
 		return applyGainLifeEvent(game, evnt)
-	case event.LoseLifeEvent:
+	case *event.LoseLifeEvent:
 		return applyeLoseLifeEvent(game, evnt)
 	//case event.MoveCardEvent:
 	//return applyMoveCardEvent(game, evnt)
-	case event.PutCardInHandEvent:
+	case *event.PutCardInHandEvent:
 		return applyPutCardInHandEvent(game, evnt)
-	case event.PutCardInGraveyardEvent:
+	case *event.PutCardInGraveyardEvent:
 		return applyPutCardInGraveyardEvent(game, evnt)
-	case event.PutCardOnBottomOfLibraryEvent:
+	case *event.PutCardOnBottomOfLibraryEvent:
 		return applyPutCardOnBottomOfLibraryEvent(game, evnt)
-	case event.PutCardOnTopOfLibraryEvent:
+	case *event.PutCardOnTopOfLibraryEvent:
 		return applyPutCardOnTopOfLibraryEvent(game, evnt)
-	case event.PutPermanentOnBattlefieldEvent:
+	case *event.PutPermanentOnBattlefieldEvent:
 		return applyPutPermanentOnBattlefieldEvent(game, evnt)
-	case event.RevealCardEvent:
+	case *event.RevealCardEvent:
 		player := game.GetPlayer(evnt.PlayerID)
 		card, ok := player.GetCardFromZone(evnt.CardID, evnt.FromZone)
 		if !ok {
@@ -49,12 +49,12 @@ func applyGameStateChangeEvent(game state.Game, gameStateChangeEvent event.GameS
 		player = player.WithRevealed(revealed)
 		game = game.WithUpdatedPlayer(player)
 		return game, nil
-	case event.SetActivePlayerEvent:
+	case *event.SetActivePlayerEvent:
 		game = game.WithActivePlayer(evnt.PlayerID)
 		return game, nil
-	case event.ShuffleLibraryEvent:
+	case *event.ShuffleLibraryEvent:
 		return applyShuffleLibraryEvent(game, evnt)
-	case event.SpendManaEvent:
+	case *event.SpendManaEvent:
 		player := game.GetPlayer(evnt.PlayerID)
 		amount, err := mana.ParseManaString(evnt.ManaString)
 		if err != nil {
@@ -69,9 +69,9 @@ func applyGameStateChangeEvent(game state.Game, gameStateChangeEvent event.GameS
 		game = game.WithUpdatedPlayer(player)
 		return game, nil
 
-	case event.TapPermanentEvent:
+	case *event.TapPermanentEvent:
 		return applyTapPermanentEvent(game, evnt)
-	case event.UntapPermanentEvent:
+	case *event.UntapPermanentEvent:
 		return applyUntapPermanentEvent(game, evnt)
 	default:
 		return game, fmt.Errorf("unknown game state change event type '%T'", evnt)
@@ -79,9 +79,9 @@ func applyGameStateChangeEvent(game state.Game, gameStateChangeEvent event.GameS
 }
 
 func applyAddManaEvent(
-	game state.Game,
-	addManaEvent event.AddManaEvent,
-) (state.Game, error) {
+	game *state.Game,
+	addManaEvent *event.AddManaEvent,
+) (*state.Game, error) {
 	player := game.GetPlayer(addManaEvent.PlayerID)
 	player = player.WithAddMana(addManaEvent.Color, addManaEvent.Amount)
 	game = game.WithUpdatedPlayer(player)
@@ -89,9 +89,9 @@ func applyAddManaEvent(
 }
 
 func applyDiscardCardEvent(
-	game state.Game,
-	event event.DiscardCardEvent,
-) (state.Game, error) {
+	game *state.Game,
+	event *event.DiscardCardEvent,
+) (*state.Game, error) {
 	player := game.GetPlayer(event.PlayerID)
 	player, err := player.WithDiscardCard(event.CardID)
 	if err != nil {
@@ -102,9 +102,9 @@ func applyDiscardCardEvent(
 }
 
 func applyDrawCardEvent(
-	game state.Game,
-	event event.DrawCardEvent,
-) (state.Game, error) {
+	game *state.Game,
+	event *event.DrawCardEvent,
+) (*state.Game, error) {
 	player := game.GetPlayer(event.PlayerID)
 	player, _, err := player.WithDrawCard()
 	if err != nil {
@@ -120,9 +120,9 @@ func applyDrawCardEvent(
 }
 
 func applyGainLifeEvent(
-	game state.Game,
-	evnt event.GainLifeEvent,
-) (state.Game, error) {
+	game *state.Game,
+	evnt *event.GainLifeEvent,
+) (*state.Game, error) {
 	player := game.GetPlayer(evnt.PlayerID)
 	player = player.WithGainLife(evnt.Amount)
 	game = game.WithUpdatedPlayer(player)
@@ -130,9 +130,9 @@ func applyGainLifeEvent(
 }
 
 func applyeLoseLifeEvent(
-	game state.Game,
-	evnt event.LoseLifeEvent,
-) (state.Game, error) {
+	game *state.Game,
+	evnt *event.LoseLifeEvent,
+) (*state.Game, error) {
 	player := game.GetPlayer(evnt.PlayerID)
 	player = player.WithLoseLife(evnt.Amount)
 	game = game.WithUpdatedPlayer(player)
@@ -140,9 +140,9 @@ func applyeLoseLifeEvent(
 }
 
 func applyPutCardInHandEvent(
-	game state.Game,
-	evnt event.PutCardInHandEvent,
-) (state.Game, error) {
+	game *state.Game,
+	evnt *event.PutCardInHandEvent,
+) (*state.Game, error) {
 	player := game.GetPlayer(evnt.PlayerID)
 	card, player, ok := player.TakeCardFromZone(evnt.CardID, evnt.FromZone)
 	if !ok {
@@ -157,9 +157,9 @@ func applyPutCardInHandEvent(
 }
 
 func applyPutCardInGraveyardEvent(
-	game state.Game,
-	evnt event.PutCardInGraveyardEvent,
-) (state.Game, error) {
+	game *state.Game,
+	evnt *event.PutCardInGraveyardEvent,
+) (*state.Game, error) {
 	player := game.GetPlayer(evnt.PlayerID)
 	card, player, ok := player.TakeCardFromZone(evnt.CardID, evnt.FromZone)
 	if !ok {
@@ -174,9 +174,9 @@ func applyPutCardInGraveyardEvent(
 }
 
 func applyPutCardOnBottomOfLibraryEvent(
-	game state.Game,
-	evnt event.PutCardOnBottomOfLibraryEvent,
-) (state.Game, error) {
+	game *state.Game,
+	evnt *event.PutCardOnBottomOfLibraryEvent,
+) (*state.Game, error) {
 	player := game.GetPlayer(evnt.PlayerID)
 	card, player, ok := player.TakeCardFromZone(evnt.CardID, evnt.FromZone)
 	if !ok {
@@ -191,9 +191,9 @@ func applyPutCardOnBottomOfLibraryEvent(
 }
 
 func applyPutCardOnTopOfLibraryEvent(
-	game state.Game,
-	evnt event.PutCardOnTopOfLibraryEvent,
-) (state.Game, error) {
+	game *state.Game,
+	evnt *event.PutCardOnTopOfLibraryEvent,
+) (*state.Game, error) {
 	player := game.GetPlayer(evnt.PlayerID)
 	card, player, ok := player.TakeCardFromZone(evnt.CardID, evnt.FromZone)
 	if !ok {
@@ -208,9 +208,9 @@ func applyPutCardOnTopOfLibraryEvent(
 }
 
 func applyPutPermanentOnBattlefieldEvent(
-	game state.Game,
-	evnt event.PutPermanentOnBattlefieldEvent,
-) (state.Game, error) {
+	game *state.Game,
+	evnt *event.PutPermanentOnBattlefieldEvent,
+) (*state.Game, error) {
 	player := game.GetPlayer(evnt.PlayerID)
 	switch evnt.FromZone {
 	case mtg.ZoneHand, mtg.ZoneLibrary, mtg.ZoneGraveyard, mtg.ZoneExile:
@@ -233,7 +233,7 @@ func applyPutPermanentOnBattlefieldEvent(
 		if !ok {
 			return game, fmt.Errorf("card %q not found in stack", evnt.CardID)
 		}
-		spell, ok := resolvable.(gob.Spell)
+		spell, ok := resolvable.(*gob.Spell)
 		if !ok {
 			return game, fmt.Errorf("resolvable %q is not a spell", evnt.CardID)
 		}
@@ -251,9 +251,9 @@ func applyPutPermanentOnBattlefieldEvent(
 }
 
 func applyShuffleLibraryEvent(
-	game state.Game,
-	evnt event.ShuffleLibraryEvent,
-) (state.Game, error) {
+	game *state.Game,
+	evnt *event.ShuffleLibraryEvent,
+) (*state.Game, error) {
 	player := game.GetPlayer(evnt.PlayerID)
 	player, err := player.WithShuffledLibrary(evnt.ShuffledCardsIDs)
 	if err != nil {
@@ -267,9 +267,9 @@ func applyShuffleLibraryEvent(
 }
 
 func applyTapPermanentEvent(
-	game state.Game,
-	evnt event.TapPermanentEvent,
-) (state.Game, error) {
+	game *state.Game,
+	evnt *event.TapPermanentEvent,
+) (*state.Game, error) {
 	permanent, ok := game.Battlefield().Get(evnt.PermanentID)
 	if !ok {
 		return game, fmt.Errorf("permanent %q not found", evnt.PermanentID)
@@ -284,9 +284,9 @@ func applyTapPermanentEvent(
 }
 
 func applyUntapPermanentEvent(
-	game state.Game,
-	evnt event.UntapPermanentEvent,
-) (state.Game, error) {
+	game *state.Game,
+	evnt *event.UntapPermanentEvent,
+) (*state.Game, error) {
 	permanent, ok := game.Battlefield().Get(evnt.PermanentID)
 	if !ok {
 		return game, fmt.Errorf("permanent %q not found", evnt.PermanentID)

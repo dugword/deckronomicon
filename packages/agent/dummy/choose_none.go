@@ -30,7 +30,7 @@ func (a *ChooseNoneAgent) PlayerID() string {
 	return a.playerID
 }
 
-func (a *ChooseNoneAgent) GetNextAction(game state.Game) (engine.Action, error) {
+func (a *ChooseNoneAgent) GetNextAction(game *state.Game) (engine.Action, error) {
 	return action.NewPassPriorityAction(), nil
 }
 
@@ -65,4 +65,4 @@ func (a *ChooseNoneAgent) Choose(prompt choose.ChoicePrompt) (choose.ChoiceResul
 	}
 }
 
-func (a *ChooseNoneAgent) ReportState(game state.Game) {}
+func (a *ChooseNoneAgent) ReportState(game *state.Game) {}

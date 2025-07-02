@@ -10,14 +10,14 @@ import (
 
 func Spell() query.Predicate {
 	return func(obj query.Object) bool {
-		_, ok := obj.(gob.Spell)
+		_, ok := obj.(*gob.Spell)
 		return ok
 	}
 }
 
 func AbilityOnStack() query.Predicate {
 	return func(obj query.Object) bool {
-		_, ok := obj.(gob.AbilityOnStack)
+		_, ok := obj.(*gob.AbilityOnStack)
 		return ok
 	}
 }
@@ -37,14 +37,14 @@ func Not(predicate query.Predicate) query.Predicate {
 
 func Permanent() query.Predicate {
 	return func(obj query.Object) bool {
-		_, ok := obj.(gob.Permanent)
+		_, ok := obj.(*gob.Permanent)
 		return ok
 	}
 }
 
 func Tapped() query.Predicate {
 	return func(obj query.Object) bool {
-		permObj, ok := obj.(gob.Permanent)
+		permObj, ok := obj.(*gob.Permanent)
 		if !ok {
 			return false
 		}
@@ -82,7 +82,7 @@ func Land() query.Predicate {
 
 func Untapped() query.Predicate {
 	return func(obj query.Object) bool {
-		permObj, ok := obj.(gob.Permanent)
+		permObj, ok := obj.(*gob.Permanent)
 		if !ok {
 			return false
 		}
@@ -92,9 +92,9 @@ func Untapped() query.Predicate {
 
 func ManaAbility() query.Predicate {
 	return func(obj query.Object) bool {
-		if abilityObj, ok := obj.(gob.Ability); ok {
+		if abilityObj, ok := obj.(*gob.Ability); ok {
 			for _, efct := range abilityObj.Effects() {
-				if _, ok := efct.(effect.AddMana); ok {
+				if _, ok := efct.(*effect.AddMana); ok {
 					return true
 				}
 			}

@@ -3,18 +3,17 @@ package action
 import (
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/engine/resenv"
-	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/state"
 	"fmt"
 )
 
 type UntapCheatAction struct {
-	permanent gob.Permanent
+	permanentID string
 }
 
-func NewUntapCheatAction(permanent gob.Permanent) UntapCheatAction {
+func NewUntapCheatAction(permanentID string) UntapCheatAction {
 	return UntapCheatAction{
-		permanent: permanent,
+		permanentID: permanentID,
 	}
 }
 
@@ -22,17 +21,17 @@ func (a UntapCheatAction) Name() string {
 	return "Untap target permanent"
 }
 
-func (a UntapCheatAction) Complete(game state.Game, player state.Player, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
+func (a UntapCheatAction) Complete(game *state.Game, playerID string, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	if !game.CheatsEnabled() {
 		return nil, fmt.Errorf("no cheating you cheater")
 	}
 	return []event.GameEvent{
-		event.CheatUntapEvent{
-			PlayerID: player.ID(),
+		&event.CheatUntapEvent{
+			PlayerID: playerID,
 		},
-		event.UntapPermanentEvent{
-			PlayerID:    player.ID(),
-			PermanentID: a.permanent.ID(),
+		&event.UntapPermanentEvent{
+			PlayerID:    playerID,
+			PermanentID: a.permanentID,
 		},
 	}, nil
 }

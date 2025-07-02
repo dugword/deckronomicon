@@ -14,9 +14,9 @@ import (
 )
 
 func ResolveReplicate(
-	game state.Game,
+	game *state.Game,
 	playerID string,
-	replicate effect.Replicate,
+	replicate *effect.Replicate,
 	source gob.Object,
 	resEnv *resenv.ResEnv,
 ) (Result, error) {
@@ -24,18 +24,18 @@ func ResolveReplicate(
 	if !ok {
 		return Result{
 			Events: []event.GameEvent{
-				event.SpellOrAbilityFizzlesEvent{
+				&event.SpellOrAbilityFizzlesEvent{
 					PlayerID: playerID,
 					ObjectID: source.ID(),
 				},
 			},
 		}, nil
 	}
-	spell, ok := resolvable.(gob.Spell)
+	spell, ok := resolvable.(*gob.Spell)
 	if !ok {
 		return Result{}, fmt.Errorf("resolvable with ID %q is %T not a spell", source.ID(), resolvable)
 	}
-	var effectWithNewTargets []effect.EffectWithTarget
+	var effectWithNewTargets []*effect.EffectWithTarget
 	for _, effectWithTarget := range spell.EffectWithTargets() {
 		if effectWithTarget.Target.Type != mtg.TargetTypeNone {
 			effectWithNewTargets = append(effectWithNewTargets, effectWithTarget)
@@ -47,7 +47,7 @@ func ResolveReplicate(
 	}
 	events := []event.GameEvent{}
 	for range replicate.Count {
-		events = append(events, event.PutCopiedSpellOnStackEvent{
+		events = append(events, &event.PutCopiedSpellOnStackEvent{
 			PlayerID:          playerID,
 			SpellID:           spell.ID(),
 			EffectWithTargets: effectWithNewTargets,

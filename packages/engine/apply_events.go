@@ -9,12 +9,12 @@ import (
 )
 
 func (e *Engine) ApplyEvent(gameEvent event.GameEvent) error {
-	e.log.Info("Applying event:", gameEvent.EventType())
+	e.log.Debug("Applying event:", gameEvent.EventType())
 	e.record.Add(gameEvent)
 	game, err := reducer.ApplyEventAndTriggers(e.game, gameEvent)
 	if err != nil {
 		if errors.Is(err, mtg.ErrGameOver) {
-			e.log.Info("Game over detected")
+			e.log.Debug("Game over detected")
 			return err
 		}
 		e.log.Critical("Failed to apply event:", err)

@@ -14,16 +14,16 @@ import (
 
 func parseActivateAbilityCommand(
 	idOrName string,
-	game state.Game,
-	player state.Player,
+	game *state.Game,
+	playerID string,
 	agent engine.PlayerAgent,
 ) (action.ActivateAbilityRequest, error) {
-	var abilityInZone gob.AbilityInZone
+	var abilityInZone *gob.AbilityInZone
 	var err error
 	ruling := judge.Ruling{Explain: true}
-	abilityInZones := judge.GetAbilitiesAvailableToActivate(game, player, &ruling)
+	abilityInZones := judge.GetAbilitiesAvailableToActivate(game, playerID, &ruling)
 	if idOrName == "" {
-		abilityInZone, err = buildActivateAbilityCommandByChoice(abilityInZones, agent, player)
+		abilityInZone, err = buildActivateAbilityCommandByChoice(abilityInZones, agent, playerID)
 		if err != nil {
 			return action.ActivateAbilityRequest{}, fmt.Errorf("failed to choose an ability to activate: %w", err)
 		}
@@ -35,7 +35,7 @@ func parseActivateAbilityCommand(
 		abilityInZone = found
 	}
 	targetsForEffects, err := getTargetsForEffects(
-		player.ID(),
+		playerID,
 		abilityInZone.Ability(),
 		abilityInZone.Ability().Effects(),
 		game,
@@ -54,13 +54,13 @@ func parseActivateAbilityCommand(
 }
 
 func buildActivateAbilityCommandByChoice(
-	abilities []gob.AbilityInZone,
+	abilities []*gob.AbilityInZone,
 	agent engine.PlayerAgent,
-	player state.Player,
-) (gob.AbilityInZone, error) {
+	playerID string,
+) (*gob.AbilityInZone, error) {
 	prompt := choose.ChoicePrompt{
 		Message:  "Choose an ability to activate",
-		Source:   player,
+		Source:   nil, // TODO: Make this better
 		Optional: true,
 		ChoiceOpts: choose.ChooseOneOpts{
 			Choices: choose.NewChoices(abilities),
@@ -68,18 +68,18 @@ func buildActivateAbilityCommandByChoice(
 	}
 	choiceResults, err := agent.Choose(prompt)
 	if err != nil {
-		return gob.AbilityInZone{}, fmt.Errorf("failed to get choices: %w", err)
+		return nil, fmt.Errorf("failed to get choices: %w", err)
 	}
 	selected, ok := choiceResults.(choose.ChooseOneResults)
 	if !ok {
-		return gob.AbilityInZone{}, fmt.Errorf("expected choose one results, got %T", selected)
+		return nil, fmt.Errorf("expected choose one results, got %T", selected)
 	}
 	if selected.Choice == nil {
-		return gob.AbilityInZone{}, fmt.Errorf("no card selected: %w", choose.ErrNoChoiceSelected)
+		return nil, fmt.Errorf("no card selected: %w", choose.ErrNoChoiceSelected)
 	}
-	ability, ok := selected.Choice.(gob.AbilityInZone)
+	ability, ok := selected.Choice.(*gob.AbilityInZone)
 	if !ok {
-		return gob.AbilityInZone{}, fmt.Errorf("selected choice is not an ability on an object in a zone")
+		return nil, fmt.Errorf("selected choice is not an ability on an object in a zone")
 	}
 	return ability, nil
 }

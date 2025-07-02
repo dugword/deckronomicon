@@ -36,7 +36,7 @@ func (n *ConcedeActionNode) Resolve(ctx *evalstate.EvalState) (engine.Action, er
 }
 
 type ActivateActionNode struct {
-	AbilityInZone gob.AbilityInZone
+	AbilityInZone *gob.AbilityInZone
 }
 
 func (n *ActivateActionNode) Resolve(ctx *evalstate.EvalState) (engine.Action, error) {
@@ -77,14 +77,14 @@ func (n *PlayLandCardActionNode) Resolve(ctx *evalstate.EvalState) (engine.Actio
 	if len(found) == 0 {
 		return nil, fmt.Errorf("no land cards found in hand for player %s", player.ID())
 	}
-	var playable []gob.Card
+	var playable []*gob.Card
 	ruling := judge.Ruling{Explain: true}
 	for _, obj := range found {
-		card, ok := obj.(gob.Card)
+		card, ok := obj.(*gob.Card)
 		if !ok {
 			return nil, fmt.Errorf("object %s is not a card", obj.ID())
 		}
-		if !judge.CanPlayLand(ctx.Game, player, mtg.ZoneHand, card, &ruling) {
+		if !judge.CanPlayLand(ctx.Game, player.ID(), mtg.ZoneHand, card, &ruling) {
 			continue
 		}
 		playable = append(playable, card)
@@ -110,11 +110,11 @@ func (n *CastSpellActionNode) Resolve(ctx *evalstate.EvalState) (engine.Action, 
 	if len(found) == 0 {
 		return nil, fmt.Errorf("no spell cards found in hand for player %s", player.ID())
 	}
-	var castable []gob.Card
+	var castable []*gob.Card
 	ruling := judge.Ruling{Explain: true}
 	var costTarget target.Target
 	for _, obj := range found {
-		card, ok := obj.(gob.Card)
+		card, ok := obj.(*gob.Card)
 		if !ok {
 			return nil, fmt.Errorf("object %s is not a card", obj.ID())
 		}
@@ -136,7 +136,7 @@ func (n *CastSpellActionNode) Resolve(ctx *evalstate.EvalState) (engine.Action, 
 			}
 		}
 		totalCost := cost.NewComposite(card.ManaCost(), additionalCost)
-		if !judge.CanCastSpellFromHand(ctx.Game, player, card, totalCost, autoPay, mana.Colors(), &ruling) {
+		if !judge.CanCastSpellFromHand(ctx.Game, player.ID(), card, totalCost, autoPay, mana.Colors(), &ruling) {
 			continue
 		}
 		castable = append(castable, card)

@@ -13,9 +13,9 @@ import (
 )
 
 func ResolveShuffleFromGraveyard(
-	game state.Game,
+	game *state.Game,
 	playerID string,
-	shuffleFromGraveyard effect.ShuffleFromGraveyard,
+	shuffleFromGraveyard *effect.ShuffleFromGraveyard,
 	source gob.Object,
 	resEnv *resenv.ResEnv,
 ) (Result, error) {
@@ -29,7 +29,7 @@ func ResolveShuffleFromGraveyard(
 		shuffledCardsIDs := resEnv.RNG.ShuffleIDs(cardIDs)
 		return Result{
 			Events: []event.GameEvent{
-				event.ShuffleLibraryEvent{
+				&event.ShuffleLibraryEvent{
 					PlayerID:         player.ID(),
 					ShuffledCardsIDs: shuffledCardsIDs,
 				},
@@ -59,7 +59,7 @@ func ResolveShuffleFromGraveyard(
 			if !ok {
 				return Result{}, fmt.Errorf("card %q not found in graveyard", choice.ID())
 			}
-			events = append(events, event.PutCardOnBottomOfLibraryEvent{
+			events = append(events, &event.PutCardOnBottomOfLibraryEvent{
 				PlayerID: player.ID(),
 				CardID:   card.ID(),
 				FromZone: mtg.ZoneGraveyard,
@@ -77,7 +77,7 @@ func ResolveShuffleFromGraveyard(
 			cardIDs = append(cardIDs, card.ID())
 		}
 		shuffledCardsIDs := resEnv.RNG.ShuffleIDs(cardIDs)
-		events = append(events, event.ShuffleLibraryEvent{
+		events = append(events, &event.ShuffleLibraryEvent{
 			PlayerID:         player.ID(),
 			ShuffledCardsIDs: shuffledCardsIDs,
 		})

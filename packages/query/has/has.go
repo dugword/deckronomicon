@@ -391,13 +391,13 @@ func AllSupertypes(supertypes ...mtg.Supertype) query.Predicate {
 
 func HasManaAbility(manaColor mana.Color) query.Predicate {
 	return func(obj query.Object) bool {
-		permanent, ok := obj.(gob.Permanent)
+		permanent, ok := obj.(*gob.Permanent)
 		if !ok {
 			return false
 		}
 		for _, ability := range permanent.ActivatedAbilities() {
 			for _, efct := range ability.Effects() {
-				AddMana, ok := efct.(effect.AddMana)
+				AddMana, ok := efct.(*effect.AddMana)
 				if !ok {
 					continue
 				}

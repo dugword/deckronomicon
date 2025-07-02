@@ -16,12 +16,12 @@ type Rule struct {
 type Strategy struct {
 	Name        string
 	Description string
-	Modes       []Rule
-	Rules       map[string][]Rule
+	Modes       []*Rule
+	Rules       map[string][]*Rule
 }
 
 type EvaluatorContext struct {
-	Game     state.Game
-	Player   state.Player
+	Game     *state.Game
+	PlayerID string
 	Strategy *Strategy
 }

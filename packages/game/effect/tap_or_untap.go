@@ -10,21 +10,21 @@ type TapOrUntap struct {
 	Target mtg.TargetType `json:"Target"`
 }
 
-func NewTapOrUntap(modifiers map[string]any) (TapOrUntap, error) {
+func NewTapOrUntap(modifiers map[string]any) (*TapOrUntap, error) {
 	targetPermanentModifier, err := parseTargetPermanent(modifiers)
 	if err != nil {
-		return TapOrUntap{}, err
+		return nil, err
 	}
-	return TapOrUntap{
+	return &TapOrUntap{
 		Target: targetPermanentModifier,
 	}, nil
 }
 
-func (e TapOrUntap) Name() string {
+func (e *TapOrUntap) Name() string {
 	return "TapOrUntap"
 }
 
-func (e TapOrUntap) TargetSpec() target.TargetSpec {
+func (e *TapOrUntap) TargetSpec() target.TargetSpec {
 	switch e.Target {
 	case mtg.TargetTypePermanent:
 		return target.PermanentTargetSpec{}
