@@ -20,10 +20,10 @@ func (a LogMessageAction) Name() string {
 	return "Log a message to the game record"
 }
 
-func (a LogMessageAction) Complete(game state.Game, player state.Player, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
+func (a LogMessageAction) Complete(game *state.Game, playerID string, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	return []event.GameEvent{
-		event.LogMessageEvent{
-			PlayerID: player.ID(),
+		&event.LogMessageEvent{
+			PlayerID: playerID,
 			Message:  a.message,
 		},
 	}, nil

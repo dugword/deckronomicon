@@ -12,18 +12,18 @@ type StaticAbility interface {
 	StaticKeyword() mtg.StaticKeyword
 }
 
-func New(staticAbilityDefinition definition.StaticAbility) (StaticAbility, error) {
+func New(staticAbilityDefinition *definition.StaticAbility) (StaticAbility, error) {
 	cost, err := cost.Parse(staticAbilityDefinition.Cost)
 	if err != nil {
 		return nil, err
 	}
 	switch staticAbilityDefinition.Name {
 	case "Cipher":
-		return Cipher{}, nil
+		return &Cipher{}, nil
 	case "Flashback":
-		return Flashback{Cost: cost}, nil
+		return &Flashback{Cost: cost}, nil
 	case "Replicate":
-		return Replicate{Cost: cost}, nil
+		return &Replicate{Cost: cost}, nil
 	case "Splice":
 		return NewSplice(cost, staticAbilityDefinition.Modifiers)
 	default:

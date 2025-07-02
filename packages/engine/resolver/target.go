@@ -6,7 +6,7 @@ import (
 )
 
 func ResolveTarget(
-	game state.Game,
+	game *state.Game,
 	playerID string,
 ) (Result, error) {
 	return Result{

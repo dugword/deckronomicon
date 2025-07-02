@@ -4,101 +4,119 @@ import (
 	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
+	"strconv"
 )
 
-func (g Game) WithCheatsEnabled(enabled bool) Game {
-	g.cheatsEnabled = enabled
-	return g
+func (g *Game) WithGetNextID() (id string, game *Game) {
+	newGame := *g
+	newGame.nextID++
+	return strconv.Itoa(newGame.nextID), &newGame
 }
 
-func (g Game) WithPhase(phase mtg.Phase) Game {
-	g.phase = phase
-	return g
+func (g *Game) WithCheatsEnabled(enabled bool) *Game {
+	newGame := *g
+	newGame.cheatsEnabled = enabled
+	return &newGame
 }
 
-func (g Game) WithStep(step mtg.Step) Game {
-	g.step = step
-	return g
+func (g *Game) WithPhase(phase mtg.Phase) *Game {
+	newGame := *g
+	newGame.phase = phase
+	return &newGame
 }
 
-func (g Game) WithGameOver(winnerID string) Game {
-	g.winnerID = winnerID
-	return g
+func (g *Game) WithStep(step mtg.Step) *Game {
+	newGame := *g
+	newGame.step = step
+	return &newGame
 }
 
-func (g Game) WithPlayers(players []Player) Game {
-	g.players = players
-	return g
+func (g *Game) WithGameOver(winnerID string) *Game {
+	newGame := *g
+	newGame.winnerID = winnerID
+	return &newGame
 }
 
-func (g Game) WithActivePlayer(playerID string) Game {
+func (g *Game) WithPlayers(players []*Player) *Game {
+	newGame := *g
+	newGame.players = players
+	return &newGame
+}
+
+func (g *Game) WithActivePlayer(playerID string) *Game {
+	newGame := *g
 	var idx int
-	for i, p := range g.players {
+	for i, p := range newGame.players {
 		if p.id == playerID {
 			idx = i
 			break
 		}
 	}
-	g.activePlayerIdx = idx
-	return g
+	newGame.activePlayerIdx = idx
+	return &newGame
 }
 
-func (g Game) WithResetPriorityPasses() Game {
-	g.playersPassedPriority = map[string]bool{}
-	return g
+func (g *Game) WithResetPriorityPasses() *Game {
+	newGame := *g
+	newGame.playersPassedPriority = map[string]bool{}
+	return &newGame
 }
 
-func (g Game) WithPlayerPassedPriority(playerID string) Game {
+func (g *Game) WithPlayerPassedPriority(playerID string) *Game {
+	newGame := *g
 	playersPassedPriority := map[string]bool{}
-	for pID := range g.playersPassedPriority {
-		playersPassedPriority[pID] = g.playersPassedPriority[pID]
+	for pID := range newGame.playersPassedPriority {
+		playersPassedPriority[pID] = newGame.playersPassedPriority[pID]
 	}
 	playersPassedPriority[playerID] = true
-	g.playersPassedPriority = playersPassedPriority
-	return g
+	newGame.playersPassedPriority = playersPassedPriority
+	return &newGame
 }
 
-func (g Game) WithUpdatedPlayer(player Player) Game {
-	var players []Player
-	for _, p := range g.players {
+func (g *Game) WithUpdatedPlayer(player *Player) *Game {
+	newGame := *g
+	var players []*Player
+	for _, p := range newGame.players {
 		if p.id == player.id {
 			players = append(players, player)
 			continue
 		}
 		players = append(players, p)
 	}
-	g.players = players
-	return g
+	newGame.players = players
+	return &newGame
 }
 
-func (g Game) WithBattlefield(battlefield Battlefield) Game {
-	g.battlefield = battlefield
-	return g
+func (g *Game) WithBattlefield(battlefield *Battlefield) *Game {
+	newGame := *g
+	newGame.battlefield = battlefield
+	return &newGame
 }
 
-func (g Game) WithPutPermanentOnBattlefield(card gob.Card, playerID string) (Game, error) {
-	id, game := g.GetNextID()
+func (g *Game) WithPutPermanentOnBattlefield(card *gob.Card, playerID string) (*Game, error) {
+	id, gameWithID := g.WithGetNextID()
 	permanent, err := gob.NewPermanent(id, card, playerID)
 	if err != nil {
-		return game, err
+		return nil, err
 	}
-	battlefield := game.battlefield.Add(permanent)
-	game = game.WithBattlefield(battlefield)
-	return game, nil
+	battlefield := gameWithID.battlefield.Add(permanent)
+	gameWithBattlefield := gameWithID.WithBattlefield(battlefield)
+	return gameWithBattlefield, nil
 }
 
-func (g Game) WithStack(stack Stack) Game {
-	g.stack = stack
-	return g
+func (g *Game) WithStack(stack *Stack) *Game {
+	newGame := *g
+	newGame.stack = stack
+	return &newGame
 }
 
-func (g Game) WithPutSpellOnStack(
-	card gob.Card,
+func (g *Game) WithPutSpellOnStack(
+	card *gob.Card,
 	playerID string,
-	effectWithTargets []effect.EffectWithTarget,
+	effectWithTargets []*effect.EffectWithTarget,
 	flashback bool,
-) (Game, error) {
-	id, game := g.GetNextID()
+) (*Game, error) {
+	id, gameWithNextID := g.WithGetNextID()
 	spell, err := gob.NewSpell(
 		id,
 		card,
@@ -107,19 +125,19 @@ func (g Game) WithPutSpellOnStack(
 		flashback,
 	)
 	if err != nil {
-		return game, err
+		return nil, err
 	}
-	stack := game.stack.AddTop(spell)
-	game = game.WithStack(stack)
-	return game, nil
+	stack := gameWithNextID.stack.AddTop(spell)
+	gameWithStack := gameWithNextID.WithStack(stack)
+	return gameWithStack, nil
 }
 
-func (g Game) WithPutCopiedSpellOnStack(
-	spell gob.Spell,
+func (g *Game) WithPutCopiedSpellOnStack(
+	spell *gob.Spell,
 	playerID string,
-	effectWithTargets []effect.EffectWithTarget,
-) (Game, error) {
-	id, game := g.GetNextID()
+	effectWithTargets []*effect.EffectWithTarget,
+) (*Game, error) {
+	id, gameWithNextID := g.WithGetNextID()
 	spell, err := gob.CopySpell(
 		id,
 		spell,
@@ -127,21 +145,21 @@ func (g Game) WithPutCopiedSpellOnStack(
 		effectWithTargets,
 	)
 	if err != nil {
-		return game, err
+		return nil, err
 	}
-	stack := game.stack.AddTop(spell)
-	game = game.WithStack(stack)
-	return game, nil
+	stack := gameWithNextID.stack.AddTop(spell)
+	gameWithStack := gameWithNextID.WithStack(stack)
+	return gameWithStack, nil
 }
 
-func (g Game) WithPutAbilityOnStack(
+func (g *Game) WithPutAbilityOnStack(
 	playerID,
 	sourceID,
 	abilityID,
 	abilityName string,
-	effectWithTargets []effect.EffectWithTarget,
-) (Game, error) {
-	id, game := g.GetNextID()
+	effectWithTargets []*effect.EffectWithTarget,
+) (*Game, error) {
+	id, gameWithNextID := g.WithGetNextID()
 	abilityOnStack := gob.NewAbilityOnStack(
 		id,
 		playerID,
@@ -150,12 +168,12 @@ func (g Game) WithPutAbilityOnStack(
 		abilityName,
 		effectWithTargets,
 	)
-	stack := game.stack.AddTop(abilityOnStack)
-	game = game.WithStack(stack)
-	return game, nil
+	stack := gameWithNextID.stack.AddTop(abilityOnStack)
+	gameWithStack := gameWithNextID.WithStack(stack)
+	return gameWithStack, nil
 }
 
-func (g Game) WithRegisteredTriggeredAbility(
+func (g *Game) WithRegisteredTriggeredAbility(
 	playerID string,
 	sourceName string,
 	sourceID string,
@@ -163,8 +181,8 @@ func (g Game) WithRegisteredTriggeredAbility(
 	effects []effect.Effect,
 	duration mtg.Duration,
 	oneShot bool,
-) Game {
-	id, game := g.GetNextID()
+) *Game {
+	id, newGame := g.WithGetNextID()
 	triggeredEffect := gob.TriggeredAbility{
 		ID:         id,
 		SourceID:   sourceID,
@@ -175,17 +193,18 @@ func (g Game) WithRegisteredTriggeredAbility(
 		Duration:   duration,
 		OneShot:    oneShot,
 	}
-	game.triggeredAbilities = append(game.triggeredAbilities[:], triggeredEffect)
-	return game
+	newGame.triggeredAbilities = append(newGame.triggeredAbilities[:], triggeredEffect)
+	return newGame
 }
 
-func (g Game) WithRemoveTriggeredAbility(triggeredAbilityID string) Game {
+func (g *Game) WithRemoveTriggeredAbility(triggeredAbilityID string) *Game {
+	newGame := *g
 	var newTriggeredAbilities []gob.TriggeredAbility
-	for _, triggeredAbility := range g.triggeredAbilities {
+	for _, triggeredAbility := range newGame.triggeredAbilities {
 		if triggeredAbility.ID != triggeredAbilityID {
 			newTriggeredAbilities = append(newTriggeredAbilities, triggeredAbility)
 		}
 	}
-	g.triggeredAbilities = newTriggeredAbilities
-	return g
+	newGame.triggeredAbilities = newTriggeredAbilities
+	return &newGame
 }

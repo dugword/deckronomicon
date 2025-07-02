@@ -179,9 +179,9 @@ func TestStep(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			playerID := "Test Player"
 			ctx := evalstate.EvalState{
-				Game: state.NewGameFromDefinition(definition.Game{
+				Game: state.NewGameFromDefinition(&definition.Game{
 					ActivePlayerID: playerID,
-					Players: []definition.Player{{
+					Players: []*definition.Player{{
 						ID: playerID,
 					}},
 					Step: string(test.is),
@@ -231,8 +231,8 @@ func TestLandPlayedThisTurn(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			ctx := evalstate.EvalState{
-				Game: state.NewGameFromDefinition(definition.Game{
-					Players: []definition.Player{{
+				Game: state.NewGameFromDefinition(&definition.Game{
+					Players: []*definition.Player{{
 						LandPlayedThisTurn: test.is,
 					}},
 				}),

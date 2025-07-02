@@ -10,12 +10,14 @@ import (
 )
 
 func CanSpliceCard(
-	player state.Player,
-	cardToCast gob.Card,
-	spliceCard gob.Card,
+	game *state.Game,
+	playerID string,
+	cardToCast *gob.Card,
+	spliceCard *gob.Card,
 	ruling *Ruling,
 ) bool {
 	can := true
+	player := game.GetPlayer(playerID)
 	if _, ok := player.GetCardFromZone(spliceCard.ID(), mtg.ZoneHand); !ok {
 		if ruling != nil && ruling.Explain {
 			ruling.Reasons = append(ruling.Reasons, "splice card is not in hand")
@@ -30,7 +32,7 @@ func CanSpliceCard(
 		can = false
 		return can
 	}
-	spliceAbility, ok := staticAbility.(staticability.Splice)
+	spliceAbility, ok := staticAbility.(*staticability.Splice)
 	if !ok {
 		if ruling != nil && ruling.Explain {
 			ruling.Reasons = append(ruling.Reasons, fmt.Sprintf("card %q has splice ability, but it is not a Splice ability", spliceCard.ID()))

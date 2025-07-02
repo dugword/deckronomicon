@@ -18,8 +18,8 @@ import (
 
 func getTargetsForCost(
 	playerID string,
-	card gob.Card,
-	game state.Game,
+	card *gob.Card,
+	game *state.Game,
 	agent engine.PlayerAgent,
 ) (target.Target, error) {
 	if card.AdditionalCost() == nil {
@@ -51,7 +51,7 @@ func getTargetsForEffects(
 	playerID string,
 	object gob.Object,
 	Effects []effect.Effect,
-	game state.Game,
+	game *state.Game,
 	agent engine.PlayerAgent,
 ) (map[effect.EffectTargetKey]target.Target, error) {
 	targetsForEffects := map[effect.EffectTargetKey]target.Target{}
@@ -107,7 +107,7 @@ func getTargetsForEffects(
 
 func getPlayerTarget(
 	object gob.Object,
-	game state.Game,
+	game *state.Game,
 	agent engine.PlayerAgent,
 ) (target.Target, error) {
 	prompt := choose.ChoicePrompt{
@@ -125,7 +125,7 @@ func getPlayerTarget(
 	if !ok {
 		return target.Target{}, fmt.Errorf("expected a single choice result")
 	}
-	selectedPlayer, ok := selected.Choice.(state.Player)
+	selectedPlayer, ok := selected.Choice.(*state.Player)
 	if !ok {
 		return target.Target{}, fmt.Errorf("selected choice is not a player")
 	}
@@ -140,7 +140,7 @@ func getPlayerTarget(
 func getSpellTarget(
 	targetSpec target.SpellTargetSpec,
 	object gob.Object,
-	game state.Game,
+	game *state.Game,
 	agent engine.PlayerAgent,
 ) (target.Target, error) {
 	query, err := querybuilder.Build(querybuilder.Opts(targetSpec))
@@ -163,7 +163,7 @@ func getSpellTarget(
 	if !ok {
 		return target.Target{}, fmt.Errorf("expected a single choice result")
 	}
-	selectedSpell, ok := selected.Choice.(gob.Spell)
+	selectedSpell, ok := selected.Choice.(*gob.Spell)
 	if !ok {
 		return target.Target{}, fmt.Errorf("selected choice is not a spell")
 	}
@@ -176,7 +176,7 @@ func getSpellTarget(
 func getPermanentTarget(
 	targetSpec target.PermanentTargetSpec,
 	object gob.Object,
-	game state.Game,
+	game *state.Game,
 	agent engine.PlayerAgent,
 ) (target.Target, error) {
 	permanents := game.Battlefield().GetAll()
@@ -195,7 +195,7 @@ func getPermanentTarget(
 	if !ok {
 		return target.Target{}, fmt.Errorf("expected a single choice result")
 	}
-	selectedPermanent, ok := selected.Choice.(gob.Permanent)
+	selectedPermanent, ok := selected.Choice.(*gob.Permanent)
 	if !ok {
 		return target.Target{}, fmt.Errorf("selected choice is not a permanent")
 	}
@@ -209,7 +209,7 @@ func getCardTarget(
 	playerID string,
 	targetSpec target.CardTargetSpec,
 	object gob.Object,
-	game state.Game,
+	game *state.Game,
 	agent engine.PlayerAgent,
 ) (target.Target, error) {
 	player := game.GetPlayer(playerID)
@@ -233,7 +233,7 @@ func getCardTarget(
 	if !ok {
 		return target.Target{}, fmt.Errorf("expected a single choice result")
 	}
-	selectedCard, ok := selected.Choice.(gob.Card)
+	selectedCard, ok := selected.Choice.(*gob.Card)
 	if !ok {
 		return target.Target{}, fmt.Errorf("selected choice is not a card")
 	}

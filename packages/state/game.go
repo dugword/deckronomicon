@@ -4,7 +4,6 @@ import (
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
 	"fmt"
-	"strconv"
 )
 
 type Game struct {
@@ -12,46 +11,46 @@ type Game struct {
 	cheatsEnabled         bool
 	activePlayerIdx       int
 	playersPassedPriority map[string]bool
-	battlefield           Battlefield
+	battlefield           *Battlefield
 	phase                 mtg.Phase
 	step                  mtg.Step
-	players               []Player
-	stack                 Stack
+	players               []*Player
+	stack                 *Stack
 	winnerID              string
 	triggeredAbilities    []gob.TriggeredAbility
 	continuousEffects     []gob.ContinuousEffect
 }
 
-func (g Game) CheatsEnabled() bool {
+func (g *Game) CheatsEnabled() bool {
 	return g.cheatsEnabled
 }
 
-func (g Game) Phase() mtg.Phase {
+func (g *Game) Phase() mtg.Phase {
 	return g.phase
 }
 
-func (g Game) Players() []Player {
+func (g *Game) Players() []*Player {
 	return g.players
 }
 
-func (g Game) Step() mtg.Step {
+func (g *Game) Step() mtg.Step {
 	return g.step
 }
 
-func (g Game) IsStackEmtpy() bool {
+func (g *Game) IsStackEmtpy() bool {
 	return g.stack.Size() == 0
 }
 
-func (g Game) Battlefield() Battlefield {
+func (g *Game) Battlefield() *Battlefield {
 	return g.battlefield
 }
 
-func (g Game) Stack() Stack {
+func (g *Game) Stack() *Stack {
 	return g.stack
 }
 
 // Returns the players starting with the active player and going in turn order
-func (g Game) PlayerIDsInTurnOrder() []string {
+func (g *Game) PlayerIDsInTurnOrder() []string {
 	var n = g.activePlayerIdx
 	var playersInTurnOrder []string
 	for i := 0; i < len(g.players); i++ {
@@ -61,15 +60,15 @@ func (g Game) PlayerIDsInTurnOrder() []string {
 	return playersInTurnOrder
 }
 
-func (g Game) ActivePlayerID() string {
+func (g *Game) ActivePlayerID() string {
 	return g.players[g.activePlayerIdx].ID()
 }
 
-func (g Game) DidPlayerPassPriority(playerID string) bool {
+func (g *Game) DidPlayerPassPriority(playerID string) bool {
 	return g.playersPassedPriority[playerID]
 }
 
-func (g Game) DidAllPlayersPassPriority() bool {
+func (g *Game) DidAllPlayersPassPriority() bool {
 	for _, player := range g.players {
 		if !g.playersPassedPriority[player.id] {
 			return false
@@ -78,7 +77,7 @@ func (g Game) DidAllPlayersPassPriority() bool {
 	return true
 }
 
-func (g Game) GetPlayer(id string) Player {
+func (g *Game) GetPlayer(id string) *Player {
 	for _, player := range g.players {
 		if player.id == id {
 			return player
@@ -88,7 +87,7 @@ func (g Game) GetPlayer(id string) Player {
 }
 
 // TODO: THIS WILL BREAK WITH MORE THAN 2 PLAYERS
-func (g Game) GetOpponent(id string) Player {
+func (g *Game) GetOpponent(id string) *Player {
 	if len(g.players) > 2 {
 		panic("GetOpponent is not implemented for more than 2 players")
 	}
@@ -96,7 +95,7 @@ func (g Game) GetOpponent(id string) Player {
 	return g.GetPlayer(opponentID)
 }
 
-func (g Game) NextPlayerID(currentPlayerID string) string {
+func (g *Game) NextPlayerID(currentPlayerID string) string {
 	for i, player := range g.players {
 		if player.id == currentPlayerID {
 			nextIdx := (i + 1) % len(g.players)
@@ -106,7 +105,7 @@ func (g Game) NextPlayerID(currentPlayerID string) string {
 	return currentPlayerID
 }
 
-func (g Game) PriorityPlayerID() string {
+func (g *Game) PriorityPlayerID() string {
 	priorityPlayer := g.ActivePlayerID()
 	if g.DidAllPlayersPassPriority() {
 		return priorityPlayer
@@ -117,23 +116,14 @@ func (g Game) PriorityPlayerID() string {
 	return priorityPlayer
 }
 
-func (g Game) PlayerPassedPriority(id string) bool {
+func (g *Game) PlayerPassedPriority(id string) bool {
 	return g.playersPassedPriority[id]
 }
 
-func (g Game) IsGameOver() bool {
+func (g *Game) IsGameOver() bool {
 	return g.winnerID != ""
 }
 
-type GameStateSnapshot struct {
-	Turn int
-}
-
-func (g Game) GetNextID() (id string, game Game) {
-	g.nextID++
-	return strconv.Itoa(g.nextID), g
-}
-
-func (g Game) TriggeredAbilities() []gob.TriggeredAbility {
+func (g *Game) TriggeredAbilities() []gob.TriggeredAbility {
 	return g.triggeredAbilities
 }

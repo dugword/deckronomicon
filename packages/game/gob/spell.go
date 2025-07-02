@@ -10,11 +10,11 @@ import (
 )
 
 type Spell struct {
-	card              Card
+	card              *Card
 	cardTypes         []mtg.CardType
 	colors            mtg.Colors
 	controller        string
-	effectWithTargets []effect.EffectWithTarget
+	effectWithTargets []*effect.EffectWithTarget
 	flashback         bool
 	id                string
 	isCopy            bool
@@ -32,10 +32,10 @@ type Spell struct {
 
 func CopySpell(
 	id string,
-	spell Spell,
+	spell *Spell,
 	playerID string,
-	effectWithTargets []effect.EffectWithTarget,
-) (Spell, error) {
+	effectWithTargets []*effect.EffectWithTarget,
+) (*Spell, error) {
 	copiedSpell, err := NewSpell(
 		id,
 		spell.card,
@@ -44,7 +44,7 @@ func CopySpell(
 		spell.flashback,
 	)
 	if err != nil {
-		return Spell{}, fmt.Errorf("failed to create copied spell: %w", err)
+		return nil, fmt.Errorf("failed to create copied spell: %w", err)
 	}
 	copiedSpell.isCopy = true
 	return copiedSpell, nil
@@ -52,11 +52,11 @@ func CopySpell(
 
 func NewSpell(
 	id string,
-	card Card,
+	card *Card,
 	playerID string,
-	effectWithTargets []effect.EffectWithTarget,
+	effectWithTargets []*effect.EffectWithTarget,
 	flashback bool,
-) (Spell, error) {
+) (*Spell, error) {
 	spell := Spell{
 		card:              card,
 		cardTypes:         card.CardTypes(),
@@ -76,86 +76,86 @@ func NewSpell(
 		supertypes:        card.Supertypes(),
 		toughness:         card.Toughness(),
 	}
-	return spell, nil
+	return &spell, nil
 }
 
-func (s Spell) Card() Card {
+func (s *Spell) Card() *Card {
 	return s.card
 }
 
-func (s Spell) CardTypes() []mtg.CardType {
+func (s *Spell) CardTypes() []mtg.CardType {
 	return s.cardTypes
 }
 
-func (s Spell) Colors() mtg.Colors {
+func (s *Spell) Colors() mtg.Colors {
 	return s.colors
 }
 
-func (s Spell) Controller() string {
+func (s *Spell) Controller() string {
 	return s.controller
 }
 
-func (s Spell) EffectWithTargets() []effect.EffectWithTarget {
+func (s *Spell) EffectWithTargets() []*effect.EffectWithTarget {
 	return s.effectWithTargets
 }
 
-func (s Spell) Flashback() bool {
+func (s *Spell) Flashback() bool {
 	return s.flashback
 }
 
-func (s Spell) Description() string {
+func (s *Spell) Description() string {
 	return "Put something good here"
 }
 
-func (s Spell) ID() string {
+func (s *Spell) ID() string {
 	return s.id
 }
 
-func (s Spell) IsCopy() bool {
+func (s *Spell) IsCopy() bool {
 	return s.isCopy
 }
 
-func (s Spell) Loyalty() int {
+func (s *Spell) Loyalty() int {
 	return s.loyalty
 }
 
-func (s Spell) ManaCost() cost.Mana {
+func (s *Spell) ManaCost() cost.Mana {
 	return s.manaCost
 }
 
-func (s Spell) ManaValue() int {
+func (s *Spell) ManaValue() int {
 	return s.manaCost.Amount().Total()
 }
 
-func (s Spell) Match(predicate query.Predicate) bool {
+func (s *Spell) Match(predicate query.Predicate) bool {
 	return predicate(s)
 }
 
-func (s Spell) Name() string {
+func (s *Spell) Name() string {
 	return s.name
 }
 
-func (s Spell) Owner() string {
+func (s *Spell) Owner() string {
 	return s.owner
 }
 
-func (s Spell) Power() int {
+func (s *Spell) Power() int {
 	return s.power
 }
 
-func (s Spell) RulesText() string {
+func (s *Spell) RulesText() string {
 	return s.rulesText
 }
 
-func (s Spell) SourceID() string {
+func (s *Spell) SourceID() string {
 	return s.card.id
 }
 
-func (s Spell) StaticAbilities() []staticability.StaticAbility {
+func (s *Spell) StaticAbilities() []staticability.StaticAbility {
 	return s.staticAbilities
 }
 
-func (s Spell) StaticKeywords() []mtg.StaticKeyword {
+func (s *Spell) StaticKeywords() []mtg.StaticKeyword {
 	var keywords []mtg.StaticKeyword
 	for _, ability := range s.staticAbilities {
 		if ability.StaticKeyword() != "" {
@@ -165,14 +165,14 @@ func (s Spell) StaticKeywords() []mtg.StaticKeyword {
 	return keywords
 }
 
-func (s Spell) Subtypes() []mtg.Subtype {
+func (s *Spell) Subtypes() []mtg.Subtype {
 	return s.subtypes
 }
 
-func (s Spell) Supertypes() []mtg.Supertype {
+func (s *Spell) Supertypes() []mtg.Supertype {
 	return s.supertypes
 }
 
-func (s Spell) Toughness() int {
+func (s *Spell) Toughness() int {
 	return s.toughness
 }

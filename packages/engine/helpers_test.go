@@ -33,21 +33,21 @@ func (a mockAction) Name() string {
 	return a.name
 }
 
-func (a mockAction) Complete(game state.Game, player state.Player, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
+func (a mockAction) Complete(game *state.Game, playerID string, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	return []event.GameEvent{
-		event.PassPriorityEvent{
-			PlayerID: player.ID(),
+		&event.PassPriorityEvent{
+			PlayerID: playerID,
 		},
 	}, nil
 }
 
-func (m *mockPlayerAgent) GetNextAction(state.Game) (Action, error) {
+func (m *mockPlayerAgent) GetNextAction(*state.Game) (Action, error) {
 	return &mockAction{
 		name: "Mock Pass Priority Action",
 	}, nil
 }
 
-func (m *mockPlayerAgent) ReportState(state.Game) error {
+func (m *mockPlayerAgent) ReportState(*state.Game) error {
 	return nil
 }
 

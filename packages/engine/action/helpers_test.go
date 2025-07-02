@@ -6,13 +6,13 @@ import (
 	"deckronomicon/packages/state"
 )
 
-func newTestGame(playerID string) state.Game {
-	game := state.NewGameFromDefinition(definition.Game{
+func newTestGame(playerID string) *state.Game {
+	game := state.NewGameFromDefinition(&definition.Game{
 		Step: string(mtg.StepPrecombatMain),
-		Players: []definition.Player{
+		Players: []*definition.Player{
 			{
 				ID: playerID,
-				Hand: definition.Hand{Cards: []definition.Card{
+				Hand: &definition.Hand{Cards: []*definition.Card{
 					{
 						ID:   "Test Card ID",
 						Name: "Test Card",
@@ -25,7 +25,7 @@ func newTestGame(playerID string) state.Game {
 					{
 						ID:   "Card with Splice ID",
 						Name: "Card with Splice",
-						StaticAbilities: []definition.StaticAbility{{
+						StaticAbilities: []*definition.StaticAbility{{
 							Name:      string(mtg.StaticKeywordSplice),
 							Modifiers: map[string]any{"Subtype": "Arcane"},
 						}},
@@ -33,14 +33,14 @@ func newTestGame(playerID string) state.Game {
 					{
 						ID:   "Card with Replicate ID",
 						Name: "Card with Replicate",
-						StaticAbilities: []definition.StaticAbility{{
+						StaticAbilities: []*definition.StaticAbility{{
 							Name: string(mtg.StaticKeywordReplicate),
 						}},
 					},
 					{
 						ID:   "Card with Target ID",
 						Name: "Card with Target",
-						SpellAbility: []definition.Effect{{
+						SpellAbility: []*definition.Effect{{
 							Name:      "Target",
 							Modifiers: map[string]any{"Target": "Permanent"},
 						}},
@@ -48,7 +48,7 @@ func newTestGame(playerID string) state.Game {
 					{
 						ID:   "Card with Ability ID",
 						Name: "Card with Ability",
-						ActivatedAbilities: []definition.Ability{{
+						ActivatedAbilities: []*definition.Ability{{
 							Name: "Ability on Card",
 							Zone: string(mtg.ZoneHand),
 						}},
@@ -56,7 +56,7 @@ func newTestGame(playerID string) state.Game {
 					{
 						ID:   "Card with Effects ID",
 						Name: "Card with Effects",
-						SpellAbility: []definition.Effect{
+						SpellAbility: []*definition.Effect{
 							{
 								Name:      "Target",
 								Modifiers: map[string]any{"Target": "Permanent"},
@@ -68,12 +68,12 @@ func newTestGame(playerID string) state.Game {
 						},
 					},
 				}},
-				Graveyard: definition.Graveyard{
-					Cards: []definition.Card{
+				Graveyard: &definition.Graveyard{
+					Cards: []*definition.Card{
 						{
 							ID:   "Card with Flashback ID",
 							Name: "Card with Flashback",
-							StaticAbilities: []definition.StaticAbility{{
+							StaticAbilities: []*definition.StaticAbility{{
 								Name: string(mtg.StaticKeywordFlashback),
 							}},
 						},
@@ -81,14 +81,14 @@ func newTestGame(playerID string) state.Game {
 				},
 			},
 		},
-		Battlefield: definition.Battlefield{
-			Permanents: []definition.Permanent{
+		Battlefield: &definition.Battlefield{
+			Permanents: []*definition.Permanent{
 				{
 					ID:         "Test Permanent ID",
 					Name:       "Test Permanent",
 					Controller: playerID,
 					Owner:      playerID,
-					ActivatedAbilities: []definition.Ability{{
+					ActivatedAbilities: []*definition.Ability{{
 						Name: "Ability on Permanent",
 					}},
 				},

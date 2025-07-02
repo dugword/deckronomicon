@@ -68,7 +68,7 @@ type AvailableMana struct {
 func (e *AvailableMana) Evaluate(ctx *evalstate.EvalState) bool {
 	player := ctx.Game.GetPlayer(ctx.PlayerID)
 	var statValue any
-	availableMana := judge.GetAvailableMana(ctx.Game, player)
+	availableMana := judge.GetAvailableMana(ctx.Game, player.ID())
 	switch e.Stat {
 	case AvailableManaWhite:
 		statValue = availableMana.White()

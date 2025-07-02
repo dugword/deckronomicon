@@ -11,26 +11,26 @@ type Mill struct {
 	Target mtg.TargetType
 }
 
-func NewMill(modifiers map[string]any) (Mill, error) {
+func NewMill(modifiers map[string]any) (*Mill, error) {
 	countModifier, err := parseCount(modifiers)
 	if err != nil {
-		return Mill{}, err
+		return nil, err
 	}
 	targetPlayerModifier, err := parseTargetPlayer(modifiers)
 	if err != nil {
-		return Mill{}, err
+		return nil, err
 	}
-	return Mill{
+	return &Mill{
 		Count:  countModifier,
 		Target: targetPlayerModifier,
 	}, nil
 }
 
-func (e Mill) Name() string {
+func (e *Mill) Name() string {
 	return "Mill"
 }
 
-func (e Mill) TargetSpec() target.TargetSpec {
+func (e *Mill) TargetSpec() target.TargetSpec {
 	switch e.Target {
 	case mtg.TargetTypeNone:
 		return target.NoneTargetSpec{}

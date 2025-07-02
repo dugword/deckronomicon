@@ -92,7 +92,12 @@ func (a *Agent) chooseNumber(
 
 func (a *Agent) chooseMapChoicesToBuckets(message string, opts choose.MapChoicesToBucketsOpts, source choose.Source) (choose.ChoiceResults, error) {
 	assignments := map[choose.Bucket][]choose.Choice{}
-	title := fmt.Sprintf("%s requires a choice", source.Name())
+	var title string
+	if source != nil {
+		title = fmt.Sprintf("%s requires a choice", source.Name())
+	} else {
+		title = "Please make a choice"
+	}
 	userMessage := []string{}
 	userMessage = append(userMessage, "Press Enter to complete selection")
 	userMessage = append(userMessage, "Unassigned choices will be assigned to the last bucket by default")
@@ -153,7 +158,12 @@ func (a *Agent) chooseMany(
 		// TODO is this an error?
 		return nil, choose.ErrNoChoicesAvailable
 	}
-	title := fmt.Sprintf("%s requires a choice", source.Name())
+	var title string
+	if source != nil {
+		title = fmt.Sprintf("%s requires a choice", source.Name())
+	} else {
+		title = "Please make a choice"
+	}
 	if min > 1 {
 		if min == max {
 			title = fmt.Sprintf(

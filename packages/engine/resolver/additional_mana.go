@@ -9,7 +9,7 @@ import (
 
 func ResolveAdditionalMana(
 	playerID string,
-	additionalMana effect.AdditionalMana,
+	additionalMana *effect.AdditionalMana,
 ) (Result, error) {
 	evnt := event.RegisterTriggeredAbilityEvent{
 		PlayerID: playerID,
@@ -20,11 +20,11 @@ func ResolveAdditionalMana(
 			},
 		},
 		Duration: additionalMana.Duration,
-		Effects: []effect.Effect{effect.AddMana{
+		Effects: []effect.Effect{&effect.AddMana{
 			Mana: additionalMana.Mana,
 		}},
 	}
 	return Result{
-		Events: []event.GameEvent{evnt},
+		Events: []event.GameEvent{&evnt},
 	}, nil
 }

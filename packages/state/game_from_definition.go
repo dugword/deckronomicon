@@ -7,14 +7,20 @@ import (
 	"deckronomicon/packages/game/mtg"
 )
 
-func NewGameFromDefinition(definition definition.Game) Game {
+func NewGameFromDefinition(definition *definition.Game) *Game {
 	game := Game{
 		nextID:                definition.NextID,
 		cheatsEnabled:         definition.CheatsEnabled,
 		playersPassedPriority: definition.PlayersPassedPriority,
-		battlefield:           NewBattlefieldFromDefinition(definition.Battlefield),
-		players:               NewPlayersFromDefinition(definition.Players),
 		winnerID:              definition.WinnerID,
+		battlefield:           NewBattlefield(),
+		stack:                 NewStack(),
+	}
+	if definition.Battlefield != nil {
+		game.battlefield = NewBattlefieldFromDefinition(definition.Battlefield)
+	}
+	if definition.Players != nil {
+		game.players = NewPlayersFromDefinition(definition.Players)
 	}
 	if definition.Phase != "" {
 		phase, ok := mtg.StringToPhase(definition.Phase)
@@ -36,36 +42,54 @@ func NewGameFromDefinition(definition definition.Game) Game {
 			break
 		}
 	}
-	return game
+	return &game
 }
 
-func NewPlayerFromDefinition(definition definition.Player) Player {
+func NewPlayerFromDefinition(definition *definition.Player) *Player {
 	manaAmount, err := mana.ParseManaString(definition.ManaPool)
 	if err != nil {
 		panic("failed to parse mana pool: " + err.Error())
 	}
-	return Player{
+	player := Player{
 		id:                 definition.ID,
 		life:               definition.Life,
 		landPlayedThisTurn: definition.LandPlayedThisTurn,
-		hand:               Hand{cards: NewCardsFromDefinitions(definition.Hand.Cards)},
-		library:            Library{cards: NewCardsFromDefinitions(definition.Library.Cards)},
-		graveyard:          Graveyard{cards: NewCardsFromDefinitions(definition.Graveyard.Cards)},
-		exile:              Exile{cards: NewCardsFromDefinitions(definition.Exile.Cards)},
+		maxHandSize:        definition.MaxHandSize,
+		hand:               NewHand(),
+		library:            NewLibrary([]*gob.Card{}),
+		exile:              NewExile(),
+		graveyard:          NewGraveyard(),
+		revealed:           NewRevealed(),
 		manaPool:           mana.Pool{}.WithAddAmount(manaAmount),
 	}
+	if definition.Hand != nil {
+		player.hand = &Hand{cards: NewCardsFromDefinitions(definition.Hand.Cards)}
+	}
+	if definition.Library != nil {
+		player.library = &Library{cards: NewCardsFromDefinitions(definition.Library.Cards)}
+	}
+	if definition.Graveyard != nil {
+		player.graveyard = &Graveyard{cards: NewCardsFromDefinitions(definition.Graveyard.Cards)}
+	}
+	if definition.Exile != nil {
+		player.exile = &Exile{cards: NewCardsFromDefinitions(definition.Exile.Cards)}
+	}
+	if definition.Revealed != nil {
+		player.revealed = &Revealed{cards: NewCardsFromDefinitions(definition.Revealed.Cards)}
+	}
+	return &player
 }
 
-func NewPlayersFromDefinition(definitions []definition.Player) []Player {
-	var players []Player
+func NewPlayersFromDefinition(definitions []*definition.Player) []*Player {
+	var players []*Player
 	for _, definition := range definitions {
 		players = append(players, NewPlayerFromDefinition(definition))
 	}
 	return players
 }
 
-func NewCardsFromDefinitions(definitions []definition.Card) []gob.Card {
-	var cards []gob.Card
+func NewCardsFromDefinitions(definitions []*definition.Card) []*gob.Card {
+	var cards []*gob.Card
 	for _, definition := range definitions {
 		card := gob.NewCardFromDefinition(definition)
 		cards = append(cards, card)
@@ -73,15 +97,15 @@ func NewCardsFromDefinitions(definitions []definition.Card) []gob.Card {
 	return cards
 }
 
-func NewBattlefieldFromDefinition(definition definition.Battlefield) Battlefield {
-	var permanents []gob.Permanent
+func NewBattlefieldFromDefinition(definition *definition.Battlefield) *Battlefield {
+	var permanents []*gob.Permanent
 	for _, permanentDefinition := range definition.Permanents {
 		permanent := gob.NewPermanentFromDefinition(
 			permanentDefinition,
 		)
 		permanents = append(permanents, permanent)
 	}
-	return Battlefield{
+	return &Battlefield{
 		permanents: permanents,
 	}
 }

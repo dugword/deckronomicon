@@ -1,6 +1,7 @@
 ScenarioName: Example Game Setup
 MaxTurns: 100
 OnThePlay: You
+Seed: 3
 Players:
   - Agent: Interactive
     AutoPay: true

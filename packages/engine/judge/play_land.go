@@ -11,12 +11,13 @@ import (
 
 // TODO: Should judge check if the card is in the player's hand?
 func CanPlayLand(
-	game state.Game,
-	player state.Player,
+	game *state.Game,
+	playerId string,
 	zone mtg.Zone,
-	card gob.Card,
+	card *gob.Card,
 	ruling *Ruling,
 ) bool {
+	player := game.GetPlayer(playerId)
 	can := true
 	if !card.Match(is.Land()) {
 		if ruling != nil && ruling.Explain {

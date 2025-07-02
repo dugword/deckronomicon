@@ -21,7 +21,7 @@ import (
 
 type Action interface {
 	Name() string
-	Complete(state.Game, state.Player, *resenv.ResEnv) ([]event.GameEvent, error)
+	Complete(game *state.Game, playerID string, resenv *resenv.ResEnv) ([]event.GameEvent, error)
 }
 
 type Logger interface {
@@ -42,22 +42,22 @@ type Logger interface {
 var ErrInvalidUserAction = errors.New("invalid user action")
 
 type Engine struct {
-	agents      map[string]PlayerAgent
-	deckLists   map[string]configs.DeckList
-	game        state.Game
-	record      *GameRecord
-	log         Logger
-	definitions map[string]definition.Card
-	resEnv      *resenv.ResEnv
+	agents          map[string]PlayerAgent
+	deckLists       map[string]*configs.DeckList
+	game            *state.Game
+	record          *GameRecord
+	log             Logger
+	cardDefinitions map[string]*definition.Card
+	resEnv          *resenv.ResEnv
 }
 
 type EngineConfig struct {
-	Players     []state.Player
-	Agents      map[string]PlayerAgent
-	Seed        int64
-	DeckLists   map[string]configs.DeckList
-	Definitions map[string]definition.Card
-	Log         Logger
+	PlayerDefinitions []*definition.Player
+	Agents            map[string]PlayerAgent
+	Seed              int64
+	DeckLists         map[string]*configs.DeckList
+	CardDefinitions   map[string]*definition.Card
+	Log               Logger
 }
 
 func NewEngine(config EngineConfig) *Engine {
@@ -66,22 +66,24 @@ func NewEngine(config EngineConfig) *Engine {
 		agents[id] = agent
 	}
 	rng := rng.NewRNG(config.Seed)
-	definitions := config.Definitions
+	cardDefinitions := config.CardDefinitions
 	return &Engine{
-		agents:      agents,
-		deckLists:   config.DeckLists,
-		game:        state.Game{}.WithPlayers(config.Players),
-		log:         config.Log,
-		record:      NewGameRecord(config.Seed),
-		definitions: definitions,
+		agents:    agents,
+		deckLists: config.DeckLists,
+		game: state.NewGameFromDefinition(&definition.Game{
+			Players: config.PlayerDefinitions,
+		}),
+		log:             config.Log,
+		record:          NewGameRecord(config.Seed),
+		cardDefinitions: cardDefinitions,
 		resEnv: &resenv.ResEnv{
 			RNG:         rng,
-			Definitions: definitions,
+			Definitions: cardDefinitions,
 		},
 	}
 }
 
-func (e *Engine) Game() state.Game {
+func (e *Engine) Game() *state.Game {
 	return e.game
 }
 
@@ -100,7 +102,7 @@ func (e *Engine) RunGame() error {
 		}
 		game, deck, err := e.game.WithBuildDeck(
 			deckList,
-			e.definitions,
+			e.cardDefinitions,
 			playerID,
 		)
 		if err != nil {
@@ -117,7 +119,7 @@ func (e *Engine) RunGame() error {
 	}
 
 	e.log.Debug("Running game")
-	if err := e.ApplyEvent(event.BeginGameEvent{}); err != nil {
+	if err := e.ApplyEvent(&event.BeginGameEvent{}); err != nil {
 		return fmt.Errorf("failed to start game: %w", err)
 	}
 	e.log.Debug("Shuffling decks")
@@ -128,7 +130,7 @@ func (e *Engine) RunGame() error {
 			cardIDs = append(cardIDs, card.ID())
 		}
 		shuffledCardsIDs := e.resEnv.RNG.ShuffleIDs(cardIDs)
-		if err := e.ApplyEvent(event.ShuffleLibraryEvent{PlayerID: playerID, ShuffledCardsIDs: shuffledCardsIDs}); err != nil {
+		if err := e.ApplyEvent(&event.ShuffleLibraryEvent{PlayerID: playerID, ShuffledCardsIDs: shuffledCardsIDs}); err != nil {
 			return fmt.Errorf("failed to shuffle decks for player %q: %w", playerID, err)
 		}
 	}
@@ -156,7 +158,7 @@ func (e *Engine) RunGame() error {
 func (e *Engine) RunTurn() error {
 	activePlayerID := e.game.ActivePlayerID()
 	e.log.Debug("Running turn for player: ", activePlayerID)
-	if err := e.ApplyEvent(event.BeginTurnEvent{PlayerID: activePlayerID}); err != nil {
+	if err := e.ApplyEvent(&event.BeginTurnEvent{PlayerID: activePlayerID}); err != nil {
 		return fmt.Errorf("failed to start turn: %w", err)
 	}
 	for _, phase := range e.GamePhases() {
@@ -164,13 +166,13 @@ func (e *Engine) RunTurn() error {
 			return fmt.Errorf("failed to run phase %s: %w", phase.name, err)
 		}
 	}
-	if err := e.ApplyEvent(event.EndTurnEvent{PlayerID: activePlayerID}); err != nil {
+	if err := e.ApplyEvent(&event.EndTurnEvent{PlayerID: activePlayerID}); err != nil {
 		return fmt.Errorf("failed to end turn: %w", err)
 	}
 	// TODO: Not sure if I like this here
 	activePlayerID = e.game.NextPlayerID(activePlayerID)
 	// TODO: Move this to the start of the turn
-	if err := e.ApplyEvent(event.SetActivePlayerEvent{PlayerID: activePlayerID}); err != nil {
+	if err := e.ApplyEvent(&event.SetActivePlayerEvent{PlayerID: activePlayerID}); err != nil {
 		return fmt.Errorf("failed to complete turn: %w", err)
 	}
 	return nil
@@ -222,7 +224,7 @@ func (e *Engine) RunPriority() error {
 		priorityPlayerID := e.game.PriorityPlayerID()
 		e.log.Debug("Running priority for player:", priorityPlayerID)
 		if err := e.ApplyEvent(
-			event.ReceivePriorityEvent{PlayerID: priorityPlayerID},
+			&event.ReceivePriorityEvent{PlayerID: priorityPlayerID},
 		); err != nil {
 			return fmt.Errorf("failed to apply receive priority event: %w", err)
 		}
@@ -240,7 +242,7 @@ func (e *Engine) RunPriority() error {
 				"failed to resolve spell or ability %q: %w", spellOrAbility.Name(), err,
 			)
 		}
-		if err := e.ApplyEvent(event.ResetPriorityPassesEvent{}); err != nil {
+		if err := e.ApplyEvent(&event.ResetPriorityPassesEvent{}); err != nil {
 			return fmt.Errorf("failed to reset priority passes: %w", err)
 		}
 	}
@@ -258,8 +260,7 @@ func (e *Engine) RunPlayerActions(playerID string) error {
 				"failed to get next action for player %q: %w", playerID, err,
 			)
 		}
-		player := e.game.GetPlayer(playerID)
-		evnts, err := action.Complete(e.game, player, e.resEnv)
+		evnts, err := action.Complete(e.game, playerID, e.resEnv)
 		if err != nil {
 			// TODO: Actually return this error in action.Complete
 			// Right now I don't, and for now I'm going to ignore all errors...
@@ -288,7 +289,7 @@ func (e *Engine) RunPlayerActions(playerID string) error {
 
 func (e *Engine) ResolveSpellOrAbility(resolvable state.Resolvable) error {
 	e.log.Debugf("Resolving spell or ability %q <%s> for %q", resolvable.Name(), resolvable.ID(), resolvable.Controller())
-	e.ApplyEvent(event.ResolveTopObjectOnStackEvent{
+	e.ApplyEvent(&event.ResolveTopObjectOnStackEvent{
 		Name: resolvable.Name(),
 		ID:   resolvable.ID(),
 	})
@@ -306,7 +307,7 @@ func (e *Engine) ResolveSpellOrAbility(resolvable state.Resolvable) error {
 	if resolvable.Match(query.And(is.Spell(), is.PermanentCardType())) {
 		// TODO: Maybe permanents should have an effect that applies them to the battlefield
 		// instead of this being a special case.
-		if err := e.ApplyEvent(event.PutPermanentOnBattlefieldEvent{
+		if err := e.ApplyEvent(&event.PutPermanentOnBattlefieldEvent{
 			PlayerID: resolvable.Owner(),
 			CardID:   resolvable.SourceID(),
 			FromZone: mtg.ZoneStack,
@@ -314,7 +315,7 @@ func (e *Engine) ResolveSpellOrAbility(resolvable state.Resolvable) error {
 			return fmt.Errorf("failed to apply event PutPermanentOnBattlefieldEvent: %w", err)
 		}
 	} else {
-		if err := e.ApplyEvent(event.RemoveSpellOrAbilityFromStackEvent{
+		if err := e.ApplyEvent(&event.RemoveSpellOrAbilityFromStackEvent{
 			PlayerID: resolvable.Owner(),
 			ObjectID: resolvable.ID(),
 		}); err != nil {
@@ -331,7 +332,7 @@ func (e *Engine) ResolveSpellOrAbility(resolvable state.Resolvable) error {
 				cardIDs = append(cardIDs, card.ID())
 			}
 			shuffledCardsIDs := e.resEnv.RNG.ShuffleIDs(cardIDs)
-			if err := e.ApplyEvent(event.ShuffleLibraryEvent{
+			if err := e.ApplyEvent(&event.ShuffleLibraryEvent{
 				PlayerID:         player.ID(),
 				ShuffledCardsIDs: shuffledCardsIDs,
 			}); err != nil {

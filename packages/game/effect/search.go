@@ -12,18 +12,19 @@ type Search struct {
 	ManaValues []int
 }
 
-func NewSearch(modifiers map[string]any) (Search, error) {
+func NewSearch(modifiers map[string]any) (*Search, error) {
 	query, err := parseQuery(modifiers)
 	if err != nil {
-		return Search{}, err
+		return nil, err
 	}
-	return Search(query), nil
+	search := Search(query)
+	return &search, nil
 }
 
-func (e Search) Name() string {
+func (e *Search) Name() string {
 	return "Search"
 }
 
-func (e Search) TargetSpec() target.TargetSpec {
+func (e *Search) TargetSpec() target.TargetSpec {
 	return target.NoneTargetSpec{}
 }

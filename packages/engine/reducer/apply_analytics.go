@@ -6,11 +6,11 @@ import (
 	"fmt"
 )
 
-func applyAnalyticsEvent(game state.Game, evnt event.AnalyticsEvent) (state.Game, error) {
+func applyAnalyticsEvent(game *state.Game, evnt event.AnalyticsEvent) (*state.Game, error) {
 	switch evnt.(type) {
-	case event.LogMessageEvent:
+	case *event.LogMessageEvent:
 		return game, nil
-	case event.EmitMetricEvent:
+	case *event.EmitMetricEvent:
 		return game, nil
 	default:
 		return game, fmt.Errorf("unknown triggered event type '%T'", evnt)

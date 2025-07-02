@@ -16,21 +16,21 @@ func TestApplyGameStateChangeEvent(t *testing.T) {
 	testCases := []struct {
 		name string
 		evnt event.GameStateChangeEvent
-		game state.Game
-		want state.Game
+		game *state.Game
+		want *state.Game
 	}{
 		{
 			name: "with AddManaEvent",
-			evnt: event.AddManaEvent{
+			evnt: &event.AddManaEvent{
 				PlayerID: playerID,
 				Color:    mana.Blue,
 				Amount:   2,
 			},
-			game: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{ID: playerID}},
+			game: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{ID: playerID}},
 			}),
-			want: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{
+			want: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{
 					ID:       playerID,
 					ManaPool: "{U}{U}",
 				}},
@@ -38,212 +38,212 @@ func TestApplyGameStateChangeEvent(t *testing.T) {
 		},
 		{
 			name: "with CheatEnabledEvent",
-			evnt: event.CheatEnabledEvent{
+			evnt: &event.CheatEnabledEvent{
 				PlayerID: playerID,
 			},
-			game: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{ID: playerID}},
+			game: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{ID: playerID}},
 			}),
-			want: state.NewGameFromDefinition(definition.Game{
+			want: state.NewGameFromDefinition(&definition.Game{
 				CheatsEnabled: true,
-				Players: []definition.Player{{
+				Players: []*definition.Player{{
 					ID: playerID,
 				}},
 			}),
 		},
 		{
 			name: "with DiscardCardEvent",
-			evnt: event.DiscardCardEvent{
+			evnt: &event.DiscardCardEvent{
 				PlayerID: playerID,
 				CardID:   "Discarded Card ID",
 			},
-			game: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{
+			game: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{
 					ID: playerID,
-					Hand: definition.Hand{
-						Cards: []definition.Card{{ID: "Discarded Card ID"}},
+					Hand: &definition.Hand{
+						Cards: []*definition.Card{{ID: "Discarded Card ID"}},
 					},
 				}},
 			}),
-			want: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{
+			want: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{
 					ID: playerID,
-					Graveyard: definition.Graveyard{
-						Cards: []definition.Card{{ID: "Discarded Card ID"}},
+					Graveyard: &definition.Graveyard{
+						Cards: []*definition.Card{{ID: "Discarded Card ID"}},
 					},
 				}},
 			}),
 		},
 		{
 			name: "with DrawCardEvent",
-			evnt: event.DrawCardEvent{
+			evnt: &event.DrawCardEvent{
 				PlayerID: playerID,
 			},
-			game: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{
+			game: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{
 					ID: playerID,
-					Library: definition.Library{
-						Cards: []definition.Card{{ID: "Drawn Card ID"}},
+					Library: &definition.Library{
+						Cards: []*definition.Card{{ID: "Drawn Card ID"}},
 					},
 				}},
 			}),
-			want: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{
+			want: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{
 					ID: playerID,
-					Hand: definition.Hand{
-						Cards: []definition.Card{{ID: "Drawn Card ID"}},
+					Hand: &definition.Hand{
+						Cards: []*definition.Card{{ID: "Drawn Card ID"}},
 					},
 				}},
 			}),
 		},
 		{
 			name: "with GainLifeEvent",
-			evnt: event.GainLifeEvent{
+			evnt: &event.GainLifeEvent{
 				PlayerID: playerID,
 				Amount:   5,
 			},
-			game: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{ID: playerID, Life: 10}},
+			game: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{ID: playerID, Life: 10}},
 			}),
-			want: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{ID: playerID, Life: 15}},
+			want: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{ID: playerID, Life: 15}},
 			}),
 		},
 		{
 			name: "with LoseLifeEvent",
-			evnt: event.LoseLifeEvent{
+			evnt: &event.LoseLifeEvent{
 				PlayerID: playerID,
 				Amount:   3,
 			},
-			game: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{ID: playerID, Life: 10}},
+			game: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{ID: playerID, Life: 10}},
 			}),
-			want: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{ID: playerID, Life: 7}},
+			want: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{ID: playerID, Life: 7}},
 			}),
 		},
 		{
 			name: "with PutCardInHandEvent",
-			evnt: event.PutCardInHandEvent{
+			evnt: &event.PutCardInHandEvent{
 				PlayerID: playerID,
 				CardID:   "Card ID to Hand",
 				FromZone: "Library",
 			},
-			game: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{
+			game: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{
 					ID: playerID,
-					Library: definition.Library{
-						Cards: []definition.Card{{ID: "Card ID to Hand"}},
+					Library: &definition.Library{
+						Cards: []*definition.Card{{ID: "Card ID to Hand"}},
 					},
 				}},
 			}),
-			want: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{
+			want: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{
 					ID: playerID,
-					Hand: definition.Hand{
-						Cards: []definition.Card{{ID: "Card ID to Hand"}},
+					Hand: &definition.Hand{
+						Cards: []*definition.Card{{ID: "Card ID to Hand"}},
 					},
 				}},
 			}),
 		},
 		{
 			name: "with PutCardInGraveyardEvent",
-			evnt: event.PutCardInGraveyardEvent{
+			evnt: &event.PutCardInGraveyardEvent{
 				PlayerID: playerID,
 				CardID:   "Card ID to Graveyard",
 				FromZone: "Hand",
 			},
-			game: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{
+			game: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{
 					ID: playerID,
-					Hand: definition.Hand{
-						Cards: []definition.Card{{ID: "Card ID to Graveyard"}},
+					Hand: &definition.Hand{
+						Cards: []*definition.Card{{ID: "Card ID to Graveyard"}},
 					},
 				}},
 			}),
-			want: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{
+			want: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{
 					ID: playerID,
-					Graveyard: definition.Graveyard{
-						Cards: []definition.Card{{ID: "Card ID to Graveyard"}},
+					Graveyard: &definition.Graveyard{
+						Cards: []*definition.Card{{ID: "Card ID to Graveyard"}},
 					},
 				}},
 			}),
 		},
 		{
 			name: "with PutCardOnBottomOfLibraryEvent",
-			evnt: event.PutCardOnBottomOfLibraryEvent{
+			evnt: &event.PutCardOnBottomOfLibraryEvent{
 				PlayerID: playerID,
 				CardID:   "Card ID to Bottom of Library",
 				FromZone: "Hand",
 			},
-			game: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{
+			game: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{
 					ID: playerID,
-					Hand: definition.Hand{
-						Cards: []definition.Card{{ID: "Card ID to Bottom of Library"}},
+					Hand: &definition.Hand{
+						Cards: []*definition.Card{{ID: "Card ID to Bottom of Library"}},
 					},
 				}},
 			}),
-			want: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{
+			want: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{
 					ID: playerID,
-					Library: definition.Library{
-						Cards: []definition.Card{{ID: "Card ID to Bottom of Library"}},
+					Library: &definition.Library{
+						Cards: []*definition.Card{{ID: "Card ID to Bottom of Library"}},
 					},
 				}},
 			}),
 		},
 		{
 			name: "with PutCardOnTopOfLibraryEvent",
-			evnt: event.PutCardOnTopOfLibraryEvent{
+			evnt: &event.PutCardOnTopOfLibraryEvent{
 				PlayerID: playerID,
 				CardID:   "Card ID to Top of Library",
 				FromZone: "Hand",
 			},
-			game: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{
+			game: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{
 					ID: playerID,
-					Hand: definition.Hand{
-						Cards: []definition.Card{{ID: "Card ID to Top of Library"}},
+					Hand: &definition.Hand{
+						Cards: []*definition.Card{{ID: "Card ID to Top of Library"}},
 					},
 				}},
 			}),
-			want: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{
+			want: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{
 					ID: playerID,
-					Library: definition.Library{
-						Cards: []definition.Card{{ID: "Card ID to Top of Library"}},
+					Library: &definition.Library{
+						Cards: []*definition.Card{{ID: "Card ID to Top of Library"}},
 					},
 				}},
 			}),
 		},
 		{
 			name: "with PutPermanentOnBattlefieldEvent",
-			evnt: event.PutPermanentOnBattlefieldEvent{
+			evnt: &event.PutPermanentOnBattlefieldEvent{
 				PlayerID: playerID,
 				CardID:   "Card ID to Battlefield",
 				FromZone: "Hand",
 			},
-			game: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{
+			game: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{
 					ID: playerID,
-					Hand: definition.Hand{
-						Cards: []definition.Card{{ID: "Card ID to Battlefield"}},
+					Hand: &definition.Hand{
+						Cards: []*definition.Card{{ID: "Card ID to Battlefield"}},
 					},
 				}},
 			}),
-			want: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{
+			want: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{
 					ID: playerID,
 				}},
-				Battlefield: definition.Battlefield{
-					Permanents: []definition.Permanent{
+				Battlefield: &definition.Battlefield{
+					Permanents: []*definition.Permanent{
 						{
 							ID:         "1",
 							Controller: playerID,
 							Owner:      playerID,
-							Card:       definition.Card{ID: "Card ID to Battlefield"},
+							Card:       &definition.Card{ID: "Card ID to Battlefield"},
 						},
 					},
 				},
@@ -251,20 +251,20 @@ func TestApplyGameStateChangeEvent(t *testing.T) {
 		},
 		{
 			name: "with SetActivePlayerEvent",
-			evnt: event.SetActivePlayerEvent{
+			evnt: &event.SetActivePlayerEvent{
 				PlayerID: playerID,
 			},
-			game: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{ID: playerID}},
+			game: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{ID: playerID}},
 			}),
-			want: state.NewGameFromDefinition(definition.Game{
+			want: state.NewGameFromDefinition(&definition.Game{
 				ActivePlayerID: playerID,
-				Players:        []definition.Player{{ID: playerID}},
+				Players:        []*definition.Player{{ID: playerID}},
 			}),
 		},
 		{
 			name: "with ShuffleLibraryEvent",
-			evnt: event.ShuffleLibraryEvent{
+			evnt: &event.ShuffleLibraryEvent{
 				PlayerID: playerID,
 				ShuffledCardsIDs: []string{
 					"Card ID 4",
@@ -274,11 +274,11 @@ func TestApplyGameStateChangeEvent(t *testing.T) {
 					"Card ID 2",
 				},
 			},
-			game: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{
+			game: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{
 					ID: playerID,
-					Library: definition.Library{
-						Cards: []definition.Card{
+					Library: &definition.Library{
+						Cards: []*definition.Card{
 							{ID: "Card ID 1"},
 							{ID: "Card ID 2"},
 							{ID: "Card ID 3"},
@@ -288,11 +288,11 @@ func TestApplyGameStateChangeEvent(t *testing.T) {
 					},
 				}},
 			}),
-			want: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{
+			want: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{
 					ID: playerID,
-					Library: definition.Library{
-						Cards: []definition.Card{
+					Library: &definition.Library{
+						Cards: []*definition.Card{
 							{ID: "Card ID 4"},
 							{ID: "Card ID 3"},
 							{ID: "Card ID 5"},
@@ -305,19 +305,19 @@ func TestApplyGameStateChangeEvent(t *testing.T) {
 		},
 		{
 			name: "with SpendManaEvent",
-			evnt: event.SpendManaEvent{
+			evnt: &event.SpendManaEvent{
 				PlayerID:   playerID,
 				ManaString: "{U}{U}",
 			},
 
-			game: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{
+			game: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{
 					ID:       playerID,
 					ManaPool: "{U}{U}{U}",
 				}},
 			}),
-			want: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{
+			want: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{
 					ID:       playerID,
 					ManaPool: "{U}",
 				}},
@@ -325,26 +325,26 @@ func TestApplyGameStateChangeEvent(t *testing.T) {
 		},
 		{
 			name: "with TapPermanentEvent",
-			evnt: event.TapPermanentEvent{
+			evnt: &event.TapPermanentEvent{
 				PlayerID:    playerID,
 				PermanentID: "Permanent ID to Tap",
 			},
-			game: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{
+			game: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{
 					ID: playerID,
 				}},
-				Battlefield: definition.Battlefield{
-					Permanents: []definition.Permanent{
+				Battlefield: &definition.Battlefield{
+					Permanents: []*definition.Permanent{
 						{ID: "Permanent ID to Tap"},
 					},
 				},
 			}),
-			want: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{
+			want: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{
 					ID: playerID,
 				}},
-				Battlefield: definition.Battlefield{
-					Permanents: []definition.Permanent{
+				Battlefield: &definition.Battlefield{
+					Permanents: []*definition.Permanent{
 						{ID: "Permanent ID to Tap", Tapped: true},
 					},
 				},
@@ -352,26 +352,26 @@ func TestApplyGameStateChangeEvent(t *testing.T) {
 		},
 		{
 			name: "with UntapPermanentEvent",
-			evnt: event.UntapPermanentEvent{
+			evnt: &event.UntapPermanentEvent{
 				PlayerID:    playerID,
 				PermanentID: "Permanent ID to Untap",
 			},
-			game: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{
+			game: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{
 					ID: playerID,
 				}},
-				Battlefield: definition.Battlefield{
-					Permanents: []definition.Permanent{
+				Battlefield: &definition.Battlefield{
+					Permanents: []*definition.Permanent{
 						{ID: "Permanent ID to Untap", Tapped: true},
 					},
 				},
 			}),
-			want: state.NewGameFromDefinition(definition.Game{
-				Players: []definition.Player{{
+			want: state.NewGameFromDefinition(&definition.Game{
+				Players: []*definition.Player{{
 					ID: playerID,
 				}},
-				Battlefield: definition.Battlefield{
-					Permanents: []definition.Permanent{
+				Battlefield: &definition.Battlefield{
+					Permanents: []*definition.Permanent{
 						{ID: "Permanent ID to Untap", Tapped: false},
 					},
 				},

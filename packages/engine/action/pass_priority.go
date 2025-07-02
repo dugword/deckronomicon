@@ -16,8 +16,8 @@ func (a PassPriorityAction) Name() string {
 	return "Pass Priority"
 }
 
-func (a PassPriorityAction) Complete(game state.Game, player state.Player, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
-	return []event.GameEvent{event.PassPriorityEvent{
-		PlayerID: player.ID(),
+func (a PassPriorityAction) Complete(game *state.Game, playerID string, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
+	return []event.GameEvent{&event.PassPriorityEvent{
+		PlayerID: playerID,
 	}}, nil
 }

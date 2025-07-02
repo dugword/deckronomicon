@@ -11,13 +11,13 @@ type PriorityEvent interface{ isPriorityEvent() }
 
 type PriorityBaseEvent struct{}
 
-func (e PriorityBaseEvent) isPriorityEvent() {}
+func (e *PriorityBaseEvent) isPriorityEvent() {}
 
 type AllPlayersPassedPriorityEvent struct {
 	PriorityBaseEvent
 }
 
-func (e AllPlayersPassedPriorityEvent) EventType() string {
+func (e *AllPlayersPassedPriorityEvent) EventType() string {
 	return EventTypeAllPlayersPassedPriority
 }
 
@@ -26,7 +26,7 @@ type ReceivePriorityEvent struct {
 	PlayerID string
 }
 
-func (e ReceivePriorityEvent) EventType() string {
+func (e *ReceivePriorityEvent) EventType() string {
 	return EventTypeReceivePriorityEvent
 }
 
@@ -34,7 +34,7 @@ type ResetPriorityPassesEvent struct {
 	PriorityBaseEvent
 }
 
-func (e ResetPriorityPassesEvent) EventType() string {
+func (e *ResetPriorityPassesEvent) EventType() string {
 	return EventTypeResetPriorityPasses
 }
 
@@ -43,6 +43,6 @@ type PassPriorityEvent struct {
 	PlayerID string
 }
 
-func (e PassPriorityEvent) EventType() string {
+func (e *PassPriorityEvent) EventType() string {
 	return EventTypePassPriority
 }

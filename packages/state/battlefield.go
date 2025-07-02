@@ -12,87 +12,87 @@ import (
 
 // Battlefield represents the battlefield during an active game.
 type Battlefield struct {
-	permanents []gob.Permanent
+	permanents []*gob.Permanent
 }
 
 // NewBattlefield creates a new Battlefield instance.
-func NewBattlefield() Battlefield {
+func NewBattlefield() *Battlefield {
 	battlefield := Battlefield{
-		permanents: []gob.Permanent{},
+		permanents: []*gob.Permanent{},
 	}
-	return battlefield
+	return &battlefield
 }
 
-func (b Battlefield) Add(permanents ...gob.Permanent) Battlefield {
-	return Battlefield{
+func (b *Battlefield) Add(permanents ...*gob.Permanent) *Battlefield {
+	return &Battlefield{
 		permanents: add.Item(b.permanents, permanents...),
 	}
 }
 
-func (b Battlefield) Contains(predicate query.Predicate) bool {
+func (b *Battlefield) Contains(predicate query.Predicate) bool {
 	return query.Contains(b.permanents, predicate)
 }
 
-func (b Battlefield) Find(predicate query.Predicate) (gob.Permanent, bool) {
+func (b *Battlefield) Find(predicate query.Predicate) (*gob.Permanent, bool) {
 	return query.Find(b.permanents, predicate)
 }
 
-func (b Battlefield) FindAll(predicate query.Predicate) []gob.Permanent {
+func (b *Battlefield) FindAll(predicate query.Predicate) []*gob.Permanent {
 	return query.FindAll(b.permanents, predicate)
 }
 
-func (b Battlefield) Get(id string) (gob.Permanent, bool) {
+func (b *Battlefield) Get(id string) (*gob.Permanent, bool) {
 	return query.Get(b.permanents, id)
 }
 
-func (b Battlefield) GetAll() []gob.Permanent {
+func (b *Battlefield) GetAll() []*gob.Permanent {
 	return query.GetAll(b.permanents)
 }
 
-func (b Battlefield) Name() string {
+func (b *Battlefield) Name() string {
 	return string(mtg.ZoneBattlefield)
 }
 
-func (b Battlefield) Remove(id string) (Battlefield, bool) {
+func (b *Battlefield) Remove(id string) (*Battlefield, bool) {
 	permanents, ok := remove.By(b.permanents, has.ID(id))
 	if !ok {
-		return b, false
+		return nil, false
 	}
-	return Battlefield{permanents: permanents}, true
+	return &Battlefield{permanents: permanents}, true
 }
 
-func (b Battlefield) RemoveBy(predicate query.Predicate) (Battlefield, bool) {
+func (b *Battlefield) RemoveBy(predicate query.Predicate) (*Battlefield, bool) {
 	permanents, ok := remove.By(b.permanents, predicate)
 	if !ok {
-		return b, false
+		return nil, false
 	}
-	return Battlefield{permanents: permanents}, true
+	return &Battlefield{permanents: permanents}, true
 }
 
-func (b Battlefield) Size() int {
+func (b *Battlefield) Size() int {
 	return len(b.permanents)
 }
 
-func (b Battlefield) Take(id string) (gob.Permanent, Battlefield, bool) {
+func (b *Battlefield) Take(id string) (*gob.Permanent, *Battlefield, bool) {
 	permanent, permanents, ok := take.By(b.permanents, has.ID(id))
 	if !ok {
-		return gob.Permanent{}, b, false
+		return nil, nil, false
 	}
 	b.permanents = permanents
-	return permanent, b, true
+	return permanent, nil, true
 }
 
-func (b Battlefield) TakeBy(predicate query.Predicate) (gob.Permanent, Battlefield, bool) {
+func (b *Battlefield) TakeBy(predicate query.Predicate) (*gob.Permanent, *Battlefield, bool) {
 	permanent, permanents, ok := take.By(b.permanents, predicate)
 	if !ok {
-		return gob.Permanent{}, b, false
+		return nil, nil, false
 	}
 	b.permanents = permanents
-	return permanent, b, true
+	return permanent, nil, true
 }
 
-func (b Battlefield) UntapAll(playerID string) Battlefield {
-	var battlefield Battlefield
+func (b *Battlefield) UntapAll(playerID string) *Battlefield {
+	battlefield := NewBattlefield()
 	for _, p := range b.permanents {
 		if p.Controller() == playerID {
 			p = p.Untap()
@@ -102,8 +102,8 @@ func (b Battlefield) UntapAll(playerID string) Battlefield {
 	return battlefield
 }
 
-func (b Battlefield) RemoveSummoningSickness(playerID string) Battlefield {
-	var battlefield Battlefield
+func (b *Battlefield) RemoveSummoningSickness(playerID string) *Battlefield {
+	battlefield := NewBattlefield()
 	for _, p := range b.permanents {
 		if p.Controller() == playerID {
 			p = p.RemoveSummoningSickness()
@@ -113,12 +113,12 @@ func (b Battlefield) RemoveSummoningSickness(playerID string) Battlefield {
 	return battlefield
 }
 
-func (b Battlefield) Zone() mtg.Zone {
+func (b *Battlefield) Zone() mtg.Zone {
 	return mtg.ZoneBattlefield
 }
 
-func (b Battlefield) WithUpdatedPermanent(permanent gob.Permanent) Battlefield {
-	var permanents []gob.Permanent
+func (b *Battlefield) WithUpdatedPermanent(permanent *gob.Permanent) *Battlefield {
+	var permanents []*gob.Permanent
 	for _, p := range b.permanents {
 		if p.ID() == permanent.ID() {
 			permanents = append(permanents, permanent)
@@ -126,6 +126,7 @@ func (b Battlefield) WithUpdatedPermanent(permanent gob.Permanent) Battlefield {
 		}
 		permanents = append(permanents, p)
 	}
-	b.permanents = permanents
-	return b
+	return &Battlefield{
+		permanents: permanents,
+	}
 }

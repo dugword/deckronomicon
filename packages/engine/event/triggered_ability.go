@@ -15,7 +15,7 @@ type TriggeredAbilityEvent interface{ isTriggeredAbilityEvent() }
 
 type TriggeredAbilityBaseEvent struct{}
 
-func (e TriggeredAbilityBaseEvent) isTriggeredAbilityEvent() {}
+func (e *TriggeredAbilityBaseEvent) isTriggeredAbilityEvent() {}
 
 type RegisterTriggeredAbilityEvent struct {
 	TriggeredAbilityBaseEvent
@@ -28,7 +28,7 @@ type RegisterTriggeredAbilityEvent struct {
 	OneShot    bool
 }
 
-func (e RegisterTriggeredAbilityEvent) EventType() string {
+func (e *RegisterTriggeredAbilityEvent) EventType() string {
 	return EventTypeRegisterTriggeredAbility
 }
 
@@ -37,6 +37,6 @@ type RemoveTriggeredAbilityEvent struct {
 	ID string
 }
 
-func (e RemoveTriggeredAbilityEvent) EventType() string {
+func (e *RemoveTriggeredAbilityEvent) EventType() string {
 	return EventTypeRemoveTriggeredAbility
 }

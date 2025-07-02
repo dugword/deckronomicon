@@ -33,7 +33,7 @@ func Run() error {
 	return nil
 }
 
-func validateCard(card definition.Card) []error {
+func validateCard(card *definition.Card) []error {
 	var errs []error
 	if card.Name == "" {
 		errs = append(errs, fmt.Errorf("card name is required"))

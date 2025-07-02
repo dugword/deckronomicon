@@ -11,7 +11,7 @@ type Effect interface {
 	Name() string
 }
 
-func New(definition definition.Effect) (Effect, error) {
+func New(definition *definition.Effect) (Effect, error) {
 	switch definition.Name {
 	case "AddMana":
 		return NewAddMana(definition.Modifiers)

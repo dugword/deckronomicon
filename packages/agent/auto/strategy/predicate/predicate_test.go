@@ -37,7 +37,7 @@ func TestNameMatchCondition(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			var objs []query.Object
 			for _, name := range test.is {
-				card := gob.NewCardFromDefinition(definition.Card{Name: name})
+				card := gob.NewCardFromDefinition(&definition.Card{Name: name})
 				objs = append(objs, card)
 			}
 			got := test.when.Matches(objs)

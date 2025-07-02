@@ -16,18 +16,18 @@ import (
 
 func parseCastSpellCommand(
 	idOrName string,
-	game state.Game,
-	player state.Player,
+	game *state.Game,
+	playerID string,
 	agent engine.PlayerAgent,
 	autoPayCost bool,
 	autoPayColors []mana.Color, // Colors to prioritize when auto-paying costs, if applicable
 ) (action.CastSpellRequest, error) {
 	ruling := judge.Ruling{Explain: true}
-	cards := judge.GetSpellsAvailableToCast(game, player, autoPayCost, autoPayColors, &ruling)
-	var cardInZone gob.CardInZone
+	cards := judge.GetSpellsAvailableToCast(game, playerID, autoPayCost, autoPayColors, &ruling)
+	var cardInZone *gob.CardInZone
 	var err error
 	if idOrName == "" {
-		cardInZone, err = getCardByChoice(cards, agent, player)
+		cardInZone, err = getCardByChoice(cards, agent, playerID)
 		if err != nil {
 			return action.CastSpellRequest{}, fmt.Errorf("failed to get card by choice: %w", err)
 		}
@@ -41,7 +41,7 @@ func parseCastSpellCommand(
 		cardInZone = found
 	}
 	costTarget, err := getTargetsForCost(
-		player.ID(),
+		playerID,
 		cardInZone.Card(),
 		game,
 		agent,
@@ -50,7 +50,7 @@ func parseCastSpellCommand(
 		return action.CastSpellRequest{}, fmt.Errorf("failed to get cost target: %w", err)
 	}
 	targetsForEffects, err := getTargetsForEffects(
-		player.ID(),
+		playerID,
 		cardInZone.Card(),
 		cardInZone.Card().SpellAbility(),
 		game,
@@ -61,7 +61,7 @@ func parseCastSpellCommand(
 	}
 	// TODO: Pass in cost or something and only get cards that can be paid for.
 	// TODO: Handle autoPayCost and autoPayColors properly.
-	splicableCards, err := judge.GetSplicableCards(game, player, cardInZone, &ruling)
+	splicableCards, err := judge.GetSplicableCards(game, playerID, cardInZone, &ruling)
 	if err != nil {
 		return action.CastSpellRequest{}, fmt.Errorf("failed to get splicable cards: %w", err)
 	}
@@ -72,7 +72,7 @@ func parseCastSpellCommand(
 	var spliceCardIDs []string
 	for _, cardToSplice := range cardsToSplice {
 		spliceTargetsForEffects, err := getTargetsForEffects(
-			player.ID(),
+			playerID,
 			cardToSplice.Card(),
 			cardToSplice.Card().SpellAbility(),
 			game,
@@ -91,7 +91,7 @@ func parseCastSpellCommand(
 		flashback = true
 	}
 	replicateCount := 0
-	if judge.CanReplicateCard(game, player, cardInZone.Card(), &ruling) {
+	if judge.CanReplicateCard(game, playerID, cardInZone.Card(), &ruling) {
 		var err error
 		replicateCount, err = getReplicateCount(cardInZone.Card(), agent)
 		if err != nil {
@@ -112,7 +112,7 @@ func parseCastSpellCommand(
 }
 
 func getReplicateCount(
-	card gob.Card,
+	card *gob.Card,
 	agent engine.PlayerAgent,
 ) (int, error) {
 	replicatePrompt := choose.ChoicePrompt{
@@ -136,11 +136,11 @@ func getReplicateCount(
 }
 
 func chooseSpliceCards(
-	splicableCards []gob.CardInZone,
-	card gob.Card,
+	splicableCards []*gob.CardInZone,
+	card *gob.Card,
 	agent engine.PlayerAgent,
-) ([]gob.CardInZone, error) {
-	var cardsInHandToSplice []gob.CardInZone
+) ([]*gob.CardInZone, error) {
+	var cardsInHandToSplice []*gob.CardInZone
 	if len(splicableCards) == 0 {
 		return nil, nil // No splicable cards available
 	}
@@ -163,7 +163,7 @@ func chooseSpliceCards(
 		return nil, fmt.Errorf("expected a multiple choice result for splicing")
 	}
 	for _, choice := range selected.Choices {
-		card, ok := choice.(gob.CardInZone)
+		card, ok := choice.(*gob.CardInZone)
 		if !ok {
 			return nil, fmt.Errorf("selected choice is not a card in a zone")
 		}
@@ -173,13 +173,13 @@ func chooseSpliceCards(
 }
 
 func getCardByChoice(
-	cards []gob.CardInZone,
+	cards []*gob.CardInZone,
 	agent engine.PlayerAgent,
-	player state.Player,
-) (gob.CardInZone, error) {
+	playerID string,
+) (*gob.CardInZone, error) {
 	prompt := choose.ChoicePrompt{
 		Message:  "Choose a spell to cast",
-		Source:   player,
+		Source:   nil, // TODO: Make this better
 		Optional: true,
 		ChoiceOpts: choose.ChooseOneOpts{
 			Choices: choose.NewChoices(cards),
@@ -187,18 +187,18 @@ func getCardByChoice(
 	}
 	choiceResults, err := agent.Choose(prompt)
 	if err != nil {
-		return gob.CardInZone{}, fmt.Errorf("failed to get choices: %w", err)
+		return nil, fmt.Errorf("failed to get choices: %w", err)
 	}
 	selected, ok := choiceResults.(choose.ChooseOneResults)
 	if !ok {
-		return gob.CardInZone{}, fmt.Errorf("expected ChooseOneResults, got %T", choiceResults)
+		return nil, fmt.Errorf("expected ChooseOneResults, got %T", choiceResults)
 	}
 	if selected.Choice == nil {
-		return gob.CardInZone{}, fmt.Errorf("no card selected: %w", choose.ErrNoChoiceSelected)
+		return nil, fmt.Errorf("no card selected: %w", choose.ErrNoChoiceSelected)
 	}
-	card, ok := selected.Choice.(gob.CardInZone)
+	card, ok := selected.Choice.(*gob.CardInZone)
 	if !ok {
-		return gob.CardInZone{}, fmt.Errorf("selected choice is not a card in a zone")
+		return nil, fmt.Errorf("selected choice is not a card in a zone")
 	}
 	return card, nil
 }

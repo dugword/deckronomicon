@@ -10,9 +10,9 @@ import (
 )
 
 func ResolveDraw(
-	game state.Game,
+	game *state.Game,
 	playerID string,
-	draw effect.Draw,
+	draw *effect.Draw,
 	target target.Target,
 ) (Result, error) {
 	switch target.Type {
@@ -26,10 +26,10 @@ func ResolveDraw(
 	}
 }
 
-func resolveDrawForPlayer(game state.Game, playerID string, count int) (Result, error) {
+func resolveDrawForPlayer(game *state.Game, playerID string, count int) (Result, error) {
 	var events []event.GameEvent
 	for range count {
-		events = append(events, event.DrawCardEvent{
+		events = append(events, &event.DrawCardEvent{
 			PlayerID: playerID,
 		})
 	}

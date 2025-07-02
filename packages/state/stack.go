@@ -14,7 +14,7 @@ type Resolvable interface {
 	Description() string
 	ID() string
 	Name() string
-	EffectWithTargets() []effect.EffectWithTarget
+	EffectWithTargets() []*effect.EffectWithTarget
 	Match(p query.Predicate) bool
 	Controller() string
 	Owner() string
@@ -25,73 +25,73 @@ type Stack struct {
 	resolvables []Resolvable
 }
 
-func NewStack() Stack {
-	stack := Stack{
+func NewStack() *Stack {
+	stack := &Stack{
 		resolvables: []Resolvable{},
 	}
 	return stack
 }
 
-func (s Stack) Add(resolvable Resolvable) Stack {
-	return Stack{resolvables: add.Item(s.resolvables, resolvable)}
+func (s *Stack) Add(resolvable Resolvable) *Stack {
+	return &Stack{resolvables: add.Item(s.resolvables, resolvable)}
 }
-func (s Stack) AddTop(resolvable Resolvable) Stack {
-	return Stack{resolvables: add.Item([]Resolvable{resolvable}, s.resolvables...)}
+func (s *Stack) AddTop(resolvable Resolvable) *Stack {
+	return &Stack{resolvables: add.Item([]Resolvable{resolvable}, s.resolvables...)}
 }
 
-func (s Stack) Find(predicate query.Predicate) (Resolvable, bool) {
+func (s *Stack) Find(predicate query.Predicate) (Resolvable, bool) {
 	return query.Find(s.resolvables, predicate)
 }
 
-func (s Stack) FindAll(predicate query.Predicate) []Resolvable {
+func (s *Stack) FindAll(predicate query.Predicate) []Resolvable {
 	return query.FindAll(s.resolvables, predicate)
 }
 
-func (s Stack) Get(id string) (Resolvable, bool) {
+func (s *Stack) Get(id string) (Resolvable, bool) {
 	return query.Get(s.resolvables, id)
 }
 
-func (s Stack) GetTop() (Resolvable, bool) {
+func (s *Stack) GetTop() (Resolvable, bool) {
 	return query.GetTop(s.resolvables)
 }
 
-func (s Stack) GetAll() []Resolvable {
+func (s *Stack) GetAll() []Resolvable {
 	return s.resolvables
 }
 
-func (s Stack) Name() string {
+func (s *Stack) Name() string {
 	return string(mtg.ZoneStack)
 }
 
-func (s Stack) Remove(id string) (Stack, bool) {
+func (s *Stack) Remove(id string) (*Stack, bool) {
 	resolvables, ok := remove.By(s.resolvables, has.ID(id))
 	if !ok {
-		return s, false
+		return nil, false
 	}
-	return Stack{resolvables: resolvables}, true
+	return &Stack{resolvables: resolvables}, true
 
 }
 
-func (s Stack) Size() int {
+func (s *Stack) Size() int {
 	return len(s.resolvables)
 }
 
-func (s Stack) Take(id string) (Resolvable, Stack, bool) {
+func (s *Stack) Take(id string) (Resolvable, *Stack, bool) {
 	resolvable, resolvables, ok := take.By(s.resolvables, has.ID(id))
 	if !ok {
-		return nil, s, false
+		return nil, nil, false
 	}
-	return resolvable, Stack{resolvables: resolvables}, true
+	return resolvable, &Stack{resolvables: resolvables}, true
 }
 
-func (s Stack) TakeTop() (Resolvable, Stack, bool) {
+func (s *Stack) TakeTop() (Resolvable, *Stack, bool) {
 	resolvable, resolvables, ok := take.Top(s.resolvables)
 	if !ok {
-		return nil, s, false
+		return nil, nil, false
 	}
-	return resolvable, Stack{resolvables: resolvables}, true
+	return resolvable, &Stack{resolvables: resolvables}, true
 }
 
-func (s Stack) ZoneType() string {
+func (s *Stack) ZoneType() string {
 	return "Stack"
 }

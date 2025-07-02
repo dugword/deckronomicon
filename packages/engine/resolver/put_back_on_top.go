@@ -12,9 +12,9 @@ import (
 )
 
 func ResolvePutBackOnTop(
-	game state.Game,
+	game *state.Game,
 	playerID string,
-	putBackOnTop effect.PutBackOnTop,
+	putBackOnTop *effect.PutBackOnTop,
 	source gob.Object,
 ) (Result, error) {
 	player := game.GetPlayer(playerID)
@@ -37,11 +37,11 @@ func ResolvePutBackOnTop(
 		}
 		var events []event.GameEvent
 		for _, choice := range selected.Choices {
-			card, ok := choice.(gob.Card)
+			card, ok := choice.(*gob.Card)
 			if !ok {
 				return Result{}, errors.New("selected choice is not a card in a zone")
 			}
-			events = append(events, event.PutCardOnTopOfLibraryEvent{
+			events = append(events, &event.PutCardOnTopOfLibraryEvent{
 				PlayerID: player.ID(),
 				CardID:   card.ID(),
 				FromZone: mtg.ZoneHand,

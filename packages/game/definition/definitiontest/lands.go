@@ -4,7 +4,7 @@ import (
 	"deckronomicon/packages/game/definition"
 )
 
-func PlainsDefinition(id string, playerID string) definition.Permanent {
+func PlainsDefinition(id string, playerID string) *definition.Permanent {
 	plains := definition.Permanent{
 		ID:         id,
 		Name:       "Plains",
@@ -13,9 +13,9 @@ func PlainsDefinition(id string, playerID string) definition.Permanent {
 		Subtypes:   []string{"Plains"},
 		Controller: playerID,
 		Owner:      playerID,
-		ActivatedAbilities: []definition.Ability{{
+		ActivatedAbilities: []*definition.Ability{{
 			Cost: "{T}",
-			Effects: []definition.Effect{{
+			Effects: []*definition.Effect{{
 				Name: "AddMana",
 				Modifiers: map[string]any{
 					"Mana": "{W}",
@@ -23,10 +23,10 @@ func PlainsDefinition(id string, playerID string) definition.Permanent {
 			}},
 		}},
 	}
-	return plains
+	return &plains
 }
 
-func IslandDefinition(id string, playerID string) definition.Permanent {
+func IslandDefinition(id string, playerID string) *definition.Permanent {
 	island := definition.Permanent{
 		ID:         id,
 		Name:       "Island",
@@ -35,9 +35,9 @@ func IslandDefinition(id string, playerID string) definition.Permanent {
 		Subtypes:   []string{"Island"},
 		Controller: playerID,
 		Owner:      playerID,
-		ActivatedAbilities: []definition.Ability{{
+		ActivatedAbilities: []*definition.Ability{{
 			Cost: "{T}",
-			Effects: []definition.Effect{{
+			Effects: []*definition.Effect{{
 				Name: "AddMana",
 				Modifiers: map[string]any{
 					"Mana": "{U}",
@@ -45,10 +45,10 @@ func IslandDefinition(id string, playerID string) definition.Permanent {
 			}},
 		}},
 	}
-	return island
+	return &island
 }
 
-func SwampDefinition(id string, playerID string) definition.Permanent {
+func SwampDefinition(id string, playerID string) *definition.Permanent {
 	swamp := definition.Permanent{
 		ID:         id,
 		Name:       "Swamp",
@@ -57,9 +57,9 @@ func SwampDefinition(id string, playerID string) definition.Permanent {
 		Subtypes:   []string{"Swamp"},
 		Controller: playerID,
 		Owner:      playerID,
-		ActivatedAbilities: []definition.Ability{{
+		ActivatedAbilities: []*definition.Ability{{
 			Cost: "{T}",
-			Effects: []definition.Effect{{
+			Effects: []*definition.Effect{{
 				Name: "AddMana",
 				Modifiers: map[string]any{
 					"Mana": "{B}",
@@ -67,10 +67,10 @@ func SwampDefinition(id string, playerID string) definition.Permanent {
 			}},
 		}},
 	}
-	return swamp
+	return &swamp
 }
 
-func MountainDefinition(id string, playerID string) definition.Permanent {
+func MountainDefinition(id string, playerID string) *definition.Permanent {
 	mountain := definition.Permanent{
 		ID:         id,
 		Name:       "Mountain",
@@ -79,9 +79,9 @@ func MountainDefinition(id string, playerID string) definition.Permanent {
 		Subtypes:   []string{"Mountain"},
 		Controller: playerID,
 		Owner:      playerID,
-		ActivatedAbilities: []definition.Ability{{
+		ActivatedAbilities: []*definition.Ability{{
 			Cost: "{T}",
-			Effects: []definition.Effect{{
+			Effects: []*definition.Effect{{
 				Name: "AddMana",
 				Modifiers: map[string]any{
 					"Mana": "{R}",
@@ -89,10 +89,10 @@ func MountainDefinition(id string, playerID string) definition.Permanent {
 			}},
 		}},
 	}
-	return mountain
+	return &mountain
 }
 
-func ForestDefinition(id string, playerID string) definition.Permanent {
+func ForestDefinition(id string, playerID string) *definition.Permanent {
 	forest := definition.Permanent{
 		ID:         id,
 		Name:       "Forest",
@@ -101,9 +101,9 @@ func ForestDefinition(id string, playerID string) definition.Permanent {
 		Subtypes:   []string{"Forest"},
 		Controller: playerID,
 		Owner:      playerID,
-		ActivatedAbilities: []definition.Ability{{
+		ActivatedAbilities: []*definition.Ability{{
 			Cost: "{T}",
-			Effects: []definition.Effect{{
+			Effects: []*definition.Effect{{
 				Name: "AddMana",
 				Modifiers: map[string]any{
 					"Mana": "{G}",
@@ -111,10 +111,10 @@ func ForestDefinition(id string, playerID string) definition.Permanent {
 			}},
 		}},
 	}
-	return forest
+	return &forest
 }
 
-func WastesDefinition(id string, playerID string) definition.Permanent {
+func WastesDefinition(id string, playerID string) *definition.Permanent {
 	wastes := definition.Permanent{
 		ID:         id,
 		Name:       "Wastes",
@@ -122,9 +122,9 @@ func WastesDefinition(id string, playerID string) definition.Permanent {
 		Supertypes: []string{"Basic"},
 		Controller: playerID,
 		Owner:      playerID,
-		ActivatedAbilities: []definition.Ability{{
+		ActivatedAbilities: []*definition.Ability{{
 			Cost: "{T}",
-			Effects: []definition.Effect{{
+			Effects: []*definition.Effect{{
 				Name: "AddMana",
 				Modifiers: map[string]any{
 					"Mana": "{C}",
@@ -132,5 +132,5 @@ func WastesDefinition(id string, playerID string) definition.Permanent {
 			}},
 		}},
 	}
-	return wastes
+	return &wastes
 }

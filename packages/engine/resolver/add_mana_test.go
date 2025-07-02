@@ -11,9 +11,9 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-func addManaTestGame(playerID string) state.Game {
-	game := state.NewGameFromDefinition(definition.Game{
-		Players: []definition.Player{{
+func addManaTestGame(playerID string) *state.Game {
+	game := state.NewGameFromDefinition(&definition.Game{
+		Players: []*definition.Player{{
 			ID: playerID,
 		}},
 	})
@@ -24,26 +24,26 @@ func TestAddManaEffect(t *testing.T) {
 	playerID := "Test Player"
 	testCases := []struct {
 		name       string
-		effect     effect.AddMana
+		effect     *effect.AddMana
 		wantEvents []event.GameEvent
 	}{
 		{
 			name:   "with WUBRG mana",
-			effect: effect.AddMana{Mana: "{W}{U}{B}{R}{G}"},
+			effect: &effect.AddMana{Mana: "{W}{U}{B}{R}{G}"},
 			wantEvents: []event.GameEvent{
-				event.AddManaEvent{PlayerID: playerID, Amount: 1, Color: mana.White},
-				event.AddManaEvent{PlayerID: playerID, Amount: 1, Color: mana.Blue},
-				event.AddManaEvent{PlayerID: playerID, Amount: 1, Color: mana.Black},
-				event.AddManaEvent{PlayerID: playerID, Amount: 1, Color: mana.Red},
-				event.AddManaEvent{PlayerID: playerID, Amount: 1, Color: mana.Green},
+				&event.AddManaEvent{PlayerID: playerID, Amount: 1, Color: mana.White},
+				&event.AddManaEvent{PlayerID: playerID, Amount: 1, Color: mana.Blue},
+				&event.AddManaEvent{PlayerID: playerID, Amount: 1, Color: mana.Black},
+				&event.AddManaEvent{PlayerID: playerID, Amount: 1, Color: mana.Red},
+				&event.AddManaEvent{PlayerID: playerID, Amount: 1, Color: mana.Green},
 			},
 		},
 		{
 			name:   "with 2UU mana",
-			effect: effect.AddMana{Mana: "{2}{U}{U}"},
+			effect: &effect.AddMana{Mana: "{2}{U}{U}"},
 			wantEvents: []event.GameEvent{
-				event.AddManaEvent{PlayerID: playerID, Amount: 2, Color: mana.Colorless},
-				event.AddManaEvent{PlayerID: playerID, Amount: 2, Color: mana.Blue},
+				&event.AddManaEvent{PlayerID: playerID, Amount: 2, Color: mana.Colorless},
+				&event.AddManaEvent{PlayerID: playerID, Amount: 2, Color: mana.Blue},
 			},
 		},
 	}

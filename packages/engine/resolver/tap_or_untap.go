@@ -8,14 +8,14 @@ import (
 )
 
 func ResolveTapOrUntap(
-	game state.Game,
+	game *state.Game,
 	playerID string,
-	tapOrUntap effect.TapOrUntap,
+	tapOrUntap *effect.TapOrUntap,
 	target target.Target,
 ) (Result, error) {
 	return Result{
 		Events: []event.GameEvent{
-			event.UntapPermanentEvent{
+			&event.UntapPermanentEvent{
 				PlayerID:    playerID,
 				PermanentID: target.ID,
 			},

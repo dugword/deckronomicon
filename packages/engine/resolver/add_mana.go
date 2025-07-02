@@ -9,9 +9,9 @@ import (
 )
 
 func ResolveAddMana(
-	game state.Game,
+	game *state.Game,
 	playerID string,
-	addMana effect.AddMana,
+	addMana *effect.AddMana,
 ) (Result, error) {
 	amount, err := mana.ParseManaString(addMana.Mana)
 	if err != nil {
@@ -19,49 +19,49 @@ func ResolveAddMana(
 	}
 	var events []event.GameEvent
 	if amount.Generic() > 0 {
-		events = append(events, event.AddManaEvent{
+		events = append(events, &event.AddManaEvent{
 			PlayerID: playerID,
 			Amount:   amount.Generic(),
 			Color:    mana.Colorless,
 		})
 	}
 	if amount.Colorless() > 0 {
-		events = append(events, event.AddManaEvent{
+		events = append(events, &event.AddManaEvent{
 			PlayerID: playerID,
 			Amount:   amount.Colorless(),
 			Color:    mana.Colorless,
 		})
 	}
 	if amount.White() > 0 {
-		events = append(events, event.AddManaEvent{
+		events = append(events, &event.AddManaEvent{
 			PlayerID: playerID,
 			Amount:   amount.White(),
 			Color:    mana.White,
 		})
 	}
 	if amount.Blue() > 0 {
-		events = append(events, event.AddManaEvent{
+		events = append(events, &event.AddManaEvent{
 			PlayerID: playerID,
 			Amount:   amount.Blue(),
 			Color:    mana.Blue,
 		})
 	}
 	if amount.Black() > 0 {
-		events = append(events, event.AddManaEvent{
+		events = append(events, &event.AddManaEvent{
 			PlayerID: playerID,
 			Amount:   amount.Black(),
 			Color:    mana.Black,
 		})
 	}
 	if amount.Red() > 0 {
-		events = append(events, event.AddManaEvent{
+		events = append(events, &event.AddManaEvent{
 			PlayerID: playerID,
 			Amount:   amount.Red(),
 			Color:    mana.Red,
 		})
 	}
 	if amount.Green() > 0 {
-		events = append(events, event.AddManaEvent{
+		events = append(events, &event.AddManaEvent{
 			PlayerID: playerID,
 			Amount:   amount.Green(),
 			Color:    mana.Green,

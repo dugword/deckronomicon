@@ -12,27 +12,27 @@ import (
 // creates as attacking/blocking, etc.
 // Changes that represent "visable" state changes should be handled in the state change events.
 
-func applyPlayerEvent(game state.Game, playerEvent event.PlayerEvent) (state.Game, error) {
+func applyPlayerEvent(game *state.Game, playerEvent event.PlayerEvent) (*state.Game, error) {
 	switch evnt := playerEvent.(type) {
-	case event.ActivateAbilityEvent:
+	case *event.ActivateAbilityEvent:
 		return game, nil
-	case event.AssignCombatDamageEvent:
+	case *event.AssignCombatDamageEvent:
 		return game, nil
-	case event.CastSpellEvent:
+	case *event.CastSpellEvent:
 		return applyCastSpellEvent(game, evnt)
-	case event.ConcedeEvent:
+	case *event.ConcedeEvent:
 		return game, nil
-	case event.CycleCardEvent:
+	case *event.CycleCardEvent:
 		return game, nil
-	case event.DeclareAttackersEvent:
+	case *event.DeclareAttackersEvent:
 		return game, nil
-	case event.DeclareBlockersEvent:
+	case *event.DeclareBlockersEvent:
 		return game, nil
-	case event.LandTappedForManaEvent:
+	case *event.LandTappedForManaEvent:
 		return game, nil
-	case event.PlayLandEvent:
+	case *event.PlayLandEvent:
 		return applyPlayLandEvent(game, evnt)
-	case event.ClearRevealedEvent:
+	case *event.ClearRevealedEvent:
 		return applyClearRevealedEvent(game, evnt)
 	default:
 		return game, fmt.Errorf("unknown player event type '%T'", evnt)
@@ -40,9 +40,9 @@ func applyPlayerEvent(game state.Game, playerEvent event.PlayerEvent) (state.Gam
 }
 
 func applyCastSpellEvent(
-	game state.Game,
-	event event.CastSpellEvent,
-) (state.Game, error) {
+	game *state.Game,
+	event *event.CastSpellEvent,
+) (*state.Game, error) {
 	player := game.GetPlayer(event.PlayerID)
 	player = player.WithSpellCastThisTurn()
 	game = game.WithUpdatedPlayer(player)
@@ -50,18 +50,18 @@ func applyCastSpellEvent(
 }
 
 func applyPlayLandEvent(
-	game state.Game,
-	evnt event.PlayLandEvent,
-) (state.Game, error) {
+	game *state.Game,
+	evnt *event.PlayLandEvent,
+) (*state.Game, error) {
 	player := game.GetPlayer(evnt.PlayerID)
 	game = game.WithUpdatedPlayer(player.WithLandPlayedThisTurn())
 	return game, nil
 }
 
 func applyClearRevealedEvent(
-	game state.Game,
-	evnt event.ClearRevealedEvent,
-) (state.Game, error) {
+	game *state.Game,
+	evnt *event.ClearRevealedEvent,
+) (*state.Game, error) {
 	player := game.GetPlayer(evnt.PlayerID)
 	game = game.WithUpdatedPlayer(player.WithClearRevealed())
 	return game, nil

@@ -17,8 +17,8 @@ func (a CheatAction) Name() string {
 	return "Enable Cheats"
 }
 
-func (a CheatAction) Complete(game state.Game, player state.Player, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
-	return []event.GameEvent{event.CheatEnabledEvent{
-		PlayerID: player.ID(),
+func (a CheatAction) Complete(game *state.Game, playerID string, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
+	return []event.GameEvent{&event.CheatEnabledEvent{
+		PlayerID: playerID,
 	}}, nil
 }

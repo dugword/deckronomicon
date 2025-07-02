@@ -6,20 +6,20 @@ type PutBackOnTop struct {
 	Count int
 }
 
-func NewPutBackOnTop(modifiers map[string]any) (PutBackOnTop, error) {
+func NewPutBackOnTop(modifiers map[string]any) (*PutBackOnTop, error) {
 	countModifier, err := parseCount(modifiers)
 	if err != nil {
-		return PutBackOnTop{}, err
+		return nil, err
 	}
-	return PutBackOnTop{
+	return &PutBackOnTop{
 		Count: countModifier,
 	}, nil
 }
 
-func (e PutBackOnTop) Name() string {
+func (e *PutBackOnTop) Name() string {
 	return "PutBackOnTop"
 }
 
-func (e PutBackOnTop) TargetSpec() target.TargetSpec {
+func (e *PutBackOnTop) TargetSpec() target.TargetSpec {
 	return target.NoneTargetSpec{}
 }

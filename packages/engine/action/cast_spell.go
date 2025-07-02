@@ -29,7 +29,7 @@ type CastSpellRequest struct {
 	CostTarget        target.Target            // Target for additional costs, if applicable
 }
 
-func (r CastSpellRequest) Build(string) CastSpellAction {
+func (r CastSpellRequest) Build() CastSpellAction {
 	return NewCastSpellAction(r)
 }
 
@@ -65,14 +65,15 @@ func (a CastSpellAction) Name() string {
 	return "Cast Spell"
 }
 
-func (a CastSpellAction) Complete(game state.Game, player state.Player, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
+func (a CastSpellAction) Complete(game *state.Game, playerID string, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	if a.flashback {
-		return a.castWithFlashback(game, player)
+		return a.castWithFlashback(game, playerID)
 	}
-	return a.castFromHand(game, player)
+	return a.castFromHand(game, playerID)
 }
 
-func (a CastSpellAction) castWithFlashback(game state.Game, player state.Player) ([]event.GameEvent, error) {
+func (a CastSpellAction) castWithFlashback(game *state.Game, playerID string) ([]event.GameEvent, error) {
+	player := game.GetPlayer(playerID)
 	cardToCast, ok := player.GetCardFromZone(a.cardID, mtg.ZoneGraveyard)
 	if !ok {
 		return nil, fmt.Errorf("player %q does not have card %q in graveyard", player.ID(), a.cardID)
@@ -81,14 +82,14 @@ func (a CastSpellAction) castWithFlashback(game state.Game, player state.Player)
 	if !ok {
 		return nil, fmt.Errorf("card %q does not have flashback ability", cardToCast.ID())
 	}
-	flashback, ok := staticAbility.(staticability.Flashback)
+	flashback, ok := staticAbility.(*staticability.Flashback)
 	if !ok {
 		return nil, fmt.Errorf("card %q does not have flashback ability", cardToCast.ID())
 	}
 	ruling := judge.Ruling{Explain: true}
 	if !judge.CanCastSpellWithFlashback(
 		game,
-		player,
+		playerID,
 		cardToCast,
 		flashback.Cost,
 		a.autoPayCost,
@@ -97,7 +98,7 @@ func (a CastSpellAction) castWithFlashback(game state.Game, player state.Player)
 	) {
 		return nil, fmt.Errorf(
 			"player %q cannot cast card %q with flashback: %s",
-			player.ID(),
+			playerID,
 			cardToCast.ID(),
 			ruling.Why(),
 		)
@@ -122,12 +123,12 @@ func (a CastSpellAction) castWithFlashback(game state.Game, player state.Player)
 	events = append(events, costEvents...)
 	events = append(
 		events,
-		event.CastSpellEvent{
+		&event.CastSpellEvent{
 			PlayerID: player.ID(),
 			CardID:   cardToCast.ID(),
 			FromZone: mtg.ZoneGraveyard,
 		},
-		event.PutSpellOnStackEvent{
+		&event.PutSpellOnStackEvent{
 			PlayerID:          player.ID(),
 			CardID:            cardToCast.ID(),
 			FromZone:          mtg.ZoneGraveyard,
@@ -138,7 +139,8 @@ func (a CastSpellAction) castWithFlashback(game state.Game, player state.Player)
 	return events, nil
 }
 
-func (a CastSpellAction) castFromHand(game state.Game, player state.Player) ([]event.GameEvent, error) {
+func (a CastSpellAction) castFromHand(game *state.Game, playerID string) ([]event.GameEvent, error) {
+	player := game.GetPlayer(playerID)
 	cardToCast, ok := player.GetCardFromZone(a.cardID, mtg.ZoneHand)
 	if !ok {
 		return nil, fmt.Errorf("player %q does not have card %q in hand", player.ID(), a.cardID)
@@ -150,7 +152,8 @@ func (a CastSpellAction) castFromHand(game state.Game, player state.Player) ([]e
 	}
 	if len(a.spliceCardIDs) > 0 {
 		spliceEffectWithCards, spliceCost, err := buildSpliceEffectWithCards(
-			player,
+			game,
+			playerID,
 			cardToCast,
 			a.spliceCardIDs,
 			a.targetsForEffects,
@@ -164,13 +167,13 @@ func (a CastSpellAction) castFromHand(game state.Game, player state.Player) ([]e
 	if a.replicateCount > 0 {
 		if !judge.CanReplicateCard(
 			game,
-			player,
+			playerID,
 			cardToCast,
 			&judge.Ruling{Explain: true},
 		) {
 			return nil, fmt.Errorf(
 				"player %q cannot replicate card %q",
-				player.ID(),
+				playerID,
 				cardToCast.ID(),
 			)
 		}
@@ -178,7 +181,7 @@ func (a CastSpellAction) castFromHand(game state.Game, player state.Player) ([]e
 		if !ok {
 			return nil, fmt.Errorf("card %q does not have replicate ability", cardToCast.ID())
 		}
-		replicate, ok := staticAbility.(staticability.Replicate)
+		replicate, ok := staticAbility.(*staticability.Replicate)
 		if !ok {
 			return nil, fmt.Errorf("card %q does not have replicate ability", cardToCast.ID())
 		}
@@ -189,7 +192,7 @@ func (a CastSpellAction) castFromHand(game state.Game, player state.Player) ([]e
 	ruling := judge.Ruling{Explain: true}
 	if !judge.CanCastSpellFromHand(
 		game,
-		player,
+		playerID,
 		cardToCast,
 		totalCost,
 		a.autoPayCost,
@@ -198,7 +201,7 @@ func (a CastSpellAction) castFromHand(game state.Game, player state.Player) ([]e
 	) {
 		return nil, fmt.Errorf(
 			"player %q cannot cast card %q from from hand: %s",
-			player.ID(),
+			playerID,
 			cardToCast.ID(),
 			ruling.Why(),
 		)
@@ -206,7 +209,7 @@ func (a CastSpellAction) castFromHand(game state.Game, player state.Player) ([]e
 	var events []event.GameEvent
 	if a.autoPayCost {
 		var err error
-		activateEvents, err := pay.AutoActivateManaSources(game, totalCost, cardToCast, player.ID(), a.autoPayColors)
+		activateEvents, err := pay.AutoActivateManaSources(game, totalCost, cardToCast, playerID, a.autoPayColors)
 		if err != nil {
 			return nil, fmt.Errorf("failed to auto-pay cost for card %q: %w", cardToCast.ID(), err)
 		}
@@ -225,12 +228,12 @@ func (a CastSpellAction) castFromHand(game state.Game, player state.Player) ([]e
 	events = append(events, costEvents...)
 	events = append(
 		events,
-		event.CastSpellEvent{
+		&event.CastSpellEvent{
 			PlayerID: player.ID(),
 			CardID:   cardToCast.ID(),
 			FromZone: mtg.ZoneHand,
 		},
-		event.PutSpellOnStackEvent{
+		&event.PutSpellOnStackEvent{
 			PlayerID:          player.ID(),
 			CardID:            cardToCast.ID(),
 			EffectWithTargets: effectWithTargets,
@@ -238,8 +241,8 @@ func (a CastSpellAction) castFromHand(game state.Game, player state.Player) ([]e
 		},
 	)
 	if a.replicateCount > 0 {
-		effectWithTargets := []effect.EffectWithTarget{{
-			Effect: effect.Replicate{Count: a.replicateCount},
+		effectWithTargets := []*effect.EffectWithTarget{{
+			Effect: &effect.Replicate{Count: a.replicateCount},
 			Target: target.Target{
 				ID: cardToCast.ID(),
 			},
@@ -247,7 +250,7 @@ func (a CastSpellAction) castFromHand(game state.Game, player state.Player) ([]e
 		}}
 		events = append(
 			events,
-			event.PutAbilityOnStackEvent{
+			&event.PutAbilityOnStackEvent{
 				PlayerID:          player.ID(),
 				SourceID:          cardToCast.ID(),
 				FromZone:          mtg.ZoneHand,
@@ -260,13 +263,15 @@ func (a CastSpellAction) castFromHand(game state.Game, player state.Player) ([]e
 }
 
 func buildSpliceEffectWithCards(
-	player state.Player,
-	cardToCast gob.Card,
+	game *state.Game,
+	playerID string,
+	cardToCast *gob.Card,
 	spliceCardIDs []string,
 	targetsForEffects map[effect.EffectTargetKey]target.Target,
-) ([]effect.EffectWithTarget, cost.Cost, error) {
+) ([]*effect.EffectWithTarget, cost.Cost, error) {
+	player := game.GetPlayer(playerID)
 	var spliceCost cost.Cost
-	var effectWithTargets []effect.EffectWithTarget
+	var effectWithTargets []*effect.EffectWithTarget
 	for _, spliceCardID := range spliceCardIDs {
 		spliceCard, ok := player.GetCardFromZone(spliceCardID, mtg.ZoneHand)
 		if !ok {
@@ -274,14 +279,15 @@ func buildSpliceEffectWithCards(
 		}
 		var ruling judge.Ruling
 		if !judge.CanSpliceCard(
-			player,
+			game,
+			playerID,
 			cardToCast,
 			spliceCard,
 			&ruling,
 		) {
 			return nil, nil, fmt.Errorf(
 				"player %q cannot splice card %q onto spell %q: %s",
-				player.ID(),
+				playerID,
 				spliceCardID,
 				cardToCast.ID(),
 				ruling.Why(),
@@ -291,7 +297,7 @@ func buildSpliceEffectWithCards(
 		if !ok {
 			return nil, nil, fmt.Errorf("card %q does not have splice ability", spliceCardID)
 		}
-		spliceAbility, ok := staticAbility.(staticability.Splice)
+		spliceAbility, ok := staticAbility.(*staticability.Splice)
 		if !ok {
 			return nil, nil, fmt.Errorf("card %q does not have splice ability", spliceCardID)
 		}

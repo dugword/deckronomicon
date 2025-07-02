@@ -8,11 +8,11 @@ import (
 
 // These are events that manage the priority system in the game.
 
-func applyTriggeredAbilityEvent(game state.Game, triggeredEvent event.TriggeredAbilityEvent) (state.Game, error) {
+func applyTriggeredAbilityEvent(game *state.Game, triggeredEvent event.TriggeredAbilityEvent) (*state.Game, error) {
 	switch evnt := triggeredEvent.(type) {
-	case event.RegisterTriggeredAbilityEvent:
+	case *event.RegisterTriggeredAbilityEvent:
 		return applyRegisterTriggeredAbilityEvent(game, evnt)
-	case event.RemoveTriggeredAbilityEvent:
+	case *event.RemoveTriggeredAbilityEvent:
 		return applyRemoveTriggeredAbilityEvent(game, evnt)
 	default:
 		return game, fmt.Errorf("unknown triggered event type '%T'", evnt)
@@ -20,9 +20,9 @@ func applyTriggeredAbilityEvent(game state.Game, triggeredEvent event.TriggeredA
 }
 
 func applyRegisterTriggeredAbilityEvent(
-	game state.Game,
-	evnt event.RegisterTriggeredAbilityEvent,
-) (state.Game, error) {
+	game *state.Game,
+	evnt *event.RegisterTriggeredAbilityEvent,
+) (*state.Game, error) {
 	player := game.GetPlayer(evnt.PlayerID)
 	game = game.WithRegisteredTriggeredAbility(
 		player.ID(),
@@ -37,9 +37,9 @@ func applyRegisterTriggeredAbilityEvent(
 }
 
 func applyRemoveTriggeredAbilityEvent(
-	game state.Game,
-	evnt event.RemoveTriggeredAbilityEvent,
-) (state.Game, error) {
+	game *state.Game,
+	evnt *event.RemoveTriggeredAbilityEvent,
+) (*state.Game, error) {
 	game = game.WithRemoveTriggeredAbility(evnt.ID)
 	return game, nil
 }

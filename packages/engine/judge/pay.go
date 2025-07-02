@@ -13,8 +13,8 @@ import (
 // E.g. is it an error because the player doesn't have enough mana,
 // or is it an error because of some broken game state?
 // TODO: Pass in ruling here and log which costs could not be paid
-func CanPayCost(someCost cost.Cost, object gob.Object, game state.Game, player state.Player, ruling *Ruling) bool {
-	costEvents, err := pay.Cost(someCost, object, player.ID())
+func CanPayCost(someCost cost.Cost, object gob.Object, game *state.Game, playerID string, ruling *Ruling) bool {
+	costEvents, err := pay.Cost(someCost, object, playerID)
 	if err != nil {
 		if ruling != nil && ruling.Explain {
 			ruling.Reasons = append(ruling.Reasons, "unable to pay cost: "+err.Error())
@@ -33,6 +33,7 @@ func CanPayCost(someCost cost.Cost, object gob.Object, game state.Game, player s
 				ruling.Reasons = append(ruling.Reasons, "unable to pay cost requiring "+costEvent.EventType())
 			}
 			canPay = false
+			break
 		}
 	}
 	return canPay
@@ -41,7 +42,7 @@ func CanPayCost(someCost cost.Cost, object gob.Object, game state.Game, player s
 func CanPayCostAutomatically(
 	someCost cost.Cost,
 	object gob.Object,
-	game state.Game,
+	game *state.Game,
 	playerID string,
 	colors []mana.Color,
 	ruling *Ruling,
@@ -69,9 +70,10 @@ func CanPayCostAutomatically(
 	return canPay
 }
 
-func CanPotentiallyPayCost(someCost cost.Cost, object gob.Object, game state.Game, player state.Player, ruling *Ruling) bool {
-	potentialManaPool := GetAvailableMana(game, player)
+func CanPotentiallyPayCost(someCost cost.Cost, object gob.Object, game *state.Game, playerID string, ruling *Ruling) bool {
+	player := game.GetPlayer(playerID)
+	potentialManaPool := GetAvailableMana(game, playerID)
 	player = player.WithManaPool(potentialManaPool)
 	game = game.WithUpdatedPlayer(player)
-	return CanPayCost(someCost, object, game, player, ruling)
+	return CanPayCost(someCost, object, game, playerID, ruling)
 }

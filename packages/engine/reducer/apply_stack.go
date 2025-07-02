@@ -11,17 +11,17 @@ import (
 
 // These are events that manage the priority system in the game.
 
-func applyStackEvent(game state.Game, stackEvent event.StackEvent) (state.Game, error) {
+func applyStackEvent(game *state.Game, stackEvent event.StackEvent) (*state.Game, error) {
 	switch evnt := stackEvent.(type) {
-	case event.ResolveTopObjectOnStackEvent:
+	case *event.ResolveTopObjectOnStackEvent:
 		return game, nil
-	case event.PutAbilityOnStackEvent:
+	case *event.PutAbilityOnStackEvent:
 		return applyPutAbilityOnStackEvent(game, evnt)
-	case event.PutCopiedSpellOnStackEvent:
+	case *event.PutCopiedSpellOnStackEvent:
 		return applyPutCopiedSpellOnStackEvent(game, evnt)
-	case event.PutSpellOnStackEvent:
+	case *event.PutSpellOnStackEvent:
 		return applyPutSpellOnStackEvent(game, evnt)
-	case event.RemoveSpellOrAbilityFromStackEvent:
+	case *event.RemoveSpellOrAbilityFromStackEvent:
 		return applyRemoveSpellOrAbilityFromStackEvent(game, evnt)
 	default:
 		return game, fmt.Errorf("unknown stack event type '%T'", evnt)
@@ -29,14 +29,14 @@ func applyStackEvent(game state.Game, stackEvent event.StackEvent) (state.Game, 
 }
 
 func applyPutCopiedSpellOnStackEvent(
-	game state.Game,
-	evnt event.PutCopiedSpellOnStackEvent,
-) (state.Game, error) {
+	game *state.Game,
+	evnt *event.PutCopiedSpellOnStackEvent,
+) (*state.Game, error) {
 	resolvable, ok := game.Stack().Get(evnt.SpellID)
 	if !ok {
 		return game, fmt.Errorf("spell %q not found on stack", evnt.SpellID)
 	}
-	spell, ok := resolvable.(gob.Spell)
+	spell, ok := resolvable.(*gob.Spell)
 	if !ok {
 		return game, fmt.Errorf("object %q is not a spell", resolvable.ID())
 	}
@@ -48,9 +48,9 @@ func applyPutCopiedSpellOnStackEvent(
 }
 
 func applyPutSpellOnStackEvent(
-	game state.Game,
-	evnt event.PutSpellOnStackEvent,
-) (state.Game, error) {
+	game *state.Game,
+	evnt *event.PutSpellOnStackEvent,
+) (*state.Game, error) {
 	player := game.GetPlayer(evnt.PlayerID)
 	card, player, ok := player.TakeCardFromZone(evnt.CardID, evnt.FromZone)
 	if !ok {
@@ -65,9 +65,9 @@ func applyPutSpellOnStackEvent(
 }
 
 func applyPutAbilityOnStackEvent(
-	game state.Game,
-	evnt event.PutAbilityOnStackEvent,
-) (state.Game, error) {
+	game *state.Game,
+	evnt *event.PutAbilityOnStackEvent,
+) (*state.Game, error) {
 	game, err := game.WithPutAbilityOnStack(
 		evnt.PlayerID,
 		evnt.SourceID,
@@ -82,16 +82,16 @@ func applyPutAbilityOnStackEvent(
 }
 
 func applyRemoveSpellOrAbilityFromStackEvent(
-	game state.Game,
-	evnt event.RemoveSpellOrAbilityFromStackEvent,
-) (state.Game, error) {
+	game *state.Game,
+	evnt *event.RemoveSpellOrAbilityFromStackEvent,
+) (*state.Game, error) {
 	player := game.GetPlayer(evnt.PlayerID)
 	resolvable, stack, ok := game.Stack().Take(evnt.ObjectID)
 	if !ok {
 		return game, fmt.Errorf("object %q not found on stack", evnt.ObjectID)
 	}
 	switch obj := resolvable.(type) {
-	case gob.Spell:
+	case *gob.Spell:
 		if obj.IsCopy() {
 			break
 		}

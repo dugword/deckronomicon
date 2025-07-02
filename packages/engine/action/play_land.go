@@ -27,28 +27,29 @@ func (a PlayLandAction) Name() string {
 	return "Play Land"
 }
 
-func (a PlayLandAction) Complete(game state.Game, player state.Player, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
+func (a PlayLandAction) Complete(game *state.Game, playerID string, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
+	player := game.GetPlayer(playerID)
 	landToPlay, ok := player.GetCardFromZone(a.cardID, mtg.ZoneHand)
 	if !ok {
-		return nil, fmt.Errorf("player %q does not have card %q in hand", player.ID(), a.cardID)
+		return nil, fmt.Errorf("player %q does not have card %q in hand", playerID, a.cardID)
 	}
 	ruling := judge.Ruling{Explain: true}
-	if !judge.CanPlayLand(game, player, mtg.ZoneHand, landToPlay, &ruling) {
+	if !judge.CanPlayLand(game, playerID, mtg.ZoneHand, landToPlay, &ruling) {
 		return nil, fmt.Errorf(
 			"player %q cannot play land %q, %s",
-			player.ID(),
+			playerID,
 			landToPlay.ID(),
 			ruling.Why(),
 		)
 	}
 	return []event.GameEvent{
-		event.PlayLandEvent{
-			PlayerID: player.ID(),
+		&event.PlayLandEvent{
+			PlayerID: playerID,
 			CardID:   landToPlay.ID(),
 			Zone:     mtg.ZoneHand,
 		},
-		event.PutPermanentOnBattlefieldEvent{
-			PlayerID: player.ID(),
+		&event.PutPermanentOnBattlefieldEvent{
+			PlayerID: playerID,
 			CardID:   landToPlay.ID(),
 			FromZone: mtg.ZoneHand,
 		},

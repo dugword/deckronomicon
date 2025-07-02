@@ -18,6 +18,7 @@ type Config struct {
 	Verbose      bool
 	Seed         int64
 	LogLevel     logger.LogLevel
+	Runs         int
 }
 
 // LoadConfig loads the configuration from command line arguments and
@@ -42,6 +43,7 @@ func LoadConfig(args []string, getenv func(string) string) (Config, error) {
 	scenariosDir := flags.String("scenarios", "scenarios", "scenarios directory")
 	autoPay := flags.Bool("autopay", false, "automatically pay costs when possible")
 	verbose := flags.Bool("verbose", config.Verbose, "verbose output")
+	runs := flags.Int("runs", 1, "number of runs to perform (default: 1)")
 	logLevelString := flags.String("loglevel", "error", "log level (debug, info, warning, error, critical)")
 	if err := flags.Parse(args[1:]); err != nil {
 		return Config{}, err
@@ -59,5 +61,6 @@ func LoadConfig(args []string, getenv func(string) string) (Config, error) {
 	config.Verbose = *verbose
 	config.Seed = *seed
 	config.LogLevel = logLevel
+	config.Runs = *runs
 	return config, nil
 }

@@ -20,13 +20,13 @@ type RuleFile struct {
 	Then        action.ActionNode   `json:"-" yaml:"-"`
 }
 
-func (p *StrategyParser) ParseRuleNode(ruleNode any) (Rule, error) {
+func (p *StrategyParser) ParseRuleNode(ruleNode any) (*Rule, error) {
 	var r Rule
 	switch node := ruleNode.(type) {
 	case string:
 		rule, ok := p.rules[node]
 		if !ok {
-			return r, fmt.Errorf("rule %s not found in rules map", node)
+			return nil, fmt.Errorf("rule %s not found in rules map", node)
 		}
 		r = rule
 	case map[string]any:
@@ -36,7 +36,7 @@ func (p *StrategyParser) ParseRuleNode(ruleNode any) (Rule, error) {
 				if name, ok := value.(string); ok {
 					r.Name = name
 				} else {
-					return r, fmt.Errorf("invalid type for Name: expected string, got %T", value)
+					return nil, fmt.Errorf("invalid type for Name: expected string, got %T", value)
 				}
 			case "Description":
 				if desc, ok := value.(string); ok {
@@ -47,20 +47,20 @@ func (p *StrategyParser) ParseRuleNode(ruleNode any) (Rule, error) {
 			case "Then":
 				r.Then = p.parseActionNode(value)
 			default:
-				return r, fmt.Errorf("unknown key in rule node: %s", key)
+				return nil, fmt.Errorf("unknown key in rule node: %s", key)
 			}
 		}
 	}
 	if r.Then == nil {
-		return r, fmt.Errorf("rule %s has no action defined", r.Name)
+		return nil, fmt.Errorf("rule %s has no action defined", r.Name)
 	}
 	if p.errors.HasErrors() {
-		return r, fmt.Errorf("errors encountered while parsing rule node: %s", p.errors.Error())
+		return nil, fmt.Errorf("errors encountered while parsing rule node: %s", p.errors.Error())
 	}
-	return r, nil
+	return &r, nil
 }
 
-func (p *StrategyParser) ParseModeNode(ruleNode map[string]any) (Rule, error) {
+func (p *StrategyParser) ParseModeNode(ruleNode map[string]any) (*Rule, error) {
 	var r Rule
 	for key, value := range ruleNode {
 		switch key {
@@ -68,7 +68,7 @@ func (p *StrategyParser) ParseModeNode(ruleNode map[string]any) (Rule, error) {
 			if name, ok := value.(string); ok {
 				r.Name = name
 			} else {
-				return r, fmt.Errorf("invalid type for Name: expected string, got %T", value)
+				return nil, fmt.Errorf("invalid type for Name: expected string, got %T", value)
 			}
 		case "Description":
 			if desc, ok := value.(string); ok {
@@ -77,13 +77,13 @@ func (p *StrategyParser) ParseModeNode(ruleNode map[string]any) (Rule, error) {
 		case "When":
 			r.When = p.parseEvaluator(value)
 		default:
-			return r, fmt.Errorf("unknown key in rule node: %s", key)
+			return nil, fmt.Errorf("unknown key in rule node: %s", key)
 		}
 	}
 	if p.errors.HasErrors() {
-		return r, fmt.Errorf("errors encountered while parsing rule node: %s", p.errors.Error())
+		return nil, fmt.Errorf("errors encountered while parsing rule node: %s", p.errors.Error())
 	}
-	return r, nil
+	return &r, nil
 }
 
 func (p *StrategyParser) ParseRuleFile(ruleFile RuleFile) Rule {

@@ -18,7 +18,7 @@ type StackEvent interface{ isStackEvent() }
 
 type StackBaseEvent struct{}
 
-func (e StackBaseEvent) isStackEvent() {}
+func (e *StackBaseEvent) isStackEvent() {}
 
 type ResolveTopObjectOnStackEvent struct {
 	StackBaseEvent
@@ -26,7 +26,7 @@ type ResolveTopObjectOnStackEvent struct {
 	ID   string
 }
 
-func (e ResolveTopObjectOnStackEvent) EventType() string {
+func (e *ResolveTopObjectOnStackEvent) EventType() string {
 	return EventTypeResolveTopObjectOnStack
 }
 
@@ -47,10 +47,10 @@ type PutCopiedSpellOnStackEvent struct {
 	PlayerID          string
 	SpellID           string
 	FromZone          mtg.Zone
-	EffectWithTargets []effect.EffectWithTarget
+	EffectWithTargets []*effect.EffectWithTarget
 }
 
-func (e PutCopiedSpellOnStackEvent) EventType() string {
+func (e *PutCopiedSpellOnStackEvent) EventType() string {
 	return EventTypePutCopiedSpellOnStack
 }
 
@@ -59,11 +59,11 @@ type PutSpellOnStackEvent struct {
 	PlayerID          string
 	CardID            string
 	FromZone          mtg.Zone
-	EffectWithTargets []effect.EffectWithTarget
+	EffectWithTargets []*effect.EffectWithTarget
 	Flashback         bool
 }
 
-func (e PutSpellOnStackEvent) EventType() string {
+func (e *PutSpellOnStackEvent) EventType() string {
 	return EventTypePutSpellOnStack
 }
 
@@ -74,10 +74,10 @@ type PutAbilityOnStackEvent struct {
 	AbilityID         string
 	FromZone          mtg.Zone
 	AbilityName       string
-	EffectWithTargets []effect.EffectWithTarget
+	EffectWithTargets []*effect.EffectWithTarget
 }
 
-func (e PutAbilityOnStackEvent) EventType() string {
+func (e *PutAbilityOnStackEvent) EventType() string {
 	return EventTypePutAbilityOnStack
 }
 
@@ -87,7 +87,7 @@ type RemoveSpellOrAbilityFromStackEvent struct {
 	ObjectID string
 }
 
-func (e RemoveSpellOrAbilityFromStackEvent) EventType() string {
+func (e *RemoveSpellOrAbilityFromStackEvent) EventType() string {
 	return EventTypeRemoveSpellOrAbilityFromStack
 }
 
@@ -97,6 +97,6 @@ type SpellOrAbilityFizzlesEvent struct {
 	ObjectID string
 }
 
-func (e SpellOrAbilityFizzlesEvent) EventType() string {
+func (e *SpellOrAbilityFizzlesEvent) EventType() string {
 	return EventTypeSpellOrAbilityFizzles
 }

@@ -92,12 +92,11 @@ func TestParseCastSpellCommand(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			game := newTestGame(playerID)
-			player := game.GetPlayer(playerID)
 			var agent engine.PlayerAgent = dummy.NewChooseOneAgent(playerID)
 			if tc.agent != nil {
 				agent = tc.agent
 			}
-			got, err := parseCastSpellCommand(tc.arg, game, player, agent, false, nil)
+			got, err := parseCastSpellCommand(tc.arg, game, playerID, agent, false, nil)
 			if err != nil {
 				t.Fatalf("parseCastSpellCommand(%q ...); err = %v; want %v", tc.arg, err, nil)
 			}
@@ -131,8 +130,7 @@ func TestParseCastSpellCommand(t *testing.T) {
 	for _, tc := range failCases {
 		t.Run(tc.name, func(t *testing.T) {
 			game := newTestGame(playerID)
-			player := game.GetPlayer(playerID)
-			_, err := parseCastSpellCommand(tc.arg, game, player, tc.agent, false, nil)
+			_, err := parseCastSpellCommand(tc.arg, game, playerID, tc.agent, false, nil)
 			if !errors.Is(err, tc.want) {
 				t.Errorf("parseCastSpellCommand(%q ...); err = %v; want %v", tc.arg, err, tc.want)
 			}

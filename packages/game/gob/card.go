@@ -9,7 +9,7 @@ import (
 )
 
 type Card struct {
-	activatedAbilities []Ability
+	activatedAbilities []*Ability
 	cardTypes          []mtg.CardType
 	controller         string
 	owner              string
@@ -28,74 +28,74 @@ type Card struct {
 	toughness          int
 }
 
-func (c Card) ActivatedAbilities() []Ability {
-	return c.activatedAbilities[:]
+func (c *Card) ActivatedAbilities() []*Ability {
+	return c.activatedAbilities
 }
 
-func (c Card) AdditionalCost() cost.Cost {
+func (c *Card) AdditionalCost() cost.Cost {
 	return c.additionalCost
 }
 
-func (c Card) CardTypes() []mtg.CardType {
+func (c *Card) CardTypes() []mtg.CardType {
 	return c.cardTypes
 }
 
-func (c Card) Colors() mtg.Colors {
+func (c *Card) Colors() mtg.Colors {
 	return c.colors
 }
 
-func (c Card) Controller() string {
+func (c *Card) Controller() string {
 	return c.controller
 }
 
-func (c Card) Description() string {
+func (c *Card) Description() string {
 	return c.rulesText
 }
 
-func (c Card) ID() string {
+func (c *Card) ID() string {
 	return c.id
 }
 
-func (c Card) Match(predicate query.Predicate) bool {
+func (c *Card) Match(predicate query.Predicate) bool {
 	return predicate(c)
 }
 
-func (c Card) Loyalty() int {
+func (c *Card) Loyalty() int {
 	return c.loyalty
 }
 
-func (c Card) ManaCost() cost.Mana {
+func (c *Card) ManaCost() cost.Mana {
 	return c.manaCost
 }
 
-func (c Card) ManaValue() int {
+func (c *Card) ManaValue() int {
 	return c.manaCost.Amount().Total()
 }
 
-func (c Card) Name() string {
+func (c *Card) Name() string {
 	return c.name
 }
 
-func (c Card) Owner() string {
+func (c *Card) Owner() string {
 	return c.owner
 }
 
-func (c Card) Power() int {
+func (c *Card) Power() int {
 	return c.power
 }
-func (c Card) RulesText() string {
+func (c *Card) RulesText() string {
 	return c.rulesText
 }
 
-func (c Card) SpellAbility() []effect.Effect {
-	return c.spellAbility[:]
+func (c *Card) SpellAbility() []effect.Effect {
+	return c.spellAbility
 }
 
-func (c Card) StaticAbilities() []staticability.StaticAbility {
-	return c.staticAbilities[:]
+func (c *Card) StaticAbilities() []staticability.StaticAbility {
+	return c.staticAbilities
 }
 
-func (c Card) StaticKeywords() []mtg.StaticKeyword {
+func (c *Card) StaticKeywords() []mtg.StaticKeyword {
 	var keywords []mtg.StaticKeyword
 	for _, ability := range c.staticAbilities {
 		if ability.StaticKeyword() != "" {
@@ -105,7 +105,7 @@ func (c Card) StaticKeywords() []mtg.StaticKeyword {
 	return keywords
 }
 
-func (c Card) StaticAbility(keyword mtg.StaticKeyword) (staticability.StaticAbility, bool) {
+func (c *Card) StaticAbility(keyword mtg.StaticKeyword) (staticability.StaticAbility, bool) {
 	for _, ability := range c.staticAbilities {
 		if ability.StaticKeyword() == keyword {
 			return ability, true
@@ -114,14 +114,14 @@ func (c Card) StaticAbility(keyword mtg.StaticKeyword) (staticability.StaticAbil
 	return nil, false
 }
 
-func (c Card) Subtypes() []mtg.Subtype {
+func (c *Card) Subtypes() []mtg.Subtype {
 	return c.subtypes
 }
 
-func (c Card) Supertypes() []mtg.Supertype {
+func (c *Card) Supertypes() []mtg.Supertype {
 	return c.supertypes
 }
 
-func (c Card) Toughness() int {
+func (c *Card) Toughness() int {
 	return c.toughness
 }

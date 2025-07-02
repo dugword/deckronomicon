@@ -11,58 +11,58 @@ import (
 )
 
 type Revealed struct {
-	cards []gob.Card
+	cards []*gob.Card
 }
 
-func NewRevealed() Revealed {
+func NewRevealed() *Revealed {
 	revealed := Revealed{
-		cards: []gob.Card{},
+		cards: []*gob.Card{},
 	}
-	return revealed
+	return &revealed
 }
 
-func (r Revealed) Add(card gob.Card) Revealed {
-	return Revealed{cards: add.Item(r.cards, card)}
+func (r *Revealed) Add(card *gob.Card) *Revealed {
+	return &Revealed{cards: add.Item(r.cards, card)}
 }
 
-func (r Revealed) AddTop(c gob.Card) Revealed {
-	return Revealed{
-		cards: add.Item([]gob.Card{c}, r.cards...),
+func (r *Revealed) AddTop(c *gob.Card) *Revealed {
+	return &Revealed{
+		cards: add.Item([]*gob.Card{c}, r.cards...),
 	}
 }
 
-func (r Revealed) Get(id string) (gob.Card, bool) {
+func (r *Revealed) Get(id string) (*gob.Card, bool) {
 	return query.Get(r.cards, id)
 }
 
-func (r Revealed) GetAll() []gob.Card {
+func (r *Revealed) GetAll() []*gob.Card {
 	return query.GetAll(r.cards)
 }
 
-func (r Revealed) Name() string {
+func (r *Revealed) Name() string {
 	return string(mtg.ZoneRevealed)
 }
 
-func (r Revealed) Remove(id string) (Revealed, bool) {
+func (r *Revealed) Remove(id string) (*Revealed, bool) {
 	cards, ok := remove.By(r.cards, has.ID(id))
 	if !ok {
-		return r, false
+		return nil, false
 	}
-	return Revealed{cards: cards}, true
+	return &Revealed{cards: cards}, true
 }
 
-func (r Revealed) Take(id string) (gob.Card, Revealed, bool) {
+func (r *Revealed) Take(id string) (*gob.Card, *Revealed, bool) {
 	card, cards, ok := take.By(r.cards, has.ID(id))
 	if !ok {
-		return gob.Card{}, r, false
+		return nil, nil, false
 	}
-	return card, Revealed{cards: cards}, true
+	return card, &Revealed{cards: cards}, true
 }
 
-func (r Revealed) Size() int {
+func (r *Revealed) Size() int {
 	return len(r.cards)
 }
 
-func (r Revealed) ZoneType() mtg.Zone {
+func (r *Revealed) ZoneType() mtg.Zone {
 	return mtg.ZoneRevealed
 }

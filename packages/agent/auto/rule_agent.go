@@ -26,13 +26,13 @@ type RuleBasedAgent struct {
 	stops       []mtg.Step
 }
 
-func (a *RuleBasedAgent) ReportState(game state.Game) {
+func (a *RuleBasedAgent) ReportState(game *state.Game) {
 	player := game.GetPlayer(a.playerID)
 	opponent := game.GetOpponent(a.playerID)
 	a.uiBuffer.Update(
 		view.NewGameViewFromState(game),
-		view.NewPlayerViewFromState(game, player, a.mode),
-		view.NewPlayerViewFromState(game, opponent, ""),
+		view.NewPlayerViewFromState(game, player.ID(), a.mode),
+		view.NewPlayerViewFromState(game, opponent.ID(), ""),
 	)
 }
 
@@ -133,7 +133,7 @@ func (a *RuleBasedAgent) Choose(prompt choose.ChoicePrompt) (choose.ChoiceResult
 	}
 }
 
-func (a *RuleBasedAgent) GetNextAction(game state.Game) (engine.Action, error) {
+func (a *RuleBasedAgent) GetNextAction(game *state.Game) (engine.Action, error) {
 	ctx := evalstate.EvalState{
 		Game:     game,
 		PlayerID: a.playerID,

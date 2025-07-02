@@ -23,7 +23,7 @@ func (a EffectCheatAction) Name() string {
 	return fmt.Sprintf("CHEAT: %s", a.EffectName)
 }
 
-func (a EffectCheatAction) Complete(game state.Game, player state.Player, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
+func (a EffectCheatAction) Complete(game *state.Game, playerID string, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	panic("EffectCheatAction is not implemented yet")
 	/*
 		if !game.CheatsEnabled() {

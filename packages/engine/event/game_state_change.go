@@ -32,7 +32,7 @@ type GameStateChangeEvent interface{ isGameStateChangeEvent() }
 
 type GameStateChangeBaseEvent struct{}
 
-func (e GameStateChangeBaseEvent) isGameStateChangeEvent() {}
+func (e *GameStateChangeBaseEvent) isGameStateChangeEvent() {}
 
 type AddManaEvent struct {
 	GameStateChangeBaseEvent
@@ -41,7 +41,7 @@ type AddManaEvent struct {
 	PlayerID string
 }
 
-func (e AddManaEvent) EventType() string {
+func (e *AddManaEvent) EventType() string {
 	return EventTypeAddMana
 }
 
@@ -50,7 +50,7 @@ type CheatEnabledEvent struct {
 	PlayerID string
 }
 
-func (e CheatEnabledEvent) EventType() string {
+func (e *CheatEnabledEvent) EventType() string {
 	return EventTypeCheatEnabled
 }
 
@@ -60,7 +60,7 @@ type DiscardCardEvent struct {
 	CardID   string
 }
 
-func (e DiscardCardEvent) EventType() string {
+func (e *DiscardCardEvent) EventType() string {
 	return EventTypeDiscardCard
 }
 
@@ -69,7 +69,7 @@ type DrawCardEvent struct {
 	PlayerID string
 }
 
-func (e DrawCardEvent) EventType() string {
+func (e *DrawCardEvent) EventType() string {
 	return EventTypeDrawCard
 }
 
@@ -79,7 +79,7 @@ type GainLifeEvent struct {
 	Amount   int
 }
 
-func (e GainLifeEvent) EventType() string {
+func (e *GainLifeEvent) EventType() string {
 	return EventTypeGainLife
 }
 
@@ -89,7 +89,7 @@ type LoseLifeEvent struct {
 	Amount   int
 }
 
-func (e LoseLifeEvent) EventType() string {
+func (e *LoseLifeEvent) EventType() string {
 	return EventTypeLoseLife
 }
 
@@ -102,7 +102,7 @@ type MoveCardEvent struct {
 	ToZone   mtg.Zone
 }
 
-func (e MoveCardEvent) EventType() string {
+func (e *MoveCardEvent) EventType() string {
 	return EventTypeMoveCard
 }
 */
@@ -114,7 +114,7 @@ type PutCardInHandEvent struct {
 	FromZone mtg.Zone
 }
 
-func (e PutCardInHandEvent) EventType() string {
+func (e *PutCardInHandEvent) EventType() string {
 	return EventTypePutCardInHand
 }
 
@@ -125,7 +125,7 @@ type PutCardInGraveyardEvent struct {
 	FromZone mtg.Zone
 }
 
-func (e PutCardInGraveyardEvent) EventType() string {
+func (e *PutCardInGraveyardEvent) EventType() string {
 	return EventTypePutCardInGraveyard
 }
 
@@ -136,7 +136,7 @@ type PutCardOnTopOfLibraryEvent struct {
 	FromZone mtg.Zone
 }
 
-func (e PutCardOnTopOfLibraryEvent) EventType() string {
+func (e *PutCardOnTopOfLibraryEvent) EventType() string {
 	return EventTypePutCardOnTopOfLibrary
 }
 
@@ -147,7 +147,7 @@ type PutCardOnBottomOfLibraryEvent struct {
 	FromZone mtg.Zone
 }
 
-func (e PutCardOnBottomOfLibraryEvent) EventType() string {
+func (e *PutCardOnBottomOfLibraryEvent) EventType() string {
 	return EventTypePutCardOnBottomOfLibrary
 }
 
@@ -158,7 +158,7 @@ type PutPermanentOnBattlefieldEvent struct {
 	FromZone mtg.Zone
 }
 
-func (e PutPermanentOnBattlefieldEvent) EventType() string {
+func (e *PutPermanentOnBattlefieldEvent) EventType() string {
 	return EventTypePutPermanentOnBattlefield
 }
 
@@ -173,7 +173,7 @@ type ResolveManaAbilityEvent struct {
 	EffectSpecs []definition.EffectSpec
 }
 
-func (e ResolveManaAbilityEvent) EventType() string {
+func (e *ResolveManaAbilityEvent) EventType() string {
 	return EventTypeResolveManaAbility
 }
 */
@@ -185,7 +185,7 @@ type RevealCardEvent struct {
 	FromZone mtg.Zone
 }
 
-func (e RevealCardEvent) EventType() string {
+func (e *RevealCardEvent) EventType() string {
 	return EventTypeRevealCard
 }
 
@@ -194,7 +194,7 @@ type SetActivePlayerEvent struct {
 	PlayerID string
 }
 
-func (e SetActivePlayerEvent) EventType() string {
+func (e *SetActivePlayerEvent) EventType() string {
 	return EventTypeSetActivePlayer
 }
 
@@ -204,7 +204,7 @@ type ShuffleLibraryEvent struct {
 	ShuffledCardsIDs []string // IDs of the cards in the shuffled order
 }
 
-func (e ShuffleLibraryEvent) EventType() string {
+func (e *ShuffleLibraryEvent) EventType() string {
 	return EventTypeShuffleLibrary
 }
 
@@ -214,7 +214,7 @@ type SpendManaEvent struct {
 	PlayerID   string
 }
 
-func (e SpendManaEvent) EventType() string {
+func (e *SpendManaEvent) EventType() string {
 	return EventTypeSpendMana
 }
 
@@ -224,7 +224,7 @@ type TapPermanentEvent struct {
 	PermanentID string
 }
 
-func (e TapPermanentEvent) EventType() string {
+func (e *TapPermanentEvent) EventType() string {
 	return EventTypeTapPermanent
 }
 
@@ -234,6 +234,6 @@ type UntapPermanentEvent struct {
 	PermanentID string
 }
 
-func (e UntapPermanentEvent) EventType() string {
+func (e *UntapPermanentEvent) EventType() string {
 	return EventTypeUntapPermanent
 }

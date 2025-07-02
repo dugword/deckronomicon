@@ -7,168 +7,173 @@ import (
 	"fmt"
 )
 
-func (p Player) WithAddMana(color mana.Color, amount int) Player {
-	p.manaPool = p.manaPool.WithAddMana(amount, color)
-	return p
+func (p *Player) WithAddMana(color mana.Color, amount int) *Player {
+	newPlayer := *p
+	manaPool := newPlayer.manaPool.WithAddMana(amount, color)
+	newPlayer.manaPool = manaPool
+	return &newPlayer
 }
 
-func (p Player) WithNextTurn() Player {
-	p.turn++
-	return p
+func (p *Player) WithNextTurn() *Player {
+	newPlayer := *p
+	newPlayer.turn++
+	return &newPlayer
 }
 
-func (p Player) WithManaPool(manaPool mana.Pool) Player {
-	p.manaPool = manaPool
-	return p
+func (p *Player) WithManaPool(manaPool mana.Pool) *Player {
+	newPlayer := *p
+	newPlayer.manaPool = manaPool
+	return &newPlayer
 }
 
-func (p Player) WithEmptyManaPool() Player {
-	p.manaPool = mana.Pool{}
-	return p
+func (p *Player) WithEmptyManaPool() *Player {
+	newPlayer := *p
+	newPlayer.manaPool = mana.Pool{}
+	return &newPlayer
 }
 
-func (p Player) WithAddCardToZone(card gob.Card, zone mtg.Zone) (Player, bool) {
+func (p *Player) WithAddCardToZone(card *gob.Card, zone mtg.Zone) (*Player, bool) {
 	switch zone {
 	case mtg.ZoneExile:
-		exile := p.WithExile(p.exile.Add(card))
-		p = exile
+		return p.WithExile(p.exile.Add(card)), true
 	case mtg.ZoneGraveyard:
-		graveyard := p.WithGraveyard(p.graveyard.Add(card))
-		p = graveyard
+		return p.WithGraveyard(p.graveyard.Add(card)), true
 	case mtg.ZoneHand:
-		hand := p.WithHand(p.hand.Add(card))
-		p = hand
+		return p.WithHand(p.hand.Add(card)), true
 	case mtg.ZoneLibrary:
-		library := p.WithLibrary(p.library.Add(card))
-		p = library
+		return p.WithLibrary(p.library.Add(card)), true
 	default:
-		return p, false // No change for unsupported zones
+		return nil, false // No change for unsupported zones
 	}
-	return p, true
 }
 
-func (p Player) WithAddCardToTopOfZone(card gob.Card, zone mtg.Zone) (Player, bool) {
+func (p *Player) WithAddCardToTopOfZone(card *gob.Card, zone mtg.Zone) (*Player, bool) {
 	switch zone {
 	case mtg.ZoneExile:
-		exile := p.WithExile(p.exile.AddTop(card))
-		p = exile
+		return p.WithExile(p.exile.AddTop(card)), true
 	case mtg.ZoneGraveyard:
-		graveyard := p.WithGraveyard(p.graveyard.AddTop(card))
-		p = graveyard
+		return p.WithGraveyard(p.graveyard.AddTop(card)), true
 	case mtg.ZoneHand:
-		hand := p.WithHand(p.hand.AddTop(card))
-		p = hand
+		return p.WithHand(p.hand.AddTop(card)), true
 	case mtg.ZoneLibrary:
-		library := p.WithLibrary(p.library.AddTop(card))
-		p = library
+		return p.WithLibrary(p.library.AddTop(card)), true
 	default:
-		return p, false // No change for unsupported zones
+		return nil, false // No change for unsupported zones
 	}
-	return p, true
 }
 
-// TODO: Should this be WithMoveCardToZone?
-func (p Player) WithDiscardCard(cardID string) (Player, error) {
+func (p *Player) WithDiscardCard(cardID string) (*Player, error) {
 	card, newHand, ok := p.hand.Take(cardID)
 	if !ok {
-		return p, fmt.Errorf("card %q not found", cardID)
+		return nil, fmt.Errorf("card %q not found", cardID)
 	}
 	newGraveyard := p.graveyard.Add(card)
-	player := p.WithHand(newHand).WithGraveyard(newGraveyard)
-	return player, nil
+	newPlayer := p.WithHand(newHand).WithGraveyard(newGraveyard)
+	return newPlayer, nil
 }
 
-func (p Player) WithDrawCard() (Player, gob.Card, error) {
+func (p *Player) WithDrawCard() (*Player, *gob.Card, error) {
 	card, library, ok := p.library.TakeTop()
 	if !ok {
-		return p, gob.Card{}, mtg.ErrLibraryEmpty
+		return nil, nil, mtg.ErrLibraryEmpty
 	}
 	hand := p.hand.Add(card)
 	player := p.WithLibrary(library).WithHand(hand)
 	return player, card, nil
 }
 
-func (p Player) WithLibrary(library Library) Player {
-	p.library = library
-	return p
+func (p *Player) WithLibrary(library *Library) *Player {
+	newPlayer := *p
+	newPlayer.library = library
+	return &newPlayer
 }
 
-func (p Player) WithHand(hand Hand) Player {
-	p.hand = hand
-	return p
+func (p *Player) WithHand(hand *Hand) *Player {
+	newPlayer := *p
+	newPlayer.hand = hand
+	return &newPlayer
 }
 
-func (p Player) WithExile(exile Exile) Player {
-	p.exile = exile
-	return p
+func (p *Player) WithExile(exile *Exile) *Player {
+	newPlayer := *p
+	newPlayer.exile = exile
+	return &newPlayer
 }
 
-func (p Player) WithGraveyard(graveyard Graveyard) Player {
-	p.graveyard = graveyard
-	return p
+func (p *Player) WithGraveyard(graveyard *Graveyard) *Player {
+	newPlayer := *p
+	newPlayer.graveyard = graveyard
+	return &newPlayer
 }
 
-func (p Player) WithLandPlayedThisTurn() Player {
-	p.landPlayedThisTurn = true
-	return p
+func (p *Player) WithLandPlayedThisTurn() *Player {
+	newPlayer := *p
+	newPlayer.landPlayedThisTurn = true
+	return &newPlayer
 }
 
-func (p Player) WithGainLife(amount int) Player {
-	p.life += amount
-	return p
+func (p *Player) WithGainLife(amount int) *Player {
+	newPlayer := *p
+	newPlayer.life += amount
+	return &newPlayer
 }
 
-func (p Player) WithLoseLife(amount int) Player {
-	p.life -= amount
-	return p
+func (p *Player) WithLoseLife(amount int) *Player {
+	newPlayer := *p
+	newPlayer.life -= amount
+	return &newPlayer
 }
 
-func (p Player) WithClearLandPlayedThisTurn() Player {
-	p.landPlayedThisTurn = false
-	return p
+func (p *Player) WithClearLandPlayedThisTurn() *Player {
+	newPlayer := *p
+	newPlayer.landPlayedThisTurn = false
+	return &newPlayer
 }
 
-func (p Player) WithRevealed(revealed Revealed) Player {
-	p.revealed = revealed
-	return p
+func (p *Player) WithRevealed(revealed *Revealed) *Player {
+	newPlayer := *p
+	newPlayer.revealed = revealed
+	return &newPlayer
 }
 
-func (p Player) WithClearRevealed() Player {
-	p.revealed = NewRevealed()
-	return p
+func (p *Player) WithClearRevealed() *Player {
+	newPlayer := *p
+	newPlayer.revealed = NewRevealed()
+	return &newPlayer
 }
 
-func (p Player) WithSpellCastThisTurn() Player {
-	p.spellsCastThisTurn++
-	return p
+func (p *Player) WithSpellCastThisTurn() *Player {
+	newPlayer := *p
+	newPlayer.spellsCastThisTurn++
+	return &newPlayer
 }
 
-func (p Player) WithShuffledLibrary(shuffledCardsIDs []string) (Player, error) {
+func (p *Player) WithShuffledLibrary(shuffledCardsIDs []string) (*Player, error) {
 	cards := p.library.GetAll()
 	if len(cards) != len(shuffledCardsIDs) {
-		return p, fmt.Errorf(
+		return nil, fmt.Errorf(
 			"shuffledCardIDs %d does not match library size %d",
 			len(shuffledCardsIDs),
 			len(cards),
 		)
 	}
-	cardIDMap := map[string]gob.Card{}
+	cardIDMap := map[string]*gob.Card{}
 	for _, card := range cards {
 		cardIDMap[card.ID()] = card
 	}
-	var redordered []gob.Card
+	var redordered []*gob.Card
 	for _, id := range shuffledCardsIDs {
 		if card, ok := cardIDMap[id]; ok {
 			redordered = append(redordered, card)
 		} else {
-			return p, fmt.Errorf("card %q not found in library", id)
+			return nil, fmt.Errorf("card %q not found in library", id)
 		}
 	}
-	p = p.WithLibrary(Library{cards: redordered})
-	return p, nil
+	return p.WithLibrary(&Library{cards: redordered}), nil
 }
 
-func (p Player) WithClearSpellsCastsThisTurn() Player {
-	p.spellsCastThisTurn = 0
-	return p
+func (p *Player) WithClearSpellsCastsThisTurn() *Player {
+	newPlayer := *p
+	newPlayer.spellsCastThisTurn = 0
+	return &newPlayer
 }

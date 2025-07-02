@@ -10,110 +10,105 @@ import (
 	"deckronomicon/packages/query/take"
 )
 
-// Library represents the player's library.
 type Library struct {
-	cards []gob.Card
+	cards []*gob.Card
 }
 
-// NewLibrary creates a new Library instance.
-func NewLibrary(cards []gob.Card) Library {
+func NewLibrary(cards []*gob.Card) *Library {
 	library := Library{
 		cards: cards,
 	}
-	return library
+	return &library
 }
 
-// Add adds a card to the bottom of the library.
-func (l Library) Add(card gob.Card) Library {
-	return Library{
+func (l *Library) Add(card *gob.Card) *Library {
+	return &Library{
 		cards: add.Item(l.cards, card),
 	}
 }
 
-// AddTop adds a card to the top of the library.
-func (l Library) AddTop(c gob.Card) Library {
-	return Library{
-		cards: add.Item([]gob.Card{c}, l.cards...),
+func (l *Library) AddTop(c *gob.Card) *Library {
+	return &Library{
+		cards: add.Item([]*gob.Card{c}, l.cards...),
 	}
 }
 
-func (l Library) Contains(predicate query.Predicate) bool {
+func (l *Library) Contains(predicate query.Predicate) bool {
 	return query.Contains(l.cards, predicate)
 }
 
-func (l Library) Find(predicate query.Predicate) (gob.Card, bool) {
+func (l *Library) Find(predicate query.Predicate) (*gob.Card, bool) {
 	return query.Find(l.cards, predicate)
 }
 
-func (l Library) FindAll(predicate query.Predicate) []gob.Card {
+func (l *Library) FindAll(predicate query.Predicate) []*gob.Card {
 	return query.FindAll(l.cards, predicate)
 }
 
-func (l Library) Get(id string) (gob.Card, bool) {
+func (l *Library) Get(id string) (*gob.Card, bool) {
 	return query.Get(l.cards, id)
 }
 
-func (l Library) GetAll() []gob.Card {
+func (l *Library) GetAll() []*gob.Card {
 	return query.GetAll(l.cards)
 }
 
-func (l Library) GetN(n int) []gob.Card {
+func (l *Library) GetN(n int) []*gob.Card {
 	return query.GetN(l.cards, n)
 }
 
-func (l Library) Name() string {
+func (l *Library) Name() string {
 	return string(mtg.ZoneLibrary)
 }
 
-// Peek returns the top N cards without modifying the library.
-func (l Library) Peek() gob.Card {
+func (l *Library) Peek() *gob.Card {
 	if len(l.cards) == 0 {
-		return gob.Card{}
+		return nil
 	}
 	return l.cards[0]
 }
 
-func (l Library) Remove(id string) (Library, bool) {
+func (l *Library) Remove(id string) (*Library, bool) {
 	cards, ok := remove.By(l.cards, has.ID(id))
 	if !ok {
-		return l, false
+		return nil, false
 	}
-	return Library{cards: cards}, true
+	return &Library{cards: cards}, true
 }
 
-func (l Library) Take(id string) (gob.Card, Library, bool) {
+func (l *Library) Take(id string) (*gob.Card, *Library, bool) {
 	card, cards, ok := take.By(l.cards, has.ID(id))
 	if !ok {
-		return gob.Card{}, l, false
+		return nil, nil, false
 	}
-	return card, Library{cards: cards}, true
+	return card, &Library{cards: cards}, true
 }
 
-func (l Library) TakeBy(query query.Predicate) (gob.Card, Library, bool) {
+func (l *Library) TakeBy(query query.Predicate) (*gob.Card, *Library, bool) {
 	taken, remaining, ok := take.By(l.cards, query)
 	if !ok {
-		return gob.Card{}, l, false
+		return nil, nil, false
 	}
-	return taken, Library{cards: remaining}, true
+	return taken, &Library{cards: remaining}, true
 }
 
-func (l Library) TakeN(n int) ([]gob.Card, Library) {
+func (l *Library) TakeN(n int) ([]*gob.Card, *Library) {
 	cards, remaining := take.N(l.cards, n)
-	return cards, Library{cards: remaining}
+	return cards, &Library{cards: remaining}
 }
 
-func (l Library) TakeTop() (gob.Card, Library, bool) {
+func (l *Library) TakeTop() (*gob.Card, *Library, bool) {
 	card, cards, ok := take.Top(l.cards)
 	if !ok {
-		return gob.Card{}, l, false
+		return nil, nil, false
 	}
-	return card, Library{cards: cards}, true
+	return card, &Library{cards: cards}, true
 }
 
-func (l Library) Size() int {
+func (l *Library) Size() int {
 	return len(l.cards)
 }
 
-func (l Library) ZoneType() mtg.Zone {
+func (l *Library) ZoneType() mtg.Zone {
 	return mtg.ZoneLibrary
 }

@@ -14,17 +14,17 @@ import (
 
 func parseUntapCheatCommand(
 	idOrName string,
-	game state.Game,
-	player state.Player,
+	game *state.Game,
+	playerID string,
 	agent engine.PlayerAgent,
 ) (action.UntapCheatAction, error) {
 	permanents := game.Battlefield().FindAll(
-		query.And(has.Controller(player.ID()), is.Tapped()),
+		query.And(has.Controller(playerID), is.Tapped()),
 	)
-	var permanent gob.Permanent
+	var permanent *gob.Permanent
 	var err error
 	if idOrName == "" {
-		permanent, err = buildUntapCommandByChoice(permanents, player, agent)
+		permanent, err = buildUntapCommandByChoice(permanents, playerID, agent)
 		if err != nil {
 			return action.UntapCheatAction{}, fmt.Errorf("failed to choose a permanent to untap: %w", err)
 		}
@@ -35,17 +35,17 @@ func parseUntapCheatCommand(
 		}
 		permanent = found
 	}
-	return action.NewUntapCheatAction(permanent), nil
+	return action.NewUntapCheatAction(permanent.ID()), nil
 }
 
 func buildUntapCommandByChoice(
-	permanents []gob.Permanent,
-	player state.Player,
+	permanents []*gob.Permanent,
+	playerID string,
 	agent engine.PlayerAgent,
-) (gob.Permanent, error) {
+) (*gob.Permanent, error) {
 	prompt := choose.ChoicePrompt{
 		Message:  "Choose a permanent to untap",
-		Source:   player,
+		Source:   nil, // TODO: Make this better
 		Optional: true,
 		ChoiceOpts: choose.ChooseOneOpts{
 			Choices: choose.NewChoices(permanents),
@@ -53,15 +53,15 @@ func buildUntapCommandByChoice(
 	}
 	choiceResults, err := agent.Choose(prompt)
 	if err != nil {
-		return gob.Permanent{}, fmt.Errorf("failed to get choices: %w", err)
+		return nil, fmt.Errorf("failed to get choices: %w", err)
 	}
 	selected, ok := choiceResults.(choose.ChooseOneResults)
 	if !ok {
-		return gob.Permanent{}, fmt.Errorf("expected a single choice result")
+		return nil, fmt.Errorf("expected a single choice result")
 	}
-	permanent, ok := selected.Choice.(gob.Permanent)
+	permanent, ok := selected.Choice.(*gob.Permanent)
 	if !ok {
-		return gob.Permanent{}, fmt.Errorf("selected choice is not a permanent")
+		return nil, fmt.Errorf("selected choice is not a permanent")
 	}
 	return permanent, nil
 }

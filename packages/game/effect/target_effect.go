@@ -9,20 +9,20 @@ type TargetEffect struct {
 	Target mtg.TargetType
 }
 
-func NewTarget(modifiers map[string]any) (TargetEffect, error) {
+func NewTarget(modifiers map[string]any) (*TargetEffect, error) {
 	targetPermanentModifier, err := parseTargetPermanent(modifiers)
 	if err != nil {
-		return TargetEffect{}, err
+		return nil, err
 	}
-	return TargetEffect{
+	return &TargetEffect{
 		Target: targetPermanentModifier,
 	}, nil
 }
 
-func (t TargetEffect) Name() string {
+func (t *TargetEffect) Name() string {
 	return "TargetEffect"
 }
 
-func (t TargetEffect) TargetSpec() target.TargetSpec {
+func (t *TargetEffect) TargetSpec() target.TargetSpec {
 	return target.PermanentTargetSpec{}
 }

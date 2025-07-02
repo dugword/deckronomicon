@@ -67,12 +67,11 @@ func TestParseActivateAbilityCommand(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			game := newTestGame(playerID)
-			player := game.GetPlayer(playerID)
 			var agent engine.PlayerAgent = dummy.NewChooseOneAgent(playerID)
 			if tc.agent != nil {
 				agent = tc.agent
 			}
-			got, err := parseActivateAbilityCommand(tc.arg, game, player, agent)
+			got, err := parseActivateAbilityCommand(tc.arg, game, playerID, agent)
 			if err != nil {
 				t.Fatalf("parseActivateAbilityCommand(%q ...); err = %v; want %v", tc.arg, err, nil)
 			}
@@ -106,8 +105,7 @@ func TestParseActivateAbilityCommand(t *testing.T) {
 	for _, tc := range failCases {
 		t.Run(tc.name, func(t *testing.T) {
 			game := newTestGame(playerID)
-			player := game.GetPlayer(playerID)
-			_, err := parseActivateAbilityCommand(tc.arg, game, player, tc.agent)
+			_, err := parseActivateAbilityCommand(tc.arg, game, playerID, tc.agent)
 			if !errors.Is(err, tc.want) {
 				t.Errorf("parseActivateAbilityCommand(%q ...); err = %v; want %v", tc.arg, err, tc.want)
 			}

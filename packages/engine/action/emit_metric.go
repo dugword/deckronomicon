@@ -22,10 +22,10 @@ func (a EmitMetricAction) Name() string {
 	return "Emit a metric"
 }
 
-func (a EmitMetricAction) Complete(game state.Game, player state.Player, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
+func (a EmitMetricAction) Complete(game *state.Game, playerID string, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	return []event.GameEvent{
-		event.EmitMetricEvent{
-			PlayerID: player.ID(),
+		&event.EmitMetricEvent{
+			PlayerID: playerID,
 			Metric:   a.metric,
 			Value:    a.value,
 		},

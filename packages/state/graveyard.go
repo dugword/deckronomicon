@@ -11,73 +11,73 @@ import (
 )
 
 type Graveyard struct {
-	cards []gob.Card
+	cards []*gob.Card
 }
 
 // NewGraveyard creates a new Graveyard instance.
-func NewGraveyard() Graveyard {
+func NewGraveyard() *Graveyard {
 	graveyard := Graveyard{
-		cards: []gob.Card{},
+		cards: []*gob.Card{},
 	}
-	return graveyard
+	return &graveyard
 }
 
-func (g Graveyard) Add(cards ...gob.Card) Graveyard {
-	return Graveyard{
+func (g *Graveyard) Add(cards ...*gob.Card) *Graveyard {
+	return &Graveyard{
 		cards: add.Item(g.cards, cards...),
 	}
 }
 
-func (g Graveyard) AddTop(c gob.Card) Graveyard {
-	return Graveyard{
-		cards: add.Item([]gob.Card{c}, g.cards...),
+func (g *Graveyard) AddTop(c *gob.Card) *Graveyard {
+	return &Graveyard{
+		cards: add.Item([]*gob.Card{c}, g.cards...),
 	}
 }
 
-func (g Graveyard) Contains(predicate query.Predicate) bool {
+func (g *Graveyard) Contains(predicate query.Predicate) bool {
 	return query.Contains(g.cards, predicate)
 }
 
-func (g Graveyard) Get(id string) (gob.Card, bool) {
+func (g *Graveyard) Get(id string) (*gob.Card, bool) {
 	return query.Get(g.cards, id)
 }
 
-func (g Graveyard) GetAll() []gob.Card {
+func (g *Graveyard) GetAll() []*gob.Card {
 	return query.GetAll(g.cards)
 }
 
-func (g Graveyard) Name() string {
+func (g *Graveyard) Name() string {
 	return string(mtg.ZoneGraveyard)
 }
 
-func (g Graveyard) Remove(id string) (Graveyard, bool) {
+func (g *Graveyard) Remove(id string) (*Graveyard, bool) {
 	cards, ok := remove.By(g.cards, has.ID(id))
 	if !ok {
-		return g, false
+		return nil, false
 	}
-	return Graveyard{cards: cards}, true
+	return &Graveyard{cards: cards}, true
 }
 
-func (g Graveyard) Take(id string) (gob.Card, Graveyard, bool) {
+func (g *Graveyard) Take(id string) (*gob.Card, *Graveyard, bool) {
 	card, cards, ok := take.By(g.cards, has.ID(id))
 	if !ok {
-		return gob.Card{}, g, false
+		return nil, nil, false
 	}
-	return card, Graveyard{cards: cards}, true
+	return card, &Graveyard{cards: cards}, true
 }
 
-func (g Graveyard) TakeBy(predicate query.Predicate) (gob.Card, Graveyard, bool) {
+func (g *Graveyard) TakeBy(predicate query.Predicate) (*gob.Card, *Graveyard, bool) {
 	card, cards, ok := take.By(g.cards, predicate)
 	if !ok {
-		return gob.Card{}, g, false
+		return nil, nil, false
 	}
-	return card, Graveyard{cards: cards}, true
+	return card, &Graveyard{cards: cards}, true
 }
 
-func (g Graveyard) Size() int {
+func (g *Graveyard) Size() int {
 	return len(g.cards)
 }
 
-func (g Graveyard) ZoneType() mtg.Zone {
+func (g *Graveyard) ZoneType() mtg.Zone {
 	return mtg.ZoneGraveyard
 }
