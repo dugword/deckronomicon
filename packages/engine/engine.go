@@ -77,8 +77,9 @@ func NewEngine(config EngineConfig) *Engine {
 		record:          NewGameRecord(config.Seed),
 		cardDefinitions: cardDefinitions,
 		resEnv: &resenv.ResEnv{
-			RNG:         rng,
-			Definitions: cardDefinitions,
+			RNG:             rng,
+			Definitions:     cardDefinitions,
+			MaybeApplyEvent: MaybeApplyEvent,
 		},
 	}
 }

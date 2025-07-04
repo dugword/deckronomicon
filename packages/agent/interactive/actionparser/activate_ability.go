@@ -4,6 +4,7 @@ import (
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine"
 	"deckronomicon/packages/engine/action"
+	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/engine/judge"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/query"
@@ -17,11 +18,12 @@ func parseActivateAbilityCommand(
 	game *state.Game,
 	playerID string,
 	agent engine.PlayerAgent,
+	maybeApply func(game *state.Game, event event.GameEvent) (*state.Game, error),
 ) (action.ActivateAbilityRequest, error) {
 	var abilityInZone *gob.AbilityInZone
 	var err error
 	ruling := judge.Ruling{Explain: true}
-	abilityInZones := judge.GetAbilitiesAvailableToActivate(game, playerID, &ruling)
+	abilityInZones := judge.GetAbilitiesAvailableToActivate(game, playerID, &ruling, maybeApply)
 	if idOrName == "" {
 		abilityInZone, err = buildActivateAbilityCommandByChoice(abilityInZones, agent, playerID, game)
 		if err != nil {

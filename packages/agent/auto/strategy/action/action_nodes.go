@@ -8,7 +8,6 @@ import (
 	"deckronomicon/packages/engine"
 	"deckronomicon/packages/engine/action"
 	"deckronomicon/packages/engine/judge"
-	"deckronomicon/packages/engine/reducer"
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mana"
@@ -137,7 +136,7 @@ func (n *CastSpellActionNode) Resolve(ctx *evalstate.EvalState) (engine.Action, 
 			}
 		}
 		totalCost := cost.NewComposite(card.ManaCost(), additionalCost)
-		apply := reducer.ApplyEventAndTriggers
+		apply := engine.MaybeApplyEvent
 		if !judge.CanCastSpellFromHand(ctx.Game, player.ID(), card, totalCost, autoPay, mana.Colors(), &ruling, apply) {
 			continue
 		}

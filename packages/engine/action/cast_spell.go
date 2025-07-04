@@ -4,7 +4,6 @@ import (
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/engine/judge"
 	"deckronomicon/packages/engine/pay"
-	"deckronomicon/packages/engine/reducer"
 	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/effect"
@@ -68,13 +67,16 @@ func (a CastSpellAction) Name() string {
 
 func (a CastSpellAction) Complete(game *state.Game, playerID string, resEnv *resenv.ResEnv) ([]event.GameEvent, error) {
 	if a.flashback {
-		return a.castWithFlashback(game, playerID)
+		return a.castWithFlashback(game, playerID, resEnv.MaybeApplyEvent)
 	}
-	apply := reducer.ApplyEventAndTriggers
-	return a.castFromHand(game, playerID, apply)
+	return a.castFromHand(game, playerID, resEnv.MaybeApplyEvent)
 }
 
-func (a CastSpellAction) castWithFlashback(game *state.Game, playerID string) ([]event.GameEvent, error) {
+func (a CastSpellAction) castWithFlashback(
+	game *state.Game,
+	playerID string,
+	maybeApply func(game *state.Game, event event.GameEvent) (*state.Game, error),
+) ([]event.GameEvent, error) {
 	player := game.GetPlayer(playerID)
 	cardToCast, ok := player.GetCardFromZone(a.cardID, mtg.ZoneGraveyard)
 	if !ok {
@@ -97,6 +99,7 @@ func (a CastSpellAction) castWithFlashback(game *state.Game, playerID string) ([
 		a.autoPayCost,
 		a.autoPayColors,
 		&ruling,
+		maybeApply,
 	) {
 		return nil, fmt.Errorf(
 			"player %q cannot cast card %q with flashback: %s",
@@ -112,8 +115,7 @@ func (a CastSpellAction) castWithFlashback(game *state.Game, playerID string) ([
 	var events []event.GameEvent
 	if a.autoPayCost {
 		var err error
-		apply := reducer.ApplyEventAndTriggers
-		activateEvents, err := pay.AutoActivateManaSources(game, flashback.Cost, cardToCast, player.ID(), a.autoPayColors, apply)
+		activateEvents, err := pay.AutoActivateManaSources(game, flashback.Cost, cardToCast, player.ID(), a.autoPayColors, maybeApply)
 		if err != nil {
 			return nil, fmt.Errorf("failed to auto-pay cost for card %q: %w", cardToCast.ID(), err)
 		}
@@ -145,7 +147,7 @@ func (a CastSpellAction) castWithFlashback(game *state.Game, playerID string) ([
 func (a CastSpellAction) castFromHand(
 	game *state.Game,
 	playerID string,
-	apply func(game *state.Game, event event.GameEvent) (*state.Game, error),
+	maybeApply func(game *state.Game, event event.GameEvent) (*state.Game, error),
 ) ([]event.GameEvent, error) {
 	player := game.GetPlayer(playerID)
 	cardToCast, ok := player.GetCardFromZone(a.cardID, mtg.ZoneHand)
@@ -177,6 +179,7 @@ func (a CastSpellAction) castFromHand(
 			playerID,
 			cardToCast,
 			&judge.Ruling{Explain: true},
+			maybeApply,
 		) {
 			return nil, fmt.Errorf(
 				"player %q cannot replicate card %q",
@@ -205,7 +208,7 @@ func (a CastSpellAction) castFromHand(
 		a.autoPayCost,
 		a.autoPayColors,
 		&ruling,
-		apply,
+		maybeApply,
 	) {
 		return nil, fmt.Errorf(
 			"player %q cannot cast card %q from from hand: %s",
@@ -217,8 +220,7 @@ func (a CastSpellAction) castFromHand(
 	var events []event.GameEvent
 	if a.autoPayCost {
 		var err error
-		apply := reducer.ApplyEventAndTriggers
-		activateEvents, err := pay.AutoActivateManaSources(game, totalCost, cardToCast, playerID, a.autoPayColors, apply)
+		activateEvents, err := pay.AutoActivateManaSources(game, totalCost, cardToCast, playerID, a.autoPayColors, maybeApply)
 		if err != nil {
 			return nil, fmt.Errorf("failed to auto-pay cost for card %q: %w", cardToCast.ID(), err)
 		}

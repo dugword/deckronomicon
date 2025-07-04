@@ -1,6 +1,7 @@
 package view
 
 import (
+	"deckronomicon/packages/engine"
 	"deckronomicon/packages/engine/judge"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
@@ -104,7 +105,7 @@ func NewPlayerViewFromState(game *state.Game, playerID string, mode string) *Pla
 	if manaPool == "" {
 		manaPool = "(empty)"
 	}
-	potentialManaPool := judge.GetAvailableMana(game, player.ID()).ManaString()
+	potentialManaPool := judge.GetAvailableMana(game, player.ID(), engine.MaybeApplyEvent).ManaString()
 	if potentialManaPool == "" {
 		potentialManaPool = "(empty)"
 	}

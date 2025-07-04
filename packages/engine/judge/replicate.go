@@ -1,6 +1,7 @@
 package judge
 
 import (
+	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/game/staticability"
@@ -13,6 +14,7 @@ func CanReplicateCard(
 	playerID string,
 	cardToReplicate *gob.Card,
 	ruling *Ruling,
+	maybeApply func(game *state.Game, event event.GameEvent) (*state.Game, error),
 ) bool {
 	can := true
 	staticAbility, ok := cardToReplicate.StaticAbility(mtg.StaticKeywordReplicate)
@@ -31,7 +33,7 @@ func CanReplicateCard(
 		can = false
 		return can
 	}
-	if !CanPayCost(replicateAbility.Cost, cardToReplicate, game, playerID, ruling) {
+	if !CanPayCost(replicateAbility.Cost, cardToReplicate, game, playerID, ruling, maybeApply) {
 		if ruling != nil && ruling.Explain {
 			ruling.Reasons = append(ruling.Reasons, fmt.Sprintf("player %q cannot pay cost %s for card %q", playerID, replicateAbility.Cost, cardToReplicate.ID()))
 		}

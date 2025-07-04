@@ -3,7 +3,6 @@ package judge
 import (
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/engine/pay"
-	"deckronomicon/packages/engine/reducer"
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mana"
@@ -14,7 +13,14 @@ import (
 // E.g. is it an error because the player doesn't have enough mana,
 // or is it an error because of some broken game state?
 // TODO: Pass in ruling here and log which costs could not be paid
-func CanPayCost(someCost cost.Cost, object gob.Object, game *state.Game, playerID string, ruling *Ruling) bool {
+func CanPayCost(
+	someCost cost.Cost,
+	object gob.Object,
+	game *state.Game,
+	playerID string,
+	ruling *Ruling,
+	maybeApply func(game *state.Game, event event.GameEvent) (*state.Game, error),
+) bool {
 	costEvents, err := pay.Cost(someCost, object, playerID)
 	if err != nil {
 		if ruling != nil && ruling.Explain {
@@ -25,7 +31,7 @@ func CanPayCost(someCost cost.Cost, object gob.Object, game *state.Game, playerI
 	canPay := true
 	for _, costEvent := range costEvents {
 		var err error
-		game, err = reducer.ApplyEventAndTriggers(game, costEvent)
+		game, err = maybeApply(game, costEvent)
 		if err != nil {
 			if ruling != nil && ruling.Explain {
 				// TODO: Find some way to tie this to the specific cost event
@@ -48,12 +54,12 @@ func CanPayCostAutomatically(
 	playerID string,
 	colors []mana.Color,
 	ruling *Ruling,
-	apply func(game *state.Game, event event.GameEvent) (*state.Game, error),
+	maybeApply func(game *state.Game, event event.GameEvent) (*state.Game, error),
 ) bool {
 	canPay := true
 	// TODO: events no longer includes paying costs, this is just the activation of mana sources
 	// still need to call the pay function to get the events
-	events, err := pay.AutoActivateManaSources(game, someCost, object, playerID, colors, apply)
+	events, err := pay.AutoActivateManaSources(game, someCost, object, playerID, colors, maybeApply)
 	if err != nil {
 		if ruling != nil && ruling.Explain {
 			ruling.Reasons = append(ruling.Reasons, "unable to pay cost automatically: "+err.Error())
@@ -64,7 +70,7 @@ func CanPayCostAutomatically(
 	// Why am I applying these events?
 	// Don't I apply them in auto activate?
 	for _, event := range events {
-		game, err = reducer.ApplyEventAndTriggers(game, event)
+		game, err = maybeApply(game, event)
 		if err != nil {
 			if ruling != nil && ruling.Explain {
 				ruling.Reasons = append(ruling.Reasons, "unable to apply event for cost: "+event.EventType())

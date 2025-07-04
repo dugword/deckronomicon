@@ -82,7 +82,7 @@ func (a ActivateAbilityAction) Complete(game *state.Game, playerID string, resEn
 	}
 	ruling := judge.Ruling{Explain: true}
 	// TODO: Should it be abilityOnObjectInZone.Object() instead of Source()?
-	if !judge.CanActivateAbility(game, playerID, source, ability, &ruling) {
+	if !judge.CanActivateAbility(game, playerID, source, ability, &ruling, resEnv.MaybeApplyEvent) {
 		return nil, fmt.Errorf(
 			"player %q cannot activate ability %q on %q in %q: %v",
 			playerID,

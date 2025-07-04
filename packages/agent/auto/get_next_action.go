@@ -11,9 +11,10 @@ import (
 
 func (a *RuleBasedAgent) GetNextAction(game *state.Game) (engine.Action, error) {
 	ctx := evalstate.EvalState{
-		Game:     game,
-		PlayerID: a.playerID,
-		Mode:     a.mode,
+		Game:            game,
+		PlayerID:        a.playerID,
+		Mode:            a.mode,
+		MaybeApplyEvent: engine.MaybeApplyEvent,
 	}
 	for _, mode := range a.strategy.Modes {
 		if mode.Name == a.mode {

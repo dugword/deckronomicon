@@ -4,8 +4,8 @@ import (
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine"
 	"deckronomicon/packages/engine/action"
+	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/engine/judge"
-	"deckronomicon/packages/engine/reducer"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mana"
 	"deckronomicon/packages/game/mtg"
@@ -22,10 +22,10 @@ func parseCastSpellCommand(
 	agent engine.PlayerAgent,
 	autoPayCost bool,
 	autoPayColors []mana.Color, // Colors to prioritize when auto-paying costs, if applicable
+	maybeApply func(game *state.Game, event event.GameEvent) (*state.Game, error),
 ) (action.CastSpellRequest, error) {
 	ruling := judge.Ruling{Explain: true}
-	apply := reducer.ApplyEventAndTriggers
-	cards := judge.GetSpellsAvailableToCast(game, playerID, autoPayCost, autoPayColors, &ruling, apply)
+	cards := judge.GetSpellsAvailableToCast(game, playerID, autoPayCost, autoPayColors, &ruling, maybeApply)
 	var cardInZone *gob.CardInZone
 	var err error
 	if idOrName == "" {
@@ -63,7 +63,7 @@ func parseCastSpellCommand(
 	}
 	// TODO: Pass in cost or something and only get cards that can be paid for.
 	// TODO: Handle autoPayCost and autoPayColors properly.
-	splicableCards, err := judge.GetSplicableCards(game, playerID, cardInZone, &ruling)
+	splicableCards, err := judge.GetSplicableCards(game, playerID, cardInZone, &ruling, maybeApply)
 	if err != nil {
 		return action.CastSpellRequest{}, fmt.Errorf("failed to get splicable cards: %w", err)
 	}
@@ -93,7 +93,7 @@ func parseCastSpellCommand(
 		flashback = true
 	}
 	replicateCount := 0
-	if judge.CanReplicateCard(game, playerID, cardInZone.Card(), &ruling) {
+	if judge.CanReplicateCard(game, playerID, cardInZone.Card(), &ruling, maybeApply) {
 		var err error
 		replicateCount, err = getReplicateCount(cardInZone.Card(), game, agent)
 		if err != nil {

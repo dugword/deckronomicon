@@ -3,7 +3,6 @@ package judge
 import (
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/engine/pay"
-	"deckronomicon/packages/engine/reducer"
 	"deckronomicon/packages/engine/resolver"
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/effect"
@@ -53,7 +52,7 @@ func GetSpellsAvailableToCast(
 	autoPayCost bool,
 	autoPayColors []mana.Color,
 	ruling *Ruling,
-	apply func(game *state.Game, event event.GameEvent) (*state.Game, error),
+	maybeApply func(game *state.Game, event event.GameEvent) (*state.Game, error),
 ) []*gob.CardInZone {
 	player := game.GetPlayer(playerID)
 	var availableCards []*gob.CardInZone
@@ -69,7 +68,7 @@ func GetSpellsAvailableToCast(
 			autoPayCost,
 			autoPayColors,
 			ruling,
-			apply,
+			maybeApply,
 		) {
 			availableCards = append(availableCards, gob.NewCardInZone(card, mtg.ZoneHand))
 		}
@@ -98,7 +97,7 @@ func GetSpellsAvailableToCast(
 			}
 			continue
 		}
-		if CanCastSpellWithFlashback(game, playerID, card, flashbackAbility.Cost, autoPayCost, autoPayColors, ruling) {
+		if CanCastSpellWithFlashback(game, playerID, card, flashbackAbility.Cost, autoPayCost, autoPayColors, ruling, maybeApply) {
 			availableCards = append(availableCards, gob.NewCardInZone(card, mtg.ZoneGraveyard))
 		}
 	}
@@ -107,7 +106,12 @@ func GetSpellsAvailableToCast(
 
 // TODO: This probably shouldn't be in Judge, maybe judge is just boolean functions
 // that return true or false, and this should be where it's used, like in the agent functions
-func GetAbilitiesAvailableToActivate(game *state.Game, playerID string, ruling *Ruling) []*gob.AbilityInZone {
+func GetAbilitiesAvailableToActivate(
+	game *state.Game,
+	playerID string,
+	ruling *Ruling,
+	maybeApply func(game *state.Game, event event.GameEvent) (*state.Game, error),
+) []*gob.AbilityInZone {
 	player := game.GetPlayer(playerID)
 	var availableAbilities []*gob.AbilityInZone
 	for _, permanent := range game.Battlefield().GetAll() {
@@ -115,7 +119,7 @@ func GetAbilitiesAvailableToActivate(game *state.Game, playerID string, ruling *
 			if ruling != nil && ruling.Explain {
 				ruling.Reasons = append(ruling.Reasons, fmt.Sprintf("[ability %q]: ", ability.Name()))
 			}
-			if CanActivateAbility(game, playerID, permanent, ability, ruling) {
+			if CanActivateAbility(game, playerID, permanent, ability, ruling, maybeApply) {
 				availableAbilities = append(availableAbilities, gob.NewAbilityInZone(ability, permanent, mtg.ZoneBattlefield))
 			}
 		}
@@ -131,7 +135,7 @@ func GetAbilitiesAvailableToActivate(game *state.Game, playerID string, ruling *
 				}
 				continue
 			}
-			if CanActivateAbility(game, playerID, card, ability, ruling) {
+			if CanActivateAbility(game, playerID, card, ability, ruling, maybeApply) {
 				availableAbilities = append(availableAbilities, gob.NewAbilityInZone(ability, card, mtg.ZoneHand))
 			}
 		}
@@ -145,6 +149,7 @@ func GetSplicableCards(
 	playerID string,
 	cardToCast *gob.CardInZone,
 	ruling *Ruling,
+	maybeApply func(game *state.Game, event event.GameEvent) (*state.Game, error),
 ) ([]*gob.CardInZone, error) {
 	player := game.GetPlayer(playerID)
 	var splicableCards []*gob.CardInZone
@@ -198,7 +203,7 @@ func GetSplicableCards(
 			cardToCast.Card().ManaCost(),
 			spliceAbility.Cost,
 		)
-		if !CanPayCost(totalCost, card, game, playerID, ruling) {
+		if !CanPayCost(totalCost, card, game, playerID, ruling, maybeApply) {
 			if ruling != nil && ruling.Explain {
 				ruling.Reasons = append(
 					ruling.Reasons,
@@ -217,7 +222,11 @@ func GetSplicableCards(
 }
 
 // TODO: Redundate with pay automatic activation
-func GetAvailableMana(game *state.Game, playerID string) mana.Pool {
+func GetAvailableMana(
+	game *state.Game,
+	playerID string,
+	maybeApply func(game *state.Game, event event.GameEvent) (*state.Game, error),
+) mana.Pool {
 	for _, untappedLand := range game.Battlefield().FindAll(
 		query.And(has.Controller(playerID), is.Land(), is.Untapped())) {
 		for _, ability := range untappedLand.ActivatedAbilities() {
@@ -249,7 +258,7 @@ func GetAvailableMana(game *state.Game, playerID string) mana.Pool {
 			})
 			for _, event := range events {
 				var err error
-				game, err = reducer.ApplyEventAndTriggers(game, event)
+				game, err = maybeApply(game, event)
 				if err != nil {
 					panic(fmt.Errorf("failed to apply event %q: %w", event.EventType(), err))
 				}
@@ -264,7 +273,7 @@ func GetAvailableMana(game *state.Game, playerID string) mana.Pool {
 					panic(fmt.Errorf("failed to resolve add mana effect: %w", err))
 				}
 				for _, event := range result.Events {
-					game, err = reducer.ApplyEventAndTriggers(game, event)
+					game, err = maybeApply(game, event)
 					if err != nil {
 						panic(fmt.Errorf("failed to apply event %q: %w", event.EventType(), err))
 					}

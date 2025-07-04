@@ -5,15 +5,22 @@ import (
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine"
 	"deckronomicon/packages/engine/action"
+	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/game/target"
+	"deckronomicon/packages/state"
 	"errors"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 )
+
+func mockMaybeApplyEvent(game *state.Game, event event.GameEvent) (*state.Game, error) {
+	// Mock implementation for testing purposes
+	return game, nil
+}
 
 func TestParseCastSpellCommand(t *testing.T) {
 	const playerID = "Test Player"
@@ -96,7 +103,7 @@ func TestParseCastSpellCommand(t *testing.T) {
 			if tc.agent != nil {
 				agent = tc.agent
 			}
-			got, err := parseCastSpellCommand(tc.arg, game, playerID, agent, false, nil)
+			got, err := parseCastSpellCommand(tc.arg, game, playerID, agent, false, nil, mockMaybeApplyEvent)
 			if err != nil {
 				t.Fatalf("parseCastSpellCommand(%q ...); err = %v; want %v", tc.arg, err, nil)
 			}
@@ -130,7 +137,7 @@ func TestParseCastSpellCommand(t *testing.T) {
 	for _, tc := range failCases {
 		t.Run(tc.name, func(t *testing.T) {
 			game := newTestGame(playerID)
-			_, err := parseCastSpellCommand(tc.arg, game, playerID, tc.agent, false, nil)
+			_, err := parseCastSpellCommand(tc.arg, game, playerID, tc.agent, false, nil, mockMaybeApplyEvent)
 			if !errors.Is(err, tc.want) {
 				t.Errorf("parseCastSpellCommand(%q ...); err = %v; want %v", tc.arg, err, tc.want)
 			}

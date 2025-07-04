@@ -33,6 +33,7 @@ func ParseInput(
 	autoPay bool,
 	autoPayColors []mana.Color,
 ) (engine.Action, error) {
+	maybeApply := engine.MaybeApplyEvent
 	parts := strings.Fields(input)
 	if len(parts) == 0 {
 		return nil, errors.New("no command provided")
@@ -41,7 +42,7 @@ func ParseInput(
 	command = strings.ToLower(command)
 	switch command {
 	case "activate", "tap":
-		request, err := parseActivateAbilityCommand(arg, game, playerID, agent)
+		request, err := parseActivateAbilityCommand(arg, game, playerID, agent, maybeApply)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse activate command: %w", err)
 		}
@@ -64,7 +65,7 @@ func ParseInput(
 	case "play":
 		return parsePlayLandCommand(arg, game, playerID, agent)
 	case "cast":
-		request, err := parseCastSpellCommand(arg, game, playerID, agent, autoPay, autoPayColors)
+		request, err := parseCastSpellCommand(arg, game, playerID, agent, autoPay, autoPayColors, maybeApply)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse cast command: %w", err)
 		}
