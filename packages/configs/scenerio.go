@@ -23,6 +23,7 @@ type DeckList struct {
 
 type Scenario struct {
 	CheatsEnabled bool
+	DirName       string
 	MaxTurns      int
 	OnThePlay     string
 	Name          string
@@ -77,6 +78,7 @@ func LoadScenario(scenariosDir, scenario string) (*Scenario, error) {
 	}
 	s := Scenario{
 		CheatsEnabled: setup.CheatsEnabled,
+		DirName:       scenarioPath,
 		MaxTurns:      setup.MaxTurns,
 		OnThePlay:     setup.OnThePlay,
 		Setup:         setup,
@@ -140,12 +142,8 @@ func LoadScenario(scenariosDir, scenario string) (*Scenario, error) {
 		if player.StartingMode == "" {
 			player.StartingMode = "Setup"
 		}
-		if playerSetup.Strategy != "" {
-			fileName := playerSetup.Strategy
-			if !strings.HasSuffix(playerSetup.Strategy, ".yaml") {
-				fileName += ".yaml"
-			}
-			player.StrategyFile = path.Join(scenarioPath, fileName)
+		if playerSetup.Strategy == "" {
+			playerSetup.Strategy = "player_strategy"
 		}
 		deckList, err := LoadDeckList(scenarioPath, playerSetup.DeckList)
 		if err != nil {

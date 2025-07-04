@@ -100,7 +100,7 @@ func (n *PlayLandCardActionNode) Resolve(ctx *evalstate.EvalState) (engine.Actio
 
 type CastSpellActionNode struct {
 	Cards          predicate.Predicate
-	AdditionalCost predicate.Predicate
+	AdditionalCost predicate.Selector
 }
 
 // TODO: Look this over, wrote it quickly late at night

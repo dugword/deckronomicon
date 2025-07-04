@@ -1,0 +1,7 @@
+Conditions:
+  - Name: Can Play a Snow-Covered Basic Land
+    When:
+      SorcerySpeed: true
+      LandPlayedThisTurn: false
+      InHand:
+          - $Snow-Covered Basic Land

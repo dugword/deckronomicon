@@ -1,0 +1,37 @@
+Name: Test Player Strategy
+Description: Player strategy for unit tests.
+Groups:
+  - Name: Basic Land
+    Description: Basic lands.
+    Members:
+      - Plains
+      - Island
+      - Swamp
+      - Mountain
+      - Forest
+
+Rules:
+  Setup:
+    - Make Land Drop
+    - Name: Play a Basic Land
+      When:
+        InHand: $Basic Land
+      Then:
+        Play: $Basic Land
+        
+  It's Snow Time:
+    - Name: Make Snow-Covered Land Drop
+      When: Can Play a Snow-Covered Basic Land
+      Then: Play a Snow-Covered Basic Land
+
+Choices:
+  Setup:
+    - Name: Make a Choice
+      Source: Source of Choice
+      When:
+        InHand:
+            - $Basic Land
+      Choose:
+        - $Basic Land
+    - Make Another Choice
+

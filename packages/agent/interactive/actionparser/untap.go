@@ -24,7 +24,7 @@ func parseUntapCheatCommand(
 	var permanent *gob.Permanent
 	var err error
 	if idOrName == "" {
-		permanent, err = buildUntapCommandByChoice(permanents, playerID, agent)
+		permanent, err = buildUntapCommandByChoice(game, permanents, playerID, agent)
 		if err != nil {
 			return action.UntapCheatAction{}, fmt.Errorf("failed to choose a permanent to untap: %w", err)
 		}
@@ -39,6 +39,7 @@ func parseUntapCheatCommand(
 }
 
 func buildUntapCommandByChoice(
+	game *state.Game,
 	permanents []*gob.Permanent,
 	playerID string,
 	agent engine.PlayerAgent,
@@ -51,7 +52,7 @@ func buildUntapCommandByChoice(
 			Choices: choose.NewChoices(permanents),
 		},
 	}
-	choiceResults, err := agent.Choose(prompt)
+	choiceResults, err := agent.Choose(game, prompt)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get choices: %w", err)
 	}

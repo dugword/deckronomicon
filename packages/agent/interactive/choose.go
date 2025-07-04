@@ -2,6 +2,7 @@ package interactive
 
 import (
 	"deckronomicon/packages/choose"
+	"deckronomicon/packages/state"
 	"errors"
 	"fmt"
 	"slices"
@@ -49,7 +50,7 @@ func (a *Agent) enterNumber(prompt string, source choose.Source) (int, error) {
 	}
 }
 
-func (a *Agent) Choose(prompt choose.ChoicePrompt) (choose.ChoiceResults, error) {
+func (a *Agent) Choose(game *state.Game, prompt choose.ChoicePrompt) (choose.ChoiceResults, error) {
 	switch opts := prompt.ChoiceOpts.(type) {
 	case choose.ChooseOneOpts:
 		choices, err := a.chooseMany(opts.Choices, 1, 1, prompt.Message, prompt.Source, prompt.Optional)

@@ -15,11 +15,11 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"runtime/pprof"
 	"time"
 )
 
 func createPlayerAgent(
+	scenario *configs.Scenario,
 	playerScenario configs.Player,
 	config configs.Config,
 	stdin io.Reader,
@@ -45,6 +45,7 @@ func createPlayerAgent(
 	case "Auto":
 		var err error
 		playerAgent, err = auto.NewRuleBasedAgent(
+			scenario.DirName,
 			playerScenario.StrategyFile,
 			playerScenario.Name,
 			"./ui/term/display.tmpl", // TODO: Make this configurable.
@@ -125,7 +126,7 @@ func Run(
 			playerScenario.Name,
 			playerScenario.AgentType,
 		))
-		playerAgent, err := createPlayerAgent(playerScenario, config, stdin)
+		playerAgent, err := createPlayerAgent(scenario, playerScenario, config, stdin)
 		if err != nil {
 			return fmt.Errorf("failed to create player agent for %q: %w", playerScenario.Name, err)
 		}
@@ -167,18 +168,11 @@ func Run(
 		Seed:              seed,
 		Log:               logger,
 	}
-
-	fCPU, err := os.Create("cpu.prof")
-	if err != nil {
-		return fmt.Errorf("failed to create CPU profile: %w", err)
-	}
-	pprof.StartCPUProfile(fCPU)
-	defer pprof.StopCPUProfile()
 	start := time.Now()
 	for i := range config.Runs {
 		engine := engine.NewEngine(engineConfig)
 		if err := engine.RunGame(); err != nil && !errors.Is(err, mtg.ErrGameOver) {
-			panic(fmt.Errorf("failed to run the game: %w", err))
+			return fmt.Errorf("failed to run the game: %w", err)
 		}
 		logger.Debug("Game over!")
 		logger.Infof("Game %d completed successfully!", i+1)

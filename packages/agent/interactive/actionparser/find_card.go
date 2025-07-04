@@ -22,7 +22,7 @@ func parseFindCardCheatCommand(
 	var card *gob.Card
 	var err error
 	if idOrName == "" {
-		card, err = buildFindCardCheatCommandByChoice(cards, playerID, agent)
+		card, err = buildFindCardCheatCommandByChoice(cards, game, playerID, agent)
 		if err != nil {
 			return action.FindCardCheatAction{}, fmt.Errorf("failed to choose a card to find: %w", err)
 		}
@@ -38,6 +38,7 @@ func parseFindCardCheatCommand(
 
 func buildFindCardCheatCommandByChoice(
 	cards []*gob.Card,
+	game *state.Game,
 	playerID string,
 	agent engine.PlayerAgent,
 ) (*gob.Card, error) {
@@ -49,7 +50,7 @@ func buildFindCardCheatCommandByChoice(
 			Choices: choose.NewChoices(cards),
 		},
 	}
-	choiceResults, err := agent.Choose(prompt)
+	choiceResults, err := agent.Choose(game, prompt)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get choices: %w", err)
 	}

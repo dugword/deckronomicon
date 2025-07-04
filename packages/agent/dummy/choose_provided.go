@@ -55,7 +55,7 @@ func (a *ChooseProvided) GetNextAction(game *state.Game) (engine.Action, error) 
 	return action.NewPassPriorityAction(), nil
 }
 
-func (a *ChooseProvided) Choose(prompt choose.ChoicePrompt) (choose.ChoiceResults, error) {
+func (a *ChooseProvided) Choose(game *state.Game, prompt choose.ChoicePrompt) (choose.ChoiceResults, error) {
 	switch opts := prompt.ChoiceOpts.(type) {
 	case choose.ChooseOneOpts:
 		if prompt.Optional && a.skipOptional {

@@ -1,0 +1,5 @@
+Modes:
+  - Name: It's Snow Time
+    When:
+      InHand:
+        - $Snow-Covered Basic Land

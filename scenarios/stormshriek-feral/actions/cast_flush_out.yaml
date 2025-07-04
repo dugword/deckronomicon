@@ -1,0 +1,8 @@
+Actions:
+  - Name: Cast Flush Out
+    Then:
+      Cast:
+        Card: Flush Out
+        AdditionalCost:
+          Discard:
+            - Mountain

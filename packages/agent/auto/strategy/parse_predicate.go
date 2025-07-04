@@ -3,148 +3,186 @@ package strategy
 import (
 	"deckronomicon/packages/agent/auto/strategy/predicate"
 	"deckronomicon/packages/game/mtg"
+	"errors"
 	"fmt"
 	"strings"
 )
 
-func (p *StrategyParser) parsePredicate(data any) predicate.Predicate {
-	switch node := data.(type) {
+func (p *StrategyParser) parsePredicate(raw any) (predicate.Predicate, error) {
+	switch node := raw.(type) {
 	case string:
 		if strings.HasPrefix(node, "$") {
 			return p.parseGroupPredicate(node)
 		}
-		return &predicate.Name{Name: node}
+		return &predicate.Name{Name: node}, nil
 	case []any:
 		var predicates []predicate.Predicate
 		for _, item := range node {
-			predicates = append(predicates, p.parsePredicate(item))
+			pred, err := p.parsePredicate(item)
+			if err != nil {
+				return nil, fmt.Errorf("error parsing predicate item %v: %w", item, err)
+			}
+			predicates = append(predicates, pred)
 		}
-		return &predicate.And{Predicates: predicates}
+		return &predicate.And{Predicates: predicates}, nil
 	case map[string]any:
-		/* // TODO Think about this
-		if len(node) != 1 {
-			// TODO: add context path to p.errors.
-			p.errors.Add(fmt.Errorf("expected exactly one key, got %d", len(node)))
-			return nil
-		}
-		*/
+		var predicates []predicate.Predicate
 		for key, val := range node {
-			var predicates []predicate.Predicate
 			switch key {
 			// todo move to a separate function
 			case "And", "All", "AllOf":
 				items, ok := val.([]any)
 				if !ok {
-					p.errors.Add(fmt.Errorf("expected list for 'and', got %T", val))
-					return nil
+					return nil, fmt.Errorf("expected list for 'And', got %T", val)
 				}
+				var children []predicate.Predicate
 				for _, item := range items {
-					predicates = append(predicates, p.parsePredicate(item))
+					pred, err := p.parsePredicate(item)
+					if err != nil {
+						return nil, fmt.Errorf("error parsing 'And' predicate item %v: %w", item, err)
+					}
+					children = append(children, pred)
 				}
-				predicates = append(predicates, &predicate.And{Predicates: predicates})
-				// todo move to a separate function
+				predicates = append(predicates, &predicate.And{Predicates: children})
 			case "Or", "Any", "AnyOf":
 				items, ok := val.([]any)
 				if !ok {
-					p.errors.Add(fmt.Errorf("expected list for 'or', got %T", val))
-					return nil
+					return nil, fmt.Errorf("expected list for 'Or', got %T", val)
 				}
+				var children []predicate.Predicate
 				for _, item := range items {
-					predicates = append(predicates, p.parsePredicate(item))
+					pred, err := p.parsePredicate(item)
+					if err != nil {
+						return nil, fmt.Errorf("error parsing 'Or' predicate item %v: %w", item, err)
+					}
+					children = append(children, pred)
 				}
-				predicates = append(predicates, &predicate.Or{Predicates: predicates})
+				predicates = append(predicates, &predicate.Or{Predicates: children})
 			case "Not":
-				predicates = append(predicates, p.parseNotPredicate(val))
+				pred, err := p.parseNotPredicate(val)
+				if err != nil {
+					return nil, fmt.Errorf("error parsing 'Not' predicate: %w", err)
+				}
+				predicates = append(predicates, pred)
 			case "CardType":
-				predicates = append(predicates, p.parseCardTypePredicate(val))
+				pred, err := p.parseCardTypePredicate(val)
+				if err != nil {
+					return nil, fmt.Errorf("error parsing 'CardType' predicate: %w", err)
+				}
+				predicates = append(predicates, pred)
 			case "Subtype":
-				predicates = append(predicates, p.parseSubtypePredicate(val))
-			case "Supertype":
-			case "Color":
-			case "Mana":
-			case "Power":
-			case "Toughness":
+				pred, err := p.parseSubtypePredicate(val)
+				if err != nil {
+					return nil, fmt.Errorf("error parsing 'Subtype' predicate: %w", err)
+				}
+				predicates = append(predicates, pred)
+				/*
+					case "Supertype":
+						pred, err := p.parseSupertypePredicate(val)
+						if err != nil {
+							return nil, fmt.Errorf("error parsing 'Supertype' predicate: %w", err)
+						}
+						predicates = append(predicates, pred)
+					case "Color":
+						pred, err := p.parseColorPredicate(val)
+						if err != nil {
+							return nil, fmt.Errorf("error parsing 'Color' predicate: %w", err)
+						}
+						predicates = append(predicates, pred)
+					case "Mana":
+						pred, err := p.parseManaPredicate(val)
+						if err != nil {
+							return nil, fmt.Errorf("error parsing 'Mana' predicate: %w", err)
+						}
+						predicates = append(predicates, pred)
+					case "Power":
+						pred, err := p.parsePowerPredicate(val)
+						if err != nil {
+							return nil, fmt.Errorf("error parsing 'Power' predicate: %w", err)
+						}
+						predicates = append(predicates, pred)
+					case "Toughness":
+						pred, err := p.parseToughnessPredicate(val)
+						if err != nil {
+							return nil, fmt.Errorf("error parsing 'Toughness' predicate: %w", err)
+						}
+						predicates = append(predicates, pred)
+				*/
 			default:
-				p.errors.Add(fmt.Errorf("unknown key: %s", key))
-				return nil
+				return nil, fmt.Errorf("unknown key %q in predicate", key)
 			}
-			if len(predicates) == 0 {
-				p.errors.Add(fmt.Errorf("no valid predicates found for key '%s'", key))
-				return nil
-			}
-			if len(predicates) == 1 {
-				return predicates[0]
-			}
-			return &predicate.And{Predicates: predicates}
 		}
+		if len(predicates) == 0 {
+			return nil, errors.New("no valid predicates found")
+		}
+		if len(predicates) == 1 {
+			return predicates[0], nil
+		}
+		return &predicate.And{Predicates: predicates}, nil
 	default:
-		p.errors.Add(fmt.Errorf("unexpected type: %T", data))
-		return nil
+		return nil, fmt.Errorf("expected string, list, or object for predicate, got %T", raw)
 	}
-	// TODO handle the switch statement to always return so we don't have the compiler hit this
-	panic("unreachable")
 }
 
-func (p *StrategyParser) parseGroupPredicate(name string) predicate.Predicate {
+func (p *StrategyParser) parseGroupPredicate(name string) (predicate.Predicate, error) {
 	if !strings.HasPrefix(name, "$") {
-		p.errors.Add(fmt.Errorf("group predicate must start with '$', got %s", name))
-		return nil
+		return nil, fmt.Errorf("group predicate must start with '$', got %s", name)
 	}
 	groupName := strings.TrimPrefix(name, "$")
 	if groupName == "" {
-		p.errors.Add(fmt.Errorf("group predicate name cannot be empty"))
-		return nil
+		return nil, fmt.Errorf("group predicate name cannot be empty")
 	}
 	group, ok := p.groups[groupName]
 	if !ok {
-		p.errors.Add(fmt.Errorf("group '%s' not found in definitions", groupName))
-		return nil
+		return nil, fmt.Errorf("group '%s' not found in definitions", groupName)
 	}
 	var predicates []predicate.Predicate
-	for _, item := range group {
-		predicate := p.parsePredicate(item)
-		if predicate != nil {
-			predicates = append(predicates, predicate)
+	for _, item := range group.Members {
+		pred, err := p.parsePredicate(item)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing predicate in group '%s': %w", groupName, err)
+		}
+		if pred != nil {
+			predicates = append(predicates, pred)
 		}
 	}
 	if len(predicates) == 0 {
-		p.errors.Add(fmt.Errorf("no valid predicate found in group '%s'", groupName))
-		return nil
+		return nil, fmt.Errorf("no valid predicate found in group '%s'", groupName)
 	}
 	if len(predicates) == 1 {
-		return predicates[0]
+		return predicates[0], nil
 	}
-	return &predicate.Or{Predicates: predicates}
+	return &predicate.Or{Predicates: predicates}, nil
 }
 
-func (p *StrategyParser) parseNotPredicate(value any) predicate.Predicate {
-	return &predicate.Not{Predicate: p.parsePredicate(value)}
+func (p *StrategyParser) parseNotPredicate(value any) (predicate.Predicate, error) {
+	pred, err := p.parsePredicate(value)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing 'Not' predicate: %w", err)
+	}
+	return &predicate.Not{Predicate: pred}, nil
 }
 
-func (p *StrategyParser) parseCardTypePredicate(value any) predicate.Predicate {
+func (p *StrategyParser) parseCardTypePredicate(value any) (predicate.Predicate, error) {
 	typeStr, ok := value.(string)
 	if !ok {
-		p.errors.Add(fmt.Errorf("expected string for 'CardType', got %T", value))
-		return nil
+		return nil, fmt.Errorf("expected string for 'CardType', got %T", value)
 	}
 	cardType, ok := mtg.StringToCardType(typeStr)
 	if !ok {
-		p.errors.Add(fmt.Errorf("invalid card type: %s", typeStr))
-		return nil
+		return nil, fmt.Errorf("invalid card type: %s", typeStr)
 	}
-	return &predicate.CardType{CardType: cardType}
+	return &predicate.CardType{CardType: cardType}, nil
 }
 
-func (p *StrategyParser) parseSubtypePredicate(value any) predicate.Predicate {
+func (p *StrategyParser) parseSubtypePredicate(value any) (predicate.Predicate, error) {
 	typeStr, ok := value.(string)
 	if !ok {
-		p.errors.Add(fmt.Errorf("expected string for 'Subtype', got %T", value))
-		return nil
+		return nil, fmt.Errorf("expected string for 'Subtype', got %T", value)
 	}
 	subtype, ok := mtg.StringToSubtype(typeStr)
 	if !ok {
-		p.errors.Add(fmt.Errorf("invalid subtype: %s", typeStr))
-		return nil
+		return nil, fmt.Errorf("invalid subtype: %s", typeStr)
 	}
-	return &predicate.Subtype{Subtype: subtype}
+	return &predicate.Subtype{Subtype: subtype}, nil
 }

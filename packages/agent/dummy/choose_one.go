@@ -33,7 +33,7 @@ func (a *ChooseOneAgent) GetNextAction(game *state.Game) (engine.Action, error) 
 	return action.NewPassPriorityAction(), nil
 }
 
-func (a *ChooseOneAgent) Choose(prompt choose.ChoicePrompt) (choose.ChoiceResults, error) {
+func (a *ChooseOneAgent) Choose(game *state.Game, prompt choose.ChoicePrompt) (choose.ChoiceResults, error) {
 	switch opts := prompt.ChoiceOpts.(type) {
 	case choose.ChooseOneOpts:
 		if len(opts.Choices) == 0 {
