@@ -23,7 +23,7 @@ func parsePlayLandCommand(
 	var cardInZone *gob.CardInZone
 	var err error
 	if idOrName == "" {
-		cardInZone, err = buildPlayLandCommandByChoice(cards, playerID, agent)
+		cardInZone, err = buildPlayLandCommandByChoice(cards, game, playerID, agent)
 		if err != nil {
 			return action.PlayLandAction{}, fmt.Errorf("failed to choose a land to play: %w", err)
 		}
@@ -42,6 +42,7 @@ func parsePlayLandCommand(
 
 func buildPlayLandCommandByChoice(
 	cards []*gob.CardInZone,
+	game *state.Game,
 	playerID string,
 	agent engine.PlayerAgent,
 ) (*gob.CardInZone, error) {
@@ -53,7 +54,7 @@ func buildPlayLandCommandByChoice(
 			Choices: choose.NewChoices(cards),
 		},
 	}
-	choiceResults, err := agent.Choose(prompt)
+	choiceResults, err := agent.Choose(game, prompt)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get choices: %w", err)
 	}

@@ -1,118 +1,156 @@
 package strategy
 
 import (
-	"encoding/json"
+	"deckronomicon/packages/agent/auto/strategy/action"
+	"deckronomicon/packages/agent/auto/strategy/evaluator"
+	"deckronomicon/packages/agent/auto/strategy/predicate"
 	"fmt"
-	"os"
 	"path/filepath"
-	"strings"
-
-	"gopkg.in/yaml.v3"
 )
 
-type StrategyFile struct {
-	Name        string           `json:"Name,omitempty" yaml:"Name,omitempty"`
-	Description string           `json:"Description,omitempty" yaml:"Description,omitempty"`
-	Groups      map[string][]any `json:"Groups,omitempty" yaml:"Groups,omitempty"`
-	Modes       []map[string]any `json:"Modes,omitempty" yaml:"Modes,omitempty"`
-	Rules       map[string]any   `json:"Rules,omitempty" yaml:"Rules,omitempty"`
-}
+// region Strategy Parser Types
 
 type StrategyParser struct {
-	errors         *ParseErrors
-	sourceFile     string
-	sourceFileType string // ".json", ".yaml"
-	groups         map[string][]any
-	rules          map[string]Rule
+	actions    map[string]action.ActionNode
+	choices    map[string]*Choice
+	conditions map[string]evaluator.Evaluator
+	groups     map[string]*Group
+	modes      map[string]*Mode
+	rules      map[string]*Rule
+	selectors  map[string]predicate.Selector
 }
 
-type ParseErrors struct {
-	errors []error
+// StrategyParserData holds a map of file names to their contents
+// for each type of fragment file used in the strategy parser.
+type StrategyParserData struct {
+	ActionFragmentFilesData    map[string][]byte
+	ChoiceFragmentFilesData    map[string][]byte
+	ConditionFragmentFilesData map[string][]byte
+	GroupFragmentFilesData     map[string][]byte
+	ModeFragmentFilesData      map[string][]byte
+	RuleFragmentFilesData      map[string][]byte
+	SelectorFragmentFilesData  map[string][]byte
 }
 
-func (e *ParseErrors) Add(err error) {
+type StrategyFile struct {
+	Name        string `json:"Name,omitempty" yaml:"Name,omitempty"`
+	Description string `json:"Description,omitempty" yaml:"Description,omitempty"`
+	// TODO: Groups cannot contain references to other groups.
+	Groups  []any            `json:"Groups,omitempty" yaml:"Groups,omitempty"`
+	Modes   []any            `json:"Modes,omitempty" yaml:"Modes,omitempty"`
+	Rules   map[string][]any `json:"Rules,omitempty" yaml:"Rules,omitempty"`
+	Choices map[string][]any `json:"Choices,omitempty" yaml:"Choices,omitempty"`
+}
+
+// endregion
+
+// region New Strategy Parser
+func NewStrategyParser(data StrategyParserData) (*StrategyParser, error) {
+	parser := StrategyParser{
+		actions:    map[string]action.ActionNode{},
+		choices:    map[string]*Choice{},
+		conditions: map[string]evaluator.Evaluator{},
+		groups:     map[string]*Group{},
+		modes:      map[string]*Mode{},
+		rules:      map[string]*Rule{},
+		selectors:  map[string]predicate.Selector{},
+	}
+	// Groups must be parsed first as they may be referenced in other fragments.
+	groupFragments, err := parser.ParseGroupFragmentFiles(data.GroupFragmentFilesData)
 	if err != nil {
-		e.errors = append(e.errors, err)
+		return nil, fmt.Errorf("failed to parse group fragments: %w", err)
 	}
-}
-
-func (e *ParseErrors) HasErrors() bool {
-	return len(e.errors) > 0
-}
-
-func (e *ParseErrors) Error() string {
-	if len(e.errors) == 0 {
-		return ""
-	}
-	var errStrings []string
-	for _, err := range e.errors {
-		errStrings = append(errStrings, err.Error())
-	}
-	return "Parse errors: " + strings.Join(errStrings, ", ")
-}
-
-func LoadStrategy(path string) (*Strategy, error) {
-	data, err := os.ReadFile(path)
+	parser.groups = groupFragments
+	// Actions, Conditions, and Selector fragments must be parsed before Modes, Rules and Choice fragments.
+	// This is because they may be referenced in the latter.
+	actions, err := parser.ParseActionFragmentFiles(data.ActionFragmentFilesData)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read file: %w", err)
+		return nil, fmt.Errorf("failed to parse action fragments: %w", err)
 	}
-	// New Parser - TODO make this a construtor
-	parser := &StrategyParser{
-		errors:         &ParseErrors{},
-		sourceFile:     path,
-		sourceFileType: filepath.Ext(path),
-	}
-	// Maybe just pass in path?
-	strategy, err := parser.Parse(data)
+	parser.actions = actions
+	conditions, err := parser.ParseConditionFragmentFiles(data.ConditionFragmentFilesData)
 	if err != nil {
-		return nil, fmt.Errorf("errors encountered while parsing strategy: %s, %w", parser.errors.Error(), err)
+		return nil, fmt.Errorf("failed to parse condition fragments: %w", err)
 	}
-	return strategy, nil
+	parser.conditions = conditions
+	selectors, err := parser.ParseSelectorFragmentFiles(data.SelectorFragmentFilesData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse selector fragments: %w", err)
+	}
+	parser.selectors = selectors
+
+	// Choices, Mode, and Rule fragments are parsed last as they may reference the previously parsed fragments.
+	choices, err := parser.ParseChoiceFragmentFiles(data.ChoiceFragmentFilesData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse choice fragments: %w", err)
+	}
+	parser.choices = choices
+	modes, err := parser.ParseModeFragmentFiles(data.ModeFragmentFilesData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse mode fragments: %w", err)
+	}
+	parser.modes = modes
+	rules, err := parser.ParseRuleFragmentFiles(data.RuleFragmentFilesData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse rule fragments: %w", err)
+	}
+	parser.rules = rules
+	return &parser, nil
 }
 
-func (p *StrategyParser) Parse(data []byte) (*Strategy, error) {
+// endregion
+
+// region Parser
+
+func (p *StrategyParser) Parse(data []byte, filePath string) (*Strategy, error) {
 	var strategyFile StrategyFile
-	switch p.sourceFileType {
-	case ".json":
-		if err := json.Unmarshal(data, &strategyFile); err != nil {
-			p.errors.Add(fmt.Errorf("failed to unmarshal strategy JSON: %w", err))
-			return nil, p.errors
-		}
-	case ".yaml":
-		if err := yaml.Unmarshal(data, &strategyFile); err != nil {
-			p.errors.Add(fmt.Errorf("failed to unmarshal strategy YAML: %w", err))
-			return nil, p.errors
-		}
-	default:
-		p.errors.Add(fmt.Errorf("unsupported file type: %s", p.sourceFileType))
-		return nil, p.errors
+	if err := unmarshalByExt(filepath.Ext(filePath), data, &strategyFile); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal strategy file: %w", err)
 	}
-	p.groups = strategyFile.Groups
-	if err := p.ParseRuleFiles(); err != nil {
-		p.errors.Add(fmt.Errorf("failed to parse rule files: %w", err))
-		return nil, p.errors
+	// Groups must be parsed first as they may be referenced in other fragments.
+	for _, groupFragment := range strategyFile.Groups {
+		group, err := p.ParseGroupNode(groupFragment)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse group fragment: %w", err)
+		}
+		if _, ok := p.groups[group.Name]; ok {
+			return nil, fmt.Errorf("group %q already exists in strategy file %s", group.Name, filePath)
+		}
+		p.groups[group.Name] = group
 	}
-	var strategy Strategy
-	var modes []*Rule
+	// region Parse Strategy Nodes
+	strategy := Strategy{
+		Name:        strategyFile.Name,
+		Description: strategyFile.Description,
+	}
 	for _, rawMode := range strategyFile.Modes {
 		mode, err := p.ParseModeNode(rawMode)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse mode: %w", err)
+			return nil, fmt.Errorf("failed to parse mode node: %w", err)
 		}
-		modes = append(modes, mode)
+		strategy.Modes = append(strategy.Modes, mode)
 	}
-	strategy.Modes = modes
 	strategy.Rules = map[string][]*Rule{}
-	for name, rawRules := range strategyFile.Rules {
-		var rules []*Rule
-		for _, rawRule := range rawRules.([]any) {
+	for mode, rawRules := range strategyFile.Rules {
+		for _, rawRule := range rawRules {
 			rule, err := p.ParseRuleNode(rawRule)
 			if err != nil {
-				return nil, fmt.Errorf("failed to parse rule in %s: %w", name, err)
+				return nil, fmt.Errorf("failed to parse rule node: %w", err)
 			}
-			rules = append(rules, rule)
+			strategy.Rules[mode] = append(strategy.Rules[mode], rule)
 		}
-		strategy.Rules[name] = rules
 	}
+	strategy.Choices = map[string][]*Choice{}
+	for mode, rawChoices := range strategyFile.Choices {
+		for _, rawChoice := range rawChoices {
+			choice, err := p.ParseChoiceNode(rawChoice)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse choice node: %w", err)
+			}
+			strategy.Choices[mode] = append(strategy.Choices[mode], choice)
+		}
+	}
+	// endregion
+
 	return &strategy, nil
 }

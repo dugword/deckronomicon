@@ -1,12 +1,14 @@
 Name: Player Strategy
 Description: Stormshriek Feral Strategy
 Groups:
-  Basic Land:
-    - Plains
-    - Island
-    - Swamp
-    - Mountain
-    - Forest
+  - Name: Basic Land
+    Description: Basic lands.
+    Members:
+      - Plains
+      - Island
+      - Swamp
+      - Mountain
+      - Forest
 
 Rules:
   Setup:
@@ -29,9 +31,14 @@ Rules:
         Cast:
           Card: Flush Out
           AdditionalCost:
-            Cards:
+            Discard:
               - Mountain
-Choices: # Have a univeral choice and a choice that can override it for specific modes
-  - Name: Discard to Hand Size
-    Cards:
-      - $Basic Land
+Choices:
+  Setup:
+    - Name: Discard to Hand Size at End of Turn
+      Source: Discard to Hand Size
+      When:
+        InHand:
+            - Mountain
+      Choose:
+        - Mountain

@@ -27,7 +27,7 @@ func parseCastSpellCommand(
 	var cardInZone *gob.CardInZone
 	var err error
 	if idOrName == "" {
-		cardInZone, err = getCardByChoice(cards, agent, playerID)
+		cardInZone, err = getCardByChoice(cards, agent, game, playerID)
 		if err != nil {
 			return action.CastSpellRequest{}, fmt.Errorf("failed to get card by choice: %w", err)
 		}
@@ -65,7 +65,7 @@ func parseCastSpellCommand(
 	if err != nil {
 		return action.CastSpellRequest{}, fmt.Errorf("failed to get splicable cards: %w", err)
 	}
-	cardsToSplice, err := chooseSpliceCards(splicableCards, cardInZone.Card(), agent)
+	cardsToSplice, err := chooseSpliceCards(splicableCards, cardInZone.Card(), game, agent)
 	if err != nil {
 		return action.CastSpellRequest{}, fmt.Errorf("failed to choose splice cards: %w", err)
 	}
@@ -93,7 +93,7 @@ func parseCastSpellCommand(
 	replicateCount := 0
 	if judge.CanReplicateCard(game, playerID, cardInZone.Card(), &ruling) {
 		var err error
-		replicateCount, err = getReplicateCount(cardInZone.Card(), agent)
+		replicateCount, err = getReplicateCount(cardInZone.Card(), game, agent)
 		if err != nil {
 			return action.CastSpellRequest{}, fmt.Errorf("failed to get replicate count: %w", err)
 		}
@@ -113,6 +113,7 @@ func parseCastSpellCommand(
 
 func getReplicateCount(
 	card *gob.Card,
+	game *state.Game,
 	agent engine.PlayerAgent,
 ) (int, error) {
 	replicatePrompt := choose.ChoicePrompt{
@@ -121,7 +122,7 @@ func getReplicateCount(
 		Optional:   true,
 		ChoiceOpts: choose.ChooseNumberOpts{},
 	}
-	replicateResults, err := agent.Choose(replicatePrompt)
+	replicateResults, err := agent.Choose(game, replicatePrompt)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get replicate count: %w", err)
 	}
@@ -138,6 +139,7 @@ func getReplicateCount(
 func chooseSpliceCards(
 	splicableCards []*gob.CardInZone,
 	card *gob.Card,
+	game *state.Game,
 	agent engine.PlayerAgent,
 ) ([]*gob.CardInZone, error) {
 	var cardsInHandToSplice []*gob.CardInZone
@@ -154,7 +156,7 @@ func chooseSpliceCards(
 			Max:     len(splicableCards),
 		},
 	}
-	spliceResults, err := agent.Choose(splicePrompt)
+	spliceResults, err := agent.Choose(game, splicePrompt)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get splice choices: %w", err)
 	}
@@ -175,6 +177,7 @@ func chooseSpliceCards(
 func getCardByChoice(
 	cards []*gob.CardInZone,
 	agent engine.PlayerAgent,
+	game *state.Game,
 	playerID string,
 ) (*gob.CardInZone, error) {
 	prompt := choose.ChoicePrompt{
@@ -185,7 +188,7 @@ func getCardByChoice(
 			Choices: choose.NewChoices(cards),
 		},
 	}
-	choiceResults, err := agent.Choose(prompt)
+	choiceResults, err := agent.Choose(game, prompt)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get choices: %w", err)
 	}

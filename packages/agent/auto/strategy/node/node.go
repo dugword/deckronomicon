@@ -7,6 +7,7 @@ import (
 	"deckronomicon/packages/query"
 )
 
+// TODO: Rename this
 type Node interface {
 	Evaluate(ctx *evalstate.EvalState) bool
 	Collect(ctx *evalstate.EvalState) []query.Object

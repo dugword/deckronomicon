@@ -34,7 +34,6 @@ func LoadConfig(args []string, getenv func(string) string) (Config, error) {
 	}
 	// Configure flags.
 	flags := flag.NewFlagSet("deckronomicon", flag.ContinueOnError)
-	// TODO: Maybe load both deck and strategy from a specified directory.
 	cheat := flags.Bool("cheat", false, "cheat mode")
 	definitions := flags.String("definitions", "definitions/cards", "definitions directory")
 	interactive := flags.Bool("interactive", false, "run as interactive mode")

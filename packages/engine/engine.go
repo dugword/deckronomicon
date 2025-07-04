@@ -300,7 +300,7 @@ func (e *Engine) ResolveSpellOrAbility(resolvable state.Resolvable) error {
 		if err != nil {
 			return fmt.Errorf("failed to resolve effect %q: %w", effectWithTarget.Effect.Name(), err)
 		}
-		if err := e.ResolveEffectResult(player.ID(), effectResult); err != nil {
+		if err := e.ResolveEffectResult(e.game, player.ID(), effectResult); err != nil {
 			return fmt.Errorf("failed to resolve effect result for effect %q: %w", effectWithTarget.Effect.Name(), err)
 		}
 	}
@@ -344,6 +344,7 @@ func (e *Engine) ResolveSpellOrAbility(resolvable state.Resolvable) error {
 }
 
 func (e *Engine) ResolveEffectResult(
+	game *state.Game,
 	playerID string,
 	result resolver.Result,
 ) error {
@@ -358,7 +359,7 @@ func (e *Engine) ResolveEffectResult(
 		if result.ChoicePrompt.ChoiceOpts == nil {
 			return nil
 		}
-		choiceResults, err := agent.Choose(result.ChoicePrompt)
+		choiceResults, err := agent.Choose(game, result.ChoicePrompt)
 		if err != nil {
 			return fmt.Errorf("failed to get choice from player agent %q: %w", agent.PlayerID(), err)
 		}

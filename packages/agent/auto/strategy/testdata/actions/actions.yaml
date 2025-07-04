@@ -1,0 +1,4 @@
+Actions:
+  - Name: Play a Snow-Covered Basic Land
+    Then:
+      Play: $Snow-Covered Basic Land

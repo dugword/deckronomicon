@@ -318,7 +318,7 @@ func TestChoose(t *testing.T) {
 				false,
 			)
 			tc.choicePrompt.Source = mockSource{}
-			got, err := agent.Choose(tc.choicePrompt)
+			got, err := agent.Choose(nil, tc.choicePrompt)
 			if err != nil {
 				t.Fatalf("Choose(...); err = %v; want %v", err, nil)
 			}

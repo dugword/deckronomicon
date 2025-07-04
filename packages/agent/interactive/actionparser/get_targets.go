@@ -117,7 +117,7 @@ func getPlayerTarget(
 			Choices: choose.NewChoices(game.Players()),
 		},
 	}
-	choiceResults, err := agent.Choose(prompt)
+	choiceResults, err := agent.Choose(game, prompt)
 	if err != nil {
 		return target.Target{}, fmt.Errorf("failed to get choice results: %w", err)
 	}
@@ -155,7 +155,7 @@ func getSpellTarget(
 			Choices: choose.NewChoices(spells),
 		},
 	}
-	choiceResults, err := agent.Choose(prompt)
+	choiceResults, err := agent.Choose(game, prompt)
 	if err != nil {
 		return target.Target{}, fmt.Errorf("failed to get choice results: %w", err)
 	}
@@ -187,7 +187,7 @@ func getPermanentTarget(
 			Choices: choose.NewChoices(permanents),
 		},
 	}
-	choiceResults, err := agent.Choose(prompt)
+	choiceResults, err := agent.Choose(game, prompt)
 	if err != nil {
 		return target.Target{}, fmt.Errorf("failed to get choice results: %w", err)
 	}
@@ -225,7 +225,7 @@ func getCardTarget(
 			Choices: choose.NewChoices(cards),
 		},
 	}
-	choiceResults, err := agent.Choose(prompt)
+	choiceResults, err := agent.Choose(game, prompt)
 	if err != nil {
 		return target.Target{}, fmt.Errorf("failed to get choice results: %w", err)
 	}

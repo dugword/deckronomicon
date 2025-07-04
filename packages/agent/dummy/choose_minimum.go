@@ -5,7 +5,6 @@ import (
 	"deckronomicon/packages/engine"
 	"deckronomicon/packages/engine/action"
 	"deckronomicon/packages/state"
-	"fmt"
 )
 
 // ChooseMinimumAgent is a dummy agent that always chooses the minimum number of options available.
@@ -33,32 +32,8 @@ func (a *ChooseMinimumAgent) GetNextAction(game *state.Game) (engine.Action, err
 	return action.NewPassPriorityAction(), nil
 }
 
-func (a *ChooseMinimumAgent) Choose(prompt choose.ChoicePrompt) (choose.ChoiceResults, error) {
-	switch opts := prompt.ChoiceOpts.(type) {
-	case choose.ChooseOneOpts:
-		if prompt.Optional {
-			return choose.ChooseOneResults{}, nil
-		}
-		if len(opts.Choices) == 0 {
-			return nil, fmt.Errorf("no choices available")
-		}
-		return choose.ChooseOneResults{Choice: opts.Choices[0]}, nil
-	case choose.ChooseManyOpts:
-		if prompt.Optional || opts.Min == 0 {
-			return choose.ChooseManyResults{}, nil
-		}
-		if len(opts.Choices) < opts.Min {
-			return nil, fmt.Errorf("not enough choices available")
-		}
-		return choose.ChooseManyResults{Choices: opts.Choices[:opts.Min]}, nil
-	case choose.ChooseNumberOpts:
-		if prompt.Optional || opts.Min == 0 {
-			return choose.ChooseNumberResults{}, nil
-		}
-		return choose.ChooseNumberResults{Number: opts.Min}, nil
-	default:
-		return nil, fmt.Errorf("unknown choice options type: %T", opts)
-	}
+func (a *ChooseMinimumAgent) Choose(game *state.Game, prompt choose.ChoicePrompt) (choose.ChoiceResults, error) {
+	return choose.ChooseMinimal(prompt)
 }
 
 func (a *ChooseMinimumAgent) ReportState(game *state.Game) {}

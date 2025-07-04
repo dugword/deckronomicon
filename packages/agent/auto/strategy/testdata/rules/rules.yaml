@@ -1,0 +1,16 @@
+Rules:
+  - Name: Make Land Drop
+    When:
+        InHand:
+          - Urza's Tower
+          - Urza's Power Plant
+          - Urza's Mine
+    Then:
+      Play: 
+        - Urza's Tower
+        - Urza's Power Plant
+        - Urza's Mine
+        
+  - Name: Make Snow-Covered Land Drop
+    When: Can Play a Snow-Covered Basic Land
+    Then: Play a Snow-Covered Basic Land

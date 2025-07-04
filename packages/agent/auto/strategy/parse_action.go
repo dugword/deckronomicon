@@ -6,14 +6,19 @@ import (
 	"fmt"
 )
 
-func (p *StrategyParser) parseActionNode(raw any) action.ActionNode {
+func (p *StrategyParser) parseActionNode(raw any) (action.ActionNode, error) {
 	switch val := raw.(type) {
+	case string:
+		act, ok := p.actions[val]
+		if !ok {
+			return nil, fmt.Errorf("unknown action %q", val)
+		}
+		return act, nil
 	case map[string]any:
 		// TODO: Make this check for 1, keeping zero ok for now
 		// for some testing
 		if len(val) > 1 {
-			p.errors.Add(fmt.Errorf("expected a single action key, got %d keys", len(val)))
-			return nil
+			return nil, fmt.Errorf("expected a single action key, got %d keys", len(val))
 		}
 		for k, v := range val {
 			switch k {
@@ -31,141 +36,151 @@ func (p *StrategyParser) parseActionNode(raw any) action.ActionNode {
 				return p.parseActivateAction(v)
 			case "Pass":
 				return p.parsePassAction(v)
-			default:
-				p.errors.Add(fmt.Errorf("unknown action key: %s", k))
-				return nil
 			}
+			return nil, fmt.Errorf("unknown action key %q", k)
 		}
-		// TODO: Think through this, maybe configure pass or fail as default?
-		return &action.PassPriorityActionNode{} // No action specified, default to pass
+		return nil, fmt.Errorf("no action key found in %v", val)
 	default:
-		p.errors.Add(fmt.Errorf("expected action object, got %T", raw))
-		return nil
+		return nil, fmt.Errorf("expected action object, got %T", raw)
 	}
 }
 
-func (p *StrategyParser) parseEmitMetricAction(value any) action.ActionNode {
+func (p *StrategyParser) parseEmitMetricAction(value any) (action.ActionNode, error) {
 	switch val := value.(type) {
 	case map[string]any:
 		name, ok := val["Metric"].(string)
 		if !ok {
-			p.errors.Add(fmt.Errorf("expected 'Metroc' key to be a string in 'Emit' action, got %T", val["Metric"]))
-			return nil
+			return nil, fmt.Errorf("expected 'Metric' key to be a string in 'Emit' action, got %T", val["Metric"])
 		}
 		// TODO: Should this default to 1 if not specified?
 		value, ok := val["Value"].(int)
 		if !ok {
-			p.errors.Add(fmt.Errorf("expected 'Value' key to be an int in 'Emit' action, got %T", val["Value"]))
-			return nil
+			return nil, fmt.Errorf("expected 'Value' key to be an int in 'Emit' action, got %T", val["Value"])
 		}
-		return &action.EmitMetricActionNode{Name: name, Value: value}
+		return &action.EmitMetricActionNode{Name: name, Value: value}, nil
 	default:
-		p.errors.Add(fmt.Errorf("expected string or object for 'Emit' action, got %T", value))
-		return nil
+		return nil, fmt.Errorf("expected string or object for 'Emit' action, got %T", value)
 	}
 }
 
-func (p *StrategyParser) parseLogMessageAction(value any) action.ActionNode {
+func (p *StrategyParser) parseLogMessageAction(value any) (action.ActionNode, error) {
 	switch val := value.(type) {
 	case string:
-		return &action.LogMessageActionNode{Message: val}
+		return &action.LogMessageActionNode{Message: val}, nil
 	case map[string]any:
 		message, ok := val["Message"].(string)
 		if !ok {
-			p.errors.Add(fmt.Errorf("expected 'Message' key to be a string in 'Log' action, got %T", val["Message"]))
-			return nil
+			return nil, fmt.Errorf("expected 'Message' key to be a string in 'Log' action, got %T", val["Message"])
 		}
-		return &action.LogMessageActionNode{Message: message}
+		return &action.LogMessageActionNode{Message: message}, nil
 	default:
-		p.errors.Add(fmt.Errorf("expected string or object for 'Log' action, got %T", value))
-		return nil
+		return nil, fmt.Errorf("expected string or object for 'Log' action, got %T", value)
 	}
 }
 
-func (p *StrategyParser) parsePlayAction(value any) action.ActionNode {
+func (p *StrategyParser) parsePlayAction(value any) (action.ActionNode, error) {
 	switch val := value.(type) {
 	case string:
-		predicate := p.parsePredicate(val)
-		return &action.PlayLandCardActionNode{Cards: predicate}
+		pred, err := p.parsePredicate(val)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing 'Play' action: %w", err)
+		}
+		return &action.PlayLandCardActionNode{Cards: pred}, nil
 	case []any:
 		var predicates []predicate.Predicate
 		for _, item := range val {
-			predicate := p.parsePredicate(item)
-			predicates = append(predicates, predicate)
+			pred, err := p.parsePredicate(item)
+			if err != nil {
+				return nil, fmt.Errorf("error parsing 'Play' action item %v: %w)", item, err)
+			}
+			predicates = append(predicates, pred)
 		}
-		return &action.PlayLandCardActionNode{Cards: &predicate.Or{Predicates: predicates}}
+		return &action.PlayLandCardActionNode{Cards: &predicate.Or{Predicates: predicates}}, nil
 	case map[string]any:
 		cardName, ok := val["Card"].(string)
 		if !ok {
-			p.errors.Add(fmt.Errorf("expected 'Card' key to be a string in 'Play' action, got %T", val["Card"]))
-			return nil
+			return nil, fmt.Errorf("expected 'Card' key to be a string in 'Play' action, got %T", val["Card"])
 		}
-		predicate := p.parsePredicate(cardName)
-		return &action.PlayLandCardActionNode{Cards: predicate}
+		pred, err := p.parsePredicate(cardName)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing 'Card' in 'Play' action: %w", err)
+		}
+		return &action.PlayLandCardActionNode{Cards: pred}, nil
 	default:
-		p.errors.Add(fmt.Errorf("expected string or object for 'Play' action, got %T", value))
-		return nil
+		return nil, fmt.Errorf("expected string or object for 'Play' action, got %T", value)
 	}
 }
 
 // TODO: Look this over, wrote it quickly late at night
-func (p *StrategyParser) parseCastAction(value any) action.ActionNode {
+func (p *StrategyParser) parseCastAction(value any) (action.ActionNode, error) {
 	switch val := value.(type) {
 	case string:
-		predicate := p.parsePredicate(val)
-		return &action.CastSpellActionNode{Cards: predicate}
+		pred, err := p.parsePredicate(val)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing 'Cast' action: %w", err)
+		}
+		return &action.CastSpellActionNode{Cards: pred}, nil
 	case []any:
 		var predicates []predicate.Predicate
 		for _, item := range val {
-			predicate := p.parsePredicate(item)
-			predicates = append(predicates, predicate)
+			pred, err := p.parsePredicate(item)
+			if err != nil {
+				return nil, fmt.Errorf("error parsing 'Cast' action item %v: %w", item, err)
+			}
+			predicates = append(predicates, pred)
 		}
-		return &action.CastSpellActionNode{Cards: &predicate.Or{Predicates: predicates}}
+		return &action.CastSpellActionNode{Cards: &predicate.Or{Predicates: predicates}}, nil
 	case map[string]any:
 		cardName, ok := val["Card"].(string)
 		if !ok {
-			p.errors.Add(fmt.Errorf("expected 'Card' key to be a string in 'Cast' action, got %T", val["Card"]))
-			return nil
+			return nil, fmt.Errorf("expected 'Card' key to be a string in 'Cast' action, got %T", val["Card"])
 		}
-		predicate := p.parsePredicate(cardName)
+		pred, err := p.parsePredicate(cardName)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing 'Card' in 'Cast' action: %w", err)
+		}
+		var additionalCost predicate.Selector
 		if additionalCostRaw, ok := val["AdditionalCost"].(map[string]any); ok {
-			cardsRaw, ok := additionalCostRaw["Cards"]
-			if !ok {
-				p.errors.Add(fmt.Errorf("missing cards in 'AdditionalCost'"))
-				return nil
-			}
-			additionalCost := p.parsePredicate(cardsRaw)
-			return &action.CastSpellActionNode{
-				Cards:          predicate,
-				AdditionalCost: additionalCost,
+			additionalCost, err = p.parseAdditionalCost(additionalCostRaw)
+			if err != nil {
+				return nil, fmt.Errorf("error parsing 'AdditionalCost' in 'Cast' action: %w", err)
 			}
 		}
 		return &action.CastSpellActionNode{
-			Cards: predicate,
-		}
+			Cards:          pred,
+			AdditionalCost: additionalCost,
+		}, nil
 	default:
-		p.errors.Add(fmt.Errorf("expected string or object for 'Cast' action, got %T", value))
-		return nil
+		return nil, fmt.Errorf("expected string or object for 'Cast' action, got %T", value)
 	}
 }
 
-func (p *StrategyParser) parseConcedeAction(value any) action.ActionNode {
-	if value != nil {
-		p.errors.Add(fmt.Errorf("expected 'Concede' action to have no value, got %T", value))
-		return nil
+func (p *StrategyParser) parseAdditionalCost(additionalCost map[string]any) (predicate.Predicate, error) {
+	for k, v := range additionalCost {
+		switch k {
+		case "Discard":
+			return p.parsePredicate(v)
+		}
 	}
-	return &action.ConcedeActionNode{}
+	return nil, fmt.Errorf("unknown additional cost key")
 }
 
-func (p *StrategyParser) parsePassAction(value any) action.ActionNode {
+func (p *StrategyParser) parseConcedeAction(value any) (action.ActionNode, error) {
 	if value != nil {
-		p.errors.Add(fmt.Errorf("expected 'Pass' action to have no value, got %T", value))
+		return nil, fmt.Errorf("expected 'Concede' action to have no value, got %T", value)
 	}
-	return &action.PassPriorityActionNode{}
+	return &action.ConcedeActionNode{}, nil
+}
+
+func (p *StrategyParser) parsePassAction(value any) (action.ActionNode, error) {
+	if value != nil {
+		return nil, fmt.Errorf("expected 'Pass' action to have no value, got %T", value)
+	}
+	return &action.PassPriorityActionNode{}, nil
 }
 
 // TODO: This is broken
-func (p *StrategyParser) parseActivateAction(_ any) action.ActionNode {
+func (p *StrategyParser) parseActivateAction(_ any) (action.ActionNode, error) {
 	/*
 		switch val := raw.(type) {
 		case string:
@@ -193,5 +208,5 @@ func (p *StrategyParser) parseActivateAction(_ any) action.ActionNode {
 			return nil
 		}
 	*/
-	return nil
+	return nil, nil
 }

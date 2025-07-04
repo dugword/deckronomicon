@@ -23,7 +23,7 @@ func parseActivateAbilityCommand(
 	ruling := judge.Ruling{Explain: true}
 	abilityInZones := judge.GetAbilitiesAvailableToActivate(game, playerID, &ruling)
 	if idOrName == "" {
-		abilityInZone, err = buildActivateAbilityCommandByChoice(abilityInZones, agent, playerID)
+		abilityInZone, err = buildActivateAbilityCommandByChoice(abilityInZones, agent, playerID, game)
 		if err != nil {
 			return action.ActivateAbilityRequest{}, fmt.Errorf("failed to choose an ability to activate: %w", err)
 		}
@@ -57,6 +57,7 @@ func buildActivateAbilityCommandByChoice(
 	abilities []*gob.AbilityInZone,
 	agent engine.PlayerAgent,
 	playerID string,
+	game *state.Game,
 ) (*gob.AbilityInZone, error) {
 	prompt := choose.ChoicePrompt{
 		Message:  "Choose an ability to activate",
@@ -66,7 +67,7 @@ func buildActivateAbilityCommandByChoice(
 			Choices: choose.NewChoices(abilities),
 		},
 	}
-	choiceResults, err := agent.Choose(prompt)
+	choiceResults, err := agent.Choose(game, prompt)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get choices: %w", err)
 	}

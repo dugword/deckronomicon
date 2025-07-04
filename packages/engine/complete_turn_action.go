@@ -29,7 +29,7 @@ func (e *Engine) CompleteTurnAction(action TurnBasedAction) error {
 	}
 	var choiceResults choose.ChoiceResults
 	if choicePrompt.ChoiceOpts != nil {
-		cs, err := e.agents[action.PlayerID()].Choose(choicePrompt)
+		cs, err := e.agents[action.PlayerID()].Choose(e.game, choicePrompt)
 		if err != nil {
 			return fmt.Errorf(
 				"failed to get choices for action %q: %w",
