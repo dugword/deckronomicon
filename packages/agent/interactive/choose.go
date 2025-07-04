@@ -51,6 +51,9 @@ func (a *Agent) enterNumber(prompt string, source choose.Source) (int, error) {
 }
 
 func (a *Agent) Choose(game *state.Game, prompt choose.ChoicePrompt) (choose.ChoiceResults, error) {
+	if game != nil {
+		a.ReportState(game)
+	}
 	switch opts := prompt.ChoiceOpts.(type) {
 	case choose.ChooseOneOpts:
 		choices, err := a.chooseMany(opts.Choices, 1, 1, prompt.Message, prompt.Source, prompt.Optional)

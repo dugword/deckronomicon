@@ -12,5 +12,4 @@ import (
 type ResEnv struct {
 	RNG         *rng.RNG
 	Definitions map[string]*definition.Card
-	//effectRegistry *effect.EffectRegistry
 }

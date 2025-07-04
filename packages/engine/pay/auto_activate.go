@@ -2,8 +2,8 @@ package pay
 
 import (
 	"deckronomicon/packages/engine/event"
-	"deckronomicon/packages/engine/reducer"
 	"deckronomicon/packages/engine/resolver"
+	"deckronomicon/packages/engine/store"
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/gob"
@@ -23,7 +23,13 @@ import (
 // It returns a slice of events that occurred during the process, or an error if it fails
 // The events returned will include the acticvation of mana sources only.
 // Spending events are not included in the events, as they are handled separately by the pay.Cost function.
-func AutoActivateManaSources(game *state.Game, someCost cost.Cost, object gob.Object, playerID string, colors []mana.Color) ([]event.GameEvent, error) {
+func AutoActivateManaSources(
+	game *state.Game,
+	someCost cost.Cost,
+	object gob.Object,
+	playerID string,
+	colors []mana.Color,
+) ([]event.GameEvent, error) {
 	// The game state returned from withActiatedManaSources is not used, as the game state is updated
 	// by the reducer.ApplyEvent function in the Engine's ApplyEvent method.
 	// This interim game state is use to track the which mana sources will be activated
@@ -201,6 +207,7 @@ func activateManaSource(
 	if !ok {
 		return game, nil, fmt.Errorf("land %s not found on battlefield", landID)
 	}
+	str := store.NewStore(game, nil)
 	for _, ability := range land.ActivatedAbilities() {
 		if !ability.Match(is.ManaAbility()) {
 			continue
@@ -219,7 +226,7 @@ func activateManaSource(
 			player.ID(),
 		)
 		if err != nil {
-			return game, nil, fmt.Errorf("failed to pay cost for mana ability %s: %w", ability.Name(), err)
+			return nil, nil, fmt.Errorf("failed to pay cost for mana ability %s: %w", ability.Name(), err)
 		}
 		events = append(events, costEvents...)
 		events = append(events, &event.LandTappedForManaEvent{
@@ -228,10 +235,8 @@ func activateManaSource(
 			Subtypes: land.Subtypes(),
 		})
 		for _, event := range events {
-			var err error
-			game, err = reducer.ApplyEventAndTriggers(game, event)
-			if err != nil {
-				return game, nil, err
+			if err := str.Apply(event); err != nil {
+				return nil, nil, err
 			}
 		}
 		for _, efct := range ability.Effects() {
@@ -242,21 +247,20 @@ func activateManaSource(
 			// TODO: Assumes no Resume function or choices required for the effect.
 			// This logic should be handled centrally as there are a few places where
 			// mana abilities are resolved and this logic is duplicated.
-			result, err := resolver.ResolveAddMana(game, player.ID(), addManaEffect)
+			result, err := resolver.ResolveAddMana(str.Game(), player.ID(), addManaEffect)
 			if err != nil {
-				return game, nil, fmt.Errorf("failed to resolve add mana effect: %w", err)
+				return nil, nil, fmt.Errorf("failed to resolve add mana effect: %w", err)
 			}
 			if result.Resume != nil {
-				return game, nil, fmt.Errorf("mana ability %s requires choices to be made", ability.Name())
+				return nil, nil, fmt.Errorf("mana ability %s requires choices to be made", ability.Name())
 			}
 			events = append(events, result.Events...)
 			for _, event := range result.Events {
-				game, err = reducer.ApplyEventAndTriggers(game, event)
-				if err != nil {
-					return game, nil, err
+				if err := str.Apply(event); err != nil {
+					return nil, nil, err
 				}
 			}
-			return game, events, nil
+			return str.Game(), events, nil
 		}
 	}
 	return game, nil, nil

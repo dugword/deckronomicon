@@ -9,6 +9,9 @@ import (
 )
 
 func (a *RuleBasedAgent) Choose(game *state.Game, prompt choose.ChoicePrompt) (choose.ChoiceResults, error) {
+	if a.interactive {
+		a.ReportState(game)
+	}
 	ctx := evalstate.EvalState{
 		Game:     game,
 		PlayerID: a.playerID,

@@ -20,6 +20,9 @@ import (
 // in tests, without having to change every test that uses cmp.Diff.
 var AllowAllUnexported = cmp.Exporter(func(reflect.Type) bool { return true })
 
+// TODO: These tests require the game state to be updated correctly...
+// is there another way to manage that?
+
 func newTestGame(
 	playerID string,
 	manaPool string,
@@ -561,6 +564,7 @@ func TestActivateManaSource(t *testing.T) {
 				"",
 				permanents,
 			)
+
 			_, got, err := activateManaSource(game, playerID, test.landID)
 			if err != nil {
 				t.Fatalf("activateManaSource(); error = %v", err)
