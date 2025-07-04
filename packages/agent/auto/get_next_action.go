@@ -10,6 +10,9 @@ import (
 )
 
 func (a *RuleBasedAgent) GetNextAction(game *state.Game) (engine.Action, error) {
+	if a.interactive {
+		a.ReportState(game)
+	}
 	ctx := evalstate.EvalState{
 		Game:     game,
 		PlayerID: a.playerID,

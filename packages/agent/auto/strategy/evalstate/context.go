@@ -1,6 +1,8 @@
 package evalstate
 
-import "deckronomicon/packages/state"
+import (
+	"deckronomicon/packages/state"
+)
 
 type EvalState struct {
 	Game     *state.Game

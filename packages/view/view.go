@@ -104,7 +104,12 @@ func NewPlayerViewFromState(game *state.Game, playerID string, mode string) *Pla
 	if manaPool == "" {
 		manaPool = "(empty)"
 	}
-	potentialManaPool := judge.GetAvailableMana(game, player.ID()).ManaString()
+	var potentialManaPool string
+	mp, err := judge.GetAvailableMana(game, player.ID())
+	if err != nil {
+		potentialManaPool = "(error retrieving potential mana pool)"
+	}
+	potentialManaPool = mp.ManaString()
 	if potentialManaPool == "" {
 		potentialManaPool = "(empty)"
 	}

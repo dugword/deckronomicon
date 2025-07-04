@@ -72,7 +72,10 @@ func (a CastSpellAction) Complete(game *state.Game, playerID string, resEnv *res
 	return a.castFromHand(game, playerID)
 }
 
-func (a CastSpellAction) castWithFlashback(game *state.Game, playerID string) ([]event.GameEvent, error) {
+func (a CastSpellAction) castWithFlashback(
+	game *state.Game,
+	playerID string,
+) ([]event.GameEvent, error) {
 	player := game.GetPlayer(playerID)
 	cardToCast, ok := player.GetCardFromZone(a.cardID, mtg.ZoneGraveyard)
 	if !ok {
@@ -139,7 +142,10 @@ func (a CastSpellAction) castWithFlashback(game *state.Game, playerID string) ([
 	return events, nil
 }
 
-func (a CastSpellAction) castFromHand(game *state.Game, playerID string) ([]event.GameEvent, error) {
+func (a CastSpellAction) castFromHand(
+	game *state.Game,
+	playerID string,
+) ([]event.GameEvent, error) {
 	player := game.GetPlayer(playerID)
 	cardToCast, ok := player.GetCardFromZone(a.cardID, mtg.ZoneHand)
 	if !ok {

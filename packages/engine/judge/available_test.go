@@ -8,6 +8,9 @@ import (
 )
 
 func TestGetAvailableMana(t *testing.T) {
+	// TODO: This tests relies on the game state being updated correctly,
+	// by the reducer. Which is not what we should be testing here.
+
 	playerID := "Test Player"
 	forestDefinition := definitiontest.ForestDefinition("Forest ID", playerID)
 	islandDefinition := definitiontest.IslandDefinition("Island ID", playerID)
@@ -21,7 +24,11 @@ func TestGetAvailableMana(t *testing.T) {
 			},
 		},
 	})
-	got := GetAvailableMana(game, playerID).ManaString()
+	pool, err := GetAvailableMana(game, playerID)
+	if err != nil {
+		t.Fatalf("GetAvailableMana(); err = %v", err)
+	}
+	got := pool.ManaString()
 	want := "{G}"
 	if got != want {
 		t.Errorf("GetAvailableMana() = %v; want %v", got, want)

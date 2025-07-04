@@ -37,7 +37,7 @@ type GameStep struct {
 }
 
 func (e *Engine) GamePhases() []GamePhase {
-	playerID := e.game.ActivePlayerID()
+	playerID := e.store.Game().ActivePlayerID()
 	return []GamePhase{
 		{
 			name: mtg.PhaseBeginning,
@@ -121,8 +121,8 @@ func (e *Engine) GamePhases() []GamePhase {
 				{
 					name: mtg.StepCleanup,
 					actions: []TurnBasedAction{
-						turnaction.NewDiscardToHandSizeAction(e.game.ActivePlayerID()),
-						turnaction.NewRemoveDamageAction(e.game.ActivePlayerID()),
+						turnaction.NewDiscardToHandSizeAction(e.store.Game().ActivePlayerID()),
+						turnaction.NewRemoveDamageAction(e.store.Game().ActivePlayerID()),
 					},
 				},
 			},

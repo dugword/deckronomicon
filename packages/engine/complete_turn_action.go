@@ -19,7 +19,7 @@ type TurnBasedAction interface {
 var ErrInvalidTurnAction = errors.New("invalid turn action")
 
 func (e *Engine) CompleteTurnAction(action TurnBasedAction) error {
-	choicePrompt, err := action.GetPrompt(e.game)
+	choicePrompt, err := action.GetPrompt(e.store.Game())
 	if err != nil {
 		return fmt.Errorf(
 			"failed to get choice prompt for action %q: %w",
@@ -29,7 +29,7 @@ func (e *Engine) CompleteTurnAction(action TurnBasedAction) error {
 	}
 	var choiceResults choose.ChoiceResults
 	if choicePrompt.ChoiceOpts != nil {
-		cs, err := e.agents[action.PlayerID()].Choose(e.game, choicePrompt)
+		cs, err := e.agents[action.PlayerID()].Choose(e.store.Game(), choicePrompt)
 		if err != nil {
 			return fmt.Errorf(
 				"failed to get choices for action %q: %w",
@@ -39,7 +39,7 @@ func (e *Engine) CompleteTurnAction(action TurnBasedAction) error {
 		}
 		choiceResults = cs
 	}
-	evnts, err := action.Complete(e.game, choiceResults)
+	evnts, err := action.Complete(e.store.Game(), choiceResults)
 	if err != nil {
 		return fmt.Errorf(
 			"failed to complete action %q: %w",
@@ -48,7 +48,7 @@ func (e *Engine) CompleteTurnAction(action TurnBasedAction) error {
 		)
 	}
 	for _, evnt := range evnts {
-		if err := e.ApplyEvent(evnt); err != nil {
+		if err := e.store.Apply(evnt); err != nil {
 			return fmt.Errorf(
 				"failed to apply event %q: %w",
 				evnt.EventType(),
