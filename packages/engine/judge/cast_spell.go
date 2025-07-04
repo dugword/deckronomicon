@@ -1,6 +1,8 @@
 package judge
 
 import (
+	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/engine/reducer"
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mana"
@@ -22,6 +24,7 @@ func canCastSpell(
 	autoPayCost bool,
 	autoPayColors []mana.Color,
 	ruling *Ruling,
+	apply func(game *state.Game, event event.GameEvent) (*state.Game, error),
 ) bool {
 	player := game.GetPlayer(playerID)
 	can := true
@@ -46,7 +49,7 @@ func canCastSpell(
 		}
 	}
 	if autoPayCost {
-		if !CanPayCostAutomatically(cost, card, game, playerID, autoPayColors, ruling) {
+		if !CanPayCostAutomatically(cost, card, game, playerID, autoPayColors, ruling, apply) {
 			if ruling != nil && ruling.Explain {
 				ruling.Reasons = append(ruling.Reasons, "cannot pay cost for spell: "+cost.Description())
 			}
@@ -80,7 +83,8 @@ func CanCastSpellWithFlashback(
 		}
 		return can
 	}
-	if !canCastSpell(game, playerID, mtg.ZoneGraveyard, card, cost, autoPayCost, autoPayColors, ruling) {
+	apply := reducer.ApplyEventAndTriggers
+	if !canCastSpell(game, playerID, mtg.ZoneGraveyard, card, cost, autoPayCost, autoPayColors, ruling, apply) {
 		if ruling != nil && ruling.Explain {
 			ruling.Reasons = append(ruling.Reasons, "cannot cast spell from graveyard")
 		}
@@ -97,9 +101,10 @@ func CanCastSpellFromHand(
 	autoPayCost bool,
 	autoPayColors []mana.Color,
 	ruling *Ruling,
+	apply func(game *state.Game, event event.GameEvent) (*state.Game, error),
 ) bool {
 	can := true
-	if !canCastSpell(game, playerID, mtg.ZoneHand, card, cost, autoPayCost, autoPayColors, ruling) {
+	if !canCastSpell(game, playerID, mtg.ZoneHand, card, cost, autoPayCost, autoPayColors, ruling, apply) {
 		if ruling != nil && ruling.Explain {
 			ruling.Reasons = append(ruling.Reasons, "cannot cast spell from hand")
 		}

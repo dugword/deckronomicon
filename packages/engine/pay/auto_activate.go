@@ -2,7 +2,6 @@ package pay
 
 import (
 	"deckronomicon/packages/engine/event"
-	"deckronomicon/packages/engine/reducer"
 	"deckronomicon/packages/engine/resolver"
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/effect"
@@ -23,7 +22,14 @@ import (
 // It returns a slice of events that occurred during the process, or an error if it fails
 // The events returned will include the acticvation of mana sources only.
 // Spending events are not included in the events, as they are handled separately by the pay.Cost function.
-func AutoActivateManaSources(game *state.Game, someCost cost.Cost, object gob.Object, playerID string, colors []mana.Color) ([]event.GameEvent, error) {
+func AutoActivateManaSources(
+	game *state.Game,
+	someCost cost.Cost,
+	object gob.Object,
+	playerID string,
+	colors []mana.Color,
+	apply func(game *state.Game, event event.GameEvent) (*state.Game, error),
+) ([]event.GameEvent, error) {
 	// The game state returned from withActiatedManaSources is not used, as the game state is updated
 	// by the reducer.ApplyEvent function in the Engine's ApplyEvent method.
 	// This interim game state is use to track the which mana sources will be activated
@@ -39,7 +45,7 @@ func AutoActivateManaSources(game *state.Game, someCost cost.Cost, object gob.Ob
 			case cost.Mana:
 				var subEvents []event.GameEvent
 				var err error
-				game, subEvents, err = withActivateManaSources(game, playerID, sc, colors)
+				game, subEvents, err = withActivateManaSources(game, playerID, sc, colors, apply)
 				if err != nil {
 					return nil, err
 				}
@@ -48,7 +54,7 @@ func AutoActivateManaSources(game *state.Game, someCost cost.Cost, object gob.Ob
 		}
 		return events, nil
 	case cost.Mana:
-		_, events, err := withActivateManaSources(game, playerID, c, colors)
+		_, events, err := withActivateManaSources(game, playerID, c, colors, apply)
 		return events, err
 	default:
 		return nil, nil
@@ -74,6 +80,7 @@ func withActivateManaSources(
 	playerID string,
 	Mana cost.Mana,
 	colors []mana.Color,
+	apply func(game *state.Game, event event.GameEvent) (*state.Game, error),
 ) (*state.Game, []event.GameEvent, error) {
 	var events []event.GameEvent
 	var err error
@@ -96,6 +103,7 @@ func withActivateManaSources(
 			playerID,
 			remaining,
 			c,
+			apply,
 		)
 		if err != nil {
 			return game, nil, err
@@ -110,6 +118,7 @@ func withActivateManaSources(
 			playerID,
 			remaining,
 			colors,
+			apply,
 		)
 		if err != nil {
 			return game, nil, err
@@ -127,6 +136,7 @@ func activateManaSourcesForColored(
 	playerID string,
 	remaining mana.Amount,
 	manaColor mana.Color,
+	apply func(game *state.Game, event event.GameEvent) (*state.Game, error),
 ) (*state.Game, mana.Amount, []event.GameEvent, error) {
 	var events []event.GameEvent
 	var err error
@@ -143,6 +153,7 @@ func activateManaSourcesForColored(
 			game,
 			playerID,
 			lands[0].ID(),
+			apply,
 		)
 		events = append(events, activatedEvents...)
 		game, remaining = withUpdatePlayerSpendAmount(
@@ -160,6 +171,7 @@ func activateManaSourcesForGeneric(
 	playerID string,
 	remaining mana.Amount,
 	colors []mana.Color,
+	apply func(game *state.Game, event event.GameEvent) (*state.Game, error),
 ) (*state.Game, mana.Amount, []event.GameEvent, error) {
 	var events []event.GameEvent
 	var err error
@@ -177,6 +189,7 @@ func activateManaSourcesForGeneric(
 				game,
 				playerID,
 				lands[0].ID(),
+				apply,
 			)
 			events = append(events, activatedEvents...)
 			game, remaining = withUpdatePlayerSpendAmount(
@@ -195,6 +208,7 @@ func activateManaSource(
 	game *state.Game,
 	playerID string,
 	landID string,
+	apply func(game *state.Game, event event.GameEvent) (*state.Game, error),
 ) (*state.Game, []event.GameEvent, error) {
 	player := game.GetPlayer(playerID)
 	land, ok := game.Battlefield().Get(landID)
@@ -229,7 +243,7 @@ func activateManaSource(
 		})
 		for _, event := range events {
 			var err error
-			game, err = reducer.ApplyEventAndTriggers(game, event)
+			game, err = apply(game, event)
 			if err != nil {
 				return game, nil, err
 			}
@@ -251,7 +265,7 @@ func activateManaSource(
 			}
 			events = append(events, result.Events...)
 			for _, event := range result.Events {
-				game, err = reducer.ApplyEventAndTriggers(game, event)
+				game, err = apply(game, event)
 				if err != nil {
 					return game, nil, err
 				}

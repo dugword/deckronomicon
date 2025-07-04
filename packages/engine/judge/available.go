@@ -47,14 +47,30 @@ func GetLandsAvailableToPlay(game *state.Game, playerID string, ruling *Ruling) 
 	return availableCards
 }
 
-func GetSpellsAvailableToCast(game *state.Game, playerID string, autoPayCost bool, autoPayColors []mana.Color, ruling *Ruling) []*gob.CardInZone {
+func GetSpellsAvailableToCast(
+	game *state.Game,
+	playerID string,
+	autoPayCost bool,
+	autoPayColors []mana.Color,
+	ruling *Ruling,
+	apply func(game *state.Game, event event.GameEvent) (*state.Game, error),
+) []*gob.CardInZone {
 	player := game.GetPlayer(playerID)
 	var availableCards []*gob.CardInZone
 	for _, card := range player.Hand().GetAll() {
 		if ruling != nil && ruling.Explain {
 			ruling.Reasons = append(ruling.Reasons, fmt.Sprintf("[card %q]: ", card.Name()))
 		}
-		if CanCastSpellFromHand(game, playerID, card, card.ManaCost(), autoPayCost, autoPayColors, ruling) {
+		if CanCastSpellFromHand(
+			game,
+			playerID,
+			card,
+			card.ManaCost(),
+			autoPayCost,
+			autoPayColors,
+			ruling,
+			apply,
+		) {
 			availableCards = append(availableCards, gob.NewCardInZone(card, mtg.ZoneHand))
 		}
 	}

@@ -1,6 +1,7 @@
 package judge
 
 import (
+	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/engine/pay"
 	"deckronomicon/packages/engine/reducer"
 	"deckronomicon/packages/game/cost"
@@ -39,6 +40,7 @@ func CanPayCost(someCost cost.Cost, object gob.Object, game *state.Game, playerI
 	return canPay
 }
 
+// TODO: I think this is only checking for mana costs not all costs
 func CanPayCostAutomatically(
 	someCost cost.Cost,
 	object gob.Object,
@@ -46,11 +48,12 @@ func CanPayCostAutomatically(
 	playerID string,
 	colors []mana.Color,
 	ruling *Ruling,
+	apply func(game *state.Game, event event.GameEvent) (*state.Game, error),
 ) bool {
 	canPay := true
 	// TODO: events no longer includes paying costs, this is just the activation of mana sources
 	// still need to call the pay function to get the events
-	events, err := pay.AutoActivateManaSources(game, someCost, object, playerID, colors)
+	events, err := pay.AutoActivateManaSources(game, someCost, object, playerID, colors, apply)
 	if err != nil {
 		if ruling != nil && ruling.Explain {
 			ruling.Reasons = append(ruling.Reasons, "unable to pay cost automatically: "+err.Error())
@@ -58,6 +61,8 @@ func CanPayCostAutomatically(
 		canPay = false
 		return canPay
 	}
+	// Why am I applying these events?
+	// Don't I apply them in auto activate?
 	for _, event := range events {
 		game, err = reducer.ApplyEventAndTriggers(game, event)
 		if err != nil {
@@ -70,6 +75,7 @@ func CanPayCostAutomatically(
 	return canPay
 }
 
+/*
 func CanPotentiallyPayCost(someCost cost.Cost, object gob.Object, game *state.Game, playerID string, ruling *Ruling) bool {
 	player := game.GetPlayer(playerID)
 	potentialManaPool := GetAvailableMana(game, playerID)
@@ -77,3 +83,4 @@ func CanPotentiallyPayCost(someCost cost.Cost, object gob.Object, game *state.Ga
 	game = game.WithUpdatedPlayer(player)
 	return CanPayCost(someCost, object, game, playerID, ruling)
 }
+*/

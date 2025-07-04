@@ -2,6 +2,7 @@ package pay
 
 import (
 	"deckronomicon/packages/engine/event"
+	"deckronomicon/packages/engine/reducer"
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/definition/definitiontest"
@@ -145,7 +146,8 @@ func TestWithActivateManaSources(t *testing.T) {
 			if err != nil {
 				t.Fatalf("ParseMana(); error = %v", err)
 			}
-			_, got, err := withActivateManaSources(game, playerID, testCost, test.colors)
+			apply := reducer.ApplyEventAndTriggers
+			_, got, err := withActivateManaSources(game, playerID, testCost, test.colors, apply)
 			if err != nil {
 				t.Fatalf("withActivateManaSources(); error = %v", err)
 			}
@@ -299,7 +301,8 @@ func TestActivateManaSourcesForColored(t *testing.T) {
 			if err != nil {
 				t.Fatalf("ParseManaString(); error = %v", err)
 			}
-			_, gotRemaining, got, err := activateManaSourcesForColored(game, playerID, remaining, test.manaColor)
+			apply := reducer.ApplyEventAndTriggers
+			_, gotRemaining, got, err := activateManaSourcesForColored(game, playerID, remaining, test.manaColor, apply)
 			if err != nil {
 				t.Fatalf("activateManaSourcesForColored(); error = %v", err)
 			}
@@ -445,7 +448,8 @@ func TestActivateManaSourcesForGeneric(t *testing.T) {
 			if err != nil {
 				t.Fatalf("ParseManaString(); error = %v", err)
 			}
-			_, gotRemaining, got, err := activateManaSourcesForGeneric(game, playerID, remaining, mana.Colors())
+			apply := reducer.ApplyEventAndTriggers
+			_, gotRemaining, got, err := activateManaSourcesForGeneric(game, playerID, remaining, mana.Colors(), apply)
 			if err != nil {
 				t.Fatalf("activateManaSourcesForGeneric(); error = %v", err)
 			}
@@ -561,7 +565,8 @@ func TestActivateManaSource(t *testing.T) {
 				"",
 				permanents,
 			)
-			_, got, err := activateManaSource(game, playerID, test.landID)
+			apply := reducer.ApplyEventAndTriggers
+			_, got, err := activateManaSource(game, playerID, test.landID, apply)
 			if err != nil {
 				t.Fatalf("activateManaSource(); error = %v", err)
 			}

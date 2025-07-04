@@ -5,6 +5,7 @@ import (
 	"deckronomicon/packages/engine"
 	"deckronomicon/packages/engine/action"
 	"deckronomicon/packages/engine/judge"
+	"deckronomicon/packages/engine/reducer"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mana"
 	"deckronomicon/packages/game/mtg"
@@ -23,7 +24,8 @@ func parseCastSpellCommand(
 	autoPayColors []mana.Color, // Colors to prioritize when auto-paying costs, if applicable
 ) (action.CastSpellRequest, error) {
 	ruling := judge.Ruling{Explain: true}
-	cards := judge.GetSpellsAvailableToCast(game, playerID, autoPayCost, autoPayColors, &ruling)
+	apply := reducer.ApplyEventAndTriggers
+	cards := judge.GetSpellsAvailableToCast(game, playerID, autoPayCost, autoPayColors, &ruling, apply)
 	var cardInZone *gob.CardInZone
 	var err error
 	if idOrName == "" {
