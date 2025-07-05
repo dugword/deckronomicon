@@ -84,6 +84,14 @@ func (s *Stack) Take(id string) (Resolvable, *Stack, bool) {
 	return resolvable, &Stack{resolvables: resolvables}, true
 }
 
+func (s *Stack) TakeBy(predicate query.Predicate) (Resolvable, *Stack, bool) {
+	resolvable, resolvables, ok := take.By(s.resolvables, predicate)
+	if !ok {
+		return nil, nil, false
+	}
+	return resolvable, &Stack{resolvables: resolvables}, true
+}
+
 func (s *Stack) TakeTop() (Resolvable, *Stack, bool) {
 	resolvable, resolvables, ok := take.Top(s.resolvables)
 	if !ok {

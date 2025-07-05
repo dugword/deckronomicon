@@ -1,0 +1,9 @@
+{
+  "TotalRuns": 50000,
+  "TotalCardsDrawn": 875544,
+  "TotalFlushOutDrawn": 62775,
+  "RunsWithAtLeastOneFlushOut": 34770,
+  "AverageCardDrawn": 17.51088,
+  "AverageFlushOutDrawn": 1.2555,
+  "ChanceAtLeastOneFlushOut": 69.54
+}

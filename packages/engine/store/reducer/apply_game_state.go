@@ -5,6 +5,7 @@ import (
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mana"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/query/has"
 	"deckronomicon/packages/state"
 	"fmt"
 )
@@ -229,7 +230,7 @@ func applyPutPermanentOnBattlefieldEvent(
 	// that have a "put on battlefield" effect, and then
 	// this event should be used to resolve that effect.
 	case mtg.ZoneStack:
-		resolvable, stack, ok := game.Stack().Take(evnt.CardID)
+		resolvable, stack, ok := game.Stack().TakeBy(has.SourceID(evnt.CardID))
 		if !ok {
 			return game, fmt.Errorf("card %q not found in stack", evnt.CardID)
 		}

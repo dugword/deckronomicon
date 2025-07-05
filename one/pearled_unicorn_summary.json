@@ -1,0 +1,9 @@
+{
+  "TotalRuns": 50000,
+  "TotalCardsDrawn": 750000,
+  "TotalPearledUnicornDrawn": 50079,
+  "RunsWithAtLeastOnePearledUnicorn": 34631,
+  "AverageCardDrawn": 15,
+  "AveragePearledUnicornDrawn": 1.00158,
+  "ChanceAtLeastOnePearledUnicornDrawn": 69.262
+}

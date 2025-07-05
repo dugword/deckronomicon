@@ -1,0 +1,9 @@
+{
+  "TotalRuns": 50000,
+  "TotalCardsDrawn": 861252,
+  "TotalThrillOfPossibilityDrawn": 55626,
+  "RunsWithAtLeastOneThrillOfPossibility": 34903,
+  "AverageCardDrawn": 17.22504,
+  "AverageThrillOfPossibilityDrawn": 1.11252,
+  "ChanceAtLeastOneThrillOfPossibilityDrawn": 69.806
+}

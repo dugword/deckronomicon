@@ -1,0 +1,12 @@
+Name: Player Strategy
+Description: Thrill of Possibility Strategy
+
+Rules:
+  Setup:
+    - Make Land Drop
+    - Cast Thrill of Possibility
+    - Concede Game at Start of Turn 21
+    
+Choices:
+  Setup:
+    - Discard to Hand Size at End of Turn

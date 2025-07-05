@@ -33,7 +33,7 @@ Rules:
           AdditionalCost:
             Discard:
               - Mountain
-    - Concede Game at End of Turn 8
+    - Concede Game at Start of Turn 9
     
 Choices:
   Setup:

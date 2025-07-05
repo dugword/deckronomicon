@@ -1,0 +1,14 @@
+Pearled Unicorn:
+    Average Total Cards Draw: 14
+    Average Seen: 0.93
+    Chance to See at Least Once: 66.53%
+
+Thrill of Possibility:
+    Average Total Cards Draw: 16.07
+    Average Seen: 1.04
+    Chance to See at Least Once: 66.62%
+
+Flush Out:
+    Average Total Cards Draw: 16.3
+    Average Seen: 1.16
+    Chance to See at Least Once: 66.69%

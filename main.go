@@ -8,6 +8,7 @@ import (
 	"deckronomicon/packages/agent/interactive"
 	"deckronomicon/packages/configs"
 	"deckronomicon/packages/engine"
+	"deckronomicon/packages/engine/store"
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/logger"
@@ -170,19 +171,23 @@ func Run(
 		Log:               logger,
 	}
 	start := time.Now()
-	runResults := []any{}
+
+	runResults := []store.RunResult{}
 	for i := range config.Runs {
 		runID := i + 1
-		runResult := map[string]int{
-			"RunID": runID,
+		runResult := store.RunResult{
+			RunID:       runID,
+			Totals:      map[string]int{},
+			Cumulatives: map[string][]int{},
 		}
-		engine := engine.NewEngine(runID, runResult, engineConfig)
+		engine := engine.NewEngine(runID, &runResult, engineConfig)
 		if err := engine.RunGame(); err != nil && !errors.Is(err, mtg.ErrGameOver) {
 			return fmt.Errorf("failed to run the game: %w", err)
 		}
 		engineConfig.Seed++
 		logger.Debug("Game over!")
 		logger.Infof("Game %d completed successfully!", i+1)
+		//fmt.Println("Final turn count:", runResult.Turns)
 		runResults = append(runResults, runResult)
 	}
 	end := time.Now()

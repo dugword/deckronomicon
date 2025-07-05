@@ -48,7 +48,7 @@ type EngineConfig struct {
 	Log               store.Logger
 }
 
-func NewEngine(runID int, results map[string]int, config EngineConfig) *Engine {
+func NewEngine(runID int, runResult *store.RunResult, config EngineConfig) *Engine {
 	agents := map[string]PlayerAgent{}
 	for id, agent := range config.Agents {
 		agents[id] = agent
@@ -63,7 +63,7 @@ func NewEngine(runID int, results map[string]int, config EngineConfig) *Engine {
 		}),
 		func(s *store.Store) []store.Middleware {
 			return []store.Middleware{
-				store.AnalyticsMiddleware(results),
+				store.AnalyticsMiddleware(runResult),
 				store.LoggingMiddleware(config.Log),
 				store.RecordEventMiddleware(func(evnt event.GameEvent) {
 					if record != nil {

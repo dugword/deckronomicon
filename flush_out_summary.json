@@ -1,0 +1,58 @@
+{
+  "NumberOfTurns": 8,
+  "TotalRuns": 100000,
+  "TotalCardsDrawn": 1632800,
+  "TotalFlushOutDrawn": 116405,
+  "TotalThrillOfPossibilityDrawn": 0,
+  "TotalPearledUnicornDrawn": 0,
+  "RunsWithAtLeastOneFlushOut": 66687,
+  "RunsWithAtLeastOneThrillOfPossibility": 0,
+  "RunsWithAtLeastOnePearledUnicorn": 0,
+  "AverageCardDrawn": 16.328,
+  "AverageFlushOutDrawn": 1.16405,
+  "AverageThrillOfPossibilityDrawn": 0,
+  "AveragePearledUnicornDrawn": 0,
+  "ChanceAtLeastOneFlushOut": 66.687,
+  "ChanceAtLeastOneThrillOfPossibilityDrawn": 0,
+  "ChanceAtLeastOnePearledUnicornDrawn": 0,
+  "AvgCumulativeCardDrawnPerTurn": [
+    7,
+    8.89232,
+    10.27326,
+    11.53978,
+    12.72962,
+    13.92436,
+    15.1242,
+    16.328
+  ],
+  "AvgCumulativeFlushOutDrawnPerTurn": [
+    0.46573,
+    0.58246,
+    0.67963,
+    0.77294,
+    0.86622,
+    0.9625,
+    1.06244,
+    1.16405
+  ],
+  "AvgCumulativeThrillOfPossibilityDrawnPerTurn": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "AvgCumulativePearledUnicornDrawnPerTurn": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ]
+}
