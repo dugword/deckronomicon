@@ -11,6 +11,7 @@ import (
 	"deckronomicon/packages/game/definition"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/logger"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -169,16 +170,30 @@ func Run(
 		Log:               logger,
 	}
 	start := time.Now()
+	runResults := []any{}
 	for i := range config.Runs {
-		engine := engine.NewEngine(i, engineConfig)
+		runID := i + 1
+		runResult := map[string]int{
+			"RunID": runID,
+		}
+		engine := engine.NewEngine(runID, runResult, engineConfig)
 		if err := engine.RunGame(); err != nil && !errors.Is(err, mtg.ErrGameOver) {
 			return fmt.Errorf("failed to run the game: %w", err)
 		}
+		engineConfig.Seed++
 		logger.Debug("Game over!")
 		logger.Infof("Game %d completed successfully!", i+1)
+		runResults = append(runResults, runResult)
 	}
 	end := time.Now()
 	logger.Infof("Total time taken for %d runs: %s", config.Runs, end.Sub(start))
 	logger.Infof("Average time per run: %s", end.Sub(start)/time.Duration(config.Runs))
+	out, err := json.MarshalIndent(runResults, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal results: %w", err)
+	}
+	if err := os.WriteFile("results/did_this_work.json", out, 0644); err != nil {
+		return fmt.Errorf("failed to write results to file: %w", err)
+	}
 	return nil
 }
