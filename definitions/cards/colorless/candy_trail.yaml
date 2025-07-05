@@ -1,7 +1,7 @@
+Name: Candy Trail
 CardTypes:
   - Artifact
 ManaCost: '{1}'
-Name: Candy Trail
 RulesText: |-
   When this artifact enters, scry 2.
   {2}, {T}, Sacrifice this artifact: You gain 3 life and draw a card.

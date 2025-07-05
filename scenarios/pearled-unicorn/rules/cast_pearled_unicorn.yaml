@@ -1,0 +1,18 @@
+Rules:
+  - Name: Cast Pearled Unicorn
+    When:
+      SorcerySpeed: true
+      AvailableMana:
+        Any:
+          AtLeast: 3
+        White:
+          Op: ">"
+          Value: 1
+      Step: PrecombatMain
+      InZone:
+        Zone: Hand
+        Cards:
+          - Pearled Unicorn
+    Then:
+      Cast:
+        Card: Pearled Unicorn

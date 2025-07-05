@@ -1,0 +1,24 @@
+Name: Lembas
+CardTypes:
+  - Artifact
+ManaCost: '{2}'
+Subtypes:
+  - Food
+ActivatedAbilities:
+  - Name : Gain 3 Life
+    Cost: '{2},{T},Sacrifice this artifact'
+    Effects:
+      - Name: GainLife
+        Modifiers:
+          Count: 3
+ETB:
+  - Name: Scry 1, Then Draw a Card
+    Effects:
+      - Name: Scry
+        Modifiers:
+          Count: 1
+RulesText: |-
+  When this artifact enters, scry 1, then draw a card.
+  {2}, {T}, Sacrifice this artifact: You gain 3 life.
+  When this artifact is put into a graveyard from the battlefield, its owner shuffles it into their library.
+
