@@ -33,6 +33,8 @@ Rules:
           AdditionalCost:
             Discard:
               - Mountain
+    - Concede Game at Start of Turn 9
+    
 Choices:
   Setup:
     - Name: Discard to Hand Size at End of Turn

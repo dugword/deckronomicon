@@ -1,0 +1,12 @@
+Rules:
+  - Name: Make Land Drop
+    When:
+      SorcerySpeed: true
+      LandPlayedThisTurn: false
+      InZone:
+        Zone: Hand
+        Cards:
+          - Plains
+    Then:
+      Play:
+        - Plains

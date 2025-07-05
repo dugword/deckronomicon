@@ -15,6 +15,7 @@ func NewGameFromDefinition(definition *definition.Game) *Game {
 		winnerID:              definition.WinnerID,
 		battlefield:           NewBattlefield(),
 		stack:                 NewStack(),
+		runID:                 definition.RunID,
 	}
 	if definition.Battlefield != nil {
 		game.battlefield = NewBattlefieldFromDefinition(definition.Battlefield)
