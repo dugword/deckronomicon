@@ -1,0 +1,8 @@
+Choices:
+  - Name: Discard to Hand Size at End of Turn
+    Source: Discard to Hand Size
+    When:
+      InHand:
+        - Mountain
+    Choose:
+        - Mountain

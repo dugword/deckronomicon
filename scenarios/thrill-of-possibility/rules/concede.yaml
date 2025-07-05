@@ -1,0 +1,8 @@
+Rules:
+  - Name: Concede Game at Start of Turn 21
+    When:
+      Step: Upkeep
+      Player:
+        Turn: 21
+    Then:
+      Concede:

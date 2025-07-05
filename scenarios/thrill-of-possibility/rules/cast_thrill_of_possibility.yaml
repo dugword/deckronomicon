@@ -1,0 +1,21 @@
+Rules:
+  - Name: Cast Thrill of Possibility
+    When:
+      SorcerySpeed: true
+      AvailableMana:
+        Any:
+          AtLeast: 2
+        Red:
+          Op: ">"
+          Value: 1
+      Step: PrecombatMain
+      InZone:
+        Zone: Hand
+        Cards:
+          - Thrill of Possibility
+    Then:
+      Cast:
+        Card: Thrill of Possibility
+        AdditionalCost:
+          Discard:
+            - Mountain

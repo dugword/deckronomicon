@@ -19,6 +19,11 @@ type Game struct {
 	winnerID              string
 	triggeredAbilities    []gob.TriggeredAbility
 	continuousEffects     []gob.ContinuousEffect
+	runID                 string
+}
+
+func (g *Game) RunID() string {
+	return g.runID
 }
 
 func (g *Game) CheatsEnabled() bool {

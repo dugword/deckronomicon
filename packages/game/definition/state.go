@@ -25,6 +25,7 @@ type Game struct {
 	PlayerWithPriority    string          `json:"PlayerWithPriority,omitempty" yaml:"PlayerWithPriority,omitempty"`
 	Step                  string          `json:"Step,omitempty" yaml:"Step,omitempty"`
 	WinnerID              string          `json:"WinnerID,omitempty" yaml:"WinnerID,omitempty"`
+	RunID                 string          `json:"RunID,omitempty" yaml:"RunID,omitempty"`
 }
 
 type Graveyard struct {

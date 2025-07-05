@@ -1,0 +1,10 @@
+Conditions:
+  - Name: Flush Out is Castable
+    When:
+      SorcerySpeed: true
+      AvailableMana:
+        Any:
+          AtLeast: 2
+        Red:
+          Op: ">"
+          Value: 1

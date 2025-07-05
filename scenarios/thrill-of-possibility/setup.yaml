@@ -1,24 +1,16 @@
 ScenarioName: Example Game Setup
 MaxTurns: 100
 OnThePlay: You
-Seed: 3
 Players:
-  - Agent: Interactive
+  - Agent: Auto
     AutoPay: true
     AutoPayColorsForGeneric: [C, W, U, B, R, G]
     Name: You
     DeckList: player_deck
     Strategy: player_strategy
     StartingLife: 20
-    # TODO: I don't think this is currently working... 
     StartingHand:
       - Island
-      - Snow-Covered Island
-      - High Tide
-      - Psychic Puppetry
-      - Psychic Puppetry
-      - Ideas Unbound
-
     StartingMode: Setup
 
   - Name: Opponent

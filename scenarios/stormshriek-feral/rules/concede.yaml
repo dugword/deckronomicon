@@ -1,0 +1,8 @@
+Rules:
+  - Name: Concede Game at Start of Turn 9
+    When:
+      Step: Upkeep
+      Player:
+        Turn: 9
+    Then:
+      Concede:

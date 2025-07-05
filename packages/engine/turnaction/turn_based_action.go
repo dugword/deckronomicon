@@ -252,12 +252,18 @@ func (a DrawAction) GetPrompt(game *state.Game) (choose.ChoicePrompt, error) {
 	// No player choice needed, but we still return an empty prompt for consistency
 	return choose.ChoicePrompt{}, nil
 }
-func (a DrawAction) Complete(*state.Game, choose.ChoiceResults) ([]event.GameEvent, error) {
+func (a DrawAction) Complete(game *state.Game, choose choose.ChoiceResults) ([]event.GameEvent, error) {
+	// TODO: Make this more better
+	// Player skips draw on their first turn if they go first
+	player := game.GetPlayer(a.PlayerID())
+	opponent := game.GetOpponent(a.PlayerID())
+	if player.Turn() == 1 && opponent.Turn() == 0 {
+		return nil, nil
+	}
 	return []event.GameEvent{
 		&event.DrawCardEvent{
 			PlayerID: a.PlayerID(),
 		}}, nil
-
 	// return event.NewDrawCardEvent(a.PlayerID), nil
 }
 
