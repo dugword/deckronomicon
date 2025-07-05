@@ -1,0 +1,8 @@
+Rules:
+  - Name: Concede Game at End of Turn 8
+    When:
+      Step: End
+      Player:
+        Turn: 8
+    Then:
+      Concede:

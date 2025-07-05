@@ -170,7 +170,7 @@ func Run(
 	}
 	start := time.Now()
 	for i := range config.Runs {
-		engine := engine.NewEngine(engineConfig)
+		engine := engine.NewEngine(i, engineConfig)
 		if err := engine.RunGame(); err != nil && !errors.Is(err, mtg.ErrGameOver) {
 			return fmt.Errorf("failed to run the game: %w", err)
 		}
