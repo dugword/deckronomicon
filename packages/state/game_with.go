@@ -107,6 +107,7 @@ func (g *Game) WithPutCardInGraveyard(playerID string, card *gob.Card) *Game {
 		}
 		game = game.WithRegisteredTriggeredAbility(
 			playerID,
+			triggeredAbility.Name(),
 			card.Name(),
 			card.ID(),
 			triggeredAbility.Trigger(),
@@ -163,6 +164,7 @@ func (g *Game) WithPutPermanentOnBattlefield(card *gob.Card, playerID string) (*
 		}
 		gameWithBattlefield = gameWithBattlefield.WithRegisteredTriggeredAbility(
 			playerID,
+			triggeredAbility.Name(),
 			permanent.Name(),
 			permanent.ID(),
 			triggeredAbility.Trigger(),
@@ -245,6 +247,7 @@ func (g *Game) WithPutAbilityOnStack(
 
 func (g *Game) WithRegisteredTriggeredAbility(
 	playerID string,
+	abilityName string,
 	sourceName string,
 	sourceID string,
 	trigger gob.Trigger,
@@ -255,6 +258,7 @@ func (g *Game) WithRegisteredTriggeredAbility(
 	id, newGame := g.WithGetNextID()
 	triggeredEffect := gob.RegisteredTriggeredAbility{
 		ID:       id,
+		Name:     abilityName,
 		SourceID: sourceID,
 		PlayerID: playerID,
 		Trigger:  trigger,

@@ -26,6 +26,7 @@ func applyRegisterTriggeredAbilityEvent(
 	player := game.GetPlayer(evnt.PlayerID)
 	game = game.WithRegisteredTriggeredAbility(
 		player.ID(),
+		evnt.AbilityName,
 		evnt.SourceName,
 		evnt.SourceID,
 		evnt.Trigger,

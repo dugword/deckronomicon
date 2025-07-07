@@ -6,7 +6,6 @@ import (
 	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/state"
-	"fmt"
 )
 
 func ResolveShuffleSelfFromGraveyard(
@@ -18,10 +17,6 @@ func ResolveShuffleSelfFromGraveyard(
 	resEnv *resenv.ResEnv,
 ) (Result, error) {
 	player := game.GetPlayer(playerID)
-	// TODO: Get this by ID
-	// TODO: FindFirst?
-	fmt.Println("Source ID =>", resolvable.SourceID())
-	//fmt.Printf("Source => %+v\n", source.SourceID)
 	card, ok := player.Graveyard().Get(resolvable.SourceID())
 	if !ok {
 		panic("handle this")

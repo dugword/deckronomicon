@@ -108,6 +108,8 @@ func GetSpellsAvailableToCast(
 func GetAbilitiesAvailableToActivate(
 	game *state.Game,
 	playerID string,
+	autoPayCost bool,
+	autoPayColors []mana.Color,
 	ruling *Ruling,
 ) []*gob.AbilityInZone {
 	player := game.GetPlayer(playerID)
@@ -117,7 +119,7 @@ func GetAbilitiesAvailableToActivate(
 			if ruling != nil && ruling.Explain {
 				ruling.Reasons = append(ruling.Reasons, fmt.Sprintf("[ability %q]: ", ability.Name()))
 			}
-			if CanActivateAbility(game, playerID, permanent, ability, ruling) {
+			if CanActivateAbility(game, playerID, permanent, ability, autoPayCost, autoPayColors, ruling) {
 				availableAbilities = append(availableAbilities, gob.NewAbilityInZone(ability, permanent, mtg.ZoneBattlefield))
 			}
 		}
@@ -133,7 +135,7 @@ func GetAbilitiesAvailableToActivate(
 				}
 				continue
 			}
-			if CanActivateAbility(game, playerID, card, ability, ruling) {
+			if CanActivateAbility(game, playerID, card, ability, autoPayCost, autoPayColors, ruling) {
 				availableAbilities = append(availableAbilities, gob.NewAbilityInZone(ability, card, mtg.ZoneHand))
 			}
 		}

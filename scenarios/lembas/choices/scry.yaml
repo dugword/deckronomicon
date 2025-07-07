@@ -1,0 +1,8 @@
+Choices:
+  - Name: When enters Scry 1 then Draw a Card
+    Source: When enters Scry 1 then Draw a Card
+    When:
+      InHand:
+        - Wastes
+    Choose:
+        - Lembas

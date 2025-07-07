@@ -9,6 +9,7 @@ import (
 	"deckronomicon/packages/game/cost"
 	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/gob"
+	"deckronomicon/packages/game/mana"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/query/is"
@@ -21,6 +22,8 @@ type ActivateAbilityRequest struct {
 	SourceID          string
 	Zone              mtg.Zone
 	TargetsForEffects map[effect.EffectTargetKey]target.Target
+	AutoPayCost       bool
+	AutoPayColors     []mana.Color // Colors to prioritize when auto-paying costs, if applicable
 }
 
 func (r ActivateAbilityRequest) Build() ActivateAbilityAction {
@@ -32,6 +35,8 @@ type ActivateAbilityAction struct {
 	sourceID          string
 	zone              mtg.Zone
 	targetsForEffects map[effect.EffectTargetKey]target.Target
+	autoPayCost       bool
+	autoPayColors     []mana.Color // Colors to prioritize when auto-paying costs, if applicable
 }
 
 func NewActivateAbilityAction(
@@ -42,6 +47,8 @@ func NewActivateAbilityAction(
 		sourceID:          request.SourceID,
 		zone:              request.Zone,
 		targetsForEffects: request.TargetsForEffects,
+		autoPayCost:       request.AutoPayCost,
+		autoPayColors:     request.AutoPayColors,
 	}
 }
 
@@ -82,7 +89,15 @@ func (a ActivateAbilityAction) Complete(game *state.Game, playerID string, resEn
 	}
 	ruling := judge.Ruling{Explain: true}
 	// TODO: Should it be abilityOnObjectInZone.Object() instead of Source()?
-	if !judge.CanActivateAbility(game, playerID, source, ability, &ruling) {
+	if !judge.CanActivateAbility(
+		game,
+		playerID,
+		source,
+		ability,
+		a.autoPayCost,
+		a.autoPayColors,
+		&ruling,
+	) {
 		return nil, fmt.Errorf(
 			"player %q cannot activate ability %q on %q in %q: %v",
 			playerID,
@@ -92,31 +107,34 @@ func (a ActivateAbilityAction) Complete(game *state.Game, playerID string, resEn
 			ruling.Reasons,
 		)
 	}
-	events := []event.GameEvent{
+
+	var events []event.GameEvent
+	if a.autoPayCost {
+		var err error
+		activateEvents, err := pay.AutoActivateManaSources(game, ability.Cost(), ability, playerID, a.autoPayColors)
+		if err != nil {
+			return nil, fmt.Errorf("failed to auto-pay cost for ability %q: %w", ability.ID(), err)
+		}
+		events = append(events, activateEvents...)
+	}
+	costEvents, err := pay.Cost(ability.Cost(), source, playerID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to pay ability cost: %w", err)
+	}
+	events = append(events, costEvents...)
+	events = append(events,
 		&event.ActivateAbilityEvent{
 			PlayerID:  playerID,
 			SourceID:  source.ID(),
 			AbilityID: ability.Name(),
 			Zone:      a.zone,
 		},
-	}
+	)
+	var nonAddManaEffectsWithTargets []*effect.EffectWithTarget
 	effectWithTargets, err := effect.BuildEffectWithTargets(ability.ID(), ability.Effects(), a.targetsForEffects)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build effect with targets: %w", err)
 	}
-	//abilityCost := ability.Cost()
-	/*
-		if costWithTarget, ok := abilityCost.(cost.CostWithTarget); ok {
-			// TODO: Set the target ID for the cost
-			abilityCost = costWithTarget.WithTarget("TODO - SET THIS TARGET ID")
-		}
-	*/
-	costEvents, err := pay.Cost(ability.Cost(), source, playerID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to pay ability cost: %w", err)
-	}
-	events = append(events, costEvents...)
-	var nonAddManaEffectsWithTargets []*effect.EffectWithTarget
 	for _, effectWithTarget := range effectWithTargets {
 		addManaEffect, ok := effectWithTarget.Effect.(*effect.AddMana)
 		if !ok {

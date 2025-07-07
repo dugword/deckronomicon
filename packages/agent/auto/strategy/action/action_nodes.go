@@ -36,16 +36,36 @@ func (n *ConcedeActionNode) Resolve(ctx *evalstate.EvalState) (engine.Action, er
 }
 
 type ActivateActionNode struct {
-	AbilityInZone *gob.AbilityInZone
+	Cards predicate.Predicate
 }
 
 func (n *ActivateActionNode) Resolve(ctx *evalstate.EvalState) (engine.Action, error) {
+	ruling := judge.Ruling{Explain: true}
+	available := judge.GetAbilitiesAvailableToActivate(ctx.Game, ctx.PlayerID, true, mana.Colors(), &ruling)
+	var abilitySources []gob.Object
+	for _, abilityInZone := range available {
+		abilitySources = append(abilitySources, abilityInZone.Source())
+	}
+	found := n.Cards.Select(query.NewQueryObjects(abilitySources))
+	if len(found) == 0 {
+		return nil, fmt.Errorf("no activatable abilities found in hand for player %s", ctx.PlayerID)
+	}
+	var abilityToActivate *gob.AbilityInZone
+	for _, item := range available {
+		if item.Source().ID() == found[0].ID() {
+			abilityToActivate = item
+			break
+		}
+	}
+	if abilityToActivate == nil {
+		return nil, fmt.Errorf("no activatable abilities found matching predicate for player %s", ctx.PlayerID)
+	}
 	request := action.ActivateAbilityRequest{
-		AbilityID: n.AbilityInZone.Ability().ID(),
-		SourceID:  n.AbilityInZone.Source().ID(),
-		Zone:      n.AbilityInZone.Zone(),
-		// TODO: Need to handle targets for effects properly
-		// TargetsForEffects: n.AbilityInZone.Ability().TargetsForEffects(),
+		AbilityID:     abilityToActivate.Ability().ID(),
+		SourceID:      abilityToActivate.Source().ID(),
+		Zone:          abilityToActivate.Zone(),
+		AutoPayCost:   true,          // TODO: Handle auto pay cost
+		AutoPayColors: mana.Colors(), // TODO: Handle auto pay colors
 	}
 	return action.NewActivateAbilityAction(request), nil
 }

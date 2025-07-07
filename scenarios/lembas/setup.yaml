@@ -2,7 +2,7 @@ ScenarioName: Example Game Setup
 MaxTurns: 100
 OnThePlay: You
 Players:
-  - Agent: Interactive
+  - Agent: Auto
     AutoPay: true
     AutoPayColorsForGeneric: [C, W, U, B, R, G]
     Name: You
