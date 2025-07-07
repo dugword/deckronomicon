@@ -93,6 +93,62 @@ func (g *Game) WithBattlefield(battlefield *Battlefield) *Game {
 	return &newGame
 }
 
+// TODO: Maybe manage all cards moving zones like this so I can register and deregister triggered abilities?
+func (g *Game) WithPutCardInGraveyard(playerID string, card *gob.Card) *Game {
+	player := g.GetPlayer(playerID)
+	player, ok := player.WithAddCardToZone(card, mtg.ZoneGraveyard)
+	if !ok {
+		return g
+	}
+	game := g.WithUpdatedPlayer(player)
+	for _, triggeredAbility := range card.TriggeredAbilities() {
+		if triggeredAbility.Zone() != mtg.ZoneGraveyard {
+			continue
+		}
+		game = game.WithRegisteredTriggeredAbility(
+			playerID,
+			card.Name(),
+			card.ID(),
+			triggeredAbility.Trigger(),
+			triggeredAbility.Effects(),
+			"",
+			false,
+		)
+	}
+	return game
+}
+
+func (g *Game) WithRemoveCardFromGraveyard(playerID, cardID string) (*gob.Card, *Game, bool) {
+	player := g.GetPlayer(playerID)
+	card, player, ok := player.TakeCardFromZone(cardID, mtg.ZoneGraveyard)
+	if !ok {
+		return nil, nil, false
+	}
+	game := g.WithUpdatedPlayer(player)
+	for _, registeredTriggeredAbilities := range game.RegisteredTriggeredAbilities() {
+		if registeredTriggeredAbilities.SourceID != card.ID() {
+			continue
+		}
+		game = game.WithRemoveTriggeredAbility(registeredTriggeredAbilities.ID)
+	}
+	return card, game, true
+}
+
+func (g *Game) WithRemovePermanentFromBattlefield(permanentID string) (*gob.Permanent, *Game, bool) {
+	permanent, battlefield, ok := g.battlefield.Take(permanentID)
+	if !ok {
+		return nil, nil, false
+	}
+	newGame := g.WithBattlefield(battlefield)
+	for _, registeredTriggeredAbilities := range newGame.RegisteredTriggeredAbilities() {
+		if registeredTriggeredAbilities.SourceID != permanent.ID() {
+			continue
+		}
+		newGame = newGame.WithRemoveTriggeredAbility(registeredTriggeredAbilities.ID)
+	}
+	return permanent, newGame, true
+}
+
 func (g *Game) WithPutPermanentOnBattlefield(card *gob.Card, playerID string) (*Game, error) {
 	id, gameWithID := g.WithGetNextID()
 	permanent, err := gob.NewPermanent(id, card, playerID)
@@ -101,6 +157,20 @@ func (g *Game) WithPutPermanentOnBattlefield(card *gob.Card, playerID string) (*
 	}
 	battlefield := gameWithID.battlefield.Add(permanent)
 	gameWithBattlefield := gameWithID.WithBattlefield(battlefield)
+	for _, triggeredAbility := range permanent.TriggeredAbilities() {
+		if triggeredAbility.Zone() != mtg.ZoneBattlefield {
+			continue
+		}
+		gameWithBattlefield = gameWithBattlefield.WithRegisteredTriggeredAbility(
+			playerID,
+			permanent.Name(),
+			permanent.ID(),
+			triggeredAbility.Trigger(),
+			triggeredAbility.Effects(),
+			"",
+			false,
+		)
+	}
 	return gameWithBattlefield, nil
 }
 
@@ -183,28 +253,27 @@ func (g *Game) WithRegisteredTriggeredAbility(
 	oneShot bool,
 ) *Game {
 	id, newGame := g.WithGetNextID()
-	triggeredEffect := gob.TriggeredAbility{
-		ID:         id,
-		SourceID:   sourceID,
-		SourceName: sourceName,
-		PlayerID:   playerID,
-		Trigger:    trigger,
-		Effects:    effects,
-		Duration:   duration,
-		OneShot:    oneShot,
+	triggeredEffect := gob.RegisteredTriggeredAbility{
+		ID:       id,
+		SourceID: sourceID,
+		PlayerID: playerID,
+		Trigger:  trigger,
+		Effects:  effects,
+		Duration: duration,
+		OneShot:  oneShot,
 	}
-	newGame.triggeredAbilities = append(newGame.triggeredAbilities[:], triggeredEffect)
+	newGame.registeredTriggeredAbilities = append(newGame.registeredTriggeredAbilities[:], triggeredEffect)
 	return newGame
 }
 
 func (g *Game) WithRemoveTriggeredAbility(triggeredAbilityID string) *Game {
 	newGame := *g
-	var newTriggeredAbilities []gob.TriggeredAbility
-	for _, triggeredAbility := range newGame.triggeredAbilities {
+	var newTriggeredAbilities []gob.RegisteredTriggeredAbility
+	for _, triggeredAbility := range newGame.registeredTriggeredAbilities {
 		if triggeredAbility.ID != triggeredAbilityID {
 			newTriggeredAbilities = append(newTriggeredAbilities, triggeredAbility)
 		}
 	}
-	newGame.triggeredAbilities = newTriggeredAbilities
+	newGame.registeredTriggeredAbilities = newTriggeredAbilities
 	return &newGame
 }

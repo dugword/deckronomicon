@@ -1,24 +1,35 @@
 Name: Lembas
+ManaCost: '{2}'
 CardTypes:
   - Artifact
-ManaCost: '{2}'
 Subtypes:
   - Food
 ActivatedAbilities:
-  - Name : Gain 3 Life
-    Cost: '{2},{T},Sacrifice this artifact'
+  - Name: Gain 3 Life
+    Cost: '{2}, {T}, Sacrifice this artifact'
     Effects:
       - Name: GainLife
         Modifiers:
           Count: 3
-ETB:
-  - Name: Scry 1, Then Draw a Card
+TriggeredAbilities:
+  - Name: When enters Scry 1 then Draw a Card
+    Trigger:
+      Event: EnteredTheBattlefield
     Effects:
       - Name: Scry
         Modifiers:
           Count: 1
+      - Name: Draw
+        Modifiers:
+          Count: 1
+  - Name: When dies Shuffle into Library
+    Trigger:
+      Event: Death
+    Effects:
+      - Name: ShuffleSelfFromGraveyard
+    Zone: Graveyard
 RulesText: |-
   When this artifact enters, scry 1, then draw a card.
   {2}, {T}, Sacrifice this artifact: You gain 3 life.
-  When this artifact is put into a graveyard from the battlefield, its owner shuffles it into their library.
-
+  When this artifact is put into a graveyard from the battlefield, its owner
+  shuffles it into their library.

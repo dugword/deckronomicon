@@ -19,23 +19,24 @@ type AbilityOnStack struct {
 }
 
 type Card struct {
-	ActivatedAbilities []*Ability       `json:"ActivatedAbilities,omitempty" yaml:"ActivatedAbilities,omitempty"`
-	CardTypes          []string         `json:"CardTypes,omitempty" yaml:"CardTypes,omitempty"`
-	Colors             []string         `json:"Color,omitempty" yaml:"Color,omitempty"`
-	Controller         string           `json:"Controller,omitempty" yaml:"Controller,omitempty"`
-	ManaCost           string           `json:"ManaCost,omitempty" yaml:"ManaCost,omitempty"`
-	AdditionalCost     string           `json:"AdditionalCost,omitempty" yaml:"AdditionalCost,omitempty"`
-	ID                 string           `json:"ID,omitempty" yaml:"ID,omitempty"`
-	Loyalty            int              `json:"Loyalty,omitempty" yaml:"Loyalty,omitempty"`
-	Name               string           `json:"Name,omitempty" yaml:"Name,omitempty"`
-	Owner              string           `json:"Owner,omitempty" yaml:"Owner,omitempty"`
-	Power              int              `json:"Power,omitempty" yaml:"Power,omitempty"`
-	RulesText          string           `json:"RulesText,omitempty" yaml:"RulesText,omitempty"`
-	SpellAbility       []*Effect        `json:"SpellAbility,omitempty" yaml:"SpellAbility,omitempty"`
-	StaticAbilities    []*StaticAbility `json:"StaticAbilities,omitempty" yaml:"StaticAbilities,omitempty"`
-	Subtypes           []string         `json:"Subtypes,omitempty" yaml:"Subtypes,omitempty"`
-	Supertypes         []string         `json:"Supertypes,omitempty" yaml:"Supertypes,omitempty"`
-	Toughness          int              `json:"Toughness,omitempty" yaml:"Toughness,omitempty"`
+	ActivatedAbilities []*Ability          `json:"ActivatedAbilities,omitempty" yaml:"ActivatedAbilities,omitempty"`
+	CardTypes          []string            `json:"CardTypes,omitempty" yaml:"CardTypes,omitempty"`
+	Colors             []string            `json:"Color,omitempty" yaml:"Color,omitempty"`
+	Controller         string              `json:"Controller,omitempty" yaml:"Controller,omitempty"`
+	ManaCost           string              `json:"ManaCost,omitempty" yaml:"ManaCost,omitempty"`
+	AdditionalCost     string              `json:"AdditionalCost,omitempty" yaml:"AdditionalCost,omitempty"`
+	ID                 string              `json:"ID,omitempty" yaml:"ID,omitempty"`
+	Loyalty            int                 `json:"Loyalty,omitempty" yaml:"Loyalty,omitempty"`
+	Name               string              `json:"Name,omitempty" yaml:"Name,omitempty"`
+	Owner              string              `json:"Owner,omitempty" yaml:"Owner,omitempty"`
+	Power              int                 `json:"Power,omitempty" yaml:"Power,omitempty"`
+	RulesText          string              `json:"RulesText,omitempty" yaml:"RulesText,omitempty"`
+	SpellAbility       []*Effect           `json:"SpellAbility,omitempty" yaml:"SpellAbility,omitempty"`
+	StaticAbilities    []*StaticAbility    `json:"StaticAbilities,omitempty" yaml:"StaticAbilities,omitempty"`
+	Subtypes           []string            `json:"Subtypes,omitempty" yaml:"Subtypes,omitempty"`
+	Supertypes         []string            `json:"Supertypes,omitempty" yaml:"Supertypes,omitempty"`
+	TriggeredAbilities []*TriggeredAbility `json:"TriggeredAbilities,omitempty" yaml:"TriggeredAbilities,omitempty"`
+	Toughness          int                 `json:"Toughness,omitempty" yaml:"Toughness,omitempty"`
 }
 
 type Effect struct {
@@ -49,25 +50,25 @@ type EffectWithTarget struct {
 }
 
 type Permanent struct {
-	ActivatedAbilities []*Ability       `json:"ActivatedAbilities,omitempty" yaml:"ActivatedAbilities,omitempty"`
-	Card               *Card            `json:"Card" yaml:"Card,omitempty"`
-	CardTypes          []string         `json:"CardTypes,omitempty" yaml:"CardTypes,omitempty"`
-	Colors             []string         `json:"Colors,omitempty" yaml:"Colors,omitempty"`
-	Controller         string           `json:"Controller,omitempty" yaml:"Controller,omitempty"`
-	ID                 string           `json:"ID,omitempty" yaml:"ID,omitempty"`
-	Loyalty            int              `json:"Loyalty,omitempty" yaml:"Loyalty,omitempty"`
-	ManaCost           string           `json:"ManaCost,omitempty" yaml:"ManaCost,omitempty"`
-	Name               string           `json:"Name,omitempty" yaml:"Name,omitempty"`
-	Owner              string           `json:"Owner,omitempty" yaml:"Owner,omitempty"`
-	Power              int              `json:"Power,omitempty" yaml:"Power,omitempty"`
-	RulesText          string           `json:"RulesText,omitempty" yaml:"RulesText,omitempty"`
-	StaticAbilities    []*StaticAbility `json:"StaticAbilities,omitempty" yaml:"StaticAbilities,omitempty"`
-	Subtypes           []string         `json:"Subtypes,omitempty" yaml:"Subtypes,omitempty"`
-	SummoningSickness  bool             `json:"SummoningSickness,omitempty" yaml:"SummoningSickness,omitempty"`
-	Supertypes         []string         `json:"Supertypes,omitempty" yaml:"Supertypes,omitempty"`
-	Tapped             bool             `json:"Tapped,omitempty" yaml:"Tapped,omitempty"`
-	Toughness          int              `json:"Toughness,omitempty" yaml:"Toughness,omitempty"`
-	TriggeredAbilities []*Ability       `json:"TriggeredAbilities,omitempty" yaml:"TriggeredAbilities,omitempty"`
+	ActivatedAbilities []*Ability          `json:"ActivatedAbilities,omitempty" yaml:"ActivatedAbilities,omitempty"`
+	Card               *Card               `json:"Card" yaml:"Card,omitempty"`
+	CardTypes          []string            `json:"CardTypes,omitempty" yaml:"CardTypes,omitempty"`
+	Colors             []string            `json:"Colors,omitempty" yaml:"Colors,omitempty"`
+	Controller         string              `json:"Controller,omitempty" yaml:"Controller,omitempty"`
+	ID                 string              `json:"ID,omitempty" yaml:"ID,omitempty"`
+	Loyalty            int                 `json:"Loyalty,omitempty" yaml:"Loyalty,omitempty"`
+	ManaCost           string              `json:"ManaCost,omitempty" yaml:"ManaCost,omitempty"`
+	Name               string              `json:"Name,omitempty" yaml:"Name,omitempty"`
+	Owner              string              `json:"Owner,omitempty" yaml:"Owner,omitempty"`
+	Power              int                 `json:"Power,omitempty" yaml:"Power,omitempty"`
+	RulesText          string              `json:"RulesText,omitempty" yaml:"RulesText,omitempty"`
+	StaticAbilities    []*StaticAbility    `json:"StaticAbilities,omitempty" yaml:"StaticAbilities,omitempty"`
+	Subtypes           []string            `json:"Subtypes,omitempty" yaml:"Subtypes,omitempty"`
+	SummoningSickness  bool                `json:"SummoningSickness,omitempty" yaml:"SummoningSickness,omitempty"`
+	Supertypes         []string            `json:"Supertypes,omitempty" yaml:"Supertypes,omitempty"`
+	Tapped             bool                `json:"Tapped,omitempty" yaml:"Tapped,omitempty"`
+	Toughness          int                 `json:"Toughness,omitempty" yaml:"Toughness,omitempty"`
+	TriggeredAbilities []*TriggeredAbility `json:"TriggeredAbilities,omitempty" yaml:"TriggeredAbilities,omitempty"`
 }
 
 type Spell struct {
@@ -95,6 +96,18 @@ type StaticAbility struct {
 	Cost      string         `json:"Cost,omitempty" yaml:"Cost,omitempty"`
 	Modifiers map[string]any `json:"Modifiers,omitempty" yaml:"Modifiers,omitempty"`
 	Name      string         `json:"Name,omitempty" yaml:"Name,omitempty"`
+}
+
+type TriggeredAbility struct {
+	Name    string    `json:"Name,omitempty" yaml:"Name,omitempty"`
+	Trigger Trigger   `json:"Trigger" yaml:"Trigger,omitempty"`
+	Effects []*Effect `json:"Effects,omitempty" yaml:"Effects,omitempty"`
+	Zone    string    `json:"Zone,omitempty" yaml:"Zone,omitempty"`
+}
+
+type Trigger struct {
+	Event  string              `json:"Event,omitempty" yaml:"Event,omitempty"`
+	Filter map[string][]string `json:"Filter,omitempty" yaml:"Filter,omitempty"`
 }
 
 type Target struct {

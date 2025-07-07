@@ -99,7 +99,7 @@ func isLife(input string) bool {
 }
 
 func isSacrificeThis(input string) bool {
-	return input == "Sacrifice this permanent"
+	return strings.HasPrefix(input, "Sacrifice this")
 }
 
 func isSacrificeTarget(input string) bool {

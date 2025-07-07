@@ -70,7 +70,9 @@ func (a *Agent) ReportState(game *state.Game) {
 }
 
 func (a *Agent) GetNextAction(game *state.Game) (engine.Action, error) {
-	a.ReportState(game)
+	if game != nil {
+		a.ReportState(game)
+	}
 	for {
 		pass := true
 		if slices.Contains(a.stops, game.Step()) {

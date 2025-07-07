@@ -7,19 +7,19 @@ import (
 )
 
 type Game struct {
-	nextID                int
-	cheatsEnabled         bool
-	activePlayerIdx       int
-	playersPassedPriority map[string]bool
-	battlefield           *Battlefield
-	phase                 mtg.Phase
-	step                  mtg.Step
-	players               []*Player
-	stack                 *Stack
-	winnerID              string
-	triggeredAbilities    []gob.TriggeredAbility
-	continuousEffects     []gob.ContinuousEffect
-	runID                 string
+	nextID                       int
+	cheatsEnabled                bool
+	activePlayerIdx              int
+	playersPassedPriority        map[string]bool
+	battlefield                  *Battlefield
+	phase                        mtg.Phase
+	step                         mtg.Step
+	players                      []*Player
+	stack                        *Stack
+	winnerID                     string
+	registeredTriggeredAbilities []gob.RegisteredTriggeredAbility
+	continuousEffects            []gob.ContinuousEffect
+	runID                        string
 }
 
 func (g *Game) RunID() string {
@@ -129,6 +129,6 @@ func (g *Game) IsGameOver() bool {
 	return g.winnerID != ""
 }
 
-func (g *Game) TriggeredAbilities() []gob.TriggeredAbility {
-	return g.triggeredAbilities
+func (g *Game) RegisteredTriggeredAbilities() []gob.RegisteredTriggeredAbility {
+	return g.registeredTriggeredAbilities
 }

@@ -30,27 +30,26 @@ type Permanent struct {
 	supertypes         []mtg.Supertype
 	tapped             bool
 	toughness          int
-	triggeredAbilities []*Ability
+	triggeredAbilities []*TriggeredAbility
 }
 
 func NewPermanent(id string, card *Card, playerID string) (*Permanent, error) {
 	permanent := Permanent{
-		card:               card,
-		cardTypes:          card.CardTypes(),
-		colors:             card.Colors(),
-		controller:         playerID,
-		id:                 id,
-		loyalty:            card.Loyalty(),
-		manaCost:           card.ManaCost(),
-		name:               card.Name(),
-		owner:              playerID,
-		power:              card.Power(),
-		rulesText:          card.RulesText(),
-		staticAbilities:    card.StaticAbilities(),
-		subtypes:           card.Subtypes(),
-		supertypes:         card.Supertypes(),
-		toughness:          card.Toughness(),
-		triggeredAbilities: []*Ability{},
+		card:            card,
+		cardTypes:       card.CardTypes(),
+		colors:          card.Colors(),
+		controller:      playerID,
+		id:              id,
+		loyalty:         card.Loyalty(),
+		manaCost:        card.ManaCost(),
+		name:            card.Name(),
+		owner:           playerID,
+		power:           card.Power(),
+		rulesText:       card.RulesText(),
+		staticAbilities: card.StaticAbilities(),
+		subtypes:        card.Subtypes(),
+		supertypes:      card.Supertypes(),
+		toughness:       card.Toughness(),
 	}
 	if slices.Contains(permanent.cardTypes, mtg.CardTypeCreature) {
 		permanent.summoningSickness = true
@@ -66,6 +65,17 @@ func NewPermanent(id string, card *Card, playerID string) (*Permanent, error) {
 			source:  &permanent,
 		}
 		permanent.activatedAbilities = append(permanent.activatedAbilities, &ability)
+	}
+	for i, a := range card.TriggeredAbilities() {
+		triggeredAbility := TriggeredAbility{
+			effects: a.Effects(),
+			name:    a.Name(),
+			id:      fmt.Sprintf("%s-%d", id, i+1),
+			trigger: a.trigger,
+			zone:    a.zone,
+			source:  &permanent,
+		}
+		permanent.triggeredAbilities = append(permanent.triggeredAbilities, &triggeredAbility)
 	}
 	return &permanent, nil
 }
@@ -182,7 +192,7 @@ func (p *Permanent) Toughness() int {
 	return p.toughness
 }
 
-func (p *Permanent) TriggeredAbilities() []*Ability {
+func (p *Permanent) TriggeredAbilities() []*TriggeredAbility {
 	return p.triggeredAbilities
 }
 

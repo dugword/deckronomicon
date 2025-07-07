@@ -1,10 +1,10 @@
 Name: Candy Trail
+ManaCost: '{1}'
 CardTypes:
   - Artifact
-ManaCost: '{1}'
-RulesText: |-
-  When this artifact enters, scry 2.
-  {2}, {T}, Sacrifice this artifact: You gain 3 life and draw a card.
 Subtypes:
   - Food
   - Clue
+RulesText: |-
+  When this artifact enters, scry 2.
+  {2}, {T}, Sacrifice this artifact: You gain 3 life and draw a card.

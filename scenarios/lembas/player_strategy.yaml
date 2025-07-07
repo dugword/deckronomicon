@@ -1,0 +1,13 @@
+Name: Player Strategy
+Description: Lembas Strategy
+
+Rules:
+  Setup:
+    - Make Land Drop
+    - Cast Lembas
+    - Crack Lembas
+    - Concede Game at Start of Turn 21
+    
+Choices:
+  Setup:
+    - Discard to Hand Size at End of Turn

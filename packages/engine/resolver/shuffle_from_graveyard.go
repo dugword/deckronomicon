@@ -5,7 +5,6 @@ import (
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/game/effect"
-	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/state"
 	"errors"
@@ -16,7 +15,7 @@ func ResolveShuffleFromGraveyard(
 	game *state.Game,
 	playerID string,
 	shuffleFromGraveyard *effect.ShuffleFromGraveyard,
-	source gob.Object,
+	resolvable state.Resolvable,
 	resEnv *resenv.ResEnv,
 ) (Result, error) {
 	player := game.GetPlayer(playerID)
@@ -38,7 +37,7 @@ func ResolveShuffleFromGraveyard(
 	}
 	choicePrompt := choose.ChoicePrompt{
 		Message: "Choose cards to shuffle into your library",
-		Source:  source,
+		Source:  resolvable,
 		ChoiceOpts: choose.ChooseManyOpts{
 			Choices: choose.NewChoices(cards),
 			Max:     shuffleFromGraveyard.Count,

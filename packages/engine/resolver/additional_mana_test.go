@@ -6,6 +6,7 @@ import (
 	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/query"
 	"deckronomicon/packages/state"
 	"testing"
 
@@ -40,7 +41,7 @@ func TestResolveAdditionalMana(t *testing.T) {
 					PlayerID: "Test Player",
 					Trigger: gob.Trigger{
 						EventType: "LandTappedForMana",
-						Filter: gob.Filter{
+						Filter: query.Opts{
 							Subtypes: []mtg.Subtype{"Island"},
 						},
 					},

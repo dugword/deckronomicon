@@ -50,6 +50,8 @@ func applyGameStateChangeEvent(game *state.Game, gameStateChangeEvent event.Game
 		player = player.WithRevealed(revealed)
 		game = game.WithUpdatedPlayer(player)
 		return game, nil
+	case *event.SacrificePermanentEvent:
+		return applySacrificePermanentEvent(game, evnt)
 	case *event.SetActivePlayerEvent:
 		game = game.WithActivePlayer(evnt.PlayerID)
 		return game, nil
@@ -178,17 +180,32 @@ func applyPutCardOnBottomOfLibraryEvent(
 	game *state.Game,
 	evnt *event.PutCardOnBottomOfLibraryEvent,
 ) (*state.Game, error) {
-	player := game.GetPlayer(evnt.PlayerID)
-	card, player, ok := player.TakeCardFromZone(evnt.CardID, evnt.FromZone)
-	if !ok {
-		return game, fmt.Errorf("card %q not in zone %q", evnt.CardID, evnt.FromZone)
+	if evnt.FromZone == mtg.ZoneGraveyard {
+		card, game, ok := game.WithRemoveCardFromGraveyard(evnt.PlayerID, evnt.CardID)
+		if !ok {
+			return game, fmt.Errorf("card %q not in graveyard", evnt.CardID)
+		}
+		player := game.GetPlayer(evnt.PlayerID)
+		player, ok = player.WithAddCardToZone(card, mtg.ZoneLibrary)
+		if !ok {
+			return game, fmt.Errorf("failed to move card %q to library", evnt.CardID)
+		}
+		game = game.WithUpdatedPlayer(player)
+		return game, nil
+	} else {
+		// TODO: Manage things consistently, not in an if/else block
+		player := game.GetPlayer(evnt.PlayerID)
+		card, player, ok := player.TakeCardFromZone(evnt.CardID, evnt.FromZone)
+		if !ok {
+			return game, fmt.Errorf("card %q not in zone %q", evnt.CardID, evnt.FromZone)
+		}
+		player, ok = player.WithAddCardToZone(card, mtg.ZoneLibrary)
+		if !ok {
+			return game, fmt.Errorf("failed to move card %q to library", evnt.CardID)
+		}
+		game = game.WithUpdatedPlayer(player)
+		return game, nil
 	}
-	player, ok = player.WithAddCardToZone(card, mtg.ZoneLibrary)
-	if !ok {
-		return game, fmt.Errorf("failed to move card %q to library", evnt.CardID)
-	}
-	game = game.WithUpdatedPlayer(player)
-	return game, nil
 }
 
 func applyPutCardOnTopOfLibraryEvent(
@@ -249,6 +266,18 @@ func applyPutPermanentOnBattlefieldEvent(
 		return game, fmt.Errorf("invalid zone %q for putting permanent on battlefield", evnt.FromZone)
 	}
 
+}
+
+func applySacrificePermanentEvent(
+	game *state.Game,
+	evnt *event.SacrificePermanentEvent,
+) (*state.Game, error) {
+	permanent, game, ok := game.WithRemovePermanentFromBattlefield(evnt.PermanentID)
+	if !ok {
+		return game, fmt.Errorf("permanent %q not found", evnt.PermanentID)
+	}
+	game = game.WithPutCardInGraveyard(permanent.Owner(), permanent.Card())
+	return game, nil
 }
 
 func applyShuffleLibraryEvent(

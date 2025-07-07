@@ -1,7 +1,6 @@
 package querybuilder
 
 import (
-	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/has"
 )
@@ -10,17 +9,14 @@ import (
 // Maybe we should have a common package for this?
 // Or maybe this should be in the query package?
 
-type Opts struct {
-	CardTypes  []mtg.CardType
-	Colors     []mtg.Color
-	Subtypes   []mtg.Subtype
-	ManaValues []int
-}
-
 func Build(
-	opts Opts,
+	opts query.Opts,
 ) (query.Predicate, error) {
 	// TODO: Can this be more simple/elegant?
+	var idPredicates []query.Predicate
+	for _, id := range opts.IDs {
+		idPredicates = append(idPredicates, has.ID(id))
+	}
 	var cardTypePredicates []query.Predicate
 	for _, cardType := range opts.CardTypes {
 		cardTypePredicates = append(cardTypePredicates, has.CardType(cardType))
@@ -38,6 +34,9 @@ func Build(
 		manaValuePredicates = append(manaValuePredicates, has.ManaValue(manaValue))
 	}
 	var predicates []query.Predicate
+	if len(idPredicates) != 0 {
+		predicates = append(predicates, query.Or(idPredicates...))
+	}
 	if len(cardTypePredicates) != 0 {
 		predicates = append(predicates, query.Or(cardTypePredicates...))
 	}

@@ -5,7 +5,6 @@ import (
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/engine/resenv"
 	"deckronomicon/packages/game/effect"
-	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/state"
 	"fmt"
 )
@@ -19,7 +18,7 @@ type Result struct {
 func Resolve(
 	game *state.Game,
 	playerID string,
-	source gob.Object,
+	resolvable state.Resolvable,
 	effectWithTarget *effect.EffectWithTarget,
 	resEnv *resenv.ResEnv,
 ) (Result, error) {
@@ -32,25 +31,29 @@ func Resolve(
 	case *effect.Counterspell:
 		return ResolveCounterspell(game, playerID, efct, target)
 	case *effect.Discard:
-		return ResolveDiscard(game, playerID, efct, target, source)
+		return ResolveDiscard(game, playerID, efct, target, resolvable)
 	case *effect.Draw:
 		return ResolveDraw(game, playerID, efct, target)
+	case *effect.GainLife:
+		return ResolveGainLife(game, playerID, efct)
 	case *effect.LookAndChoose:
-		return ResolveLookAndChoose(game, playerID, efct, source)
+		return ResolveLookAndChoose(game, playerID, efct, resolvable)
 	case *effect.Mill:
 		return ResolveMill(game, playerID, efct, target)
 	case *effect.PutBackOnTop:
-		return ResolvePutBackOnTop(game, playerID, efct, source)
+		return ResolvePutBackOnTop(game, playerID, efct, resolvable)
 	case *effect.RegisterDelayedTriggeredAbility:
-		return ResolveRegisterDelayedTriggeredAbility(playerID, efct, source)
+		return ResolveRegisterDelayedTriggeredAbility(playerID, efct, resolvable)
 	case *effect.Replicate:
-		return ResolveReplicate(game, playerID, efct, source, resEnv)
+		return ResolveReplicate(game, playerID, efct, resolvable, resEnv)
 	case *effect.Scry:
-		return ResolveScry(game, playerID, efct, source)
+		return ResolveScry(game, playerID, efct, resolvable)
 	case *effect.Search:
-		return ResolveSearch(game, playerID, efct, source)
+		return ResolveSearch(game, playerID, efct, resolvable)
 	case *effect.ShuffleFromGraveyard:
-		return ResolveShuffleFromGraveyard(game, playerID, efct, source, resEnv)
+		return ResolveShuffleFromGraveyard(game, playerID, efct, resolvable, resEnv)
+	case *effect.ShuffleSelfFromGraveyard:
+		return ResolveShuffleSelfFromGraveyard(game, playerID, efct, resolvable, resEnv)
 	case *effect.Tap:
 		return ResolveTap(game, playerID)
 	case *effect.TapOrUntap:

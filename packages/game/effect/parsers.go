@@ -2,6 +2,7 @@ package effect
 
 import (
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/query"
 	"fmt"
 )
 
@@ -40,21 +41,14 @@ func parseTargetPlayer(modifiers map[string]any) (mtg.TargetType, error) {
 	return target, nil
 }
 
-type query struct {
-	CardTypes  []mtg.CardType `json:"CardTypes,omitempty"`
-	Colors     []mtg.Color    `json:"Colors,omitempty"`
-	Subtypes   []mtg.Subtype  `json:"Subtypes,omitempty"`
-	ManaValues []int          `json:"ManaValues,omitempty"`
-}
-
-func parseQuery(modifiers map[string]any) (query, error) {
+func buildQueryOpts(modifiers map[string]any) (query.Opts, error) {
 	var cardTypes []mtg.CardType
 	cardTypesRaw, ok := modifiers["CardTypes"].([]any)
 	if ok {
 		for _, cardTypeRaw := range cardTypesRaw {
 			cardType, ok := mtg.StringToCardType(fmt.Sprintf("%v", cardTypeRaw))
 			if !ok {
-				return query{}, fmt.Errorf("a 'CardTypes' modifier of type []CardType required, got %T", cardTypeRaw)
+				return query.Opts{}, fmt.Errorf("a 'CardTypes' modifier of type []CardType required, got %T", cardTypeRaw)
 			}
 			cardTypes = append(cardTypes, cardType)
 		}
@@ -65,7 +59,7 @@ func parseQuery(modifiers map[string]any) (query, error) {
 		for _, colorRaw := range colorsRaw {
 			color, ok := mtg.StringToColor(fmt.Sprintf("%v", colorRaw))
 			if !ok {
-				return query{}, fmt.Errorf("a 'Colors' modifier of type []Color required, got %T", colorRaw)
+				return query.Opts{}, fmt.Errorf("a 'Colors' modifier of type []Color required, got %T", colorRaw)
 			}
 			colors = append(colors, color)
 		}
@@ -76,7 +70,7 @@ func parseQuery(modifiers map[string]any) (query, error) {
 		for _, subtypeRaw := range subtypesRaw {
 			subtype, ok := mtg.StringToSubtype(fmt.Sprintf("%v", subtypeRaw))
 			if !ok {
-				return query{}, fmt.Errorf("a 'Subtypes' modifier of type []Subtype required, got %T", subtypeRaw)
+				return query.Opts{}, fmt.Errorf("a 'Subtypes' modifier of type []Subtype required, got %T", subtypeRaw)
 			}
 			subtypes = append(subtypes, subtype)
 		}
@@ -87,12 +81,12 @@ func parseQuery(modifiers map[string]any) (query, error) {
 		for _, manaValueRaw := range manaValuesRaw {
 			manaValue, ok := manaValueRaw.(int)
 			if !ok {
-				return query{}, fmt.Errorf("a 'ManaValues' modifier of type []int required, got %T", manaValueRaw)
+				return query.Opts{}, fmt.Errorf("a 'ManaValues' modifier of type []int required, got %T", manaValueRaw)
 			}
 			manaValues = append(manaValues, manaValue)
 		}
 	}
-	return query{
+	return query.Opts{
 		CardTypes:  cardTypes,
 		Colors:     colors,
 		Subtypes:   subtypes,

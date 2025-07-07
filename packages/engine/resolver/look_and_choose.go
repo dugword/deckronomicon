@@ -8,6 +8,7 @@ import (
 	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/has"
+	"deckronomicon/packages/query/querybuilder"
 	"deckronomicon/packages/query/take"
 	"deckronomicon/packages/state"
 	"errors"
@@ -18,7 +19,7 @@ func ResolveLookAndChoose(
 	game *state.Game,
 	playerID string,
 	lookAndChoose *effect.LookAndChoose,
-	source gob.Object,
+	resolvable state.Resolvable,
 ) (Result, error) {
 	player := game.GetPlayer(playerID)
 	cards, _ := player.Library().TakeN(lookAndChoose.Look)
@@ -30,7 +31,7 @@ func ResolveLookAndChoose(
 			FromZone: mtg.ZoneLibrary,
 		})
 	}
-	predicate, err := buildPredicate(QueryOpts{
+	predicate, err := querybuilder.Build(query.Opts{
 		CardTypes: lookAndChoose.CardTypes,
 	})
 	if err != nil {
@@ -40,7 +41,7 @@ func ResolveLookAndChoose(
 	choicePrompt := choose.ChoicePrompt{
 		// TODO: Add type information to message
 		Message:  fmt.Sprintf("Look at the top %d cards of your library. Choose %d of them", lookAndChoose.Look, lookAndChoose.Choose),
-		Source:   source,
+		Source:   resolvable,
 		Optional: true,
 		ChoiceOpts: choose.ChooseManyOpts{
 			Choices: choose.NewChoices(choiceCards),

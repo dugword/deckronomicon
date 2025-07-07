@@ -6,6 +6,7 @@ import (
 	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/query/querybuilder"
 	"deckronomicon/packages/state"
 	"errors"
 	"fmt"
@@ -15,10 +16,10 @@ func ResolveSearch(
 	game *state.Game,
 	playerID string,
 	search *effect.Search,
-	source gob.Object,
+	resolvable state.Resolvable,
 ) (Result, error) {
 	player := game.GetPlayer(playerID)
-	query, err := buildPredicate(QueryOpts(*search))
+	query, err := querybuilder.Build(search.QueryOpts)
 	if err != nil {
 		return Result{}, fmt.Errorf("failed to build query for Search effect: %w", err)
 	}
@@ -26,7 +27,7 @@ func ResolveSearch(
 	choicePrompt := choose.ChoicePrompt{
 		// TODO: provide more detail on what kind of card to choose
 		Message: "Choose a card to put into your hand",
-		Source:  source,
+		Source:  resolvable,
 		ChoiceOpts: choose.ChooseOneOpts{
 			Choices: choose.NewChoices(cards),
 		},
