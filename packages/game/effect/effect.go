@@ -23,6 +23,8 @@ func New(definition *definition.Effect) (Effect, error) {
 		return NewDiscard(definition.Modifiers)
 	case "Draw":
 		return NewDraw(definition.Modifiers)
+	case "GainLife":
+		return NewGainLife(definition.Modifiers)
 	case "LookAndChoose":
 		return NewLookAndChoose(definition.Modifiers)
 	case "Mill":
@@ -39,6 +41,8 @@ func New(definition *definition.Effect) (Effect, error) {
 		return NewSearch(definition.Modifiers)
 	case "ShuffleFromGraveyard":
 		return NewShuffleFromGraveyard(definition.Modifiers)
+	case "ShuffleSelfFromGraveyard":
+		return NewShuffleSelfFromGraveyard(definition.Modifiers)
 	case "Tap":
 		return NewTap(definition.Modifiers)
 	case "TapOrUntap":

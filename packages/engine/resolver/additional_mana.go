@@ -5,6 +5,7 @@ import (
 	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/query"
 )
 
 func ResolveAdditionalMana(
@@ -15,7 +16,7 @@ func ResolveAdditionalMana(
 		PlayerID: playerID,
 		Trigger: gob.Trigger{
 			EventType: "LandTappedForMana",
-			Filter: gob.Filter{
+			Filter: query.Opts{
 				Subtypes: []mtg.Subtype{additionalMana.Subtype},
 			},
 		},

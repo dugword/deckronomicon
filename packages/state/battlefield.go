@@ -78,8 +78,7 @@ func (b *Battlefield) Take(id string) (*gob.Permanent, *Battlefield, bool) {
 	if !ok {
 		return nil, nil, false
 	}
-	b.permanents = permanents
-	return permanent, nil, true
+	return permanent, &Battlefield{permanents: permanents}, true
 }
 
 func (b *Battlefield) TakeBy(predicate query.Predicate) (*gob.Permanent, *Battlefield, bool) {
@@ -87,8 +86,7 @@ func (b *Battlefield) TakeBy(predicate query.Predicate) (*gob.Permanent, *Battle
 	if !ok {
 		return nil, nil, false
 	}
-	b.permanents = permanents
-	return permanent, nil, true
+	return permanent, &Battlefield{permanents: permanents}, true
 }
 
 func (b *Battlefield) UntapAll(playerID string) *Battlefield {

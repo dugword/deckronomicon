@@ -17,23 +17,23 @@ func ResolveReplicate(
 	game *state.Game,
 	playerID string,
 	replicate *effect.Replicate,
-	source gob.Object,
+	resolvable state.Resolvable,
 	resEnv *resenv.ResEnv,
 ) (Result, error) {
-	resolvable, ok := game.Stack().Find(query.And(is.Spell(), has.SourceID(source.ID())))
+	spellFromStack, ok := game.Stack().Find(query.And(is.Spell(), has.SourceID(resolvable.ID())))
 	if !ok {
 		return Result{
 			Events: []event.GameEvent{
 				&event.SpellOrAbilityFizzlesEvent{
 					PlayerID: playerID,
-					ObjectID: source.ID(),
+					ObjectID: resolvable.ID(),
 				},
 			},
 		}, nil
 	}
-	spell, ok := resolvable.(*gob.Spell)
+	spell, ok := spellFromStack.(*gob.Spell)
 	if !ok {
-		return Result{}, fmt.Errorf("resolvable with ID %q is %T not a spell", source.ID(), resolvable)
+		return Result{}, fmt.Errorf("resolvable with ID %q is %T not a spell", spellFromStack.ID(), spellFromStack)
 	}
 	var effectWithNewTargets []*effect.EffectWithTarget
 	for _, effectWithTarget := range spell.EffectWithTargets() {

@@ -4,21 +4,22 @@ import (
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/game/effect"
 	"deckronomicon/packages/game/gob"
+	"deckronomicon/packages/state"
 )
 
 func ResolveRegisterDelayedTriggeredAbility(
 	playerID string,
 	efct *effect.RegisterDelayedTriggeredAbility,
-	source gob.Object,
+	resolvable state.Resolvable,
 ) (Result, error) {
 	events := []event.GameEvent{
 		&event.RegisterTriggeredAbilityEvent{
 			PlayerID:   playerID,
-			SourceName: source.Name(),
-			SourceID:   source.ID(),
+			SourceName: resolvable.Name(),
+			SourceID:   resolvable.ID(),
 			Trigger: gob.Trigger{
 				EventType: efct.EventType,
-				Filter:    gob.Filter(efct.EventFilter),
+				Filter:    efct.Filter,
 			},
 			OneShot: true,
 			Effects: efct.Effects,

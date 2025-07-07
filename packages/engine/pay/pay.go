@@ -19,6 +19,8 @@ func Cost(someCost cost.Cost, object gob.Object, playerID string) ([]event.GameE
 		return payLife(c, playerID), nil
 	case cost.Mana:
 		return payMana(c, playerID), nil
+	case cost.SacrificeThis:
+		return paySacrificeThisCost(object, playerID), nil
 	case cost.TapThis:
 		return payTapCost(object, playerID), nil
 	default:
@@ -76,6 +78,15 @@ func payMana(c cost.Mana, playerID string) []event.GameEvent {
 		PlayerID:   playerID,
 		ManaString: c.Amount().ManaString(),
 	}}
+}
+
+func paySacrificeThisCost(object gob.Object, playerID string) []event.GameEvent {
+	return []event.GameEvent{
+		&event.SacrificePermanentEvent{
+			PlayerID:    playerID,
+			PermanentID: object.ID(),
+		},
+	}
 }
 
 func payTapCost(object gob.Object, playerID string) []event.GameEvent {

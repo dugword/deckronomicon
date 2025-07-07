@@ -21,7 +21,6 @@ func NewAddMana(modifiers map[string]any) (*AddMana, error) {
 	return &AddMana{Mana: manaString}, nil
 }
 
-// Move this to not the resolver, but the effect description like with the modifiers
 func (e *AddMana) TargetSpec() target.TargetSpec {
 	return target.NoneTargetSpec{}
 }

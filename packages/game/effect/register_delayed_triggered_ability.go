@@ -2,22 +2,15 @@ package effect
 
 import (
 	"deckronomicon/packages/game/definition"
-	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/game/target"
+	"deckronomicon/packages/query"
 	"fmt"
 )
 
-type EventFilter struct {
-	CardTypes  []mtg.CardType
-	Colors     []mtg.Color
-	Subtypes   []mtg.Subtype
-	ManaValues []int
-}
-
 type RegisterDelayedTriggeredAbility struct {
-	EventType   string
-	EventFilter EventFilter
-	Effects     []Effect
+	EventType string
+	Filter    query.Opts
+	Effects   []Effect
 }
 
 func (e *RegisterDelayedTriggeredAbility) Name() string {
@@ -37,7 +30,7 @@ func NewRegisterDelayedTriggeredAbility(modifier map[string]any) (*RegisterDelay
 	if eventFilterRaw != nil && !ok {
 		return nil, fmt.Errorf("a 'EventFilter' modifier of type map[string]any required, got %T", modifier["EventFilter"])
 	}
-	query, err := parseQuery(eventFilterRaw)
+	query, err := buildQueryOpts(eventFilterRaw)
 	if err != nil {
 		return nil, err
 	}
@@ -47,9 +40,9 @@ func NewRegisterDelayedTriggeredAbility(modifier map[string]any) (*RegisterDelay
 	}
 	effects, err := parseEffects(effectsRaw)
 	return &RegisterDelayedTriggeredAbility{
-		EventType:   eventType,
-		EventFilter: EventFilter(query),
-		Effects:     effects,
+		EventType: eventType,
+		Filter:    query,
+		Effects:   effects,
 	}, nil
 }
 

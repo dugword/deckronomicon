@@ -38,6 +38,10 @@ func (g *Graveyard) Contains(predicate query.Predicate) bool {
 	return query.Contains(g.cards, predicate)
 }
 
+func (g *Graveyard) Find(predicate query.Predicate) (*gob.Card, bool) {
+	return query.Find(g.cards, predicate)
+}
+
 func (g *Graveyard) Get(id string) (*gob.Card, bool) {
 	return query.Get(g.cards, id)
 }

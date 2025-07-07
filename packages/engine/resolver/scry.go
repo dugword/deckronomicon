@@ -15,13 +15,13 @@ func ResolveScry(
 	game *state.Game,
 	playerID string,
 	scry *effect.Scry,
-	source gob.Object,
+	resolvable state.Resolvable,
 ) (Result, error) {
 	player := game.GetPlayer(playerID)
 	cards := player.Library().GetN(scry.Count)
 	choicePrompt := choose.ChoicePrompt{
 		Message: "Put each card on top or bottom of your library in any order",
-		Source:  source,
+		Source:  resolvable,
 		ChoiceOpts: choose.MapChoicesToBucketsOpts{
 			Choices: choose.NewChoices(cards),
 			Buckets: []choose.Bucket{

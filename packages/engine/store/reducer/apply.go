@@ -8,6 +8,10 @@ import (
 
 func Apply(game *state.Game, gameEvent event.GameEvent) (*state.Game, error) {
 	switch evnt := gameEvent.(type) {
+	case event.TriggerEvent:
+		// Trigger events do not change state, they exist to enable
+		// triggered abilities to be put on the stack.
+		return game, nil
 	case event.AnalyticsEvent:
 		return applyAnalyticsEvent(game, evnt)
 	case event.GameLifecycleEvent:

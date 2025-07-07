@@ -43,46 +43,52 @@ func NewStore(initialState *state.Game, middlewareBuilder func(store *Store) []M
 	// Copy the initial state to avoid modifying the original state
 	copiedState := *initialState
 	store := Store{
-		game:            &copiedState,
-		middlewareChain: ChainMiddleware(CoreApplyEvent),
+		game: &copiedState,
 	}
+	// middleware := []Middleware{TriggeredAbilitiesMiddleware(&store)}
+	middleware := []Middleware{}
 	if middlewareBuilder != nil {
-		store.middlewareChain = ChainMiddleware(CoreApplyEvent, middlewareBuilder(&store)...)
+		middleware = append(middleware, middlewareBuilder(&store)...)
 	}
+	store.middlewareChain = ChainMiddleware(CoreApplyEvent, middleware...)
 	return &store
 }
 
 func (s *Store) Apply(evnt event.GameEvent) error {
-	newGame, err := s.middlewareChain(s.game, evnt)
-	if err != nil {
-		return fmt.Errorf("failed to apply event %q: %w", evnt.EventType(), err)
-	}
-	s.game = newGame
-	triggeredAbilities, err := CheckTriggeredAbilities(s.game, evnt)
-	if err != nil {
-		return fmt.Errorf("failed to check triggered abilities: %w", err)
-	}
-	for _, triggeredAbility := range triggeredAbilities {
-		triggeredEvents, err := HandleTriggeredAbility(s.game, triggeredAbility, evnt)
+	eventQueue := []event.GameEvent{evnt}
+	for len(eventQueue) > 0 {
+		currentEvent := eventQueue[0]
+		eventQueue = eventQueue[1:]
+		fmt.Println("Current Event:", currentEvent.EventType())
+
+		newGame, err := s.middlewareChain(s.game, currentEvent)
 		if err != nil {
-			return fmt.Errorf("failed to handle triggered ability: %w", err)
+			return fmt.Errorf("failed to apply event %q: %w", currentEvent.EventType(), err)
 		}
-		for _, triggeredEvent := range triggeredEvents {
-			err := s.Apply(triggeredEvent)
+
+		triggerEvents := GenerateTriggerEvents(s.game, newGame, currentEvent)
+		eventQueue = append(eventQueue, triggerEvents...)
+
+		s.game = newGame
+		triggeredAbilities, err := CheckTriggeredAbilities(s.game, currentEvent)
+		if err != nil {
+			return fmt.Errorf("failed to check triggered abilities: %w", err)
+		}
+		for _, triggeredAbility := range triggeredAbilities {
+			triggeredEvents, err := HandleTriggeredAbility(s.game, triggeredAbility, currentEvent)
 			if err != nil {
-				return fmt.Errorf("failed to apply triggered event %q: %w", triggeredEvent.EventType(), err)
+				return fmt.Errorf("failed to handle triggered ability: %w", err)
 			}
+			eventQueue = append(eventQueue, triggeredEvents...)
 		}
-	}
-	// TODO: Make this more elegant and generic
-	if evnt.EventType() == "BeginEndStep" {
-		// Remove all triggered abilities that are set to end at the end of the turn.
-		for _, ta := range s.game.TriggeredAbilities() {
-			if ta.Duration == mtg.DurationEndOfTurn {
-				if err := s.Apply(&event.RemoveTriggeredAbilityEvent{
-					ID: ta.ID,
-				}); err != nil {
-					return fmt.Errorf("failed to remove triggered ability %q: %w", ta.ID, err)
+		// TODO: Make this more elegant and generic
+		if currentEvent.EventType() == "BeginEndStep" {
+			// Remove all triggered abilities that are set to end at the end of the turn.
+			for _, ta := range s.game.RegisteredTriggeredAbilities() {
+				if ta.Duration == mtg.DurationEndOfTurn {
+					eventQueue = append(eventQueue, &event.RemoveTriggeredAbilityEvent{
+						ID: ta.ID,
+					})
 				}
 			}
 		}
@@ -110,17 +116,17 @@ func ChainMiddleware(final ApplyEventFunc, middleware ...Middleware) ApplyEventF
 	return final
 }
 
-func CheckTriggeredAbilities(game *state.Game, evnt event.GameEvent) ([]gob.TriggeredAbility, error) {
-	var triggeredAbilities []gob.TriggeredAbility
-	for _, ta := range game.TriggeredAbilities() {
-		if MatchesTrigger(ta.Trigger, evnt, game, ta.PlayerID) {
+func CheckTriggeredAbilities(game *state.Game, evnt event.GameEvent) ([]gob.RegisteredTriggeredAbility, error) {
+	var triggeredAbilities []gob.RegisteredTriggeredAbility
+	for _, ta := range game.RegisteredTriggeredAbilities() {
+		if MatchesTrigger(ta, evnt, game, ta.PlayerID) {
 			triggeredAbilities = append(triggeredAbilities, ta)
 		}
 	}
 	return triggeredAbilities, nil
 }
 
-func HandleTriggeredAbility(game *state.Game, triggeredAbility gob.TriggeredAbility, evnt event.GameEvent) ([]event.GameEvent, error) {
+func HandleTriggeredAbility(game *state.Game, triggeredAbility gob.RegisteredTriggeredAbility, evnt event.GameEvent) ([]event.GameEvent, error) {
 	var events []event.GameEvent
 	var effectWithTargets []*effect.EffectWithTarget
 	for _, efct := range triggeredAbility.Effects {
@@ -151,35 +157,47 @@ func HandleTriggeredAbility(game *state.Game, triggeredAbility gob.TriggeredAbil
 	return events, nil
 }
 
-func MatchesTrigger(trigger gob.Trigger, evnt event.GameEvent, game *state.Game, playerID string) bool {
+func MatchesTrigger(triggeredAbility gob.RegisteredTriggeredAbility, evnt event.GameEvent, game *state.Game, playerID string) bool {
 	// TODO: This match logic should live in the trigger itself I think, otherwise this is going to get out of hand.
 	// Or maybe not because we have a generic "filter" in the trigger that is applied differently based on the event type.
 	// Maybe this needs to be applied in a dispatching reducer pattern like the apply events function.
 	// Maybe this should be in the judge package.
 	// TODO: Yeah probably should be in the judge package.
-	switch trigger.EventType {
-	case "LandTappedForMana":
-		LandTappedForManaEvent, ok := evnt.(*event.LandTappedForManaEvent)
-		if !ok {
+	fmt.Printf("Triggered Ability => %+v\n", triggeredAbility)
+	fmt.Printf("Event => %s ::  %+v\n", evnt.EventType(), evnt)
+	if triggeredAbility.Trigger.EventType != evnt.EventType() {
+		return false
+	}
+	switch e := evnt.(type) {
+	case *event.DeathEvent:
+		if triggeredAbility.Trigger.SelfTrigger {
+			if triggeredAbility.SourceID == e.CardID {
+				return true
+			}
+		}
+		return false
+	case *event.EnteredTheBattlefieldEvent:
+		fmt.Printf("Triggered Ability => %+v\n", triggeredAbility)
+		if triggeredAbility.Trigger.SelfTrigger {
+			if triggeredAbility.SourceID == e.PermanentID {
+				return true
+			}
+		}
+		return false
+	case *event.LandTappedForManaEvent:
+		if e.PlayerID != playerID {
 			return false
 		}
-		if LandTappedForManaEvent.PlayerID != playerID {
-			return false
-		}
-		if trigger.Filter.Subtypes != nil {
-			for _, subtype := range trigger.Filter.Subtypes {
-				if !slices.Contains(LandTappedForManaEvent.Subtypes, subtype) {
+		if triggeredAbility.Trigger.Filter.Subtypes != nil {
+			for _, subtype := range triggeredAbility.Trigger.Filter.Subtypes {
+				if !slices.Contains(e.Subtypes, subtype) {
 					return false
 				}
 			}
 		}
 		return true
-	case "BeginEndStep":
-		BeginEndStepEvent, ok := evnt.(*event.BeginEndStepEvent)
-		if !ok {
-			return false
-		}
-		if BeginEndStepEvent.PlayerID != playerID {
+	case *event.BeginEndStepEvent:
+		if e.PlayerID != playerID {
 			return false
 		}
 		return true

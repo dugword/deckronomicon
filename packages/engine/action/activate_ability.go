@@ -128,6 +128,7 @@ func (a ActivateAbilityAction) Complete(game *state.Game, playerID string, resEn
 			if !ok {
 				return nil, fmt.Errorf("source %q is not a permanent", source.ID())
 			}
+			// TODO: Figure out how to move this to generate trigger events middleware
 			events = append(events, &event.LandTappedForManaEvent{
 				PlayerID: playerID,
 				ObjectID: land.ID(),

@@ -1,15 +1,12 @@
 package effect
 
 import (
-	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/game/target"
+	"deckronomicon/packages/query"
 )
 
 type Counterspell struct {
-	CardTypes  []mtg.CardType `json:"CardTypes,omitempty"`
-	Colors     []mtg.Color    `json:"Colors,omitempty"`
-	Subtypes   []mtg.Subtype  `json:"Subtypes,omitempty"`
-	ManaValues []int          `json:"ManaValues,omitempty"`
+	QueryOpts query.Opts
 }
 
 func (e *Counterspell) Name() string {
@@ -17,16 +14,18 @@ func (e *Counterspell) Name() string {
 }
 
 func NewCounterspell(modifiers map[string]any) (*Counterspell, error) {
-	query, err := parseQuery(modifiers)
+	queryOpts, err := buildQueryOpts(modifiers)
 	if err != nil {
 		return nil, err
 	}
-	counterspell := Counterspell(query)
+	counterspell := Counterspell{
+		QueryOpts: queryOpts,
+	}
 	return &counterspell, nil
 }
 
 func (e *Counterspell) TargetSpec() target.TargetSpec {
-	return target.SpellTargetSpec(
-		*e,
-	)
+	return target.SpellTargetSpec{
+		QueryOpts: e.QueryOpts,
+	}
 }

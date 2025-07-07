@@ -7,6 +7,8 @@ import (
 // Player Decisions, actual state changes are handled in state change events.
 // These events represent intentional choices the player has made during the game.
 
+// TODO: These should probably be trigger events
+
 const (
 	EventTypeActivateAbility    = "ActivateAbility"
 	EventTypeAssignCombatDamage = "AssignCombatDamage"
@@ -17,7 +19,6 @@ const (
 	EventTypeDeclareBlockers    = "DeclareBlockers"
 	EventTypePlayLand           = "PlayLand"
 	EventTypeCycleCard          = "CycleCard"
-	EventTypeLandTappedForMana  = "LandTappedForMana"
 )
 
 type PlayerEvent interface{ isPlayerEvent() }
@@ -115,15 +116,4 @@ type CycleCardEvent struct {
 
 func (e *CycleCardEvent) EventType() string {
 	return EventTypeCycleCard
-}
-
-type LandTappedForManaEvent struct {
-	PlayerBaseEvent
-	PlayerID string
-	ObjectID string
-	Subtypes []mtg.Subtype
-}
-
-func (e *LandTappedForManaEvent) EventType() string {
-	return EventTypeLandTappedForMana
 }

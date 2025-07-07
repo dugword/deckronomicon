@@ -51,7 +51,12 @@ func LoggingMiddleware(log Logger) Middleware {
 	return func(next ApplyEventFunc) ApplyEventFunc {
 		return func(game *state.Game, ev event.GameEvent) (*state.Game, error) {
 			log.Debug("Applying event:", ev.EventType())
-			return next(game, ev)
+			newGame, err := next(game, ev)
+			if err != nil {
+				return nil, err
+			}
+			log.Debug("Applied event:", ev.EventType())
+			return newGame, nil
 		}
 	}
 }

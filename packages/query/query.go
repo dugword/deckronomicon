@@ -8,6 +8,15 @@ import (
 // TODO: Have some way to stringify these interfaces for debugging purposes
 // query.Describe = "match (Creature or Enchantment) and (Blue or Red) and (ManaValue 3 or ManaValue 4)"
 
+type Opts struct {
+	IDs        []string
+	CardTypes  []mtg.CardType
+	Colors     []mtg.Color
+	ManaValues []int
+	Subtypes   []mtg.Subtype
+	Supertypes []mtg.Supertype
+}
+
 // Cards, Permanents, Sp
 type Object interface {
 	Controller() string

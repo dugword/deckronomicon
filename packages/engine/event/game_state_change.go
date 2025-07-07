@@ -19,9 +19,10 @@ const (
 	EventTypePutCardOnBottomOfLibrary  = "PutCardOnBottomOfLibrary"
 	EventTypePutPermanentOnBattlefield = "PutPermanentOnBattlefield"
 	// EventTypeResolveManaAbility        = "ResolveManaAbility"
-	EventTypeRevealCard      = "RevealCard"
-	EventTypeSetActivePlayer = "SetActivePlayer"
-	EventTypeSpendMana       = "SpendMana"
+	EventTypeRevealCard         = "RevealCard"
+	EventTypeSacrificePermanent = "SacrificePermanent"
+	EventTypeSetActivePlayer    = "SetActivePlayer"
+	EventTypeSpendMana          = "SpendMana"
 	// EventTypeShuffleDeck     = "ShuffleDeck"
 	EventTypeShuffleLibrary = "ShuffleLibrary"
 	EventTypeTapPermanent   = "TapPermanent"
@@ -187,6 +188,16 @@ type RevealCardEvent struct {
 
 func (e *RevealCardEvent) EventType() string {
 	return EventTypeRevealCard
+}
+
+type SacrificePermanentEvent struct {
+	GameStateChangeBaseEvent
+	PlayerID    string
+	PermanentID string
+}
+
+func (e *SacrificePermanentEvent) EventType() string {
+	return EventTypeSacrificePermanent
 }
 
 type SetActivePlayerEvent struct {

@@ -143,7 +143,7 @@ func getSpellTarget(
 	game *state.Game,
 	agent engine.PlayerAgent,
 ) (target.Target, error) {
-	query, err := querybuilder.Build(querybuilder.Opts(targetSpec))
+	query, err := querybuilder.Build(targetSpec.QueryOpts)
 	if err != nil {
 		panic(fmt.Errorf("failed to build query for Search effect: %w", err))
 	}
@@ -213,7 +213,7 @@ func getCardTarget(
 	agent engine.PlayerAgent,
 ) (target.Target, error) {
 	player := game.GetPlayer(playerID)
-	predicate, err := querybuilder.Build(querybuilder.Opts(targetSpec))
+	predicate, err := querybuilder.Build(targetSpec.QueryOpts)
 	if err != nil {
 		panic(fmt.Errorf("failed to build query for Search effect: %w", err))
 	}

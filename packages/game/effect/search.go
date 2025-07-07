@@ -1,23 +1,22 @@
 package effect
 
 import (
-	"deckronomicon/packages/game/mtg"
 	"deckronomicon/packages/game/target"
+	"deckronomicon/packages/query"
 )
 
 type Search struct {
-	CardTypes  []mtg.CardType
-	Colors     []mtg.Color
-	Subtypes   []mtg.Subtype
-	ManaValues []int
+	QueryOpts query.Opts
 }
 
 func NewSearch(modifiers map[string]any) (*Search, error) {
-	query, err := parseQuery(modifiers)
+	queryOpts, err := buildQueryOpts(modifiers)
 	if err != nil {
 		return nil, err
 	}
-	search := Search(query)
+	search := Search{
+		QueryOpts: queryOpts,
+	}
 	return &search, nil
 }
 

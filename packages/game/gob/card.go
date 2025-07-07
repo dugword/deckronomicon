@@ -25,6 +25,7 @@ type Card struct {
 	staticAbilities    []staticability.StaticAbility
 	subtypes           []mtg.Subtype
 	supertypes         []mtg.Supertype
+	triggeredAbilities []*TriggeredAbility
 	toughness          int
 }
 
@@ -120,6 +121,10 @@ func (c *Card) Subtypes() []mtg.Subtype {
 
 func (c *Card) Supertypes() []mtg.Supertype {
 	return c.supertypes
+}
+
+func (c *Card) TriggeredAbilities() []*TriggeredAbility {
+	return c.triggeredAbilities
 }
 
 func (c *Card) Toughness() int {

@@ -28,8 +28,6 @@ func applyPlayerEvent(game *state.Game, playerEvent event.PlayerEvent) (*state.G
 		return game, nil
 	case *event.DeclareBlockersEvent:
 		return game, nil
-	case *event.LandTappedForManaEvent:
-		return game, nil
 	case *event.PlayLandEvent:
 		return applyPlayLandEvent(game, evnt)
 	case *event.ClearRevealedEvent:

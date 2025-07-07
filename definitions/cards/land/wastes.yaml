@@ -1,0 +1,13 @@
+Name: Wastes
+CardTypes:
+  - Land
+Supertypes:
+  - Basic
+ActivatedAbilities:
+  - Name: Add {C} Mana
+    Cost: '{T}'
+    Effects:
+      - Name: AddMana
+        Modifiers:
+          Mana: '{C}'
+RulesText: '{T}: Add {C}.'

@@ -1,0 +1,27 @@
+Rules:
+  - Name: Cast Lembas
+    When:
+      SorcerySpeed: true
+      AvailableMana:
+        Any:
+          AtLeast: 2
+      InZone:
+        Zone: Hand
+        Cards:
+          - Lembas
+    Then:
+      Cast:
+        Card: Lembas
+  - Name: Crack Lembas
+    When:
+      SorcerySpeed: true
+      AvailableMana:
+        Any:
+          AtLeast: 2
+      InZone:
+        Zone: Battlefield
+        Cards:
+          - Lembas
+    Then:
+      Cast:
+        Card: Lembas

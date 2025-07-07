@@ -80,6 +80,14 @@ func NewCardFromDefinition(definition *definition.Card) *Card {
 		}
 		staticAbilities = append(staticAbilities, staticAbility)
 	}
+	var triggeredAbilities []*TriggeredAbility
+	for _, triggeredAbilityDefinition := range definition.TriggeredAbilities {
+		triggeredAbility, err := NewTriggeredAbility(&card, len(triggeredAbilities), triggeredAbilityDefinition)
+		if err != nil {
+			panic(fmt.Errorf("failed to build triggered ability %s: %w", triggeredAbilityDefinition.Name, err))
+		}
+		triggeredAbilities = append(triggeredAbilities, triggeredAbility)
+	}
 	card.activatedAbilities = activatedAbilities
 	card.cardTypes = cardTypes
 	card.colors = cardColors
@@ -87,6 +95,7 @@ func NewCardFromDefinition(definition *definition.Card) *Card {
 	card.additionalCost = additionalCost
 	card.spellAbility = spellAbility
 	card.staticAbilities = staticAbilities
+	card.triggeredAbilities = triggeredAbilities
 	card.subtypes = subtypes
 	card.supertypes = supertypes
 	return &card

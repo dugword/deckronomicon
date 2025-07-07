@@ -15,12 +15,12 @@ func ResolvePutBackOnTop(
 	game *state.Game,
 	playerID string,
 	putBackOnTop *effect.PutBackOnTop,
-	source gob.Object,
+	resolvable state.Resolvable,
 ) (Result, error) {
 	player := game.GetPlayer(playerID)
 	choicePrompt := choose.ChoicePrompt{
 		Message: fmt.Sprintf("Put %d card(s) on top of your library in any order", putBackOnTop.Count),
-		Source:  source,
+		Source:  resolvable,
 		ChoiceOpts: choose.ChooseManyOpts{
 			Choices: choose.NewChoices(player.Hand().GetAll()),
 			Min:     putBackOnTop.Count,

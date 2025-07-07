@@ -4,7 +4,6 @@ import (
 	"deckronomicon/packages/choose"
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/game/effect"
-	"deckronomicon/packages/game/gob"
 	"deckronomicon/packages/game/target"
 	"deckronomicon/packages/state"
 	"errors"
@@ -15,13 +14,13 @@ func ResolveDiscard(
 	playerID string,
 	discard *effect.Discard,
 	target target.Target,
-	source gob.Object,
+	resolvable state.Resolvable,
 ) (Result, error) {
 	player := game.GetPlayer(playerID)
 	cards := player.Hand().GetAll()
 	choicePrompt := choose.ChoicePrompt{
 		Message: "Chose cards to discard",
-		Source:  source,
+		Source:  resolvable,
 		ChoiceOpts: choose.ChooseManyOpts{
 			Choices: choose.NewChoices(cards),
 			Min:     discard.Count,

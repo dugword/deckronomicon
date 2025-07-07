@@ -1,6 +1,9 @@
 package target
 
-import "deckronomicon/packages/game/mtg"
+import (
+	"deckronomicon/packages/game/mtg"
+	"deckronomicon/packages/query"
+)
 
 type Target struct {
 	Type mtg.TargetType
@@ -35,10 +38,7 @@ func (t PlayerTargetSpec) TargetType() mtg.TargetType {
 }
 
 type PermanentTargetSpec struct {
-	CardTypes  []mtg.CardType
-	Colors     []mtg.Color
-	Subtypes   []mtg.Subtype
-	ManaValues []int
+	QueryOpts query.Opts
 }
 
 func (t PermanentTargetSpec) Name() string {
@@ -50,10 +50,7 @@ func (t PermanentTargetSpec) TargetType() mtg.TargetType {
 }
 
 type SpellTargetSpec struct {
-	CardTypes  []mtg.CardType
-	Colors     []mtg.Color
-	Subtypes   []mtg.Subtype
-	ManaValues []int
+	QueryOpts query.Opts
 }
 
 func (t SpellTargetSpec) Name() string {
@@ -65,10 +62,7 @@ func (t SpellTargetSpec) TargetType() mtg.TargetType {
 }
 
 type CardTargetSpec struct {
-	CardTypes  []mtg.CardType
-	Colors     []mtg.Color
-	Subtypes   []mtg.Subtype
-	ManaValues []int
+	QueryOpts query.Opts
 }
 
 func (t CardTargetSpec) Name() string {
