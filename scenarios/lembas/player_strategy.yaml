@@ -11,3 +11,4 @@ Rules:
 Choices:
   Setup:
     - Discard to Hand Size at End of Turn
+    - When enters Scry 1 then Draw a Card

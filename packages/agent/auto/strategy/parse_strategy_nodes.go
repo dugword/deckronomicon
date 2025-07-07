@@ -43,7 +43,6 @@ func (p *StrategyParser) ParseChoiceNode(raw any) (*Choice, error) {
 					return nil, fmt.Errorf("failed to parse 'Choose' selector: %w", err)
 				}
 				choice.Choose = selector
-
 			}
 		}
 		return &choice, nil

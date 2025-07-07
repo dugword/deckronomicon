@@ -19,13 +19,14 @@ func (e *TriggeredAbilityBaseEvent) isTriggeredAbilityEvent() {}
 
 type RegisterTriggeredAbilityEvent struct {
 	TriggeredAbilityBaseEvent
-	PlayerID   string
-	SourceName string
-	SourceID   string
-	Trigger    gob.Trigger
-	Effects    []effect.Effect
-	Duration   mtg.Duration
-	OneShot    bool
+	PlayerID    string
+	AbilityName string
+	SourceName  string
+	SourceID    string
+	Trigger     gob.Trigger
+	Effects     []effect.Effect
+	Duration    mtg.Duration
+	OneShot     bool
 }
 
 func (e *RegisterTriggeredAbilityEvent) EventType() string {

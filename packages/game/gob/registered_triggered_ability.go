@@ -7,6 +7,7 @@ import (
 
 type RegisteredTriggeredAbility struct {
 	ID       string
+	Name     string
 	SourceID string
 	PlayerID string
 	Duration mtg.Duration

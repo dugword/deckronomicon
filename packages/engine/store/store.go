@@ -59,8 +59,6 @@ func (s *Store) Apply(evnt event.GameEvent) error {
 	for len(eventQueue) > 0 {
 		currentEvent := eventQueue[0]
 		eventQueue = eventQueue[1:]
-		fmt.Println("Current Event:", currentEvent.EventType())
-
 		newGame, err := s.middlewareChain(s.game, currentEvent)
 		if err != nil {
 			return fmt.Errorf("failed to apply event %q: %w", currentEvent.EventType(), err)
@@ -150,7 +148,7 @@ func HandleTriggeredAbility(game *state.Game, triggeredAbility gob.RegisteredTri
 			PlayerID:          triggeredAbility.PlayerID,
 			SourceID:          triggeredAbility.SourceID,
 			AbilityID:         triggeredAbility.ID,
-			AbilityName:       "Triggered Effect",
+			AbilityName:       triggeredAbility.Name,
 			EffectWithTargets: effectWithTargets,
 		})
 	}
@@ -163,8 +161,6 @@ func MatchesTrigger(triggeredAbility gob.RegisteredTriggeredAbility, evnt event.
 	// Maybe this needs to be applied in a dispatching reducer pattern like the apply events function.
 	// Maybe this should be in the judge package.
 	// TODO: Yeah probably should be in the judge package.
-	fmt.Printf("Triggered Ability => %+v\n", triggeredAbility)
-	fmt.Printf("Event => %s ::  %+v\n", evnt.EventType(), evnt)
 	if triggeredAbility.Trigger.EventType != evnt.EventType() {
 		return false
 	}
@@ -177,7 +173,6 @@ func MatchesTrigger(triggeredAbility gob.RegisteredTriggeredAbility, evnt event.
 		}
 		return false
 	case *event.EnteredTheBattlefieldEvent:
-		fmt.Printf("Triggered Ability => %+v\n", triggeredAbility)
 		if triggeredAbility.Trigger.SelfTrigger {
 			if triggeredAbility.SourceID == e.PermanentID {
 				return true

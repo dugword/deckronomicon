@@ -41,7 +41,7 @@ func ParseInput(
 	command = strings.ToLower(command)
 	switch command {
 	case "activate", "tap":
-		request, err := parseActivateAbilityCommand(arg, game, playerID, agent)
+		request, err := parseActivateAbilityCommand(arg, game, playerID, agent, autoPay, autoPayColors)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse activate command: %w", err)
 		}

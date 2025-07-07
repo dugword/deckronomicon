@@ -18,6 +18,9 @@ func (a *RuleBasedAgent) Choose(game *state.Game, prompt choose.ChoicePrompt) (c
 		Mode:     a.mode,
 	}
 	for _, choice := range a.strategy.Choices[a.mode] {
+		if choice.Name != prompt.Source.Name() {
+			continue
+		}
 		if !choice.When.Evaluate(&ctx) {
 			continue
 		}
@@ -45,6 +48,22 @@ func (a *RuleBasedAgent) Choose(game *state.Game, prompt choose.ChoicePrompt) (c
 				Choices: choose.NewChoices(chosen[:opts.Min]), // Return the minimum number of choices
 			}, nil
 		case choose.MapChoicesToBucketsOpts:
+			if a.interactive {
+				a.EnterToContinueOnChoices(fmt.Sprintf("Matched choice: %s", choice.Name), prompt.Message, opts.Choices)
+			}
+			chosen := choice.Choose.Select(NewQueryObjectsFromChoices(opts.Choices))
+			if len(chosen) == 0 {
+				return choose.MapChoicesToBucketsResults{
+					Assignments: map[choose.Bucket][]choose.Choice{
+						opts.Buckets[len(opts.Buckets)-1]: opts.Choices,
+					},
+				}, nil
+			}
+			return choose.MapChoicesToBucketsResults{
+				Assignments: map[choose.Bucket][]choose.Choice{
+					opts.Buckets[0]: choose.NewChoices(chosen),
+				},
+			}, nil
 		case choose.ChooseNumberOpts:
 		default:
 			return nil, fmt.Errorf("unsupported choice options type: %T", opts)

@@ -6,6 +6,7 @@ import (
 	"deckronomicon/packages/engine/action"
 	"deckronomicon/packages/engine/judge"
 	"deckronomicon/packages/game/gob"
+	"deckronomicon/packages/game/mana"
 	"deckronomicon/packages/query"
 	"deckronomicon/packages/query/has"
 	"deckronomicon/packages/state"
@@ -17,11 +18,13 @@ func parseActivateAbilityCommand(
 	game *state.Game,
 	playerID string,
 	agent engine.PlayerAgent,
+	autoPayCost bool,
+	autoPayColors []mana.Color, // Colors to prioritize when auto-paying costs, if applicable
 ) (action.ActivateAbilityRequest, error) {
 	var abilityInZone *gob.AbilityInZone
 	var err error
 	ruling := judge.Ruling{Explain: true}
-	abilityInZones := judge.GetAbilitiesAvailableToActivate(game, playerID, &ruling)
+	abilityInZones := judge.GetAbilitiesAvailableToActivate(game, playerID, autoPayCost, autoPayColors, &ruling)
 	if idOrName == "" {
 		abilityInZone, err = buildActivateAbilityCommandByChoice(abilityInZones, agent, playerID, game)
 		if err != nil {
@@ -49,6 +52,8 @@ func parseActivateAbilityCommand(
 		SourceID:          abilityInZone.Source().ID(),
 		Zone:              abilityInZone.Zone(),
 		TargetsForEffects: targetsForEffects,
+		AutoPayCost:       autoPayCost,
+		AutoPayColors:     autoPayColors,
 	}
 	return request, nil
 }

@@ -3,7 +3,6 @@ package store
 import (
 	"deckronomicon/packages/engine/event"
 	"deckronomicon/packages/state"
-	"fmt"
 )
 
 func GenerateTriggerEvents(oldGame *state.Game, newGame *state.Game, evnt event.GameEvent) []event.GameEvent {
@@ -42,7 +41,6 @@ func GenerateTriggerEvents(oldGame *state.Game, newGame *state.Game, evnt event.
 		}
 	}
 	for _, oldPermanent := range oldBattlefield.GetAll() {
-		fmt.Println("Checking old permanent:", oldPermanent.Name())
 		_, found := newBattlefield.Get(oldPermanent.ID())
 		if !found {
 			triggerEvents = append(triggerEvents, &event.LeftTheBattlefieldEvent{

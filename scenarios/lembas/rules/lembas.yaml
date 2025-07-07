@@ -14,7 +14,6 @@ Rules:
         Card: Lembas
   - Name: Crack Lembas
     When:
-      SorcerySpeed: true
       AvailableMana:
         Any:
           AtLeast: 2
@@ -23,5 +22,5 @@ Rules:
         Cards:
           - Lembas
     Then:
-      Cast:
+      Activate:
         Card: Lembas

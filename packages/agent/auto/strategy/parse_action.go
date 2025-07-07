@@ -179,34 +179,37 @@ func (p *StrategyParser) parsePassAction(value any) (action.ActionNode, error) {
 	return &action.PassPriorityActionNode{}, nil
 }
 
-// TODO: This is broken
-func (p *StrategyParser) parseActivateAction(_ any) (action.ActionNode, error) {
-	/*
-		switch val := raw.(type) {
-		case string:
-			return &action.ActivateActionNode{AbilityInZone: gob.AbilityInZone{}}
-		case []any:
-			var abilities []string
-			for _, item := range val {
-				ability, ok := item.(string)
-				if !ok {
-					p.errors.Add(fmt.Errorf("expected string in 'Activate' action array, got %T", item))
-					return nil
-				}
-				abilities = append(abilities, ability)
-			}
-			return &action.ActivateActionNode{AbilityInZone: gob.AbilityInZone{}}
-		case map[string]any:
-			_, ok := val["Ability"].(string)
-			if !ok {
-				p.errors.Add(fmt.Errorf("expected 'Ability' key to be a string in 'Activate' action, got %T", val["Ability"]))
-				return nil
-			}
-			return &action.ActivateActionNode{AbilityInZone: gob.AbilityInZone{}}
-		default:
-			p.errors.Add(fmt.Errorf("expected string or object for 'Activate' action, got %T", raw))
-			return nil
+func (p *StrategyParser) parseActivateAction(raw any) (action.ActionNode, error) {
+	switch val := raw.(type) {
+	case string:
+		pred, err := p.parsePredicate(val)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing 'Activate' action: %w", err)
 		}
-	*/
-	return nil, nil
+		return &action.ActivateActionNode{Cards: pred}, nil
+	case []any:
+		var predicates []predicate.Predicate
+		for _, item := range val {
+			pred, err := p.parsePredicate(item)
+			if err != nil {
+				return nil, fmt.Errorf("error parsing 'Cast' action item %v: %w", item, err)
+			}
+			predicates = append(predicates, pred)
+		}
+		return &action.ActivateActionNode{Cards: &predicate.Or{Predicates: predicates}}, nil
+	case map[string]any:
+		cardName, ok := val["Card"].(string)
+		if !ok {
+			return nil, fmt.Errorf("expected 'Card' key to be a string in 'Cast' action, got %T", val["Card"])
+		}
+		pred, err := p.parsePredicate(cardName)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing 'Card' in 'Cast' action: %w", err)
+		}
+		return &action.ActivateActionNode{
+			Cards: pred,
+		}, nil
+	default:
+		return nil, fmt.Errorf("expected string or object for 'Cast' action, got %T", val)
+	}
 }
